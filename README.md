@@ -1,5 +1,3 @@
 # Vue 3 + TypeScript + Vite
 
-This template should help get you started developing with Vue 3 and TypeScript in Vite. The template uses Vue 3 `<script setup>` SFCs, check out the [script setup docs](https://v3.vuejs.org/api/sfc-script-setup.html#sfc-script-setup) to learn more.
-
-Learn more about the recommended Project Setup and IDE Support in the [Vue Docs TypeScript Guide](https://vuejs.org/guide/typescript/overview.html#project-setup).
+这是一个基于Vue 3的PDF模板设计器，还在初期阶段，因为社区版的不给用了，打算自己实现一个，最近比较忙，欢迎大家参与贡献。如果我来不及合并就自己fork加工吧。
