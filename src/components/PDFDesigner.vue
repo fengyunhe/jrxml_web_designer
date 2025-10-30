@@ -60,25 +60,44 @@
             </div>
             <div class="band-content">
               <div 
-                v-for="(item, index) in band.elements" 
-                :key="index"
-                class="design-element"
-                :class="{ 'selected': selectedElement && selectedElement.bandIndex === bandIndex && selectedElement.elementIndex === index }"
-                @click.stop="selectElement(bandIndex, index)"
-                :style="{
-                  position: 'absolute',
-                  left: item.x + 'px',
-                  top: item.y + 'px',
-                  width: item.width + 'px',
-                  height: item.height + 'px',
-                  backgroundColor: item.backcolor || 'transparent',
-                  border: item.border || '1px solid #ccc'
-                }"
-                @mousedown="startDragging($event, bandIndex, index)"
-              >
+            v-for="(item, index) in band.elements" 
+            :key="index"
+            class="design-element"
+            :class="{ 'selected': selectedElement && selectedElement.bandIndex === bandIndex && selectedElement.elementIndex === index }"
+            @click.stop="selectElement(bandIndex, index)"
+            :style="{
+              position: 'absolute',
+              left: item.x + 'px',
+              top: item.y + 'px',
+              width: item.width + 'px',
+              height: item.height + 'px',
+              backgroundColor: item.backcolor || 'transparent',
+              border: item.border || '1px solid #ccc'
+            }"
+            @mousedown="startDragging($event, bandIndex, index)"
+          >
+            <!-- 右下角调整大小手柄 -->
+            <div 
+              v-if="selectedElement && selectedElement.bandIndex === bandIndex && selectedElement.elementIndex === index"
+              class="resize-handle"
+              @mousedown.stop="startResizingElement($event, bandIndex, index)"
+            ></div>
                 <!-- 根据元素类型显示不同内容 -->
                 <template v-if="item.type === 'staticText'">
-                  {{ item.text || '静态文本' }}
+                  <template v-if="editingElement && editingElement.bandIndex === bandIndex && editingElement.elementIndex === index">
+                    <input 
+                      v-model="item.text" 
+                      type="text" 
+                      class="inline-edit-input"
+                      @blur="finishEditing"
+                      @keyup.enter="finishEditing"
+                      @keyup.esc="cancelEditing"
+                      ref="editInput"
+                    />
+                  </template>
+                  <template v-else>
+                    <span @dblclick.stop="startEditing(bandIndex, index)">{{ item.text || '静态文本' }}</span>
+                  </template>
                 </template>
                 <template v-else-if="item.type === 'textField'">
                   {{ item.expression || '字段: ' + item.fieldName }}
@@ -277,7 +296,7 @@
             <button @click="copyJRXML" class="btn-secondary btn-small">复制</button>
           </div>
           <div class="jrxml-content">
-            <pre v-if="jrxmlContent" class="jrxml-pre">{{ jrxmlContent }}</pre>
+            <pre v-if="jrxmlContent" class="jrxml-pre" spellcheck="false" style="user-select: text;">{{ jrxmlContent }}</pre>
             <div v-else class="jrxml-placeholder">点击"生成JRXML"按钮查看内容</div>
           </div>
         </div>
@@ -379,6 +398,8 @@ const reportFields = ref([
 // 选中状态
 const selectedBandIndex = ref<number | null>(null);
 const selectedElement = ref<{bandIndex: number, elementIndex: number} | null>(null);
+const editingElement = ref<{bandIndex: number, elementIndex: number} | null>(null);
+const editInput = ref<HTMLInputElement | null>(null);
 
 // 计算属性
 const paperWidth = computed(() => reportProperties.value.pageWidth);
@@ -395,6 +416,8 @@ const currentElement = computed(() => {
 
 // 拖拽相关
 const draggingInfo = ref<{bandIndex: number, elementIndex: number, startX: number, startY: number} | null>(null);
+// 调整大小相关
+const resizingInfo = ref<{bandIndex: number, elementIndex: number, startX: number, startY: number, startWidth: number, startHeight: number} | null>(null);
 
 // 处理拖放
 const handleDragStart = (event: DragEvent, element: any) => {
@@ -558,6 +581,34 @@ const deleteElement = () => {
   }
 };
 
+// 开始编辑静态文本
+const startEditing = (bandIndex: number, elementIndex: number) => {
+  editingElement.value = { bandIndex, elementIndex };
+  // 选择该元素
+  selectElement(bandIndex, elementIndex);
+  
+  // 等待DOM更新后聚焦输入框
+  setTimeout(() => {
+    if (editInput.value) {
+      editInput.value.focus();
+      editInput.value.select();
+    }
+  }, 10);
+};
+
+// 完成编辑
+const finishEditing = () => {
+  editingElement.value = null;
+  // 保存数据
+  saveToLocalStorage();
+  updateJRXML();
+};
+
+// 取消编辑
+const cancelEditing = () => {
+  editingElement.value = null;
+};
+
 // 保存数据到localStorage
 const saveToLocalStorage = () => {
   try {
@@ -706,6 +757,58 @@ const startResizingBand = (event: MouseEvent, bandIndex: number) => {
   
   document.addEventListener('mousemove', handleMouseMove);
   document.addEventListener('mouseup', handleMouseUp);
+};
+
+// 开始调整元素大小
+const startResizingElement = (event: MouseEvent, bandIndex: number, elementIndex: number) => {
+  event.preventDefault();
+  
+  const band = bands.value[bandIndex];
+  const element = band?.elements[elementIndex];
+  
+  if (element) {
+    resizingInfo.value = {
+      bandIndex,
+      elementIndex,
+      startX: event.clientX,
+      startY: event.clientY,
+      startWidth: element.width,
+      startHeight: element.height
+    };
+    
+    const handleMouseMove = (e: MouseEvent) => {
+      if (resizingInfo.value) {
+        const currentBand = bands.value[resizingInfo.value.bandIndex];
+        const currentElement = currentBand?.elements[resizingInfo.value.elementIndex];
+        
+        if (currentBand && currentElement) {
+          // 计算新的宽度和高度
+          let newWidth = resizingInfo.value.startWidth + (e.clientX - resizingInfo.value.startX);
+          let newHeight = resizingInfo.value.startHeight + (e.clientY - resizingInfo.value.startY);
+          
+          // 限制最小尺寸
+          newWidth = Math.max(20, newWidth);
+          newHeight = Math.max(20, newHeight);
+          
+          // 限制不能超出纸张和band边界
+          newWidth = Math.min(newWidth, paperWidth.value - currentElement.x);
+          newHeight = Math.min(newHeight, currentBand.height - currentElement.y);
+          
+          currentElement.width = newWidth;
+          currentElement.height = newHeight;
+        }
+      }
+    };
+    
+    const handleMouseUp = () => {
+      resizingInfo.value = null;
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+    };
+    
+    document.addEventListener('mousemove', handleMouseMove);
+    document.addEventListener('mouseup', handleMouseUp);
+  }
 };
 
 // 预览PDF
@@ -868,9 +971,43 @@ const previewPDF = () => {
   font-size: 0.9rem;
 }
 
+/* 内联编辑输入框样式 */
+.inline-edit-input {
+  width: 100%;
+  height: 100%;
+  padding: 5px;
+  border: 1px solid #4a90e2;
+  border-radius: 2px;
+  background-color: white;
+  font-size: inherit;
+  font-family: inherit;
+  text-align: center;
+  box-sizing: border-box;
+  outline: none;
+  cursor: text;
+}
+
 .design-element.selected {
   border: 2px solid #1976d2;
   box-shadow: 0 0 0 2px rgba(25, 118, 210, 0.2);
+}
+
+/* 调整大小手柄样式 */
+.resize-handle {
+  position: absolute;
+  right: -5px;
+  bottom: -5px;
+  width: 10px;
+  height: 10px;
+  background-color: #1976d2;
+  border: 1px solid white;
+  border-radius: 2px;
+  cursor: se-resize;
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.1);
+}
+
+.resize-handle:hover {
+  background-color: #1565c0;
 }
 
 .property-panel {
@@ -1116,6 +1253,14 @@ const previewPDF = () => {
   white-space: pre-wrap;
   word-wrap: break-word;
   min-height: 100%;
+  user-select: text;
+  cursor: text;
+  -webkit-user-select: text;
+  -moz-user-select: text;
+  -ms-user-select: text;
+  border: none;
+  outline: none;
+  overflow-wrap: break-word;
 }
 
 .jrxml-placeholder {
