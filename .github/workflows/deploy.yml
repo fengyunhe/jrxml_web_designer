@@ -3,7 +3,7 @@ name: Deploy to GitHub Pages
 on:
   # 当推送到main分支时触发部署
   push:
-    branches: [ main ]
+    branches: [ master ]
   
   # 允许手动触发工作流
   workflow_dispatch:
