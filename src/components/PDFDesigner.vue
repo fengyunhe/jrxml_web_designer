@@ -19,7 +19,15 @@
       </div>
     </div>
     
-    <div class="designer-layout">
+    <!-- 坐标显示元素 -->
+      <div 
+        v-if="dragCoordinates.visible" 
+        class="coordinates-display"
+      >
+        X: {{ dragCoordinates.x }}, Y: {{ dragCoordinates.y }}
+      </div>
+      
+      <div class="designer-layout">
       <!-- 左侧元素库 -->
       <div class="element-panel" v-show="showLeftPanel">  
         <h3>元素库</h3>
@@ -87,7 +95,10 @@
             class="band"
             :style="{ height: band.height + 'px' }"
             @click="selectBand(bandIndex)"
-            :class="{ 'selected': selectedBandIndex === bandIndex }"
+            :class="{ 
+              'selected': selectedBandIndex === bandIndex,
+              'dragging-target': highlightedBandIndex === bandIndex
+            }"
           >
             <div class="band-header">
               <span>{{ band.type }}</span>
@@ -216,7 +227,7 @@
               <template v-else-if="currentElement.type === 'textField'">
                 <div class="form-group">
                   <label>字段名称</label>
-                  <input v-model="currentElement.fieldName" type="text" />
+                  <input v-model="currentElement.fieldName" type="text" @input="updateExpressionFromFieldName" />
                 </div>
                 <div class="form-group">
                   <label>表达式</label>
@@ -513,7 +524,6 @@
         >
           {{ tab.name }}
         </button>
-        <button @click="clearLocalStorage" class="btn-danger btn-small">清空本地数据</button>
       </div>
       
       <!-- 页面设置标签 -->
@@ -707,6 +717,17 @@ function setVerticalAlignment(alignment: 'Top' | 'Middle' | 'Bottom') {
     currentElement.value.verticalAlignment = alignment;
   }
 }
+
+// 当字段名称变化时，如果表达式为空则自动生成表达式
+function updateExpressionFromFieldName() {
+  if (currentElement.value && currentElement.value.type === 'textField') {
+    const fieldName = currentElement.value.fieldName;
+    // 只有当字段名称不为空且表达式为空时才自动生成
+    if (fieldName && !currentElement.value.expression) {
+      currentElement.value.expression = `$F{${fieldName}}`;
+    }
+  }
+}
 // 底部面板高度
 const bottomPanelHeight = ref(400); // 默认高度400px
 
@@ -871,6 +892,9 @@ const currentElement = computed(() => {
 
 // 拖拽相关
 const draggingInfo = ref<{bandIndex: number, elementIndex: number, startX: number, startY: number} | null>(null);
+const highlightedBandIndex = ref<number | null>(null); // 高亮显示的目标band索引
+// 拖动时显示的坐标信息
+const dragCoordinates = ref<{x: number, y: number, visible: boolean}>({ x: 0, y: 0, visible: false });
 // 调整大小相关
 const resizingInfo = ref<{bandIndex: number, elementIndex: number, startX: number, startY: number, startWidth: number, startHeight: number} | null>(null);
 
@@ -912,9 +936,8 @@ const handleDrop = (event: DragEvent) => {
     // 创建新元素
     const newElement: DesignElement = {
       type: elementData.type,
-      // 计算在band中的精确位置，减去band-header的高度约24px
       x: Math.max(0, x - 50), // 减去元素宽度的一半以居中
-      y: Math.max(0, y - currentY - 24), // 减去band-header的高度
+      y: Math.max(0, y - currentY), // 直接使用相对于band的位置
       width: 100,
       height: 30,
       ...getDefaultElementProperties(elementData.type)
@@ -1043,19 +1066,140 @@ const startDragging = (event: MouseEvent, bandIndex: number, elementIndex: numbe
           const currentElement = currentBand?.elements[draggingInfo.value.elementIndex];
           
           if (currentBand && currentElement) {
-            // 限制元素在band内移动，不需要额外的边距限制，因为pager容器已经应用了边距
+            // 计算元素相对于paper的位置，不限制在band内
             const availableWidth = paperWidth.value - reportProperties.value.leftMargin - reportProperties.value.rightMargin;
-            currentElement.x = Math.max(0, Math.min(e.clientX - draggingInfo.value.startX, availableWidth - currentElement.width));
-            currentElement.y = Math.max(0, Math.min(e.clientY - draggingInfo.value.startY, currentBand.height - currentElement.height));
+            const newX = Math.max(0, Math.min(e.clientX - draggingInfo.value.startX, availableWidth - currentElement.width));
+            const newY = e.clientY - draggingInfo.value.startY; // 移除y坐标的下限限制
+            
+            currentElement.x = newX;
+            currentElement.y = newY;
+            
+            // 更新并显示坐标信息
+            // 显示元素的相对坐标值
+            let relativeX = Math.round(newX);
+            let relativeY = Math.round(newY);
+            
+            const paperElement = document.querySelector('.paper') as HTMLElement;
+            if (paperElement) {
+              const bandElements = document.querySelectorAll('.band');
+              
+              // 计算元素在拖动过程中相对于目标band的坐标
+              if (highlightedBandIndex.value !== null && bandElements[highlightedBandIndex.value]) {
+                // 如果有高亮的band（表示鼠标当前所在的band），计算元素相对于这个band的坐标
+                const targetBandElement = bandElements[highlightedBandIndex.value] as HTMLElement;
+                const targetBandRect = targetBandElement.getBoundingClientRect();
+                const currentBandElement = bandElements[draggingInfo.value.bandIndex] as HTMLElement;
+                const currentBandRect = currentBandElement.getBoundingClientRect();
+                
+                // 计算元素相对于目标band的Y坐标
+                // 1. 计算元素在当前band中的相对位置
+                // 2. 加上当前band与目标band之间的偏移
+                const currentElementInPage = currentBandRect.top + currentElement.y;
+                relativeY = Math.round(currentElementInPage - targetBandRect.top);
+              }
+            }
+            
+            dragCoordinates.value = {
+              x: relativeX,
+              y: relativeY,
+              visible: true
+            };
+            
+            // 更新坐标显示元素的位置，使其跟随鼠标
+            const coordinatesElement = document.querySelector('.coordinates-display') as HTMLElement;
+            if (coordinatesElement) {
+              coordinatesElement.style.left = (e.clientX + 10) + 'px';
+              coordinatesElement.style.top = (e.clientY - 30) + 'px';
+            }
+            
+            // 使用DOM元素的实际位置来计算目标band，提高准确性
+            const paper = document.querySelector('.paper') as HTMLElement;
+            if (paper) {
+              let targetBandIndex = draggingInfo.value.bandIndex;
+              
+              // 获取所有band元素
+              const bandElements = document.querySelectorAll('.band');
+              for (let i = 0; i < bandElements.length; i++) {
+                const bandElement = bandElements[i] as HTMLElement;
+                const bandRect = bandElement.getBoundingClientRect();
+                
+                // 检查鼠标位置是否在当前band的范围内
+                if (e.clientY >= bandRect.top && e.clientY <= bandRect.bottom) {
+                  targetBandIndex = i;
+                  break;
+                }
+              }
+              
+              highlightedBandIndex.value = targetBandIndex;
+            }
           }
         }
       };
     }
     
     if (!cachedMouseUpHandler) {
-      cachedMouseUpHandler = () => {
+      cachedMouseUpHandler = (e: MouseEvent) => {
         // 保存状态到历史记录
         saveStateToHistory();
+        
+        if (draggingInfo.value) {
+          const currentBand = bands.value[draggingInfo.value.bandIndex];
+          const currentElement = currentBand?.elements[draggingInfo.value.elementIndex];
+          
+          if (currentBand && currentElement) {
+            // 使用鼠标释放时的实际位置来确定目标band
+            const paper = document.querySelector('.paper') as HTMLElement;
+            let targetBandIndex = draggingInfo.value.bandIndex;
+            
+            if (paper) {
+              // 获取所有band元素
+              const bandElements = document.querySelectorAll('.band');
+              for (let i = 0; i < bandElements.length; i++) {
+                const bandElement = bandElements[i] as HTMLElement;
+                const bandRect = bandElement.getBoundingClientRect();
+                
+                // 使用鼠标位置来确定目标band，确保元素始终移动到鼠标所在的band
+                if (e.clientY >= bandRect.top && e.clientY <= bandRect.bottom) {
+                  targetBandIndex = i;
+                  break;
+                }
+              }
+            }
+            
+            // 如果元素移动到了不同的band
+            if (targetBandIndex !== draggingInfo.value.bandIndex) {
+              const targetBand = bands.value[targetBandIndex];
+              if (targetBand) {
+                // 移除原band中的元素
+                currentBand.elements.splice(draggingInfo.value.elementIndex, 1);
+                
+                // 计算元素相对于目标band的y坐标
+                const paperRect = paper.getBoundingClientRect();
+                const targetBandRect = document.querySelectorAll('.band')[targetBandIndex].getBoundingClientRect();
+                
+                // 将元素绝对坐标转换为相对于目标band的坐标
+                // 1. 计算元素在页面中的绝对位置（基于paper的位置和当前元素y坐标）
+                const elementTopInPage = paperRect.top + currentElement.y;
+                // 2. 计算元素相对于目标band的位置
+                currentElement.y = Math.max(0, elementTopInPage - targetBandRect.top);
+                
+                // 添加到新band中，使用相对于band的坐标
+                targetBand.elements.push(currentElement);
+                
+                // 更新选中的元素索引
+                selectedElement.value = {
+                  bandIndex: targetBandIndex,
+                  elementIndex: targetBand.elements.length - 1
+                };
+              }
+            }
+            // 元素位置保持拖动时的最后位置，不做额外调整
+          }
+        }
+        
+        // 清除高亮和坐标显示
+        highlightedBandIndex.value = null;
+        dragCoordinates.value.visible = false;
         
         draggingInfo.value = null;
         isDraggingOrResizing = false;
@@ -1328,8 +1472,10 @@ onMounted(() => {
       redo();
     }
     
-    // Del键删除选中的组件（仅在非编辑模式下）
-  if ((event.key === 'Delete' || event.key === 'Backspace') && selectedElement.value && !editingElement.value) {
+    // Del键删除选中的组件（仅在非编辑模式下且没有输入框处于焦点状态时）
+  const activeElement = document.activeElement;
+  const isInputFocused = activeElement && (activeElement.tagName === 'INPUT' || activeElement.tagName === 'TEXTAREA' || activeElement.tagName === 'SELECT');
+  if ((event.key === 'Delete' || event.key === 'Backspace') && selectedElement.value && !editingElement.value && !isInputFocused) {
     event.preventDefault();
     deleteElement();
     }
@@ -1988,7 +2134,6 @@ const closeHelpModal = () => {
   color: #333;
 }
 
-
 /* 底部面板的过渡样式 */
 .tabs-container {
   transition: height 0.3s ease;
@@ -2110,10 +2255,15 @@ const closeHelpModal = () => {
   box-shadow: 0 6px 24px rgba(0,0,0,0.2), 0 0 0 1px rgba(0,0,0,0.08);
 }
 
-.band {  
+.band {
   border-bottom: 1px dashed #ccc;
   position: relative;
   min-height: 20px;
+}
+
+.band.dragging-target {
+  background-color: #e6f7ff;
+  border-color: #1890ff;
 }
 
 .band-resize-handle {
@@ -2155,16 +2305,21 @@ const closeHelpModal = () => {
   justify-content: space-between;
   align-items: center;
   padding: 0.25rem 0.5rem;
-  background-color: #f5f5f5;
+  background-color: transparent;
   font-size: 0.8rem;
   font-weight: bold;
   color: #666;
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 1;
 }
 
 .band-content {
   position: relative;
   width: 100%;
-  height: calc(100% - 24px);
+  height: 100%;
 }
 
 .design-element {
@@ -2821,4 +2976,17 @@ const closeHelpModal = () => {
   -ms-user-select: none;
   user-select: none;
 }
+/* 坐标显示样式 */
+.coordinates-display {
+  position: absolute;
+  background-color: rgba(0, 0, 0, 0.8);
+  color: white;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  pointer-events: none;
+  z-index: 1000;
+  white-space: nowrap;
+}
+
 </style>
