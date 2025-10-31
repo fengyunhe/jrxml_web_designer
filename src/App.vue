@@ -3,7 +3,9 @@ import PDFDesigner from './components/PDFDesigner.vue'
 </script>
 
 <template>
-  <PDFDesigner />
+  <div id="app">
+    <PDFDesigner />
+  </div>
 </template>
 
 <style scoped>

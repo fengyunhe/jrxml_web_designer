@@ -3,10 +3,10 @@
     <div class="designer-header">
       <h1>PDF模板设计器</h1>
       <div class="header-actions">
-        <button @click="toggleLeftPanel" class="btn-secondary">
-          {{ showLeftPanel ? '隐藏左侧面板' : '显示左侧面板' }}
-        </button>
-        <button @click="toggleRightPanel" class="btn-secondary">
+          <button @click="toggleLeftPanel" class="btn-secondary">
+            {{ showLeftPanel ? '隐藏左侧面板' : '显示左侧面板' }}
+          </button>
+          <button @click="toggleRightPanel" class="btn-secondary">
           {{ showRightPanel ? '隐藏右侧面板' : '显示右侧面板' }}
         </button>
         <button @click="toggleBottomPanel" class="btn-secondary">
@@ -20,7 +20,7 @@
     
     <div class="designer-layout">
       <!-- 左侧元素库 -->
-      <div class="element-panel" v-show="showLeftPanel">
+      <div class="element-panel" v-show="showLeftPanel">  
         <h3>元素库</h3>
         <div class="element-list">
           <div 
@@ -31,6 +31,17 @@
             draggable="true"
           >
             {{ element.name }}
+          </div>
+        </div>
+        
+        <!-- 数据字段区域 - 移到左侧面板 -->
+        <div class="data-fields-section">
+          <h4>数据字段</h4>
+          <div class="fields-mini-view">
+            <div v-for="(field, index) in reportFields" :key="index" class="field-mini-item">
+              <span class="field-name">$F{ {{ field.name }} }</span>
+              <span class="field-type">({{ field.class }})</span>
+            </div>
           </div>
         </div>
       </div>
@@ -63,7 +74,7 @@
                 @change="updateBandHeight(bandIndex)"
                 @blur="updateBandHeight(bandIndex)"
               />
-              <span class="unit-label">{{ heightUnit }}</span>
+
             </div>
             </div>
             <div class="band-content">
@@ -80,7 +91,19 @@
               width: item.width + 'px',
               height: item.height + 'px',
               backgroundColor: item.backcolor || 'transparent',
-              border: item.border || '1px solid #ccc'
+              paddingTop: item.box?.topPadding ? `${item.box.topPadding}px` : (item.box?.padding ? `${item.box.padding}px` : undefined),
+              paddingLeft: item.box?.leftPadding ? `${item.box.leftPadding}px` : (item.box?.padding ? `${item.box.padding}px` : undefined),
+              paddingBottom: item.box?.bottomPadding ? `${item.box.bottomPadding}px` : (item.box?.padding ? `${item.box.padding}px` : undefined),
+              paddingRight: item.box?.rightPadding ? `${item.box.rightPadding}px` : (item.box?.padding ? `${item.box.padding}px` : undefined),
+              borderTop: getBorderStyle('top', item.box) || (item.border || item.box ? '1px solid #ccc' : '1px solid transparent'),
+              borderLeft: getBorderStyle('left', item.box) || (item.border || item.box ? '1px solid #ccc' : '1px solid transparent'),
+              borderBottom: getBorderStyle('bottom', item.box) || (item.border || item.box ? '1px solid #ccc' : '1px solid transparent'),
+              borderRight: getBorderStyle('right', item.box) || (item.border || item.box ? '1px solid #ccc' : '1px solid transparent'),
+              fontFamily: item.fontFamily || reportProperties.defaultFont.name,
+              fontSize: item.fontSize ? `${item.fontSize}px` : `${reportProperties.defaultFont.size}px`,
+              fontWeight: item.isBold !== undefined ? (item.isBold ? 'bold' : 'normal') : (reportProperties.defaultFont.isBold ? 'bold' : 'normal'),
+              fontStyle: item.isItalic !== undefined ? (item.isItalic ? 'italic' : 'normal') : (reportProperties.defaultFont.isItalic ? 'italic' : 'normal'),
+              textDecoration: item.isUnderline !== undefined ? (item.isUnderline ? 'underline' : 'none') : (reportProperties.defaultFont.isUnderline ? 'underline' : 'none')
             }"
             @mousedown="startDragging($event, bandIndex, index)"
           >
@@ -159,134 +182,312 @@
         
         <!-- 元素属性 -->
         <div v-else-if="selectedElement && currentElement" class="property-section">
-          <h4>元素属性</h4>
-          <div class="form-group">
-            <label>X坐标</label>
-            <input v-model.number="currentElement.x" type="number" />
-          </div>
-          <div class="form-group">
-            <label>Y坐标</label>
-            <input v-model.number="currentElement.y" type="number" />
-          </div>
-          <div class="form-group">
-            <label>宽度</label>
-            <input v-model.number="currentElement.width" type="number" />
-          </div>
-          <div class="form-group">
-            <label>高度</label>
-            <input v-model.number="currentElement.height" type="number" />
+          <!-- 元素属性标签页 -->
+          <div class="element-tabs">
+            <div class="element-tab-navigation">
+              <button 
+                v-for="tab in elementTabs" 
+                :key="tab.id"
+                class="element-tab-button" 
+                :class="{ 'active': activeElementTab === tab.id }"
+                @click="activeElementTab = tab.id"
+              >
+                {{ tab.name }}
+              </button>
+            </div>
+            
+            <!-- 基本属性标签页 -->
+            <div class="element-tab-content" v-show="activeElementTab === 'basic'">
+              <h4>基本属性</h4>
+              <div class="form-group">
+                <label>X坐标</label>
+                <input v-model.number="currentElement.x" type="number" />
+              </div>
+              <div class="form-group">
+                <label>Y坐标</label>
+                <input v-model.number="currentElement.y" type="number" />
+              </div>
+              <div class="form-group">
+                <label>宽度</label>
+                <input v-model.number="currentElement.width" type="number" />
+              </div>
+              <div class="form-group">
+                <label>高度</label>
+                <input v-model.number="currentElement.height" type="number" />
+              </div>
+              
+              <!-- 根据元素类型显示特定属性 -->
+              <template v-if="currentElement.type === 'staticText'">
+                <div class="form-group">
+                  <label>文本内容</label>
+                  <textarea v-model="currentElement.text"></textarea>
+                </div>
+                <div class="form-group">
+                  <label>字体大小</label>
+                  <input v-model.number="currentElement.fontSize" type="number" />
+                </div>
+                <div class="form-group">
+                  <label>是否粗体</label>
+                  <input v-model="currentElement.isBold" type="checkbox" />
+                </div>
+              </template>
+              
+              <template v-else-if="currentElement.type === 'textField'">
+                <div class="form-group">
+                  <label>字段名称</label>
+                  <input v-model="currentElement.fieldName" type="text" />
+                </div>
+                <div class="form-group">
+                  <label>表达式</label>
+                  <input v-model="currentElement.expression" type="text" />
+                  <small>例如: $F{字段名} 或 $F{字段名}.toString()</small>
+                </div>
+                <div class="form-group">
+                  <label>格式模式</label>
+                  <input v-model="currentElement.pattern" type="text" />
+                  <small>例如: 日期格式 "yyyy-MM-dd"，数字格式 "#,##0.00"</small>
+                </div>
+                <div class="form-group">
+                  <label>文本对齐</label>
+                  <select v-model="currentElement.textAlignment">
+                    <option value="Left">左对齐</option>
+                    <option value="Center">居中</option>
+                    <option value="Right">右对齐</option>
+                    <option value="Justified">两端对齐</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label>垂直对齐</label>
+                  <select v-model="currentElement.verticalAlignment">
+                    <option value="Top">顶部</option>
+                    <option value="Middle">中间</option>
+                    <option value="Bottom">底部</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label>字体大小</label>
+                  <input v-model.number="currentElement.fontSize" type="number" />
+                </div>
+                <div class="checkbox-group">
+                  <label>
+                    <input v-model="currentElement.isBold" type="checkbox" />
+                    粗体
+                  </label>
+                  <label>
+                    <input v-model="currentElement.isItalic" type="checkbox" />
+                    斜体
+                  </label>
+                  <label>
+                    <input v-model="currentElement.isUnderline" type="checkbox" />
+                    下划线
+                  </label>
+                </div>
+                <div class="form-group">
+                  <label>
+                    <input v-model="currentElement.isStretchWithOverflow" type="checkbox" />
+                    内容超出时自动拉伸
+                  </label>
+                </div>
+                <div class="form-group">
+                  <label>
+                    <input v-model="currentElement.isBlankWhenNull" type="checkbox" />
+                    值为null时显示空白
+                  </label>
+                </div>
+                <div class="form-group">
+                  <label>表达式计算时机</label>
+                  <select v-model="currentElement.evaluationTime">
+                    <option value="Now">当前</option>
+                    <option value="Report">报表结束时</option>
+                    <option value="Page">页结束时</option>
+                    <option value="Column">列结束时</option>
+                    <option value="Group">组结束时</option>
+                    <option value="Band">区域渲染时</option>
+                    <option value="Auto">自动</option>
+                  </select>
+                </div>
+              </template>
+            </div>
+            
+            <!-- Box设置标签页 -->
+            <div class="element-tab-content" v-show="activeElementTab === 'box'">
+              <h4>Box设置</h4>
+              
+              <!-- 初始化box对象（如果不存在） -->
+              <div v-if="!currentElement.box" class="init-box-section">
+                <button @click="initBox()" class="btn-secondary btn-small">初始化Box设置</button>
+              </div>
+              
+              <template v-if="currentElement.box">
+                <!-- 全局边框设置 -->
+                <div class="box-section">
+                  <h5>全局边框</h5>
+                  <div class="form-group">
+                    <label>边框样式</label>
+                    <select v-model="currentElement.box.border">
+                      <option value="">无</option>
+                      <option value="Thin">细线 (1px)</option>
+                      <option value="Medium">中等 (2px)</option>
+                      <option value="Thick">粗线 (3px)</option>
+                      <option value="Dashed">虚线</option>
+                      <option value="Dotted">点线</option>
+                      <option value="Double">双线</option>
+                    </select>
+                  </div>
+                  <div class="form-group">
+                    <label>边框颜色</label>
+                    <input v-model="currentElement.box.borderColor" type="color" />
+                  </div>
+                </div>
+                
+                <!-- 各边边框设置 -->
+                <div class="box-section">
+                  <h5>各边边框（覆盖全局设置）</h5>
+                  
+                  <!-- 上边 -->
+                  <div class="border-side-group">
+                    <label class="side-label">上边</label>
+                    <select v-model="currentElement.box.topBorder" class="side-control">
+                      <option value="">使用全局</option>
+                      <option value="Thin">细线 (1px)</option>
+                      <option value="Medium">中等 (2px)</option>
+                      <option value="Thick">粗线 (3px)</option>
+                      <option value="Dashed">虚线</option>
+                      <option value="Dotted">点线</option>
+                      <option value="Double">双线</option>
+                    </select>
+                    <input v-model="currentElement.box.topBorderColor" type="color" class="color-control" />
+                  </div>
+                  
+                  <!-- 左边 -->
+                  <div class="border-side-group">
+                    <label class="side-label">左边</label>
+                    <select v-model="currentElement.box.leftBorder" class="side-control">
+                      <option value="">使用全局</option>
+                      <option value="Thin">细线 (1px)</option>
+                      <option value="Medium">中等 (2px)</option>
+                      <option value="Thick">粗线 (3px)</option>
+                      <option value="Dashed">虚线</option>
+                      <option value="Dotted">点线</option>
+                      <option value="Double">双线</option>
+                    </select>
+                    <input v-model="currentElement.box.leftBorderColor" type="color" class="color-control" />
+                  </div>
+                  
+                  <!-- 下边 -->
+                  <div class="border-side-group">
+                    <label class="side-label">下边</label>
+                    <select v-model="currentElement.box.bottomBorder" class="side-control">
+                      <option value="">使用全局</option>
+                      <option value="Thin">细线 (1px)</option>
+                      <option value="Medium">中等 (2px)</option>
+                      <option value="Thick">粗线 (3px)</option>
+                      <option value="Dashed">虚线</option>
+                      <option value="Dotted">点线</option>
+                      <option value="Double">双线</option>
+                    </select>
+                    <input v-model="currentElement.box.bottomBorderColor" type="color" class="color-control" />
+                  </div>
+                  
+                  <!-- 右边 -->
+                  <div class="border-side-group">
+                    <label class="side-label">右边</label>
+                    <select v-model="currentElement.box.rightBorder" class="side-control">
+                      <option value="">使用全局</option>
+                      <option value="Thin">细线 (1px)</option>
+                      <option value="Medium">中等 (2px)</option>
+                      <option value="Thick">粗线 (3px)</option>
+                      <option value="Dashed">虚线</option>
+                      <option value="Dotted">点线</option>
+                      <option value="Double">双线</option>
+                    </select>
+                    <input v-model="currentElement.box.rightBorderColor" type="color" class="color-control" />
+                  </div>
+                </div>
+                
+                <!-- 边距设置 -->
+                <div class="box-section">
+                  <h5>边距设置</h5>
+                  <div class="form-group">
+                    <label>全局边距（像素）</label>
+                    <input v-model.number="currentElement.box.padding" type="number" placeholder="全部边距" />
+                    <small>设置后会覆盖各边独立设置</small>
+                  </div>
+                  
+                  <div class="padding-grid">
+                    <div class="form-group">
+                      <label>上边距</label>
+                      <input v-model.number="currentElement.box.topPadding" type="number" />
+                    </div>
+                    <div class="form-group">
+                      <label>左边距</label>
+                      <input v-model.number="currentElement.box.leftPadding" type="number" />
+                    </div>
+                    <div class="form-group">
+                      <label>下边距</label>
+                      <input v-model.number="currentElement.box.bottomPadding" type="number" />
+                    </div>
+                    <div class="form-group">
+                      <label>右边距</label>
+                      <input v-model.number="currentElement.box.rightPadding" type="number" />
+                    </div>
+                  </div>
+                </div>
+              </template>
+            </div>
+            
+            <!-- 样式设置标签页 -->
+            <div class="element-tab-content" v-show="activeElementTab === 'style'">
+              <h4>样式设置</h4>
+              <div class="form-group">
+                <label>背景颜色</label>
+                <input v-model="currentElement.backcolor" type="color" />
+              </div>
+              
+              <template v-if="currentElement.type !== 'line' && currentElement.type !== 'image'">
+                <div class="form-group">
+                  <label>字体名称</label>
+                  <select v-model="currentElement.fontFamily">
+                    <option value="">使用默认字体</option>
+                    <option value="SansSerif">SansSerif</option>
+                    <option value="Serif">Serif</option>
+                    <option value="Monospaced">Monospaced</option>
+                    <option value="Arial">Arial</option>
+                    <option value="Times New Roman">Times New Roman</option>
+                  </select>
+                </div>
+                
+                <div class="checkbox-group">
+                  <label>
+                    <input v-model="currentElement.isBold" type="checkbox" />
+                    粗体
+                  </label>
+                  <label>
+                    <input v-model="currentElement.isItalic" type="checkbox" />
+                    斜体
+                  </label>
+                  <label>
+                    <input v-model="currentElement.isUnderline" type="checkbox" />
+                    下划线
+                  </label>
+                </div>
+              </template>
+            </div>
           </div>
           
-          <!-- 根据元素类型显示特定属性 -->
-          <template v-if="currentElement.type === 'staticText'">
-            <div class="form-group">
-              <label>文本内容</label>
-              <textarea v-model="currentElement.text"></textarea>
-            </div>
-            <div class="form-group">
-              <label>字体大小</label>
-              <input v-model.number="currentElement.fontSize" type="number" />
-            </div>
-            <div class="form-group">
-              <label>是否粗体</label>
-              <input v-model="currentElement.isBold" type="checkbox" />
-            </div>
-          </template>
-          
-          <template v-else-if="currentElement.type === 'textField'">
-            <div class="form-group">
-              <label>字段名称</label>
-              <input v-model="currentElement.fieldName" type="text" />
-            </div>
-            <div class="form-group">
-              <label>表达式</label>
-              <input v-model="currentElement.expression" type="text" />
-              <small>例如: $F{字段名} 或 $F{字段名}.toString()</small>
-            </div>
-            <div class="form-group">
-              <label>格式模式</label>
-              <input v-model="currentElement.pattern" type="text" />
-              <small>例如: 日期格式 "yyyy-MM-dd"，数字格式 "#,##0.00"</small>
-            </div>
-            <div class="form-group">
-              <label>文本对齐</label>
-              <select v-model="currentElement.textAlignment">
-                <option value="Left">左对齐</option>
-                <option value="Center">居中</option>
-                <option value="Right">右对齐</option>
-                <option value="Justified">两端对齐</option>
-              </select>
-            </div>
-            <div class="form-group">
-              <label>垂直对齐</label>
-              <select v-model="currentElement.verticalAlignment">
-                <option value="Top">顶部</option>
-                <option value="Middle">中间</option>
-                <option value="Bottom">底部</option>
-              </select>
-            </div>
-            <div class="form-group">
-              <label>字体大小</label>
-              <input v-model.number="currentElement.fontSize" type="number" />
-            </div>
-            <div class="checkbox-group">
-              <label>
-                <input v-model="currentElement.isBold" type="checkbox" />
-                粗体
-              </label>
-              <label>
-                <input v-model="currentElement.isItalic" type="checkbox" />
-                斜体
-              </label>
-              <label>
-                <input v-model="currentElement.isUnderline" type="checkbox" />
-                下划线
-              </label>
-            </div>
-            <div class="form-group">
-              <label>
-                <input v-model="currentElement.isStretchWithOverflow" type="checkbox" />
-                内容超出时自动拉伸
-              </label>
-            </div>
-            <div class="form-group">
-              <label>
-                <input v-model="currentElement.isBlankWhenNull" type="checkbox" />
-                值为null时显示空白
-              </label>
-            </div>
-            <div class="form-group">
-              <label>表达式计算时机</label>
-              <select v-model="currentElement.evaluationTime">
-                <option value="Now">当前</option>
-                <option value="Report">报表结束时</option>
-                <option value="Page">页结束时</option>
-                <option value="Column">列结束时</option>
-                <option value="Group">组结束时</option>
-                <option value="Band">区域渲染时</option>
-                <option value="Auto">自动</option>
-              </select>
-            </div>
-          </template>
-          
-          <button @click="deleteElement" class="btn-danger">删除元素</button>
+          <div class="element-actions">
+            <button @click="deleteElement" class="btn-danger">删除元素</button>
+          </div>
         </div>
         
-        <!-- 数据字段设置 -->
-        <div class="property-section">
-          <h4>数据字段</h4>
-          <div v-for="(field, index) in reportFields" :key="index" class="field-item">
-            <input v-model="field.name" placeholder="字段名" />
-            <input v-model="field.class" placeholder="类型" />
-            <button @click="removeField(index)" class="btn-small">删除</button>
-          </div>
-          <button @click="addField" class="btn-secondary btn-small">添加字段</button>
-        </div>
+
       </div>
     </div>
     
     <!-- 底部标签页区域 -->
-    <div class="tabs-container" v-show="showBottomPanel">
+    <div class="tabs-container" v-show="showBottomPanel" :style="{ height: bottomPanelHeight + 'px' }">
+      <!-- 顶部调整手柄 -->
+      <div class="tabs-resize-handle" @mousedown.stop="startResizingBottomPanel"></div>
       <div class="tab-navigation">
         <button 
           v-for="tab in tabs" 
@@ -326,14 +527,7 @@
             </div>
           </div>
           
-          <div class="form-group">
-            <label>高度单位</label>
-            <select v-model="reportProperties.heightUnit">
-              <option value="px">像素 (px)</option>
-              <option value="mm">毫米 (mm)</option>
-              <option value="in">英寸 (in)</option>
-            </select>
-          </div>
+
           <!-- 字体设置 -->
           <div class="font-settings-section">
             <h4>默认字体设置</h4>
@@ -394,6 +588,18 @@
       </div>
     </div>
   </div>
+  
+  <!-- 框选区域可视化 -->
+  <div 
+    v-if="isMultiSelecting" 
+    class="selection-box" 
+    :style="{
+      left: selectionBox.x + 'px',
+      top: selectionBox.y + 'px',
+      width: selectionBox.width + 'px',
+      height: selectionBox.height + 'px'
+    }"
+  ></div>
 </template>
 
 <script setup lang="ts">
@@ -406,7 +612,7 @@ const getDOMParser = (): DOMParser => {
   }
   throw new Error('当前环境不支持DOMParser，无法解析XML');
 };
-import { generateJRXMLContent } from '../utils/jrxmlGenerator';
+import { generateJRXMLContent, parseJRXMLContent } from '../utils/jrxmlGenerator';
 
 // 标签页相关
 const activeTab = ref('pageSettings');
@@ -415,10 +621,20 @@ const tabs = ref([
   { id: 'jrxml', name: 'JRXML内容' }
 ]);
 
+// 元素属性标签页相关
+const activeElementTab = ref('basic');
+const elementTabs = ref([
+  { id: 'basic', name: '基本属性' },
+  { id: 'box', name: 'Box设置' },
+  { id: 'style', name: '样式设置' }
+]);
+
 // 面板显示状态
 const showLeftPanel = ref(true);
 const showRightPanel = ref(true);
 const showBottomPanel = ref(true);
+// 底部面板高度
+const bottomPanelHeight = ref(400); // 默认高度400px
 
 // JRXML内容显示
 const jrxmlContent = ref('');
@@ -439,7 +655,7 @@ const reportProperties = ref({
     isItalic: false,
     isUnderline: false
   },
-  heightUnit: 'px' // 添加高度单位属性
+  
 });
 
 // 可用元素
@@ -452,14 +668,44 @@ const elements = ref([
 ]);
 
 // 定义元素接口
+interface Pen {
+  lineWidth?: number;
+  lineStyle?: string;
+  lineColor?: string;
+}
+
+interface Box {
+  topPadding?: number;
+  leftPadding?: number;
+  bottomPadding?: number;
+  rightPadding?: number;
+  padding?: number;
+  topPen?: Pen;
+  leftPen?: Pen;
+  bottomPen?: Pen;
+  rightPen?: Pen;
+  border?: string;
+  borderColor?: string;
+  topBorder?: string;
+  topBorderColor?: string;
+  leftBorder?: string;
+  leftBorderColor?: string;
+  bottomBorder?: string;
+  bottomBorderColor?: string;
+  rightBorder?: string;
+  rightBorderColor?: string;
+}
+
 interface DesignElement {
   type: string;
   x: number;
   y: number;
   width: number;
   height: number;
+  unit?: string;
   text?: string;
   fontSize?: number;
+  fontFamily?: string;
   isBold?: boolean;
   isItalic?: boolean;
   isUnderline?: boolean;
@@ -470,6 +716,7 @@ interface DesignElement {
   lineWidth?: number;
   backcolor?: string;
   border?: string;
+  box?: Box;
   // 动态字段特有属性
   isStretchWithOverflow?: boolean;
   evaluationTime?: string;
@@ -592,9 +839,21 @@ const handleDrop = (event: DragEvent) => {
 
 // 获取元素默认属性
 const getDefaultElementProperties = (type: string): Partial<DesignElement> => {
+  // 使用报表的默认字体设置
+  const defaultFontProps = {
+    fontFamily: reportProperties.value.defaultFont.name,
+    fontSize: reportProperties.value.defaultFont.size,
+    isBold: reportProperties.value.defaultFont.isBold,
+    isItalic: reportProperties.value.defaultFont.isItalic,
+    isUnderline: reportProperties.value.defaultFont.isUnderline
+  };
+  
   switch (type) {
     case 'staticText':
-      return { text: '静态文本', fontSize: 12, isBold: false };
+      return { 
+        text: '静态文本', 
+        ...defaultFontProps
+      };
     case 'textField':
       return {
         fieldName: '', 
@@ -603,7 +862,7 @@ const getDefaultElementProperties = (type: string): Partial<DesignElement> => {
         evaluationTime: 'Now',
         pattern: '',
         isBlankWhenNull: false,
-        fontSize: 12,
+        ...defaultFontProps,
         textAlignment: 'Left',
         verticalAlignment: 'Top'
       };
@@ -612,7 +871,10 @@ const getDefaultElementProperties = (type: string): Partial<DesignElement> => {
     case 'line':
       return { lineDirection: 'Horizontal', lineWidth: 1 };
     case 'rectangle':
-      return { backcolor: '#f0f0f0' };
+      return { 
+        backcolor: '#f0f0f0',
+        border: '1px solid #ccc' // 为矩形元素默认添加边框
+      };
     default:
       return {};
   }
@@ -676,8 +938,56 @@ const startDragging = (event: MouseEvent, bandIndex: number, elementIndex: numbe
   }
 };
 
-// 计算属性 - 获取当前的高度单位
-const heightUnit = computed(() => reportProperties.value.heightUnit);
+
+
+// 获取边框样式 - 优化边框颜色和粗细的处理
+const getBorderStyle = (side: string, box?: Box): string | undefined => {
+  if (!box) return undefined;
+  
+  // 优先使用sideBorder属性
+  const borderProperty = side === 'top' ? box.topBorder : 
+                       side === 'left' ? box.leftBorder : 
+                       side === 'bottom' ? box.bottomBorder : 
+                       box.rightBorder;
+  
+  // 如果没有sideBorder但有border，使用border
+  const border = borderProperty || box.border;
+  if (!border) return undefined;
+  
+  // 获取边框颜色 - 确保始终有颜色
+  const colorProperty = side === 'top' ? box.topBorderColor : 
+                       side === 'left' ? box.leftBorderColor : 
+                       side === 'bottom' ? box.bottomBorderColor : 
+                       box.rightBorderColor;
+  const color = colorProperty || box.borderColor || '#000000'; // 确保有默认颜色
+  
+  // 获取线宽 - 确保粗细正确
+  let width = '1px'; // 默认宽度
+  const penProperty = side === 'top' ? box.topPen : 
+                      side === 'left' ? box.leftPen : 
+                      side === 'bottom' ? box.bottomPen : 
+                      box.rightPen;
+  if (penProperty?.lineWidth !== undefined) {
+    width = `${penProperty.lineWidth}px`;
+  } else if (border === 'Thin' || border === '1Point') {
+    width = '1px';
+  } else if (border === '2Point' || border === 'Medium') {
+    width = '2px';
+  } else if (border === '4Point' || border === 'Thick') {
+    width = '4px';
+  }
+  
+  // 获取线型
+  let style = 'solid'; // 默认实线
+  if (penProperty?.lineStyle) {
+    if (penProperty.lineStyle === 'Dashed') style = 'dashed';
+    else if (penProperty.lineStyle === 'Dotted') style = 'dotted';
+    else if (penProperty.lineStyle === 'Double') style = 'double';
+  }
+  
+  // 确保返回完整的边框样式，包括颜色、粗细和样式
+  return `${width} ${style} ${color}`;
+};
 
 // 更新区域高度
 const updateBandHeight = (bandIndex: number) => {
@@ -793,6 +1103,35 @@ const clearLocalStorage = () => {
   }
 };
 
+// 初始化元素的Box属性
+const initBox = () => {
+  if (currentElement.value) {
+    // 创建一个默认的box对象
+    currentElement.value.box = {
+      // 全局边框
+      border: '',
+      borderColor: '#000000',
+      
+      // 各边边框
+      topBorder: '',
+      topBorderColor: '#000000',
+      leftBorder: '',
+      leftBorderColor: '#000000',
+      bottomBorder: '',
+      bottomBorderColor: '#000000',
+      rightBorder: '',
+      rightBorderColor: '#000000',
+      
+      // 边距
+      padding: 0,
+      topPadding: 0,
+      leftPadding: 0,
+      bottomPadding: 0,
+      rightPadding: 0
+    };
+  }
+};
+
 // 生成JRXML
 const generateJRXML = () => {
   const content = generateJRXMLContent(reportProperties.value, bands.value, reportFields.value);
@@ -829,6 +1168,30 @@ const toggleBottomPanel = () => {
   showBottomPanel.value = !showBottomPanel.value;
 };
 
+// 开始调整底部面板高度
+const startResizingBottomPanel = (event: MouseEvent): void => {
+  event.preventDefault();
+  
+  const startY = event.clientY;
+  const startHeight = bottomPanelHeight.value;
+  
+  const handleMouseMove = (e: MouseEvent): void => {
+    // 计算高度变化（鼠标向上移动增加高度，向下移动减少高度）
+    const deltaY = startY - e.clientY;
+    const newHeight = Math.max(100, Math.min(800, startHeight + deltaY)); // 限制最小100px，最大800px
+    bottomPanelHeight.value = newHeight;
+  };
+  
+  const handleMouseUp = (): void => {
+    document.removeEventListener('mousemove', handleMouseMove);
+    document.removeEventListener('mouseup', handleMouseUp);
+  };
+  
+  document.addEventListener('mousemove', handleMouseMove);
+  document.addEventListener('mouseup', handleMouseUp);
+};
+
+
 // 自动更新JRXML内容
 const updateJRXML = () => {
   try {
@@ -838,6 +1201,11 @@ const updateJRXML = () => {
     console.error('更新JRXML失败:', error);
   }
 };
+
+// 框选相关变量
+const isMultiSelecting = ref(false);
+const selectionBox = ref({ x: 0, y: 0, width: 0, height: 0 });
+const selectedElements = ref<{bandIndex: number, elementIndex: number}[]>([]);
 
 // 组件挂载时加载数据
 onMounted(() => {
@@ -852,12 +1220,141 @@ onMounted(() => {
       event.preventDefault();
       toggleBottomPanel();
     }
+    
+    // Del键删除选中的组件
+    if ((event.key === 'Delete' || event.key === 'Backspace') && selectedElement.value) {
+      event.preventDefault();
+      deleteElement();
+    }
   };
   
+  // 开始框选
+  const startMultiSelect = (event: MouseEvent) => {
+    // 只在设计区域且没有选中其他元素时允许框选
+    if (event.target === document.querySelector('.paper') || 
+        (event.target as HTMLElement).closest('.band-content')) {
+      event.preventDefault();
+      isMultiSelecting.value = true;
+      
+      const paper = document.querySelector('.paper') as HTMLElement;
+      const rect = paper.getBoundingClientRect();
+      
+      selectionBox.value = {
+        x: event.clientX - rect.left,
+        y: event.clientY - rect.top,
+        width: 0,
+        height: 0
+      };
+      
+      // 清空之前的多选结果
+      selectedElements.value = [];
+    }
+  };
+  
+  // 更新框选区域
+  const updateMultiSelect = (event: MouseEvent) => {
+    if (isMultiSelecting.value) {
+      const paper = document.querySelector('.paper') as HTMLElement;
+      const rect = paper.getBoundingClientRect();
+      
+      const startX = selectionBox.value.x;
+      const startY = selectionBox.value.y;
+      const currentX = event.clientX - rect.left;
+      const currentY = event.clientY - rect.top;
+      
+      selectionBox.value = {
+        x: Math.min(startX, currentX),
+        y: Math.min(startY, currentY),
+        width: Math.abs(currentX - startX),
+        height: Math.abs(currentY - startY)
+      };
+      
+      // 检查哪些元素在框选范围内
+      selectedElements.value = [];
+      
+      bands.value.forEach((band, bandIndex) => {
+        let bandY = 0;
+        for (let i = 0; i < bandIndex; i++) {
+          bandY += bands.value[i].height;
+        }
+        
+        band.elements.forEach((element, elementIndex) => {
+          const elementTop = bandY + element.y;
+          const elementLeft = element.x;
+          const elementRight = elementLeft + element.width;
+          const elementBottom = elementTop + element.height;
+          
+          const boxLeft = selectionBox.value.x;
+          const boxTop = selectionBox.value.y;
+          const boxRight = boxLeft + selectionBox.value.width;
+          const boxBottom = boxTop + selectionBox.value.height;
+          
+          // 检查元素是否完全在框选范围内
+          if (elementLeft >= boxLeft && elementTop >= boxTop && 
+              elementRight <= boxRight && elementBottom <= boxBottom) {
+            selectedElements.value.push({ bandIndex, elementIndex });
+          }
+        });
+      });
+    }
+  };
+  
+  // 结束框选
+  const endMultiSelect = () => {
+    if (isMultiSelecting.value) {
+      isMultiSelecting.value = false;
+      selectionBox.value = { x: 0, y: 0, width: 0, height: 0 };
+      
+      // 如果有选中的元素，将第一个设为当前选中元素
+      if (selectedElements.value.length > 0) {
+        selectedElement.value = selectedElements.value[0];
+        selectedBandIndex.value = null;
+      }
+    }
+  };
+  
+  // 添加框选相关事件监听
+  const paper = document.querySelector('.paper') as HTMLElement;
+  if (paper) {
+    paper.addEventListener('mousedown', startMultiSelect);
+  }
+  
+  document.addEventListener('mousemove', updateMultiSelect);
+  document.addEventListener('mouseup', endMultiSelect);
   document.addEventListener('keydown', handleKeyDown);
   
   // 保存监听器引用，以便在组件卸载时移除
   (window as any).pdfDesignerKeydownListener = handleKeyDown;
+  (window as any).pdfDesignerMouseDownListener = startMultiSelect;
+  (window as any).pdfDesignerMouseMoveListener = updateMultiSelect;
+  (window as any).pdfDesignerMouseUpListener = endMultiSelect;
+});
+
+// 组件卸载时清理事件监听器
+onUnmounted(() => {
+  // 移除键盘事件监听器
+  const handleKeyDown = (window as any).pdfDesignerKeydownListener;
+  if (handleKeyDown) {
+    document.removeEventListener('keydown', handleKeyDown);
+  }
+  
+  // 移除框选相关事件监听器
+  const startMultiSelect = (window as any).pdfDesignerMouseDownListener;
+  const updateMultiSelect = (window as any).pdfDesignerMouseMoveListener;
+  const endMultiSelect = (window as any).pdfDesignerMouseUpListener;
+  
+  const paper = document.querySelector('.paper') as HTMLElement;
+  if (paper && startMultiSelect) {
+    paper.removeEventListener('mousedown', startMultiSelect);
+  }
+  
+  if (updateMultiSelect) {
+    document.removeEventListener('mousemove', updateMultiSelect);
+  }
+  
+  if (endMultiSelect) {
+    document.removeEventListener('mouseup', endMultiSelect);
+  }
 });
 
 // 监听关键数据变化，自动保存和更新JRXML
@@ -891,149 +1388,165 @@ const regenerateJRXML = (): void => {
 // 保存编辑后的JRXML内容
 const saveJRXML = (): void => {
   try {
-    // 解析编辑后的XML内容
-    const parser = getDOMParser();
-    const xmlDoc = parser.parseFromString(jrxmlContent.value, 'text/xml');
+    // 使用我们的parseJRXMLContent函数解析JRXML内容
+    const parsedData = parseJRXMLContent(jrxmlContent.value);
     
-    // 检查解析是否成功
-    const parserError = xmlDoc.querySelector('parsererror');
-    if (parserError) {
-      throw new Error('JRXML格式错误，请检查XML语法');
-    }
+    // 更新报表属性
+    reportProperties.value = {
+      ...parsedData.properties,
+      defaultFont: reportProperties.value.defaultFont // 保留默认字体设置
+    };
     
-    // 解析报表属性
-    const jasperReport = xmlDoc.querySelector('jasperReport') as Element;
-    if (jasperReport) {
-      // 更新报表基本属性
-      reportProperties.value.name = jasperReport.getAttribute('name') || reportProperties.value.name;
-      reportProperties.value.pageWidth = parseInt(jasperReport.getAttribute('pageWidth') || '595');
-      reportProperties.value.pageHeight = parseInt(jasperReport.getAttribute('pageHeight') || '842');
-      reportProperties.value.leftMargin = parseInt(jasperReport.getAttribute('leftMargin') || '20');
-      reportProperties.value.rightMargin = parseInt(jasperReport.getAttribute('rightMargin') || '20');
-      reportProperties.value.topMargin = parseInt(jasperReport.getAttribute('topMargin') || '20');
-      reportProperties.value.bottomMargin = parseInt(jasperReport.getAttribute('bottomMargin') || '20');
-      
-      // 解析字段定义
-      const fieldElements = xmlDoc.querySelectorAll('field') as NodeListOf<Element>;
-      reportFields.value = Array.from(fieldElements).map(field => ({
-        name: field.getAttribute('name') || '',
-        class: field.getAttribute('class') || 'java.lang.String'
-      }));
-      
-      // 解析各个band区域
-      const bandTypes: string[] = ['title', 'pageHeader', 'columnHeader', 'detail', 'columnFooter', 'pageFooter', 'summary'];
-      bandTypes.forEach(bandType => {
-        const bandElement = xmlDoc.querySelector(`${bandType}`) as Element | null;
-        if (bandElement) {
-          const bandIndex = bands.value.findIndex(b => b.type === bandType);
-          if (bandIndex >= 0) {
-            // 更新band高度
-            const height = bandElement.getAttribute('height');
-            if (height) {
-              bands.value[bandIndex].height = parseInt(height);
+    // 更新字段定义
+    reportFields.value = parsedData.fields;
+    
+    // 更新bands
+    bands.value = parsedData.bands;
+    
+    // 为矩形元素添加默认边框，确保显示效果
+    bands.value.forEach(band => {
+      band.elements.forEach(element => {
+        if (element.type === 'rectangle' && !element.border && (!element.box?.border && !element.box?.topBorderStyle)) {
+          if (!element.box) {
+            element.box = {};
+          }
+          element.box.border = 'Thin';
+          element.box.borderColor = '#000000';
+        }
+        
+        // 确保所有元素大小合理
+        if (element.width < 20) element.width = 20; // 确保最小宽度
+        if (element.height < 10) element.height = 10; // 确保最小高度
+        
+        // 对于box元素，确保解析的边框属性正确应用
+        if (element.box) {
+          // 处理pen元素中的边框样式
+          const processPen = (pen: any): string => {
+            if (!pen) return '';
+            
+            let width = '1px';
+            let style = 'solid';
+            let color = '#000000';
+            
+            if (pen.lineWidth) {
+              width = `${pen.lineWidth}px`;
             }
             
-            // 清空现有元素，准备重新解析
-            bands.value[bandIndex].elements = [];
-            
-            // 解析静态文本元素
-            const staticTexts = bandElement.querySelectorAll('staticText') as NodeListOf<Element>;
-            staticTexts.forEach(staticText => {
-              const reportElement = staticText.querySelector('reportElement') as Element | null;
-              const textNode = staticText.querySelector('text') as Element | null;
-              const textElement = staticText.querySelector('textElement') as Element | null;
-              
-              if (reportElement) {
-                const element: DesignElement = {
-                  type: 'staticText',
-                  x: parseInt(reportElement.getAttribute('x') || '0'),
-                  y: parseInt(reportElement.getAttribute('y') || '0'),
-                  width: parseInt(reportElement.getAttribute('width') || '100'),
-                  height: parseInt(reportElement.getAttribute('height') || '30'),
-                  text: textNode?.textContent || '静态文本',
-                  fontSize: 12,
-                  isBold: false
-                };
-                
-                // 解析字体属性
-                if (textElement) {
-                  const font = textElement.querySelector('font') as Element | null;
-                  if (font) {
-                    element.fontSize = parseInt(font.getAttribute('size') || '12');
-                    element.isBold = font.getAttribute('isBold') === 'true';
-                    element.isItalic = font.getAttribute('isItalic') === 'true';
-                    element.isUnderline = font.getAttribute('isUnderline') === 'true';
-                  }
-                }
-                
-                bands.value[bandIndex].elements.push(element);
+            if (pen.lineStyle) {
+              switch (pen.lineStyle) {
+                case 'Dashed':
+                  style = 'dashed';
+                  break;
+                case 'Dotted':
+                  style = 'dotted';
+                  break;
+                case 'Double':
+                  style = 'double';
+                  break;
+                default:
+                  style = 'solid';
               }
-            });
+            }
             
-            // 解析动态文本元素
-            const textFields = bandElement.querySelectorAll('textField') as NodeListOf<Element>;
-            textFields.forEach(textField => {
-              const reportElement = textField.querySelector('reportElement') as Element | null;
-              const textFieldExpression = textField.querySelector('textFieldExpression') as Element | null;
-              const textElement = textField.querySelector('textElement') as Element | null;
-              
-              if (reportElement) {
-                // 尝试从表达式中提取字段名
-                let fieldName = '';
-                let expression = textFieldExpression?.textContent?.trim() || '';
-                const fieldMatch = expression.match(/\$F\{([^}]*)\}/);
-                if (fieldMatch) {
-                  fieldName = fieldMatch[1];
-                }
-                
-                const element: DesignElement = {
-                  type: 'textField',
-                  x: parseInt(reportElement.getAttribute('x') || '0'),
-                  y: parseInt(reportElement.getAttribute('y') || '0'),
-                  width: parseInt(reportElement.getAttribute('width') || '100'),
-                  height: parseInt(reportElement.getAttribute('height') || '30'),
-                  fieldName: fieldName,
-                  expression: expression,
-                  fontSize: 12,
-                  isBold: false,
-                  isStretchWithOverflow: textField.getAttribute('isStretchWithOverflow') === 'true',
-                  evaluationTime: textField.getAttribute('evaluationTime') || 'Now',
-                  pattern: textField.getAttribute('pattern') || '',
-                  isBlankWhenNull: textField.getAttribute('isBlankWhenNull') === 'true',
-                  textAlignment: 'Left',
-                  verticalAlignment: 'Top'
-                };
-                
-                // 解析文本对齐属性
-                if (textElement) {
-                  element.textAlignment = textElement.getAttribute('textAlignment') || 'Left';
-                  element.verticalAlignment = textElement.getAttribute('verticalAlignment') || 'Top';
-                  
-                  // 解析字体属性
-                  const font = textElement.querySelector('font') as Element | null;
-                  if (font) {
-                    element.fontSize = parseInt(font.getAttribute('size') || '12');
-                    element.isBold = font.getAttribute('isBold') === 'true';
-                    element.isItalic = font.getAttribute('isItalic') === 'true';
-                    element.isUnderline = font.getAttribute('isUnderline') === 'true';
-                  }
-                }
-                
-                bands.value[bandIndex].elements.push(element);
-              }
-            });
+            if (pen.lineColor) {
+              color = pen.lineColor;
+            }
+            
+            return `${width} ${style} ${color}`;
+          };
+          
+          // 为各边的pen设置边框样式
+          if (element.box.topPen && !element.box.topBorderStyle) {
+            element.box.topBorderStyle = processPen(element.box.topPen);
           }
+          if (element.box.leftPen && !element.box.leftBorderStyle) {
+            element.box.leftBorderStyle = processPen(element.box.leftPen);
+          }
+          if (element.box.bottomPen && !element.box.bottomBorderStyle) {
+            element.box.bottomBorderStyle = processPen(element.box.bottomPen);
+          }
+          if (element.box.rightPen && !element.box.rightBorderStyle) {
+            element.box.rightBorderStyle = processPen(element.box.rightPen);
+          }
+          
+          // 处理border属性映射
+          const borderMap: Record<string, string> = {
+            'Thin': '1px',
+            '1Point': '1px',
+            '2Point': '2px',
+            '4Point': '4px',
+            'Dotted': '1px dotted',
+            'Dashed': '1px dashed',
+            'Double': '3px double'
+          };
+          
+          // 应用边框属性
+          const applyBorder = (borderAttr: string, colorAttr: string): string => {
+            if (!borderAttr) return '';
+            
+            let borderValue = borderMap[borderAttr] || '1px';
+            let borderColor = element.box?.[colorAttr] || '#000000';
+            
+            // 如果borderAttr是样式名称（非像素值），添加完整的边框样式
+            if (borderAttr !== 'Thin' && borderAttr !== '1Point' && borderAttr !== '2Point' && borderAttr !== '4Point') {
+              if (borderValue.includes(' ')) {
+                return borderValue + ' ' + borderColor;
+              }
+              return `${borderValue} solid ${borderColor}`;
+            }
+            
+            return `${borderValue} solid ${borderColor}`;
+          };
+          
+          // 设置各边的边框样式
+          if (element.box.topBorder && !element.box.topBorderStyle) {
+            element.box.topBorderStyle = applyBorder(element.box.topBorder, 'topBorderColor');
+          }
+          if (element.box.leftBorder && !element.box.leftBorderStyle) {
+            element.box.leftBorderStyle = applyBorder(element.box.leftBorder, 'leftBorderColor');
+          }
+          if (element.box.bottomBorder && !element.box.bottomBorderStyle) {
+            element.box.bottomBorderStyle = applyBorder(element.box.bottomBorder, 'bottomBorderColor');
+          }
+          if (element.box.rightBorder && !element.box.rightBorderStyle) {
+            element.box.rightBorderStyle = applyBorder(element.box.rightBorder, 'rightBorderColor');
+          }
+          
+          // 如果设置了全局border属性，应用到所有边
+          if (element.box.border && (!element.box.topBorderStyle || !element.box.leftBorderStyle || !element.box.bottomBorderStyle || !element.box.rightBorderStyle)) {
+            const globalBorder = applyBorder(element.box.border, 'borderColor');
+            if (!element.box.topBorderStyle) element.box.topBorderStyle = globalBorder;
+            if (!element.box.leftBorderStyle) element.box.leftBorderStyle = globalBorder;
+            if (!element.box.bottomBorderStyle) element.box.bottomBorderStyle = globalBorder;
+            if (!element.box.rightBorderStyle) element.box.rightBorderStyle = globalBorder;
+          }
+        }
+        
+        // 确保元素不超出纸张边界
+        element.x = Math.max(0, element.x);
+        element.y = Math.max(0, element.y);
+        if (element.x + element.width > paperWidth.value) {
+          element.width = paperWidth.value - element.x;
         }
       });
       
-      // 保存到本地存储
-      saveToLocalStorage();
+      // 重新计算band所需最小高度
+      let requiredHeight = 0;
+      band.elements.forEach(element => {
+        const elementBottom = element.y + element.height;
+        requiredHeight = Math.max(requiredHeight, elementBottom);
+      });
       
-      // 显示成功提示
-      alert('JRXML编辑已保存，界面已更新');
-    } else {
-      throw new Error('无效的JRXML格式：未找到jasperReport根元素');
-    }
+      // 确保band高度足够
+      const additionalMargin = band.type === 'detail' ? 10 : 5;
+      band.height = Math.max(requiredHeight + additionalMargin, band.height, 20);
+    });
+    
+    // 保存到本地存储
+    saveToLocalStorage();
+    
+    // 显示成功提示
+    alert('JRXML编辑已保存，界面已更新');
   } catch (error: unknown) {
     console.error('保存JRXML失败:', error);
     alert(`保存失败: ${error instanceof Error ? error.message : '未知错误'}`);
@@ -1174,6 +1687,7 @@ const previewPDF = () => {
   flex: 1;
   overflow: hidden;
   transition: all 0.3s ease;
+  position: relative;
 }
 
 /* 面板切换时的过渡样式 */
@@ -1187,12 +1701,51 @@ const previewPDF = () => {
 .designer-canvas {
   flex: 1;
   transition: all 0.3s ease;
+  overflow-x: auto;
+  display: flex;
+  justify-content: flex-start;
 }
 
 /* 底部面板的过渡样式 */
 .tabs-container {
   transition: height 0.3s ease;
   overflow: hidden;
+  border-top: 1px solid #ddd;
+  background-color: #f5f5f5;
+  position: relative;
+  min-height: 0; /* 允许底部面板高度调整时不会影响整体布局 */
+}
+
+/* 底部面板调整手柄 */
+.tabs-resize-handle {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  cursor: ns-resize;
+  background-color: transparent;
+  z-index: 10;
+}
+
+.tabs-resize-handle:hover {
+  background-color: rgba(25, 118, 210, 0.1);
+}
+
+.tabs-resize-handle::before {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: 30px;
+  height: 2px;
+  background-color: #1976d2;
+  opacity: 0;
+}
+
+.tabs-resize-handle:hover::before {
+  opacity: 1;
 }
 
 .element-panel {
@@ -1222,16 +1775,56 @@ const previewPDF = () => {
   display: flex;
   justify-content: center;
   align-items: flex-start;
-  padding: 2rem;
+  padding: 1rem;
   background-color: #f0f0f0;
   overflow: auto;
+  min-height: 0; /* 允许flex子元素缩小 */
+  position: relative;
+}
+
+/* 水平标尺样式 */
+.horizontal-ruler {
+  position: sticky;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 20px;
+  background-color: #fff;
+  border-bottom: 1px solid #ddd;
+  margin-bottom: 10px;
+  display: flex;
+  align-items: flex-end;
+  padding-bottom: 5px;
+  z-index: 10;
+}
+
+.ruler-tick {
+  position: absolute;
+  width: 1px;
+  height: 5px;
+  background-color: #333;
+}
+
+.ruler-label {
+  position: absolute;
+  font-size: 10px;
+  color: #666;
+  text-align: center;
+  transform: translateX(-50%);
+  bottom: 2px;
 }
 
 .paper {
   background-color: #fff;
-  box-shadow: 0 0 10px rgba(0,0,0,0.1);
+  box-shadow: 0 4px 20px rgba(0,0,0,0.15), 0 0 0 1px rgba(0,0,0,0.05);
   position: relative;
-  overflow: hidden;
+  overflow: visible;
+  border-radius: 2px;
+  transition: box-shadow 0.3s ease;
+}
+
+.paper:hover {
+  box-shadow: 0 6px 24px rgba(0,0,0,0.2), 0 0 0 1px rgba(0,0,0,0.08);
 }
 
 .band {  
@@ -1463,7 +2056,6 @@ const previewPDF = () => {
   height: 100%;
 }
 
-/* 标签页相关样式 */
 .tabs-container {
   background-color: #f5f5f5;
   border-top: 1px solid #ddd;
@@ -1501,7 +2093,6 @@ const previewPDF = () => {
   min-height: 300px;
 }
 
-/* 页面设置标签样式 */
 .page-settings-tab {
   background-color: white;
 }
@@ -1510,31 +2101,6 @@ const previewPDF = () => {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
   gap: 20px;
-}
-
-.form-group {
-  margin-bottom: 15px;
-}
-
-.form-group label {
-  display: block;
-  margin-bottom: 5px;
-  font-weight: 500;
-}
-
-.form-group input[type="text"],
-.form-group input[type="number"],
-.form-group select {
-  width: 100%;
-  padding: 8px;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-}
-
-.margin-inputs {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 10px;
 }
 
 .font-settings-section {
@@ -1564,7 +2130,6 @@ const previewPDF = () => {
   font-weight: normal;
 }
 
-/* JRXML标签样式 */
 .jrxml-tab {
   background-color: white;
 }
@@ -1573,6 +2138,9 @@ const previewPDF = () => {
   background-color: #f5f5f5;
   border-radius: 6px;
   overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
 }
 
 .jrxml-header {
@@ -1582,11 +2150,13 @@ const previewPDF = () => {
   padding: 10px 15px;
   background-color: #e9e9e9;
   border-bottom: 1px solid #ddd;
+  flex-shrink: 0;
 }
 
 .jrxml-content {
-  height: 400px;
+  flex: 1;
   overflow: auto;
+  min-height: 0;
 }
 
 .jrxml-pre {
@@ -1609,43 +2179,287 @@ const previewPDF = () => {
   overflow-wrap: break-word;
 }
 
-/* JRXML编辑器样式 */
-  .jrxml-editor {
-    width: 100%;
-    height: 100%;
-    padding: 15px;
-    background-color: #1e1e1e;
-    color: #d4d4d4;
-    font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
-    font-size: 14px;
-    line-height: 1.5;
-    white-space: pre-wrap;
-    word-wrap: break-word;
-    border: none;
-    outline: none;
-    resize: none;
-    tab-size: 2;
-    overflow-wrap: break-word;
-  }
-  
-  .jrxml-editor:focus {
-    border: none;
-    outline: none;
-  }
-  
-  /* JRXML操作按钮容器 */
-  .jrxml-actions {
-    display: flex;
-    gap: 8px;
-  }
-  
-  .jrxml-placeholder {
-    padding: 40px 20px;
-    text-align: center;
-    color: #999;
-    height: 100%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
+.jrxml-editor {
+  width: 100%;
+  height: 100%;
+  padding: 15px;
+  background-color: #1e1e1e;
+  color: #d4d4d4;
+  font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+  font-size: 14px;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  border: none;
+  outline: none;
+  resize: none;
+  tab-size: 2;
+  overflow-wrap: break-word;
+}
+
+.jrxml-editor:focus {
+  border: none;
+  outline: none;
+}
+
+.jrxml-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.jrxml-placeholder {
+  padding: 40px 20px;
+  text-align: center;
+  color: #999;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* 元素标签页样式 */
+.element-tabs {
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.element-tab-navigation {
+  display: flex;
+  background-color: #f5f5f5;
+  border-bottom: 1px solid #ddd;
+}
+
+.element-tab-button {
+  padding: 8px 16px;
+  border: none;
+  background: none;
+  cursor: pointer;
+  font-size: 14px;
+  color: #666;
+  transition: all 0.2s;
+}
+
+.element-tab-button:hover {
+  background-color: #e9e9e9;
+  color: #333;
+}
+
+.element-tab-button.active {
+  background-color: #fff;
+  color: #1890ff;
+  border-bottom: 2px solid #1890ff;
+}
+
+.element-tab-content {
+  padding: 16px;
+  min-height: 200px;
+}
+
+/* 左侧数据字段区域样式 */
+.data-fields-section {
+  margin-top: 20px;
+  padding-top: 15px;
+  border-top: 1px solid #e0e0e0;
+}
+
+.data-fields-section h4 {
+  font-size: 14px;
+  margin-bottom: 10px;
+  color: #666;
+}
+
+.fields-mini-view {
+  max-height: 200px;
+  overflow-y: auto;
+  font-size: 12px;
+}
+
+.field-mini-item {
+  padding: 4px 8px;
+  margin-bottom: 4px;
+  background-color: #f5f5f5;
+  border-radius: 3px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.field-name {
+  color: #1890ff;
+  font-weight: 500;
+}
+
+.field-type {
+  color: #666;
+  font-size: 11px;
+}
+
+/* Box设置相关样式 */
+.box-section {
+  margin-bottom: 20px;
+  padding-bottom: 15px;
+  border-bottom: 1px solid #eee;
+}
+
+.box-section:last-child {
+  border-bottom: none;
+}
+
+.box-section h5 {
+  margin-top: 0;
+  margin-bottom: 10px;
+  font-size: 14px;
+  color: #333;
+  font-weight: 600;
+}
+
+.border-side-group {
+  display: flex;
+  align-items: center;
+  margin-bottom: 10px;
+  gap: 10px;
+}
+
+.side-label {
+  min-width: 40px;
+  font-size: 14px;
+}
+
+.side-control {
+  flex: 1;
+  max-width: 200px;
+}
+
+.color-control {
+  width: 50px;
+  height: 32px;
+  padding: 2px;
+  border: 1px solid #d9d9d9;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.init-box-section {
+  padding: 20px;
+  text-align: center;
+  background-color: #f9f9f9;
+  border-radius: 4px;
+}
+
+.padding-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+/* 按钮样式 */
+.btn-small {
+  padding: 4px 12px;
+  font-size: 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-secondary {
+  background-color: #f0f0f0;
+  color: #666;
+  border: 1px solid #d9d9d9;
+}
+
+.btn-secondary:hover {
+  background-color: #e6e6e6;
+  color: #333;
+}
+
+.btn-primary {
+  background-color: #1890ff;
+  color: white;
+  border: 1px solid #1890ff;
+}
+
+.btn-primary:hover {
+  background-color: #40a9ff;
+  border-color: #40a9ff;
+}
+
+.btn-danger {
+  background-color: #ff4d4f;
+  color: white;
+  border: 1px solid #ff4d4f;
+}
+
+.btn-danger:hover {
+  background-color: #ff7875;
+  border-color: #ff7875;
+}
+
+.element-actions {
+  margin-top: 16px;
+  text-align: right;
+}
+
+/* JRXML内容区域高度最大化 */
+.jrxml-tab {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.jrxml-container {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.jrxml-header {
+  padding: 10px 16px;
+  border-bottom: 1px solid #eee;
+}
+
+.jrxml-content {
+  flex: 1;
+  overflow: hidden;
+  display: flex;
+}
+
+.jrxml-editor {
+  width: 100%;
+  height: 100%;
+  border: none;
+  resize: none;
+  padding: 16px;
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+  font-size: 12px;
+  line-height: 1.5;
+  background-color: #f5f5f5;
+  overflow: auto;
+  box-sizing: border-box;
+}
+
+.jrxml-placeholder {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #999;
+  font-size: 14px;
+  background-color: #fafafa;
+}
+
+/* 框选样式 */
+.selection-box {
+  position: absolute;
+  background-color: rgba(24, 144, 255, 0.2);
+  border: 1px solid #1890ff;
+  pointer-events: none;
+  z-index: 1000;
+}
+
+/* 选中元素高亮样式 */
+.design-element.selected {
+  box-shadow: 0 0 0 2px #1890ff;
+}
 </style>
