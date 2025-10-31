@@ -115,7 +115,16 @@ function generateBoxXML(box: any): string {
   
   xml += '>\n';
   
-  // 添加pen子元素
+  // 添加全局pen子元素，如果存在的话
+  if (box.pen) {
+    xml += '        <pen';
+    if (box.pen.lineWidth !== undefined) xml += ` lineWidth="${box.pen.lineWidth}"`;
+    if (box.pen.lineStyle) xml += ` lineStyle="${box.pen.lineStyle}"`;
+    if (box.pen.lineColor) xml += ` lineColor="${box.pen.lineColor}"`;
+    xml += '/>\n';
+  }
+  
+  // 添加各边的pen子元素
   if (box.topPen) {
     xml += '        <topPen';
     if (box.topPen.lineWidth !== undefined) xml += ` lineWidth="${box.topPen.lineWidth}"`;
@@ -176,6 +185,10 @@ function generateStaticTextXML(element: any): string {
   xml += `      <textElement${textElementAttrs}>\n        <font`;
     
   let fontAttrs = '';
+  // 添加字体名称属性
+  if (element.fontFamily) {
+    fontAttrs += ` fontName="${element.fontFamily}"`;
+  }
   if (element.fontSize) {
     fontAttrs += ` size="${element.fontSize}"`;
   }
@@ -256,6 +269,10 @@ function generateTextFieldXML(element: any): string {
   
   // 添加字体配置
   let fontAttrs = '';
+  // 添加字体名称属性
+  if (element.fontFamily) {
+    fontAttrs += ` fontName="${element.fontFamily}"`;
+  }
   if (element.fontSize) {
     fontAttrs += ` size="${element.fontSize}"`;
   }
@@ -503,7 +520,7 @@ function parseBoxElement(boxElement: Element): any {
   return box;
 }
 
-// 解析pen元素，处理边框粗细和样式
+// 解析pen元素，处理边框粗细、样式和颜色
 function parsePenElement(penElement: Element): any {
   const pen = {} as any;
   

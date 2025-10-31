@@ -54,6 +54,20 @@
              @dragover.prevent
              @dragenter.prevent
         >
+          <!-- 报表边距容器 -->
+          <div class="pager"
+               :style="{ 
+                 marginLeft: reportProperties.leftMargin + 'px',
+                 marginRight: reportProperties.rightMargin + 'px',
+                 marginTop: reportProperties.topMargin + 'px',
+                 marginBottom: reportProperties.bottomMargin + 'px',
+                 width: 'calc(100% - ' + (reportProperties.leftMargin + reportProperties.rightMargin) + 'px)',
+                 height: 'calc(100% - ' + (reportProperties.topMargin + reportProperties.bottomMargin) + 'px)',
+                 position: 'relative',
+                 backgroundSize: '20px 20px'
+               }"
+          >
+          
           <!-- 报表区域 -->
           <div 
             v-for="(band, bandIndex) in bands" 
@@ -78,75 +92,30 @@
             </div>
             </div>
             <div class="band-content">
-              <div 
-            v-for="(item, index) in band.elements" 
-            :key="index"
-            class="design-element"
-            :class="{ 'selected': selectedElement && selectedElement.bandIndex === bandIndex && selectedElement.elementIndex === index }"
-            @click.stop="selectElement(bandIndex, index)"
-            :style="{
-              position: 'absolute',
-              left: item.x + 'px',
-              top: item.y + 'px',
-              width: item.width + 'px',
-              height: item.height + 'px',
-              backgroundColor: item.backcolor || 'transparent',
-              paddingTop: item.box?.topPadding ? `${item.box.topPadding}px` : (item.box?.padding ? `${item.box.padding}px` : undefined),
-              paddingLeft: item.box?.leftPadding ? `${item.box.leftPadding}px` : (item.box?.padding ? `${item.box.padding}px` : undefined),
-              paddingBottom: item.box?.bottomPadding ? `${item.box.bottomPadding}px` : (item.box?.padding ? `${item.box.padding}px` : undefined),
-              paddingRight: item.box?.rightPadding ? `${item.box.rightPadding}px` : (item.box?.padding ? `${item.box.padding}px` : undefined),
-              borderTop: getBorderStyle('top', item.box) || (item.border || item.box ? '1px solid #ccc' : '1px solid transparent'),
-              borderLeft: getBorderStyle('left', item.box) || (item.border || item.box ? '1px solid #ccc' : '1px solid transparent'),
-              borderBottom: getBorderStyle('bottom', item.box) || (item.border || item.box ? '1px solid #ccc' : '1px solid transparent'),
-              borderRight: getBorderStyle('right', item.box) || (item.border || item.box ? '1px solid #ccc' : '1px solid transparent'),
-              fontFamily: item.fontFamily || reportProperties.defaultFont.name,
-              fontSize: item.fontSize ? `${item.fontSize}px` : `${reportProperties.defaultFont.size}px`,
-              fontWeight: item.isBold !== undefined ? (item.isBold ? 'bold' : 'normal') : (reportProperties.defaultFont.isBold ? 'bold' : 'normal'),
-              fontStyle: item.isItalic !== undefined ? (item.isItalic ? 'italic' : 'normal') : (reportProperties.defaultFont.isItalic ? 'italic' : 'normal'),
-              textDecoration: item.isUnderline !== undefined ? (item.isUnderline ? 'underline' : 'none') : (reportProperties.defaultFont.isUnderline ? 'underline' : 'none')
-            }"
-            @mousedown="startDragging($event, bandIndex, index)"
-          >
-            <!-- 右下角调整大小手柄 -->
-            <div 
-              v-if="selectedElement && selectedElement.bandIndex === bandIndex && selectedElement.elementIndex === index"
-              class="resize-handle"
-              @mousedown.stop="startResizingElement($event, bandIndex, index)"
-            ></div>
-                <!-- 根据元素类型显示不同内容 -->
-                <template v-if="item.type === 'staticText'">
-                  <template v-if="editingElement && editingElement.bandIndex === bandIndex && editingElement.elementIndex === index">
-                    <input 
-                      v-model="item.text" 
-                      type="text" 
-                      class="inline-edit-input"
-                      @blur="finishEditing"
-                      @keyup.enter="finishEditing"
-                      @keyup.esc="cancelEditing"
-                      ref="editInput"
-                    />
-                  </template>
-                  <template v-else>
-                    <span @dblclick.stop="startEditing(bandIndex, index)">{{ item.text || '静态文本' }}</span>
-                  </template>
-                </template>
-                <template v-else-if="item.type === 'textField'">
-                  {{ item.expression || '字段: ' + item.fieldName }}
-                </template>
-                <template v-else-if="item.type === 'image'">
-                  <div class="image-placeholder">图片</div>
-                </template>
-                <template v-else-if="item.type === 'line'">
-                  <div class="line-element"></div>
-                </template>
-                <template v-else-if="item.type === 'rectangle'">
-                  <div class="rectangle-element"></div>
-                </template>
-              </div>
+              <ElementFactory
+                v-for="(item, index) in band.elements"
+                :key="index"
+                :element="item"
+                :band-index="bandIndex"
+                :element-index="index"
+                :selected-element="selectedElement"
+                :editing-element="editingElement"
+                :report-font-family="reportProperties.defaultFont.name"
+                :report-font-size="reportProperties.defaultFont.size"
+                :report-is-bold="reportProperties.defaultFont.isBold"
+                :report-is-italic="reportProperties.defaultFont.isItalic"
+                :report-is-underline="reportProperties.defaultFont.isUnderline"
+                @select="selectElement"
+                @drag-start="startDragging"
+                @resize-start="startResizingElement"
+                @start-editing="startEditing"
+                @finish-editing="finishEditing"
+                @cancel-editing="cancelEditing"
+              />
             </div>
             <!-- 区域高度调整手柄 -->
             <div class="band-resize-handle" @mousedown.stop="startResizingBand($event, bandIndex)"></div>
-          </div>
+          </div></div>
         </div>
       </div>
       
@@ -447,14 +416,16 @@
               <template v-if="currentElement.type !== 'line' && currentElement.type !== 'image'">
                 <div class="form-group">
                   <label>字体名称</label>
-                  <select v-model="currentElement.fontFamily">
+                  <select v-model="currentElement.fontFamily" style="appearance: none; -webkit-appearance: none;">
                     <option value="">使用默认字体</option>
                     <option value="SansSerif">SansSerif</option>
                     <option value="Serif">Serif</option>
                     <option value="Monospaced">Monospaced</option>
                     <option value="Arial">Arial</option>
                     <option value="Times New Roman">Times New Roman</option>
+                    <option value="Noto Serif SC">Noto Serif SC</option>
                   </select>
+                  <small style="display: block; margin-top: 4px; font-size: 12px; color: #666;">提示：可以直接在下拉框中输入字体名称</small>
                 </div>
                 
                 <div class="checkbox-group">
@@ -503,7 +474,7 @@
       
       <!-- 页面设置标签 -->
       <div class="tab-content page-settings-tab" v-show="activeTab === 'pageSettings'">
-        <h3>页面设置</h3>
+        <h3 style="margin-top: 0; margin-bottom: 12px; font-size: 18px;">页面设置</h3>
         <div class="settings-grid">
           <div class="form-group">
             <label>报表名称</label>
@@ -533,13 +504,15 @@
             <h4>默认字体设置</h4>
             <div class="form-group">
               <label>字体名称</label>
-              <select v-model="reportProperties.defaultFont.name">
+              <select v-model="reportProperties.defaultFont.name" style="appearance: none; -webkit-appearance: none;">
                 <option value="SansSerif">SansSerif</option>
                 <option value="Serif">Serif</option>
                 <option value="Monospaced">Monospaced</option>
                 <option value="Arial">Arial</option>
                 <option value="Times New Roman">Times New Roman</option>
+                <option value="Noto Serif SC">Noto Serif SC</option>
               </select>
+              <small style="display: block; margin-top: 4px; font-size: 12px; color: #666;">提示：可以直接在下拉框中输入字体名称</small>
             </div>
             <div class="form-group">
               <label>字体大小</label>
@@ -589,20 +562,12 @@
     </div>
   </div>
   
-  <!-- 框选区域可视化 -->
-  <div 
-    v-if="isMultiSelecting" 
-    class="selection-box" 
-    :style="{
-      left: selectionBox.x + 'px',
-      top: selectionBox.y + 'px',
-      width: selectionBox.width + 'px',
-      height: selectionBox.height + 'px'
-    }"
-  ></div>
+
 </template>
 
 <script setup lang="ts">
+import ElementFactory from './elements/ElementFactory.vue';
+import type { DesignElement, SelectedElementInfo, Band, Box } from '../types';
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue';
 
 // 确保浏览器环境中DOMParser可用
@@ -663,8 +628,7 @@ const elements = ref([
   { type: 'staticText', name: '静态文本' },
   { type: 'textField', name: '动态文本' },
   { type: 'image', name: '图片' },
-  { type: 'line', name: '线条' },
-  { type: 'rectangle', name: '矩形' }
+  { type: 'line', name: '线条' }
 ]);
 
 // 定义元素接口
@@ -825,13 +789,28 @@ const handleDrop = (event: DragEvent) => {
     
     const targetBand = bands.value[bandIndex];
     if (targetBand && targetBand.elements) {
-      // 确保元素不会超出band边界
-      if (newElement.x + newElement.width > paperWidth.value) {
-        newElement.x = paperWidth.value - newElement.width;
+      // 确保元素不会超出边距限制
+      const { leftMargin, rightMargin } = reportProperties.value;
+      const availableWidth = paperWidth.value - leftMargin - rightMargin;
+      
+      // 限制元素左边界不小于左边距
+      newElement.x = Math.max(leftMargin, newElement.x);
+      
+      // 限制元素不超出右边界
+      if (newElement.x + newElement.width > paperWidth.value - rightMargin) {
+        newElement.x = paperWidth.value - rightMargin - newElement.width;
       }
+      
+      // 确保元素宽度不超过可用空间
+      if (newElement.width > availableWidth) {
+        newElement.width = availableWidth;
+      }
+      
+      // 确保元素不超出band高度
       if (newElement.y + newElement.height > targetBand.height) {
         newElement.y = targetBand.height - newElement.height;
       }
+      
       targetBand.elements.push(newElement);
     }
   }
@@ -890,11 +869,19 @@ const selectBand = (index: number) => {
 
 // 选择元素
 const selectElement = (bandIndex: number, elementIndex: number) => {
+  // 快速更新选中状态，避免不必要的DOM操作
   selectedElement.value = { bandIndex, elementIndex };
   selectedBandIndex.value = null;
+  
   // 自动隐藏底部面板
   showBottomPanel.value = false;
+  
+  // 移除了昂贵的DOM查询和动画效果，通过Vue的响应式系统和CSS类来管理选择状态
 };
+
+// 缓存事件处理函数，避免重复创建
+let cachedMouseMoveHandler: ((e: MouseEvent) => void) | null = null;
+let cachedMouseUpHandler: (() => void) | null = null;
 
 // 开始拖拽元素
 const startDragging = (event: MouseEvent, bandIndex: number, elementIndex: number) => {
@@ -908,6 +895,7 @@ const startDragging = (event: MouseEvent, bandIndex: number, elementIndex: numbe
   const element = band?.elements[elementIndex];
   
   if (element) {
+    // 存储拖拽信息
     draggingInfo.value = {
       bandIndex,
       elementIndex,
@@ -915,26 +903,38 @@ const startDragging = (event: MouseEvent, bandIndex: number, elementIndex: numbe
       startY: event.clientY - element.y
     };
     
-    const handleMouseMove = (e: MouseEvent) => {
-      if (draggingInfo.value) {
-        const currentBand = bands.value[draggingInfo.value.bandIndex];
-        const currentElement = currentBand?.elements[draggingInfo.value.elementIndex];
-        
-        if (currentBand && currentElement) {
-          currentElement.x = Math.max(0, Math.min(e.clientX - draggingInfo.value.startX, paperWidth.value - currentElement.width));
-          currentElement.y = Math.max(0, Math.min(e.clientY - draggingInfo.value.startY, currentBand.height - currentElement.height));
+    // 使用缓存的事件处理函数，避免每次拖拽都创建新的函数
+    if (!cachedMouseMoveHandler) {
+      cachedMouseMoveHandler = (e: MouseEvent) => {
+        if (draggingInfo.value) {
+          const currentBand = bands.value[draggingInfo.value.bandIndex];
+          const currentElement = currentBand?.elements[draggingInfo.value.elementIndex];
+          
+          if (currentBand && currentElement) {
+            // 获取报表边距设置
+            const { leftMargin, rightMargin } = reportProperties.value;
+            // 限制元素不超出左右边距
+            currentElement.x = Math.max(leftMargin, Math.min(e.clientX - draggingInfo.value.startX, paperWidth.value - rightMargin - currentElement.width));
+            currentElement.y = Math.max(0, Math.min(e.clientY - draggingInfo.value.startY, currentBand.height - currentElement.height));
+          }
         }
-      }
-    };
+      };
+    }
     
-    const handleMouseUp = () => {
-      draggingInfo.value = null;
-      document.removeEventListener('mousemove', handleMouseMove);
-      document.removeEventListener('mouseup', handleMouseUp);
-    };
+    if (!cachedMouseUpHandler) {
+      cachedMouseUpHandler = () => {
+        draggingInfo.value = null;
+        // 移除事件监听器
+        if (cachedMouseMoveHandler) {
+          document.removeEventListener('mousemove', cachedMouseMoveHandler);
+        }
+        document.removeEventListener('mouseup', cachedMouseUpHandler);
+      };
+    }
     
-    document.addEventListener('mousemove', handleMouseMove);
-    document.addEventListener('mouseup', handleMouseUp);
+    // 添加事件监听器
+    document.addEventListener('mousemove', cachedMouseMoveHandler);
+    document.addEventListener('mouseup', cachedMouseUpHandler);
   }
 };
 
@@ -1202,10 +1202,7 @@ const updateJRXML = () => {
   }
 };
 
-// 框选相关变量
-const isMultiSelecting = ref(false);
-const selectionBox = ref({ x: 0, y: 0, width: 0, height: 0 });
-const selectedElements = ref<{bandIndex: number, elementIndex: number}[]>([]);
+// 选中状态变量已在script setup顶部定义
 
 // 组件挂载时加载数据
 onMounted(() => {
@@ -1226,108 +1223,114 @@ onMounted(() => {
       event.preventDefault();
       deleteElement();
     }
-  };
-  
-  // 开始框选
-  const startMultiSelect = (event: MouseEvent) => {
-    // 只在设计区域且没有选中其他元素时允许框选
-    if (event.target === document.querySelector('.paper') || 
-        (event.target as HTMLElement).closest('.band-content')) {
+    
+    // 方向键选择周围组件
+    if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(event.key)) {
       event.preventDefault();
-      isMultiSelecting.value = true;
-      
-      const paper = document.querySelector('.paper') as HTMLElement;
-      const rect = paper.getBoundingClientRect();
-      
-      selectionBox.value = {
-        x: event.clientX - rect.left,
-        y: event.clientY - rect.top,
-        width: 0,
-        height: 0
-      };
-      
-      // 清空之前的多选结果
-      selectedElements.value = [];
+      navigateElements(event.key);
     }
   };
   
-  // 更新框选区域
-  const updateMultiSelect = (event: MouseEvent) => {
-    if (isMultiSelecting.value) {
-      const paper = document.querySelector('.paper') as HTMLElement;
-      const rect = paper.getBoundingClientRect();
+  // 键盘导航选择周围组件
+  const navigateElements = (direction: string) => {
+    if (!selectedElement.value) return;
+    
+    const { bandIndex: currentBandIndex, elementIndex: currentElementIndex } = selectedElement.value;
+    const currentBand = bands.value[currentBandIndex];
+    const currentElement = currentBand?.elements[currentElementIndex];
+    
+    if (!currentBand || !currentElement) return;
+    
+    let nearestElement: { bandIndex: number; elementIndex: number; distance: number } | null = null;
+    let currentBandY = 0;
+    
+    // 计算当前元素的绝对位置
+    const currentX = currentElement.x;
+    const currentY = currentBandY + currentElement.y;
+    
+    // 遍历所有元素，找到最近的符合方向条件的元素
+    bands.value.forEach((band, bandIdx) => {
+      // 累计带的Y坐标
+      const bandOffsetY = currentBandY;
+      currentBandY += band.height;
       
-      const startX = selectionBox.value.x;
-      const startY = selectionBox.value.y;
-      const currentX = event.clientX - rect.left;
-      const currentY = event.clientY - rect.top;
-      
-      selectionBox.value = {
-        x: Math.min(startX, currentX),
-        y: Math.min(startY, currentY),
-        width: Math.abs(currentX - startX),
-        height: Math.abs(currentY - startY)
-      };
-      
-      // 检查哪些元素在框选范围内
-      selectedElements.value = [];
-      
-      bands.value.forEach((band, bandIndex) => {
-        let bandY = 0;
-        for (let i = 0; i < bandIndex; i++) {
-          bandY += bands.value[i].height;
+      band.elements.forEach((element, elementIdx) => {
+        // 跳过当前选中的元素
+        if (bandIdx === currentBandIndex && elementIdx === currentElementIndex) return;
+        
+        // 计算元素的绝对位置
+        const elementX = element.x;
+        const elementY = bandOffsetY + element.y;
+        
+        // 根据方向计算是否符合条件
+        let isValidDirection = false;
+        
+        switch (direction) {
+          case 'ArrowUp':
+            isValidDirection = elementY < currentY;
+            break;
+          case 'ArrowDown':
+            isValidDirection = elementY > currentY;
+            break;
+          case 'ArrowLeft':
+            isValidDirection = elementX < currentX;
+            break;
+          case 'ArrowRight':
+            isValidDirection = elementX > currentX;
+            break;
         }
         
-        band.elements.forEach((element, elementIndex) => {
-          const elementTop = bandY + element.y;
-          const elementLeft = element.x;
-          const elementRight = elementLeft + element.width;
-          const elementBottom = elementTop + element.height;
-          
-          const boxLeft = selectionBox.value.x;
-          const boxTop = selectionBox.value.y;
-          const boxRight = boxLeft + selectionBox.value.width;
-          const boxBottom = boxTop + selectionBox.value.height;
-          
-          // 检查元素是否完全在框选范围内
-          if (elementLeft >= boxLeft && elementTop >= boxTop && 
-              elementRight <= boxRight && elementBottom <= boxBottom) {
-            selectedElements.value.push({ bandIndex, elementIndex });
+        if (isValidDirection) {
+          // 计算距离
+          let distance = 0;
+          switch (direction) {
+            case 'ArrowUp':
+            case 'ArrowDown':
+              distance = Math.abs(elementY - currentY) + Math.abs(elementX - currentX) * 0.1; // Y方向为主，X方向为辅
+              break;
+            case 'ArrowLeft':
+            case 'ArrowRight':
+              distance = Math.abs(elementX - currentX) + Math.abs(elementY - currentY) * 0.1; // X方向为主，Y方向为辅
+              break;
           }
-        });
+          
+          // 更新最近的元素
+          if (!nearestElement || distance < nearestElement.distance) {
+            nearestElement = { bandIndex: bandIdx, elementIndex: elementIdx, distance };
+          }
+        }
       });
+    });
+    
+    // 选择最近的元素
+    if (nearestElement) {
+      selectElement(nearestElement.bandIndex, nearestElement.elementIndex);
     }
   };
   
-  // 结束框选
-  const endMultiSelect = () => {
-    if (isMultiSelecting.value) {
-      isMultiSelecting.value = false;
-      selectionBox.value = { x: 0, y: 0, width: 0, height: 0 };
-      
-      // 如果有选中的元素，将第一个设为当前选中元素
-      if (selectedElements.value.length > 0) {
-        selectedElement.value = selectedElements.value[0];
-        selectedBandIndex.value = null;
-      }
-    }
+  // 单个选择已在其他函数中实现
+  
+  // 处理报表区域的点击事件，取消选中状态
+  const handlePaperClick = () => {
+    // 只有在没有其他元素被点击的情况下才取消选中
+    selectedElement.value = null;
+    selectedBandIndex.value = null;
   };
   
-  // 添加框选相关事件监听
-  const paper = document.querySelector('.paper') as HTMLElement;
-  if (paper) {
-    paper.addEventListener('mousedown', startMultiSelect);
-  }
+  // 移除了框选相关函数
   
-  document.addEventListener('mousemove', updateMultiSelect);
-  document.addEventListener('mouseup', endMultiSelect);
+  // 添加键盘事件监听
   document.addEventListener('keydown', handleKeyDown);
+  
+  // 获取paper元素并添加点击事件监听
+  const paperElement = document.querySelector('.paper');
+  if (paperElement) {
+    paperElement.addEventListener('click', handlePaperClick);
+  }
   
   // 保存监听器引用，以便在组件卸载时移除
   (window as any).pdfDesignerKeydownListener = handleKeyDown;
-  (window as any).pdfDesignerMouseDownListener = startMultiSelect;
-  (window as any).pdfDesignerMouseMoveListener = updateMultiSelect;
-  (window as any).pdfDesignerMouseUpListener = endMultiSelect;
+  (window as any).pdfDesignerPaperClickListener = handlePaperClick;
 });
 
 // 组件卸载时清理事件监听器
@@ -1338,22 +1341,11 @@ onUnmounted(() => {
     document.removeEventListener('keydown', handleKeyDown);
   }
   
-  // 移除框选相关事件监听器
-  const startMultiSelect = (window as any).pdfDesignerMouseDownListener;
-  const updateMultiSelect = (window as any).pdfDesignerMouseMoveListener;
-  const endMultiSelect = (window as any).pdfDesignerMouseUpListener;
-  
-  const paper = document.querySelector('.paper') as HTMLElement;
-  if (paper && startMultiSelect) {
-    paper.removeEventListener('mousedown', startMultiSelect);
-  }
-  
-  if (updateMultiSelect) {
-    document.removeEventListener('mousemove', updateMultiSelect);
-  }
-  
-  if (endMultiSelect) {
-    document.removeEventListener('mouseup', endMultiSelect);
+  // 移除paper点击事件监听器
+  const handlePaperClick = (window as any).pdfDesignerPaperClickListener;
+  const paperElement = document.querySelector('.paper');
+  if (handlePaperClick && paperElement) {
+    paperElement.removeEventListener('click', handlePaperClick);
   }
 });
 
@@ -1625,8 +1617,10 @@ const startResizingElement = (event: MouseEvent, bandIndex: number, elementIndex
           newWidth = Math.max(20, newWidth);
           newHeight = Math.max(20, newHeight);
           
-          // 限制不能超出纸张和band边界
-          newWidth = Math.min(newWidth, paperWidth.value - currentElement.x);
+          // 获取报表边距设置
+          const { rightMargin } = reportProperties.value;
+          // 限制不能超出纸张右边界（考虑右边距）和band底部边界
+          newWidth = Math.min(newWidth, paperWidth.value - rightMargin - currentElement.x);
           newHeight = Math.min(newHeight, currentBand.height - currentElement.y);
           
           currentElement.width = newWidth;
@@ -1948,8 +1942,8 @@ const previewPDF = () => {
 }
 
 .form-group {
-  margin-bottom: 1rem;
-}
+    margin-bottom: 0.75rem;
+  }
 
 .form-group label {
   display: block;
@@ -1967,10 +1961,16 @@ const previewPDF = () => {
 }
 
 .margin-inputs {
-  display: grid;
-  grid-template-columns: 1fr 1fr 1fr 1fr;
-  gap: 0.5rem;
-}
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 0.3rem;
+  }
+  
+  .margin-inputs input {
+    padding: 0.3rem;
+    font-size: 0.85rem;
+    text-align: center;
+  }
 
 .btn-primary,
 .btn-secondary,
@@ -2089,46 +2089,62 @@ const previewPDF = () => {
 }
 
 .tab-content {
-  padding: 20px;
   min-height: 300px;
+  overflow: auto;
+}
+
+.jrxml-tab {
+  height: 100%;
+  overflow: hidden;
 }
 
 .page-settings-tab {
-  background-color: white;
-}
+    background-color: white;
+    padding: 15px;
+    height: 100%;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+  }
 
-.settings-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-  gap: 20px;
-}
+  .settings-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 12px;
+    overflow-y: auto;
+    flex: 1;
+    min-height: 0;
+  }
 
 .font-settings-section {
-  grid-column: 1 / -1;
-  padding: 15px;
-  background-color: #f9f9f9;
-  border-radius: 6px;
-  margin-top: 10px;
-}
+    grid-column: 1 / -1;
+    padding: 12px;
+    background-color: #f9f9f9;
+    border-radius: 4px;
+    margin-top: 8px;
+  }
 
-.font-settings-section h4 {
-  margin-top: 0;
-  margin-bottom: 15px;
-  color: #333;
-}
+  .font-settings-section h4 {
+    margin-top: 0;
+    margin-bottom: 10px;
+    color: #333;
+    font-size: 16px;
+  }
 
 .checkbox-group {
-  display: flex;
-  gap: 20px;
-}
+    display: flex;
+    gap: 15px;
+    flex-wrap: wrap;
+  }
 
-.checkbox-group label {
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  margin-bottom: 0;
-  font-weight: normal;
-}
+  .checkbox-group label {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    margin-bottom: 0;
+    font-weight: normal;
+    font-size: 14px;
+  }
 
 .jrxml-tab {
   background-color: white;
@@ -2155,8 +2171,11 @@ const previewPDF = () => {
 
 .jrxml-content {
   flex: 1;
-  overflow: auto;
+  overflow: hidden;
   min-height: 0;
+  max-height: 600px; /* 限制最大高度，确保不超出面板区域 */
+  border-radius: 4px;
+  border: 1px solid #ddd;
 }
 
 .jrxml-pre {
@@ -2182,11 +2201,10 @@ const previewPDF = () => {
 .jrxml-editor {
   width: 100%;
   height: 100%;
-  padding: 15px;
-  background-color: #1e1e1e;
-  color: #d4d4d4;
+  padding: 16px;
+  background-color: #f8f9fa;
   font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
-  font-size: 14px;
+  font-size: 13px;
   line-height: 1.5;
   white-space: pre-wrap;
   word-wrap: break-word;
@@ -2194,7 +2212,14 @@ const previewPDF = () => {
   outline: none;
   resize: none;
   tab-size: 2;
-  overflow-wrap: break-word;
+  box-sizing: border-box;
+  /* 优化代码显示效果 */
+  color: #333;
+  text-shadow: 0 1px 0 rgba(255,255,255,.8);
+  /* 增加行号效果的背景 */
+  background-image: linear-gradient(transparent 19px, #eee 19px, #eee 20px, transparent 20px);
+  background-size: 100% 20px;
+  background-position: 0 1em;
 }
 
 .jrxml-editor:focus {
@@ -2254,6 +2279,7 @@ const previewPDF = () => {
 .element-tab-content {
   padding: 16px;
   min-height: 200px;
+  overflow: auto;
 }
 
 /* 左侧数据字段区域样式 */
@@ -2424,19 +2450,7 @@ const previewPDF = () => {
   display: flex;
 }
 
-.jrxml-editor {
-  width: 100%;
-  height: 100%;
-  border: none;
-  resize: none;
-  padding: 16px;
-  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
-  font-size: 12px;
-  line-height: 1.5;
-  background-color: #f5f5f5;
-  overflow: auto;
-  box-sizing: border-box;
-}
+
 
 .jrxml-placeholder {
   width: 100%;
@@ -2461,5 +2475,33 @@ const previewPDF = () => {
 /* 选中元素高亮样式 */
 .design-element.selected {
   box-shadow: 0 0 0 2px #1890ff;
+  position: relative;
+}
+
+/* 选择动画效果 */
+.design-element.select-animation {
+  animation: pulse 0.3s ease-in-out;
+}
+
+@keyframes pulse {
+  0% {
+    box-shadow: 0 0 0 2px #1890ff;
+  }
+  50% {
+    box-shadow: 0 0 0 4px rgba(24, 144, 255, 0.5);
+  }
+  100% {
+    box-shadow: 0 0 0 2px #1890ff;
+  }
+}
+
+/* 提高鼠标选择的精确度 */
+.design-element {
+  touch-action: manipulation;
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
 }
 </style>
