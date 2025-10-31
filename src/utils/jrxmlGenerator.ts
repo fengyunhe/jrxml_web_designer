@@ -21,11 +21,19 @@ export interface Field {
   class: string;
 }
 
+// 报表参数接口
+export interface Parameter {
+  name: string;
+  class: string;
+  defaultValue?: string;
+}
+
 // 生成JRXML内容
 export function generateJRXMLContent(
   properties: ReportProperties,
   bands: Band[],
-  fields: Field[]
+  fields: Field[],
+  parameters: Parameter[] = []
 ): string {
   let jrxml = `<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE jasperReport PUBLIC "-//JasperReports//DTD Report Design//EN" "http://jasperreports.sourceforge.net/dtds/jasperreport.dtd">
@@ -40,6 +48,20 @@ export function generateJRXMLContent(
     bottomMargin="${properties.bottomMargin}">
 `;
 
+  // 添加参数定义
+  if (parameters.length > 0) {
+    jrxml += '\n  <!-- 报表参数定义 -->\n';
+    parameters.forEach(param => {
+      if (param.name && param.class) {
+        jrxml += `  <parameter name="${param.name}" class="${param.class}">\n`;
+        if (param.defaultValue !== undefined) {
+          jrxml += `    <defaultValueExpression><![CDATA[${param.defaultValue}]]></defaultValueExpression>\n`;
+        }
+        jrxml += '  </parameter>\n';
+      }
+    });
+  }
+  
   // 添加字段定义
   if (fields.length > 0) {
     jrxml += '\n  <!-- 数据字段定义 -->\n';
@@ -182,7 +204,13 @@ function generateStaticTextXML(element: any): string {
     textElementAttrs += ` textAlignment="${element.textAlignment}"`;
   }
   
-  xml += `      <textElement${textElementAttrs}>\n        <font`;
+  // 添加verticalAlignment属性，确保符合DTD
+  if (element.verticalAlignment && ['Top', 'Middle', 'Bottom'].includes(element.verticalAlignment)) {
+    textElementAttrs += ` verticalAlignment="${element.verticalAlignment}"`;
+  }
+  
+  xml += `      <textElement${textElementAttrs}>
+        <font`;
     
   let fontAttrs = '';
   // 添加字体名称属性
@@ -354,7 +382,7 @@ function generateRectangleXML(element: any): string {
 // 不再需要UUID生成函数，已移除
 
 // 解析JRXML内容为设计器数据结构
-export function parseJRXMLContent(jrxmlContent: string): { properties: ReportProperties; bands: Band[]; fields: Field[] } {
+export function parseJRXMLContent(jrxmlContent: string): { properties: ReportProperties; bands: Band[]; fields: Field[]; parameters: Parameter[] } {
   // 使用DOMParser解析XML
   const parser = new DOMParser();
   const xmlDoc = parser.parseFromString(jrxmlContent, 'text/xml');
@@ -385,6 +413,24 @@ export function parseJRXMLContent(jrxmlContent: string): { properties: ReportPro
     }
   });
   
+  // 解析参数
+  const parameters: Parameter[] = [];
+  xmlDoc.querySelectorAll('parameter').forEach(paramElem => {
+    const name = paramElem.getAttribute('name');
+    const className = paramElem.getAttribute('class') || 'java.lang.String';
+    if (name) {
+      const param: Parameter = { name, class: className };
+      
+      // 解析默认值
+      const defaultValueExpr = paramElem.querySelector('defaultValueExpression');
+      if (defaultValueExpr && defaultValueExpr.textContent) {
+        param.defaultValue = defaultValueExpr.textContent.trim();
+      }
+      
+      parameters.push(param);
+    }
+  });
+  
   // 解析bands
   const bands: Band[] = [];
   const bandTypes = ['background', 'title', 'pageHeader', 'columnHeader', 'detail', 'columnFooter', 'pageFooter', 'lastPageFooter', 'summary', 'noData'];
@@ -406,7 +452,7 @@ export function parseJRXMLContent(jrxmlContent: string): { properties: ReportPro
     }
   });
   
-  return { properties, bands, fields };
+  return { properties, bands, fields, parameters };
 }
 
 // 解析band中的元素

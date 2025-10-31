@@ -34,7 +34,18 @@
           </div>
         </div>
         
-        <!-- 数据字段区域 - 移到左侧面板 -->
+        <!-- 报表参数区域 -->
+        <div class="data-parameters-section">
+          <h4>报表参数</h4>
+          <div class="parameters-mini-view">
+            <div v-for="(param, index) in reportParameters" :key="index" class="field-mini-item">
+              <span class="field-name">$P{ {{ param.name }} }</span>
+              <span class="field-type">({{ param.class }})</span>
+            </div>
+          </div>
+        </div>
+        
+        <!-- 数据字段区域 -->
         <div class="data-fields-section">
           <h4>数据字段</h4>
           <div class="fields-mini-view">
@@ -428,6 +439,38 @@
                   <small style="display: block; margin-top: 4px; font-size: 12px; color: #666;">提示：可以直接在下拉框中输入字体名称</small>
                 </div>
                 
+                <div class="form-group">
+                  <label>文本对齐</label>
+                  <div class="alignment-controls">
+                    <button 
+                      v-for="align in ['Left', 'Center', 'Right']" 
+                      :key="align"
+                      @click="setHorizontalAlignment(align)"
+                      :class="{ active: currentElement.textAlignment === align }"
+                      class="align-button"
+                      title="水平对齐: {{ align }}"
+                    >
+                      {{ align === 'Left' ? '左对齐' : align === 'Center' ? '居中对齐' : '右对齐' }}
+                    </button>
+                  </div>
+                </div>
+                
+                <div class="form-group">
+                  <label>垂直对齐</label>
+                  <div class="alignment-controls">
+                    <button 
+                      v-for="align in ['Top', 'Middle', 'Bottom']" 
+                      :key="align"
+                      @click="setVerticalAlignment(align)"
+                      :class="{ active: currentElement.verticalAlignment === align }"
+                      class="align-button"
+                      title="垂直对齐: {{ align }}"
+                    >
+                      {{ align === 'Top' ? '顶部对齐' : align === 'Middle' ? '垂直居中' : '底部对齐' }}
+                    </button>
+                  </div>
+                </div>
+                
                 <div class="checkbox-group">
                   <label>
                     <input v-model="currentElement.isBold" type="checkbox" />
@@ -567,7 +610,7 @@
 
 <script setup lang="ts">
 import ElementFactory from './elements/ElementFactory.vue';
-import type { DesignElement, SelectedElementInfo, Band, Box } from '../types';
+import type { DesignElement, SelectedElementInfo, Band, Box, ReportField, ReportParameter } from '../types';
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue';
 
 // 确保浏览器环境中DOMParser可用
@@ -598,6 +641,20 @@ const elementTabs = ref([
 const showLeftPanel = ref(true);
 const showRightPanel = ref(true);
 const showBottomPanel = ref(true);
+
+// 设置水平对齐方式
+function setHorizontalAlignment(alignment: 'Left' | 'Center' | 'Right') {
+  if (currentElement.value) {
+    currentElement.value.textAlignment = alignment;
+  }
+}
+
+// 设置垂直对齐方式
+function setVerticalAlignment(alignment: 'Top' | 'Middle' | 'Bottom') {
+  if (currentElement.value) {
+    currentElement.value.verticalAlignment = alignment;
+  }
+}
 // 底部面板高度
 const bottomPanelHeight = ref(400); // 默认高度400px
 
@@ -711,11 +768,25 @@ const bands = ref<Band[]>([
 ]);
 
 // 数据字段
-const reportFields = ref([
-  { name: 'id', class: 'java.lang.String' },
-  { name: 'name', class: 'java.lang.String' },
-  { name: 'amount', class: 'java.math.BigDecimal' }
+const reportFields = ref<ReportField[]>([
 ]);
+
+// 报表参数
+const reportParameters = ref<ReportParameter[]>([
+]);
+
+// 添加新参数
+function addParameter() {
+  reportParameters.value.push({
+    name: 'newParam',
+    class: 'java.lang.String'
+  });
+}
+
+// 删除参数
+function deleteParameter(index: number) {
+  reportParameters.value.splice(index, 1);
+}
 
 // 选中状态
 const selectedBandIndex = ref<number | null>(null);
@@ -1130,7 +1201,7 @@ const initBox = () => {
 
 // 生成JRXML
 const generateJRXML = () => {
-  const content = generateJRXMLContent(reportProperties.value, bands.value, reportFields.value);
+  const content = generateJRXMLContent(reportProperties.value, bands.value, reportFields.value, reportParameters.value);
   jrxmlContent.value = content;
   
   // 自动切换到JRXML标签页
@@ -1191,7 +1262,7 @@ const startResizingBottomPanel = (event: MouseEvent): void => {
 // 自动更新JRXML内容
 const updateJRXML = () => {
   try {
-    const content = generateJRXMLContent(reportProperties.value, bands.value, reportFields.value);
+    const content = generateJRXMLContent(reportProperties.value, bands.value, reportFields.value, reportParameters.value);
     jrxmlContent.value = content;
   } catch (error) {
     console.error('更新JRXML失败:', error);
@@ -1387,6 +1458,9 @@ const saveJRXML = (): void => {
     
     // 更新字段定义
     reportFields.value = parsedData.fields;
+    
+    // 更新参数定义
+    reportParameters.value = parsedData.parameters || [];
     
     // 更新bands
     bands.value = parsedData.bands;
@@ -2420,6 +2494,34 @@ const previewPDF = () => {
 .element-actions {
   margin-top: 16px;
   text-align: right;
+}
+
+/* 对齐控制样式 */
+.alignment-controls {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.align-button {
+  flex: 1;
+  padding: 6px 12px;
+  border: 1px solid #d9d9d9;
+  background: #fff;
+  cursor: pointer;
+  border-radius: 4px;
+  transition: all 0.2s;
+  font-size: 12px;
+}
+
+.align-button:hover {
+  background: #f0f0f0;
+}
+
+.align-button.active {
+  background: #1890ff;
+  color: white;
+  border-color: #1890ff;
 }
 
 /* JRXML内容区域高度最大化 */

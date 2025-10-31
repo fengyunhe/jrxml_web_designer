@@ -34,6 +34,13 @@ export interface ReportField {
   class: string;
 }
 
+// 报表参数接口
+export interface ReportParameter {
+  name: string;
+  class: string;
+  defaultValue?: string;
+}
+
 // 字体设置接口
 export interface FontSettings {
   name: string;

@@ -71,8 +71,10 @@ const elementStyle = computed(() => {
     fontWeight: props.element.isBold !== undefined ? (props.element.isBold ? 'bold' : 'normal') : (props.reportIsBold ? 'bold' : 'normal'),
     fontStyle: props.element.isItalic !== undefined ? (props.element.isItalic ? 'italic' : 'normal') : (props.reportIsItalic ? 'italic' : 'normal'),
     textDecoration: props.element.isUnderline !== undefined ? (props.element.isUnderline ? 'underline' : 'none') : (props.reportIsUnderline ? 'underline' : 'none'),
-    textAlign: props.element.textAlignment,
-    verticalAlign: props.element.verticalAlignment
+    display: 'flex',
+    alignItems: props.element.verticalAlignment?.toLowerCase() || 'flex-start',
+    justifyContent: props.element.textAlignment === 'Justified' ? 'space-between' : (props.element.textAlignment?.toLowerCase() || 'flex-start'),
+    textAlign: props.element.textAlignment === 'Justified' ? 'justify' : props.element.textAlignment?.toLowerCase() || 'left'
   };
 });
 
