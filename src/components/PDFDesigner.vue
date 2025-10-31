@@ -775,8 +775,92 @@ const reportFields = ref<ReportField[]>([
 const reportParameters = ref<ReportParameter[]>([
 ]);
 
+// 历史记录栈 - 用于撤销功能
+interface HistoryState {
+  reportProperties: typeof reportProperties.value;
+  bands: typeof bands.value;
+  reportFields: typeof reportFields.value;
+  reportParameters: typeof reportParameters.value;
+}
+
+const historyStack = ref<HistoryState[]>([]);
+const redoStack = ref<HistoryState[]>([]);
+const MAX_HISTORY_SIZE = 50; // 最大历史记录数量
+let isDraggingOrResizing = false; // 标记是否正在拖动或调整大小
+
+// 保存当前状态到历史记录
+function saveStateToHistory() {
+  // 创建状态快照（深拷贝）
+  const stateSnapshot: HistoryState = {
+    reportProperties: JSON.parse(JSON.stringify(reportProperties.value)),
+    bands: JSON.parse(JSON.stringify(bands.value)),
+    reportFields: JSON.parse(JSON.stringify(reportFields.value)),
+    reportParameters: JSON.parse(JSON.stringify(reportParameters.value))
+  };
+  
+  // 添加到历史栈
+  historyStack.value.push(stateSnapshot);
+  
+  // 如果历史栈超过最大限制，删除最旧的记录
+  if (historyStack.value.length > MAX_HISTORY_SIZE) {
+    historyStack.value.shift();
+  }
+  
+  // 清空重做栈
+  redoStack.value = [];
+}
+
+// 撤销功能
+function undo() {
+  if (historyStack.value.length === 0) return;
+  
+  // 保存当前状态到重做栈
+  const currentState: HistoryState = {
+    reportProperties: JSON.parse(JSON.stringify(reportProperties.value)),
+    bands: JSON.parse(JSON.stringify(bands.value)),
+    reportFields: JSON.parse(JSON.stringify(reportFields.value)),
+    reportParameters: JSON.parse(JSON.stringify(reportParameters.value))
+  };
+  redoStack.value.push(currentState);
+  
+  // 恢复上一个状态
+  const previousState = historyStack.value.pop()!;
+  reportProperties.value = previousState.reportProperties;
+  bands.value = previousState.bands;
+  reportFields.value = previousState.reportFields;
+  reportParameters.value = previousState.reportParameters;
+  
+  // 更新JRXML
+  updateJRXML();
+}
+
+// 重做功能
+function redo() {
+  if (redoStack.value.length === 0) return;
+  
+  // 保存当前状态到历史栈
+  const currentState: HistoryState = {
+    reportProperties: JSON.parse(JSON.stringify(reportProperties.value)),
+    bands: JSON.parse(JSON.stringify(bands.value)),
+    reportFields: JSON.parse(JSON.stringify(reportFields.value)),
+    reportParameters: JSON.parse(JSON.stringify(reportParameters.value))
+  };
+  historyStack.value.push(currentState);
+  
+  // 应用下一个状态
+  const nextState = redoStack.value.pop()!;
+  reportProperties.value = nextState.reportProperties;
+  bands.value = nextState.bands;
+  reportFields.value = nextState.reportFields;
+  reportParameters.value = nextState.reportParameters;
+  
+  // 更新JRXML
+  updateJRXML();
+}
+
 // 添加新参数
 function addParameter() {
+  saveStateToHistory();
   reportParameters.value.push({
     name: 'newParam',
     class: 'java.lang.String'
@@ -785,6 +869,7 @@ function addParameter() {
 
 // 删除参数
 function deleteParameter(index: number) {
+  saveStateToHistory();
   reportParameters.value.splice(index, 1);
 }
 
@@ -971,6 +1056,8 @@ const startDragging = (event: MouseEvent, bandIndex: number, elementIndex: numbe
       startY: event.clientY - element.y
     };
     
+    isDraggingOrResizing = true;
+    
     // 使用缓存的事件处理函数，避免每次拖拽都创建新的函数
     if (!cachedMouseMoveHandler) {
       cachedMouseMoveHandler = (e: MouseEvent) => {
@@ -990,7 +1077,15 @@ const startDragging = (event: MouseEvent, bandIndex: number, elementIndex: numbe
     
     if (!cachedMouseUpHandler) {
       cachedMouseUpHandler = () => {
+        // 保存状态到历史记录
+        saveStateToHistory();
+        
         draggingInfo.value = null;
+        isDraggingOrResizing = false;
+        
+        // 更新JRXML
+        updateJRXML();
+        
         // 移除事件监听器
         if (cachedMouseMoveHandler) {
           document.removeEventListener('mousemove', cachedMouseMoveHandler);
@@ -1077,17 +1172,20 @@ const updateBandHeight = (bandIndex: number) => {
 
 // 添加字段
 const addField = () => {
+  saveStateToHistory();
   reportFields.value.push({ name: '', class: 'java.lang.String' });
 };
 
 // 删除字段
 const removeField = (index: number) => {
+  saveStateToHistory();
   reportFields.value.splice(index, 1);
 };
 
 // 删除元素
 const deleteElement = () => {
   if (selectedElement.value) {
+    saveStateToHistory();
     const { bandIndex, elementIndex } = selectedElement.value;
     const band = bands.value[bandIndex];
     if (band && band.elements) {
@@ -1263,7 +1361,16 @@ const startResizingBottomPanel = (event: MouseEvent): void => {
 const updateJRXML = () => {
   try {
     const content = generateJRXMLContent(reportProperties.value, bands.value, reportFields.value, reportParameters.value);
-    jrxmlContent.value = content;
+    
+    // 如果内容有变化，保存到历史记录
+    if (content !== jrxmlContent.value) {
+      // 只在非拖拽/调整大小状态下保存历史
+      if (!isDraggingOrResizing && historyStack.value.length === 0) {
+        // 初始化时保存第一次状态
+        saveStateToHistory();
+      }
+      jrxmlContent.value = content;
+    }
   } catch (error) {
     console.error('更新JRXML失败:', error);
   }
@@ -1283,6 +1390,18 @@ onMounted(() => {
     if (event.ctrlKey && event.key === 'b') {
       event.preventDefault();
       toggleBottomPanel();
+    }
+    
+    // CTRL+Z 撤销操作
+    if (event.ctrlKey && event.key === 'z') {
+      event.preventDefault();
+      undo();
+    }
+    
+    // CTRL+Y 重做操作
+    if (event.ctrlKey && event.key === 'y') {
+      event.preventDefault();
+      redo();
     }
     
     // Del键删除选中的组件（仅在非编辑模式下）
@@ -1418,10 +1537,13 @@ onUnmounted(() => {
 
 // 监听关键数据变化，自动保存和更新JRXML
 watch(
-  [reportProperties, bands, reportFields],
+  [reportProperties, bands, reportFields, reportParameters],
   () => {
-    saveToLocalStorage();
-    updateJRXML();
+    // 只在非拖拽/调整大小状态下更新
+    if (!isDraggingOrResizing) {
+      saveToLocalStorage();
+      updateJRXML();
+    }
   },
   { deep: true }
 );
@@ -1673,6 +1795,8 @@ const startResizingElement = (event: MouseEvent, bandIndex: number, elementIndex
       startHeight: element.height
     };
     
+    isDraggingOrResizing = true;
+    
     const handleMouseMove = (e: MouseEvent) => {
       if (resizingInfo.value) {
         const currentBand = bands.value[resizingInfo.value.bandIndex];
@@ -1700,7 +1824,15 @@ const startResizingElement = (event: MouseEvent, bandIndex: number, elementIndex
     };
     
     const handleMouseUp = () => {
+      // 保存状态到历史记录
+      saveStateToHistory();
+      
       resizingInfo.value = null;
+      isDraggingOrResizing = false;
+      
+      // 更新JRXML
+      updateJRXML();
+      
       document.removeEventListener('mousemove', handleMouseMove);
       document.removeEventListener('mouseup', handleMouseUp);
     };
