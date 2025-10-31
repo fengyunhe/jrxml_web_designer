@@ -446,7 +446,7 @@
                     <button 
                       v-for="align in ['Left', 'Center', 'Right']" 
                       :key="align"
-                      @click="setHorizontalAlignment(align)"
+                      @click="setHorizontalAlignment(align as 'Left' | 'Center' | 'Right')"
                       :class="{ active: currentElement.textAlignment === align }"
                       class="align-button"
                       title="水平对齐: {{ align }}"
@@ -462,7 +462,7 @@
                     <button 
                       v-for="align in ['Top', 'Middle', 'Bottom']" 
                       :key="align"
-                      @click="setVerticalAlignment(align)"
+                      @click="setVerticalAlignment(align as 'Top' | 'Middle' | 'Bottom')"
                       :class="{ active: currentElement.verticalAlignment === align }"
                       class="align-button"
                       title="垂直对齐: {{ align }}"
@@ -667,16 +667,11 @@
 
 <script setup lang="ts">
 import ElementFactory from './elements/ElementFactory.vue';
-import type { DesignElement, SelectedElementInfo, Band, Box, ReportField, ReportParameter } from '../types';
+import type { DesignElement, Band, ReportField, ReportParameter } from '../types';
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue';
 
 // 确保浏览器环境中DOMParser可用
-const getDOMParser = (): DOMParser => {
-  if (typeof window !== 'undefined' && window.DOMParser) {
-    return new DOMParser();
-  }
-  throw new Error('当前环境不支持DOMParser，无法解析XML');
-};
+// 移除未使用的getDOMParser函数
 import { generateJRXMLContent, parseJRXMLContent } from '../utils/jrxmlGenerator';
 
 // 标签页相关
@@ -746,72 +741,9 @@ const elements = ref([
 ]);
 
 // 定义元素接口
-interface Pen {
-  lineWidth?: number;
-  lineStyle?: string;
-  lineColor?: string;
-}
+// 使用从types/index.ts导入的Pen和Box接口
 
-interface Box {
-  topPadding?: number;
-  leftPadding?: number;
-  bottomPadding?: number;
-  rightPadding?: number;
-  padding?: number;
-  topPen?: Pen;
-  leftPen?: Pen;
-  bottomPen?: Pen;
-  rightPen?: Pen;
-  border?: string;
-  borderColor?: string;
-  topBorder?: string;
-  topBorderColor?: string;
-  leftBorder?: string;
-  leftBorderColor?: string;
-  bottomBorder?: string;
-  bottomBorderColor?: string;
-  rightBorder?: string;
-  rightBorderColor?: string;
-}
-
-interface DesignElement {
-  type: string;
-  x: number;
-  y: number;
-  width: number;
-  height: number;
-  unit?: string;
-  text?: string;
-  fontSize?: number;
-  fontFamily?: string;
-  isBold?: boolean;
-  isItalic?: boolean;
-  isUnderline?: boolean;
-  fieldName?: string;
-  expression?: string;
-  imagePath?: string;
-  lineDirection?: string;
-  lineWidth?: number;
-  backcolor?: string;
-  border?: string;
-  box?: Box;
-  // 动态字段特有属性
-  isStretchWithOverflow?: boolean;
-  evaluationTime?: string;
-  pattern?: string;
-  isBlankWhenNull?: boolean;
-  hyperlinkType?: string;
-  hyperlinkTarget?: string;
-  textAlignment?: string;
-  verticalAlignment?: string;
-}
-
-// 定义区域接口
-interface Band {
-  type: string;
-  height: number;
-  elements: DesignElement[];
-}
+// 使用从types/index.ts导入的接口
 
 // 报表区域
 const bands = ref<Band[]>([
@@ -916,19 +848,7 @@ function redo() {
 }
 
 // 添加新参数
-function addParameter() {
-  saveStateToHistory();
-  reportParameters.value.push({
-    name: 'newParam',
-    class: 'java.lang.String'
-  });
-}
-
-// 删除参数
-function deleteParameter(index: number) {
-  saveStateToHistory();
-  reportParameters.value.splice(index, 1);
-}
+// 移除未使用的参数管理函数
 
 // 选中状态
 const selectedBandIndex = ref<number | null>(null);
@@ -1147,7 +1067,10 @@ const startDragging = (event: MouseEvent, bandIndex: number, elementIndex: numbe
         if (cachedMouseMoveHandler) {
           document.removeEventListener('mousemove', cachedMouseMoveHandler);
         }
-        document.removeEventListener('mouseup', cachedMouseUpHandler);
+        if (cachedMouseUpHandler) {
+          document.removeEventListener('mouseup', cachedMouseUpHandler);
+          cachedMouseUpHandler = null;
+        }
       };
     }
     
@@ -1159,54 +1082,7 @@ const startDragging = (event: MouseEvent, bandIndex: number, elementIndex: numbe
 
 
 
-// 获取边框样式 - 优化边框颜色和粗细的处理
-const getBorderStyle = (side: string, box?: Box): string | undefined => {
-  if (!box) return undefined;
-  
-  // 优先使用sideBorder属性
-  const borderProperty = side === 'top' ? box.topBorder : 
-                       side === 'left' ? box.leftBorder : 
-                       side === 'bottom' ? box.bottomBorder : 
-                       box.rightBorder;
-  
-  // 如果没有sideBorder但有border，使用border
-  const border = borderProperty || box.border;
-  if (!border) return undefined;
-  
-  // 获取边框颜色 - 确保始终有颜色
-  const colorProperty = side === 'top' ? box.topBorderColor : 
-                       side === 'left' ? box.leftBorderColor : 
-                       side === 'bottom' ? box.bottomBorderColor : 
-                       box.rightBorderColor;
-  const color = colorProperty || box.borderColor || '#000000'; // 确保有默认颜色
-  
-  // 获取线宽 - 确保粗细正确
-  let width = '1px'; // 默认宽度
-  const penProperty = side === 'top' ? box.topPen : 
-                      side === 'left' ? box.leftPen : 
-                      side === 'bottom' ? box.bottomPen : 
-                      box.rightPen;
-  if (penProperty?.lineWidth !== undefined) {
-    width = `${penProperty.lineWidth}px`;
-  } else if (border === 'Thin' || border === '1Point') {
-    width = '1px';
-  } else if (border === '2Point' || border === 'Medium') {
-    width = '2px';
-  } else if (border === '4Point' || border === 'Thick') {
-    width = '4px';
-  }
-  
-  // 获取线型
-  let style = 'solid'; // 默认实线
-  if (penProperty?.lineStyle) {
-    if (penProperty.lineStyle === 'Dashed') style = 'dashed';
-    else if (penProperty.lineStyle === 'Dotted') style = 'dotted';
-    else if (penProperty.lineStyle === 'Double') style = 'double';
-  }
-  
-  // 确保返回完整的边框样式，包括颜色、粗细和样式
-  return `${width} ${style} ${color}`;
-};
+// 移除未使用的getBorderStyle函数
 
 // 更新区域高度
 const updateBandHeight = (bandIndex: number) => {
@@ -1228,16 +1104,7 @@ const updateBandHeight = (bandIndex: number) => {
 };
 
 // 添加字段
-const addField = () => {
-  saveStateToHistory();
-  reportFields.value.push({ name: '', class: 'java.lang.String' });
-};
-
-// 删除字段
-const removeField = (index: number) => {
-  saveStateToHistory();
-  reportFields.value.splice(index, 1);
-};
+// 移除未使用的字段管理函数
 
 // 删除元素
 const deleteElement = () => {
@@ -1547,7 +1414,9 @@ onMounted(() => {
     
     // 选择最近的元素
     if (nearestElement) {
-      selectElement(nearestElement.bandIndex, nearestElement.elementIndex);
+      // 使用类型断言确保属性访问有效
+      const element = nearestElement as { bandIndex: number; elementIndex: number };
+      selectElement(element.bandIndex, element.elementIndex);
     }
   };
   
@@ -1647,7 +1516,7 @@ const saveJRXML = (): void => {
     // 为矩形元素添加默认边框，确保显示效果
     bands.value.forEach(band => {
       band.elements.forEach(element => {
-        if (element.type === 'rectangle' && !element.border && (!element.box?.border && !element.box?.topBorderStyle)) {
+        if (element.type === 'rectangle' && !element.border && (!element.box?.border && !element.box?.topBorder)) {
           if (!element.box) {
             element.box = {};
           }
@@ -1697,17 +1566,23 @@ const saveJRXML = (): void => {
           };
           
           // 为各边的pen设置边框样式
-          if (element.box.topPen && !element.box.topBorderStyle) {
-            element.box.topBorderStyle = processPen(element.box.topPen);
+          // 处理pen属性，但不使用不存在的borderStyle
+          if (element.box.topPen) {
+            // 可以将pen属性的值转换后赋给topBorder
+            element.box.topBorder = processPen(element.box.topPen);
           }
-          if (element.box.leftPen && !element.box.leftBorderStyle) {
-            element.box.leftBorderStyle = processPen(element.box.leftPen);
+          if (element.box.leftPen) {
+            // 可以将pen属性的值转换后赋给leftBorder
+            element.box.leftBorder = processPen(element.box.leftPen);
           }
-          if (element.box.bottomPen && !element.box.bottomBorderStyle) {
-            element.box.bottomBorderStyle = processPen(element.box.bottomPen);
+          // 处理pen属性，但不使用不存在的borderStyle
+          if (element.box.bottomPen) {
+            // 可以将pen属性的值转换后赋给bottomBorder
+            element.box.bottomBorder = processPen(element.box.bottomPen);
           }
-          if (element.box.rightPen && !element.box.rightBorderStyle) {
-            element.box.rightBorderStyle = processPen(element.box.rightPen);
+          if (element.box.rightPen) {
+            // 可以将pen属性的值转换后赋给rightBorder
+            element.box.rightBorder = processPen(element.box.rightPen);
           }
           
           // 处理border属性映射
@@ -1726,7 +1601,8 @@ const saveJRXML = (): void => {
             if (!borderAttr) return '';
             
             let borderValue = borderMap[borderAttr] || '1px';
-            let borderColor = element.box?.[colorAttr] || '#000000';
+            // 使用类型断言来解决索引问题
+            let borderColor = (element.box as any)?.[colorAttr] || '#000000';
             
             // 如果borderAttr是样式名称（非像素值），添加完整的边框样式
             if (borderAttr !== 'Thin' && borderAttr !== '1Point' && borderAttr !== '2Point' && borderAttr !== '4Point') {
@@ -1740,26 +1616,28 @@ const saveJRXML = (): void => {
           };
           
           // 设置各边的边框样式
-          if (element.box.topBorder && !element.box.topBorderStyle) {
-            element.box.topBorderStyle = applyBorder(element.box.topBorder, 'topBorderColor');
+          // 直接使用现有的border属性，不需要额外的borderStyle
+          if (element.box.topBorder) {
+            // 已经有topBorder属性，确保它的值正确
           }
-          if (element.box.leftBorder && !element.box.leftBorderStyle) {
-            element.box.leftBorderStyle = applyBorder(element.box.leftBorder, 'leftBorderColor');
+          // 直接使用现有的border属性，不需要额外的borderStyle
+          if (element.box.leftBorder) {
+            // 已经有leftBorder属性，确保它的值正确
           }
-          if (element.box.bottomBorder && !element.box.bottomBorderStyle) {
-            element.box.bottomBorderStyle = applyBorder(element.box.bottomBorder, 'bottomBorderColor');
+          if (element.box.bottomBorder) {
+            // 已经有bottomBorder属性，确保它的值正确
           }
-          if (element.box.rightBorder && !element.box.rightBorderStyle) {
-            element.box.rightBorderStyle = applyBorder(element.box.rightBorder, 'rightBorderColor');
+          if (element.box.rightBorder) {
+            // 已经有rightBorder属性，确保它的值正确
           }
           
           // 如果设置了全局border属性，应用到所有边
-          if (element.box.border && (!element.box.topBorderStyle || !element.box.leftBorderStyle || !element.box.bottomBorderStyle || !element.box.rightBorderStyle)) {
+          if (element.box.border && (!element.box.topBorder || !element.box.leftBorder || !element.box.bottomBorder || !element.box.rightBorder)) {
             const globalBorder = applyBorder(element.box.border, 'borderColor');
-            if (!element.box.topBorderStyle) element.box.topBorderStyle = globalBorder;
-            if (!element.box.leftBorderStyle) element.box.leftBorderStyle = globalBorder;
-            if (!element.box.bottomBorderStyle) element.box.bottomBorderStyle = globalBorder;
-            if (!element.box.rightBorderStyle) element.box.rightBorderStyle = globalBorder;
+            if (!element.box.topBorder) element.box.topBorder = globalBorder;
+            if (!element.box.leftBorder) element.box.leftBorder = globalBorder;
+            if (!element.box.bottomBorder) element.box.bottomBorder = globalBorder;
+            if (!element.box.rightBorder) element.box.rightBorder = globalBorder;
           }
         }
         
@@ -1804,9 +1682,12 @@ const startResizingBand = (event: MouseEvent, bandIndex: number): void => {
   showBottomPanel.value = false;
   
   const startY = event.clientY;
+  if (!bands.value || !bands.value[bandIndex]) return;
+  
   const startHeight = bands.value[bandIndex].height;
   
   const handleMouseMove = (e: MouseEvent): void => {
+    if (!bands.value || !bands.value[bandIndex]) return;
     const deltaY = e.clientY - startY;
     const newHeight = Math.max(20, startHeight + deltaY);
     bands.value[bandIndex].height = newHeight;

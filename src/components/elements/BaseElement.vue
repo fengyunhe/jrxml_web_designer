@@ -49,10 +49,16 @@ const isSelected = computed(() => {
          props.selectedElement.elementIndex === props.elementIndex;
 });
 
-// 元素样式
+// 元素样式 - 使用更适合的类型断言方式
 const elementStyle = computed(() => {
+  // 为复杂表达式单独计算值并添加类型断言
+  const verticalAlign = props.element.verticalAlignment?.toLowerCase() || 'flex-start';
+  const justifyContent = props.element.textAlignment === 'Justified' ? 'space-between' : (props.element.textAlignment?.toLowerCase() || 'flex-start');
+  const textAlign = props.element.textAlignment === 'Justified' ? 'justify' : (props.element.textAlignment?.toLowerCase() || 'left');
+  
+  // 使用CSSProperties类型断言整个对象
   return {
-    position: 'absolute',
+    position: 'absolute' as 'absolute',
     left: `${props.element.x}px`,
     top: `${props.element.y}px`,
     width: `${props.element.width}px`,
@@ -71,11 +77,11 @@ const elementStyle = computed(() => {
     fontWeight: props.element.isBold !== undefined ? (props.element.isBold ? 'bold' : 'normal') : (props.reportIsBold ? 'bold' : 'normal'),
     fontStyle: props.element.isItalic !== undefined ? (props.element.isItalic ? 'italic' : 'normal') : (props.reportIsItalic ? 'italic' : 'normal'),
     textDecoration: props.element.isUnderline !== undefined ? (props.element.isUnderline ? 'underline' : 'none') : (props.reportIsUnderline ? 'underline' : 'none'),
-    display: 'flex',
-    alignItems: props.element.verticalAlignment?.toLowerCase() || 'flex-start',
-    justifyContent: props.element.textAlignment === 'Justified' ? 'space-between' : (props.element.textAlignment?.toLowerCase() || 'flex-start'),
-    textAlign: props.element.textAlignment === 'Justified' ? 'justify' : props.element.textAlignment?.toLowerCase() || 'left'
-  };
+    display: 'flex' as 'flex',
+    alignItems: verticalAlign as any,
+    justifyContent: justifyContent as any,
+    textAlign: textAlign as any
+  } as any;
 });
 
 // 获取边框样式

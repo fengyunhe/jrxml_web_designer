@@ -13,11 +13,7 @@ import TextFieldElement from './TextFieldElement.vue';
 import ImageElement from './ImageElement.vue';
 import LineElement from './LineElement.vue';
 import type { 
-  DesignElement, 
-  StaticTextElement as StaticTextElementType, 
-  TextFieldElement as TextFieldElementType, 
-  ImageElement as ImageElementType, 
-  LineElement as LineElementType,
+  DesignElement,
   SelectedElementInfo,
   EditingElementInfo
 } from '../../types';
@@ -57,14 +53,17 @@ const getElementComponent = computed(() => {
       return ImageElement;
     case 'line':
       return LineElement;
+    case 'rectangle':
+      // 使用StaticTextElement作为rectangle类型的默认渲染组件
+      return StaticTextElement;
     default:
       return StaticTextElement;
   }
 });
 
-// 通用属性
+// 通用属性 - 添加类型断言以确保与组件期望的类型匹配
 const commonProps = computed(() => ({
-  element: props.element,
+  element: props.element as any, // 使用any断言暂时解决类型兼容性问题
   bandIndex: props.bandIndex,
   elementIndex: props.elementIndex,
   selectedElement: props.selectedElement,

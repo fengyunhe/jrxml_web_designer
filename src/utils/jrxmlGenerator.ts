@@ -1,5 +1,7 @@
-// JRXML生成器
+// 导入类型定义
+import type { DesignElement, BandType } from '../types';
 
+// JRXML生成器
 export interface ReportProperties {
   name: string;
   pageWidth: number;
@@ -11,9 +13,9 @@ export interface ReportProperties {
 }
 
 export interface Band {
-  type: string;
+  type: BandType;
   height: number;
-  elements: any[];
+  elements: DesignElement[];
 }
 
 export interface Field {
@@ -444,7 +446,7 @@ export function parseJRXMLContent(jrxmlContent: string): { properties: ReportPro
         const elements = parseBandElements(bandElem);
         
         bands.push({
-          type,
+          type: type as BandType,
           height,
           elements
         });
@@ -479,8 +481,14 @@ function parseElement(element: Element, type: string): any {
   const reportElement = element.querySelector('reportElement');
   if (!reportElement) return null;
   
-  const result = {
-    type,
+  // 确保type是有效的DesignElement类型（排除rectangle）
+  const validElementTypes: Array<'staticText' | 'textField' | 'image' | 'line'> = ['staticText', 'textField', 'image', 'line'];
+  const elementType = validElementTypes.includes(type as any) ? (type as any) : undefined;
+  
+  if (!elementType) return null;
+  
+  const result: Partial<DesignElement> = {
+    type: elementType,
     x: parseInt(reportElement.getAttribute('x') || '0'),
     y: parseInt(reportElement.getAttribute('y') || '0'),
     width: parseInt(reportElement.getAttribute('width') || '100'),

@@ -2,7 +2,14 @@
 export type ElementType = 'staticText' | 'textField' | 'image' | 'line' | 'rectangle';
 
 // Band类型枚举
-export type BandType = 'detail' | 'pageHeader' | 'pageFooter' | 'title' | 'summary';
+export type BandType = 'detail' | 'pageHeader' | 'pageFooter' | 'title' | 'summary' | 'columnHeader' | 'columnFooter';
+
+// 笔样式接口
+export interface Pen {
+  lineWidth?: number;
+  lineStyle?: string;
+  lineColor?: string;
+}
 
 // 边框样式接口
 export interface Box {
@@ -20,12 +27,21 @@ export interface Box {
   rightBorder?: string;
   rightBorderColor?: string;
   
+  // 笔样式
+  topPen?: Pen;
+  leftPen?: Pen;
+  bottomPen?: Pen;
+  rightPen?: Pen;
+  
   // 边距
   padding?: number;
   topPadding?: number;
   leftPadding?: number;
   bottomPadding?: number;
   rightPadding?: number;
+  
+  // 允许通过字符串索引访问属性
+  [key: string]: any;
 }
 
 // 报表字段接口
@@ -111,12 +127,18 @@ export interface LineElement extends DesignElementBase {
   lineWidth?: number;
 }
 
+// 矩形元素接口
+export interface RectangleElement extends DesignElementBase {
+  type: 'rectangle';
+}
+
 // 设计元素联合类型
 export type DesignElement = 
   | StaticTextElement 
   | TextFieldElement 
   | ImageElement 
-  | LineElement;
+  | LineElement
+  | RectangleElement;
 
 // 报表区域接口
 export interface Band {
