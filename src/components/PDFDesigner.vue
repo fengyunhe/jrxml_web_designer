@@ -1285,10 +1285,10 @@ onMounted(() => {
       toggleBottomPanel();
     }
     
-    // Del键删除选中的组件
-    if ((event.key === 'Delete' || event.key === 'Backspace') && selectedElement.value) {
-      event.preventDefault();
-      deleteElement();
+    // Del键删除选中的组件（仅在非编辑模式下）
+  if ((event.key === 'Delete' || event.key === 'Backspace') && selectedElement.value && !editingElement.value) {
+    event.preventDefault();
+    deleteElement();
     }
     
     // 方向键选择周围组件
