@@ -37,8 +37,7 @@ export function generateJRXMLContent(
     leftMargin="${properties.leftMargin}"
     rightMargin="${properties.rightMargin}"
     topMargin="${properties.topMargin}"
-    bottomMargin="${properties.bottomMargin}"
-    uuid="${generateUUID()}">
+    bottomMargin="${properties.bottomMargin}">
 `;
 
   // 添加字段定义
@@ -55,14 +54,17 @@ export function generateJRXMLContent(
   // 添加报表区域
   bands.forEach(band => {
     if (band.elements.length > 0 || band.height > 0) {
-      jrxml += `\n  <${band.type} height="${band.height}">\n`;
+      jrxml += `\n  <${band.type}>`;
+      
+      // 根据DTD规范，height属性应该在band元素上
+      jrxml += `\n    <band height="${band.height}">`;
       
       // 添加区域内的元素
       band.elements.forEach(element => {
         jrxml += generateElementXML(element);
       });
       
-      jrxml += `  </${band.type}>\n`;
+      jrxml += `\n    </band>\n  </${band.type}>`;
     }
   });
 
@@ -99,16 +101,34 @@ function generateStaticTextXML(element: any): string {
   
   xml += '/>\n';
   
-  if (element.fontSize || element.isBold) {
-    xml += '      <textElement>\n        <font';
-    if (element.fontSize) {
-      xml += ` size="${element.fontSize}"`;
-    }
-    if (element.isBold) {
-      xml += ' isBold="true"';
-    }
-    xml += '/>\n      </textElement>\n';
+  // 确保始终包含textElement和font元素，符合DTD结构
+  let textElementAttrs = '';
+  
+  // 添加textAlignment属性，确保符合DTD
+  if (element.textAlignment && ['Left', 'Center', 'Right', 'Justified'].includes(element.textAlignment)) {
+    textElementAttrs += ` textAlignment="${element.textAlignment}"`;
   }
+  
+  xml += `      <textElement${textElementAttrs}>\n        <font`;
+    
+  let fontAttrs = '';
+  if (element.fontSize) {
+    fontAttrs += ` size="${element.fontSize}"`;
+  }
+  
+  if (element.isBold) {
+    fontAttrs += ' isBold="true"';
+  }
+  
+  if (element.isItalic) {
+    fontAttrs += ' isItalic="true"';
+  }
+  
+  if (element.isUnderline) {
+    fontAttrs += ' isUnderline="true"';
+  }
+  
+  xml += `${fontAttrs}/>\n      </textElement>\n`;
   
   xml += `      <text><![CDATA[${element.text || ''}]]></text>\n    </staticText>\n`;
   return xml;
@@ -116,14 +136,77 @@ function generateStaticTextXML(element: any): string {
 
 // 生成动态文本XML
 function generateTextFieldXML(element: any): string {
-  let xml = `    <textField>
+  let xml = `    <textField`;
+  
+  // 添加textField的特有属性，确保符合DTD规范
+  if (element.isStretchWithOverflow !== undefined) {
+    xml += ` isStretchWithOverflow="${element.isStretchWithOverflow}"`;
+  }
+  
+  if (element.evaluationTime && element.evaluationTime !== 'Now') {
+    // 确保evaluationTime符合DTD允许的值
+    const validEvaluationTimes = ['Report', 'Page', 'Column', 'Group', 'Band', 'Auto'];
+    if (validEvaluationTimes.includes(element.evaluationTime)) {
+      xml += ` evaluationTime="${element.evaluationTime}"`;
+    }
+    if (element.evaluationTime === 'Group' && element.evaluationGroup) {
+      xml += ` evaluationGroup="${element.evaluationGroup}"`;
+    }
+  }
+  
+  if (element.pattern) {
+    xml += ` pattern="${element.pattern}"`;
+  }
+  
+  if (element.isBlankWhenNull !== undefined) {
+    xml += ` isBlankWhenNull="${element.isBlankWhenNull}"`;
+  }
+  
+  xml += `>
       <reportElement x="${element.x || 0}" y="${element.y || 0}" width="${element.width || 100}" height="${element.height || 30}"`;
   
   if (element.backcolor) {
     xml += ` backcolor="${element.backcolor}"`;
   }
   
+  // 添加reportElement的其他可选属性
+  if (element.positionType && ['Float', 'FixRelativeToTop', 'FixRelativeToBottom'].includes(element.positionType)) {
+    xml += ` positionType="${element.positionType}"`;
+  }
+  
   xml += '/>\n';
+  
+  // 添加文本元素配置，确保textAlignment符合DTD
+  let textElementAttrs = '';
+  if (element.textAlignment && ['Left', 'Center', 'Right', 'Justified'].includes(element.textAlignment)) {
+    textElementAttrs += ` textAlignment="${element.textAlignment}"`;
+  }
+  
+  if (element.verticalAlignment && ['Top', 'Middle', 'Bottom'].includes(element.verticalAlignment)) {
+    textElementAttrs += ` verticalAlignment="${element.verticalAlignment}"`;
+  }
+  
+  xml += `      <textElement${textElementAttrs}>\n`;
+  
+  // 添加字体配置
+  let fontAttrs = '';
+  if (element.fontSize) {
+    fontAttrs += ` size="${element.fontSize}"`;
+  }
+  
+  if (element.isBold) {
+    fontAttrs += ' isBold="true"';
+  }
+  
+  if (element.isItalic) {
+    fontAttrs += ' isItalic="true"';
+  }
+  
+  if (element.isUnderline) {
+    fontAttrs += ' isUnderline="true"';
+  }
+  
+  xml += `        <font${fontAttrs}/>\n      </textElement>\n`;
   
   let expression = element.expression;
   if (!expression && element.fieldName) {
@@ -140,7 +223,22 @@ function generateTextFieldXML(element: any): string {
 
 // 生成图片XML
 function generateImageXML(element: any): string {
-  let xml = `    <image>
+  let xml = `    <image`;
+  
+  // 添加image特有的属性，确保符合DTD
+  if (element.scaleImage && ['Clip', 'FillFrame', 'RetainShape', 'RealHeight', 'RealSize'].includes(element.scaleImage)) {
+    xml += ` scaleImage="${element.scaleImage}"`;
+  }
+  
+  if (element.hAlign && ['Left', 'Center', 'Right'].includes(element.hAlign)) {
+    xml += ` hAlign="${element.hAlign}"`;
+  }
+  
+  if (element.vAlign && ['Top', 'Middle', 'Bottom'].includes(element.vAlign)) {
+    xml += ` vAlign="${element.vAlign}"`;
+  }
+  
+  xml += `>
       <reportElement x="${element.x || 0}" y="${element.y || 0}" width="${element.width || 100}" height="${element.height || 30}"/>
 `;
   
@@ -150,16 +248,10 @@ function generateImageXML(element: any): string {
 
 // 生成线条XML
 function generateLineXML(element: any): string {
-  const lineDirection = element.lineDirection || 'Horizontal';
-  let xml = `    <line>
+  const direction = element.lineDirection || element.direction || 'TopDown'; // DTD中默认是TopDown
+  let xml = `    <line direction="${direction}">
       <reportElement x="${element.x || 0}" y="${element.y || 0}" width="${element.width || 100}" height="${element.height || 1}"/>
-`;
-  
-  if (lineDirection) {
-    xml += `      <lineDirection>${lineDirection}</lineDirection>\n`;
-  }
-  
-  xml += `    </line>\n`;
+    </line>\n`;
   return xml;
 }
 
@@ -176,11 +268,4 @@ function generateRectangleXML(element: any): string {
   return xml;
 }
 
-// 生成UUID
-function generateUUID(): string {
-  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
-    const r = Math.random() * 16 | 0;
-    const v = c === 'x' ? r : (r & 0x3 | 0x8);
-    return v.toString(16);
-  });
-}
+// 不再需要UUID生成函数，已移除

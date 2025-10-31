@@ -55,8 +55,16 @@
             <div class="band-header">
               <span>{{ band.type }}</span>
               <div class="band-actions">
-                <button @click.stop="editBandHeight(bandIndex)">调整高度</button>
-              </div>
+              <input 
+                v-model.number="band.height" 
+                type="number" 
+                class="band-height-input"
+                min="20"
+                @change="updateBandHeight(bandIndex)"
+                @blur="updateBandHeight(bandIndex)"
+              />
+              <span class="unit-label">{{ heightUnit }}</span>
+            </div>
             </div>
             <div class="band-content">
               <div 
@@ -193,6 +201,71 @@
             <div class="form-group">
               <label>表达式</label>
               <input v-model="currentElement.expression" type="text" />
+              <small>例如: $F{字段名} 或 $F{字段名}.toString()</small>
+            </div>
+            <div class="form-group">
+              <label>格式模式</label>
+              <input v-model="currentElement.pattern" type="text" />
+              <small>例如: 日期格式 "yyyy-MM-dd"，数字格式 "#,##0.00"</small>
+            </div>
+            <div class="form-group">
+              <label>文本对齐</label>
+              <select v-model="currentElement.textAlignment">
+                <option value="Left">左对齐</option>
+                <option value="Center">居中</option>
+                <option value="Right">右对齐</option>
+                <option value="Justified">两端对齐</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>垂直对齐</label>
+              <select v-model="currentElement.verticalAlignment">
+                <option value="Top">顶部</option>
+                <option value="Middle">中间</option>
+                <option value="Bottom">底部</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>字体大小</label>
+              <input v-model.number="currentElement.fontSize" type="number" />
+            </div>
+            <div class="checkbox-group">
+              <label>
+                <input v-model="currentElement.isBold" type="checkbox" />
+                粗体
+              </label>
+              <label>
+                <input v-model="currentElement.isItalic" type="checkbox" />
+                斜体
+              </label>
+              <label>
+                <input v-model="currentElement.isUnderline" type="checkbox" />
+                下划线
+              </label>
+            </div>
+            <div class="form-group">
+              <label>
+                <input v-model="currentElement.isStretchWithOverflow" type="checkbox" />
+                内容超出时自动拉伸
+              </label>
+            </div>
+            <div class="form-group">
+              <label>
+                <input v-model="currentElement.isBlankWhenNull" type="checkbox" />
+                值为null时显示空白
+              </label>
+            </div>
+            <div class="form-group">
+              <label>表达式计算时机</label>
+              <select v-model="currentElement.evaluationTime">
+                <option value="Now">当前</option>
+                <option value="Report">报表结束时</option>
+                <option value="Page">页结束时</option>
+                <option value="Column">列结束时</option>
+                <option value="Group">组结束时</option>
+                <option value="Band">区域渲染时</option>
+                <option value="Auto">自动</option>
+              </select>
             </div>
           </template>
           
@@ -253,6 +326,14 @@
             </div>
           </div>
           
+          <div class="form-group">
+            <label>高度单位</label>
+            <select v-model="reportProperties.heightUnit">
+              <option value="px">像素 (px)</option>
+              <option value="mm">毫米 (mm)</option>
+              <option value="in">英寸 (in)</option>
+            </select>
+          </div>
           <!-- 字体设置 -->
           <div class="font-settings-section">
             <h4>默认字体设置</h4>
@@ -293,10 +374,20 @@
         <div class="jrxml-container">
           <div class="jrxml-header">
             <h3>JRXML内容</h3>
-            <button @click="copyJRXML" class="btn-secondary btn-small">复制</button>
+            <div class="jrxml-actions">
+              <button @click="copyJRXML" class="btn-secondary btn-small">复制</button>
+              <button @click="saveJRXML" class="btn-primary btn-small">保存编辑</button>
+              <button @click="regenerateJRXML" class="btn-secondary btn-small">重新生成</button>
+            </div>
           </div>
           <div class="jrxml-content">
-            <pre v-if="jrxmlContent" class="jrxml-pre" spellcheck="false" style="user-select: text;">{{ jrxmlContent }}</pre>
+            <textarea 
+              v-if="jrxmlContent" 
+              v-model="jrxmlContent" 
+              class="jrxml-editor" 
+              spellcheck="false"
+              @keyup.ctrl.s.prevent="saveJRXML"
+            ></textarea>
             <div v-else class="jrxml-placeholder">点击"生成JRXML"按钮查看内容</div>
           </div>
         </div>
@@ -306,7 +397,15 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch, onMounted } from 'vue';
+import { ref, computed, watch, onMounted, onUnmounted } from 'vue';
+
+// 确保浏览器环境中DOMParser可用
+const getDOMParser = (): DOMParser => {
+  if (typeof window !== 'undefined' && window.DOMParser) {
+    return new DOMParser();
+  }
+  throw new Error('当前环境不支持DOMParser，无法解析XML');
+};
 import { generateJRXMLContent } from '../utils/jrxmlGenerator';
 
 // 标签页相关
@@ -339,7 +438,8 @@ const reportProperties = ref({
     isBold: false,
     isItalic: false,
     isUnderline: false
-  }
+  },
+  heightUnit: 'px' // 添加高度单位属性
 });
 
 // 可用元素
@@ -361,6 +461,8 @@ interface DesignElement {
   text?: string;
   fontSize?: number;
   isBold?: boolean;
+  isItalic?: boolean;
+  isUnderline?: boolean;
   fieldName?: string;
   expression?: string;
   imagePath?: string;
@@ -368,6 +470,15 @@ interface DesignElement {
   lineWidth?: number;
   backcolor?: string;
   border?: string;
+  // 动态字段特有属性
+  isStretchWithOverflow?: boolean;
+  evaluationTime?: string;
+  pattern?: string;
+  isBlankWhenNull?: boolean;
+  hyperlinkType?: string;
+  hyperlinkTarget?: string;
+  textAlignment?: string;
+  verticalAlignment?: string;
 }
 
 // 定义区域接口
@@ -382,7 +493,7 @@ const bands = ref<Band[]>([
   { type: 'title', height: 80, elements: [] },
   { type: 'pageHeader', height: 50, elements: [] },
   { type: 'columnHeader', height: 30, elements: [] },
-  { type: 'detail', height: 40, elements: [] },
+  { type: 'detail', height: 100, elements: [] }, // 默认给detail区域100的高度
   { type: 'columnFooter', height: 30, elements: [] },
   { type: 'pageFooter', height: 40, elements: [] },
   { type: 'summary', height: 60, elements: [] }
@@ -485,7 +596,17 @@ const getDefaultElementProperties = (type: string): Partial<DesignElement> => {
     case 'staticText':
       return { text: '静态文本', fontSize: 12, isBold: false };
     case 'textField':
-      return { fieldName: '', expression: '' };
+      return {
+        fieldName: '', 
+        expression: '',
+        isStretchWithOverflow: false,
+        evaluationTime: 'Now',
+        pattern: '',
+        isBlankWhenNull: false,
+        fontSize: 12,
+        textAlignment: 'Left',
+        verticalAlignment: 'Top'
+      };
     case 'image':
       return { imagePath: '' };
     case 'line':
@@ -501,18 +622,25 @@ const getDefaultElementProperties = (type: string): Partial<DesignElement> => {
 const selectBand = (index: number) => {
   selectedBandIndex.value = index;
   selectedElement.value = null;
+  // 自动隐藏底部面板
+  showBottomPanel.value = false;
 };
 
 // 选择元素
 const selectElement = (bandIndex: number, elementIndex: number) => {
   selectedElement.value = { bandIndex, elementIndex };
   selectedBandIndex.value = null;
+  // 自动隐藏底部面板
+  showBottomPanel.value = false;
 };
 
 // 开始拖拽元素
 const startDragging = (event: MouseEvent, bandIndex: number, elementIndex: number) => {
   event.stopPropagation();
   selectElement(bandIndex, elementIndex);
+  
+  // 自动隐藏底部面板
+  showBottomPanel.value = false;
   
   const band = bands.value[bandIndex];
   const element = band?.elements[elementIndex];
@@ -548,13 +676,24 @@ const startDragging = (event: MouseEvent, bandIndex: number, elementIndex: numbe
   }
 };
 
-// 编辑区域高度
-const editBandHeight = (index: number) => {
-  const band = bands.value[index];
+// 计算属性 - 获取当前的高度单位
+const heightUnit = computed(() => reportProperties.value.heightUnit);
+
+// 更新区域高度
+const updateBandHeight = (bandIndex: number) => {
+  const band = bands.value[bandIndex];
   if (band) {
-    const newHeight = prompt('请输入新的高度:', band.height.toString());
-    if (newHeight && !isNaN(Number(newHeight))) {
-      band.height = Number(newHeight);
+    // 确保高度不小于最小值
+    band.height = Math.max(20, band.height);
+    
+    // 调整该区域内元素的位置，确保元素不会超出区域边界
+    if (band.elements) {
+      band.elements.forEach(element => {
+        if (element.y + element.height > band.height) {
+          element.y = band.height - element.height;
+          if (element.y < 0) element.y = 0;
+        }
+      });
     }
   }
 };
@@ -586,6 +725,9 @@ const startEditing = (bandIndex: number, elementIndex: number) => {
   editingElement.value = { bandIndex, elementIndex };
   // 选择该元素
   selectElement(bandIndex, elementIndex);
+  
+  // 自动隐藏底部面板
+  showBottomPanel.value = false;
   
   // 等待DOM更新后聚焦输入框
   setTimeout(() => {
@@ -702,6 +844,20 @@ onMounted(() => {
   loadFromLocalStorage();
   // 初始加载后更新JRXML
   updateJRXML();
+  
+  // 添加键盘事件监听器
+  const handleKeyDown = (event: KeyboardEvent) => {
+    // CTRL+B 快捷键切换底部面板显示状态
+    if (event.ctrlKey && event.key === 'b') {
+      event.preventDefault();
+      toggleBottomPanel();
+    }
+  };
+  
+  document.addEventListener('keydown', handleKeyDown);
+  
+  // 保存监听器引用，以便在组件卸载时移除
+  (window as any).pdfDesignerKeydownListener = handleKeyDown;
 });
 
 // 监听关键数据变化，自动保存和更新JRXML
@@ -715,25 +871,188 @@ watch(
 );
 
 // 复制JRXML内容到剪贴板
-const copyJRXML = () => {
-  navigator.clipboard.writeText(jrxmlContent.value).then(() => {
-    // 可以添加一个提示，告诉用户复制成功
+const copyJRXML = async (): Promise<void> => {
+  try {
+    await navigator.clipboard.writeText(jrxmlContent.value);
     alert('JRXML内容已复制到剪贴板');
-  }).catch(err => {
+  } catch (err: unknown) {
     console.error('复制失败:', err);
-  });
+    alert('复制失败，请手动复制');
+  }
+};
+
+// 重新生成JRXML内容
+const regenerateJRXML = (): void => {
+  updateJRXML();
+  // 显示提示信息
+  alert('JRXML已重新生成');
+};
+
+// 保存编辑后的JRXML内容
+const saveJRXML = (): void => {
+  try {
+    // 解析编辑后的XML内容
+    const parser = getDOMParser();
+    const xmlDoc = parser.parseFromString(jrxmlContent.value, 'text/xml');
+    
+    // 检查解析是否成功
+    const parserError = xmlDoc.querySelector('parsererror');
+    if (parserError) {
+      throw new Error('JRXML格式错误，请检查XML语法');
+    }
+    
+    // 解析报表属性
+    const jasperReport = xmlDoc.querySelector('jasperReport') as Element;
+    if (jasperReport) {
+      // 更新报表基本属性
+      reportProperties.value.name = jasperReport.getAttribute('name') || reportProperties.value.name;
+      reportProperties.value.pageWidth = parseInt(jasperReport.getAttribute('pageWidth') || '595');
+      reportProperties.value.pageHeight = parseInt(jasperReport.getAttribute('pageHeight') || '842');
+      reportProperties.value.leftMargin = parseInt(jasperReport.getAttribute('leftMargin') || '20');
+      reportProperties.value.rightMargin = parseInt(jasperReport.getAttribute('rightMargin') || '20');
+      reportProperties.value.topMargin = parseInt(jasperReport.getAttribute('topMargin') || '20');
+      reportProperties.value.bottomMargin = parseInt(jasperReport.getAttribute('bottomMargin') || '20');
+      
+      // 解析字段定义
+      const fieldElements = xmlDoc.querySelectorAll('field') as NodeListOf<Element>;
+      reportFields.value = Array.from(fieldElements).map(field => ({
+        name: field.getAttribute('name') || '',
+        class: field.getAttribute('class') || 'java.lang.String'
+      }));
+      
+      // 解析各个band区域
+      const bandTypes: string[] = ['title', 'pageHeader', 'columnHeader', 'detail', 'columnFooter', 'pageFooter', 'summary'];
+      bandTypes.forEach(bandType => {
+        const bandElement = xmlDoc.querySelector(`${bandType}`) as Element | null;
+        if (bandElement) {
+          const bandIndex = bands.value.findIndex(b => b.type === bandType);
+          if (bandIndex >= 0) {
+            // 更新band高度
+            const height = bandElement.getAttribute('height');
+            if (height) {
+              bands.value[bandIndex].height = parseInt(height);
+            }
+            
+            // 清空现有元素，准备重新解析
+            bands.value[bandIndex].elements = [];
+            
+            // 解析静态文本元素
+            const staticTexts = bandElement.querySelectorAll('staticText') as NodeListOf<Element>;
+            staticTexts.forEach(staticText => {
+              const reportElement = staticText.querySelector('reportElement') as Element | null;
+              const textNode = staticText.querySelector('text') as Element | null;
+              const textElement = staticText.querySelector('textElement') as Element | null;
+              
+              if (reportElement) {
+                const element: DesignElement = {
+                  type: 'staticText',
+                  x: parseInt(reportElement.getAttribute('x') || '0'),
+                  y: parseInt(reportElement.getAttribute('y') || '0'),
+                  width: parseInt(reportElement.getAttribute('width') || '100'),
+                  height: parseInt(reportElement.getAttribute('height') || '30'),
+                  text: textNode?.textContent || '静态文本',
+                  fontSize: 12,
+                  isBold: false
+                };
+                
+                // 解析字体属性
+                if (textElement) {
+                  const font = textElement.querySelector('font') as Element | null;
+                  if (font) {
+                    element.fontSize = parseInt(font.getAttribute('size') || '12');
+                    element.isBold = font.getAttribute('isBold') === 'true';
+                    element.isItalic = font.getAttribute('isItalic') === 'true';
+                    element.isUnderline = font.getAttribute('isUnderline') === 'true';
+                  }
+                }
+                
+                bands.value[bandIndex].elements.push(element);
+              }
+            });
+            
+            // 解析动态文本元素
+            const textFields = bandElement.querySelectorAll('textField') as NodeListOf<Element>;
+            textFields.forEach(textField => {
+              const reportElement = textField.querySelector('reportElement') as Element | null;
+              const textFieldExpression = textField.querySelector('textFieldExpression') as Element | null;
+              const textElement = textField.querySelector('textElement') as Element | null;
+              
+              if (reportElement) {
+                // 尝试从表达式中提取字段名
+                let fieldName = '';
+                let expression = textFieldExpression?.textContent?.trim() || '';
+                const fieldMatch = expression.match(/\$F\{([^}]*)\}/);
+                if (fieldMatch) {
+                  fieldName = fieldMatch[1];
+                }
+                
+                const element: DesignElement = {
+                  type: 'textField',
+                  x: parseInt(reportElement.getAttribute('x') || '0'),
+                  y: parseInt(reportElement.getAttribute('y') || '0'),
+                  width: parseInt(reportElement.getAttribute('width') || '100'),
+                  height: parseInt(reportElement.getAttribute('height') || '30'),
+                  fieldName: fieldName,
+                  expression: expression,
+                  fontSize: 12,
+                  isBold: false,
+                  isStretchWithOverflow: textField.getAttribute('isStretchWithOverflow') === 'true',
+                  evaluationTime: textField.getAttribute('evaluationTime') || 'Now',
+                  pattern: textField.getAttribute('pattern') || '',
+                  isBlankWhenNull: textField.getAttribute('isBlankWhenNull') === 'true',
+                  textAlignment: 'Left',
+                  verticalAlignment: 'Top'
+                };
+                
+                // 解析文本对齐属性
+                if (textElement) {
+                  element.textAlignment = textElement.getAttribute('textAlignment') || 'Left';
+                  element.verticalAlignment = textElement.getAttribute('verticalAlignment') || 'Top';
+                  
+                  // 解析字体属性
+                  const font = textElement.querySelector('font') as Element | null;
+                  if (font) {
+                    element.fontSize = parseInt(font.getAttribute('size') || '12');
+                    element.isBold = font.getAttribute('isBold') === 'true';
+                    element.isItalic = font.getAttribute('isItalic') === 'true';
+                    element.isUnderline = font.getAttribute('isUnderline') === 'true';
+                  }
+                }
+                
+                bands.value[bandIndex].elements.push(element);
+              }
+            });
+          }
+        }
+      });
+      
+      // 保存到本地存储
+      saveToLocalStorage();
+      
+      // 显示成功提示
+      alert('JRXML编辑已保存，界面已更新');
+    } else {
+      throw new Error('无效的JRXML格式：未找到jasperReport根元素');
+    }
+  } catch (error: unknown) {
+    console.error('保存JRXML失败:', error);
+    alert(`保存失败: ${error instanceof Error ? error.message : '未知错误'}`);
+  }
 };
 
 
 
 // 开始调整band高度
-const startResizingBand = (event: MouseEvent, bandIndex: number) => {
+const startResizingBand = (event: MouseEvent, bandIndex: number): void => {
   event.preventDefault();
+  
+  // 自动隐藏底部面板
+  showBottomPanel.value = false;
   
   const startY = event.clientY;
   const startHeight = bands.value[bandIndex].height;
   
-  const handleMouseMove = (e: MouseEvent) => {
+  const handleMouseMove = (e: MouseEvent): void => {
     const deltaY = e.clientY - startY;
     const newHeight = Math.max(20, startHeight + deltaY);
     bands.value[bandIndex].height = newHeight;
@@ -750,7 +1069,7 @@ const startResizingBand = (event: MouseEvent, bandIndex: number) => {
     }
   };
   
-  const handleMouseUp = () => {
+  const handleMouseUp = (): void => {
     document.removeEventListener('mousemove', handleMouseMove);
     document.removeEventListener('mouseup', handleMouseUp);
   };
@@ -760,8 +1079,11 @@ const startResizingBand = (event: MouseEvent, bandIndex: number) => {
 };
 
 // 开始调整元素大小
-const startResizingElement = (event: MouseEvent, bandIndex: number, elementIndex: number) => {
+const startResizingElement = (event: MouseEvent, bandIndex: number, elementIndex: number): void => {
   event.preventDefault();
+  
+  // 自动隐藏底部面板
+  showBottomPanel.value = false;
   
   const band = bands.value[bandIndex];
   const element = band?.elements[elementIndex];
@@ -810,6 +1132,14 @@ const startResizingElement = (event: MouseEvent, bandIndex: number, elementIndex
     document.addEventListener('mouseup', handleMouseUp);
   }
 };
+
+// 组件卸载时清理事件监听器
+onUnmounted(() => {
+  if ((window as any).pdfDesignerKeydownListener) {
+    document.removeEventListener('keydown', (window as any).pdfDesignerKeydownListener);
+    delete (window as any).pdfDesignerKeydownListener;
+  }
+});
 
 // 预览PDF
 const previewPDF = () => {
@@ -1085,6 +1415,22 @@ const previewPDF = () => {
     margin-right: 10px;
     align-self: center;
   }
+  
+  /* 高度输入框样式 */
+  .band-height-input {
+    width: 60px;
+    padding: 2px 6px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 12px;
+    text-align: center;
+  }
+  
+  .unit-label {
+    margin-left: 5px;
+    font-size: 12px;
+    color: #666;
+  }
 
 .field-item {
   display: flex;
@@ -1263,13 +1609,43 @@ const previewPDF = () => {
   overflow-wrap: break-word;
 }
 
-.jrxml-placeholder {
-  padding: 40px 20px;
-  text-align: center;
-  color: #999;
-  height: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
+/* JRXML编辑器样式 */
+  .jrxml-editor {
+    width: 100%;
+    height: 100%;
+    padding: 15px;
+    background-color: #1e1e1e;
+    color: #d4d4d4;
+    font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+    font-size: 14px;
+    line-height: 1.5;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    border: none;
+    outline: none;
+    resize: none;
+    tab-size: 2;
+    overflow-wrap: break-word;
+  }
+  
+  .jrxml-editor:focus {
+    border: none;
+    outline: none;
+  }
+  
+  /* JRXML操作按钮容器 */
+  .jrxml-actions {
+    display: flex;
+    gap: 8px;
+  }
+  
+  .jrxml-placeholder {
+    padding: 40px 20px;
+    text-align: center;
+    color: #999;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
 </style>
