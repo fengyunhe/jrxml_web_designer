@@ -1034,7 +1034,7 @@ const selectElement = (bandIndex: number, elementIndex: number) => {
 
 // 缓存事件处理函数，避免重复创建
 let cachedMouseMoveHandler: ((e: MouseEvent) => void) | null = null;
-let cachedMouseUpHandler: (() => void) | null = null;
+let cachedMouseUpHandler: ((e: MouseEvent) => void) | null = null;
 
 // 开始拖拽元素
 const startDragging = (event: MouseEvent, bandIndex: number, elementIndex: number) => {
@@ -1175,22 +1175,25 @@ const startDragging = (event: MouseEvent, bandIndex: number, elementIndex: numbe
                 
                 // 计算元素相对于目标band的y坐标
                 const paperRect = paper.getBoundingClientRect();
-                const targetBandRect = document.querySelectorAll('.band')[targetBandIndex].getBoundingClientRect();
+                const targetBandElement = document.querySelectorAll('.band')[targetBandIndex] as HTMLElement | undefined;
+                if (targetBandElement) {
+                  const targetBandRect = targetBandElement.getBoundingClientRect();
                 
-                // 将元素绝对坐标转换为相对于目标band的坐标
-                // 1. 计算元素在页面中的绝对位置（基于paper的位置和当前元素y坐标）
-                const elementTopInPage = paperRect.top + currentElement.y;
-                // 2. 计算元素相对于目标band的位置
-                currentElement.y = Math.max(0, elementTopInPage - targetBandRect.top);
+                  // 将元素绝对坐标转换为相对于目标band的坐标
+                  // 1. 计算元素在页面中的绝对位置（基于paper的位置和当前元素y坐标）
+                  const elementTopInPage = paperRect.top + currentElement.y;
+                  // 2. 计算元素相对于目标band的位置
+                  currentElement.y = Math.max(0, elementTopInPage - targetBandRect.top);
                 
-                // 添加到新band中，使用相对于band的坐标
-                targetBand.elements.push(currentElement);
+                  // 添加到新band中，使用相对于band的坐标
+                  targetBand.elements.push(currentElement);
                 
-                // 更新选中的元素索引
-                selectedElement.value = {
-                  bandIndex: targetBandIndex,
-                  elementIndex: targetBand.elements.length - 1
-                };
+                  // 更新选中的元素索引
+                  selectedElement.value = {
+                    bandIndex: targetBandIndex,
+                    elementIndex: targetBand.elements.length - 1
+                  };
+                }
               }
             }
             // 元素位置保持拖动时的最后位置，不做额外调整
