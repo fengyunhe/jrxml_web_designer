@@ -21,15 +21,15 @@ jobs:
         uses: actions/setup-node@v3
         with:
           node-version: '16'
-          cache: 'pnpm'
+          cache: 'npm'
       
       # 安装依赖
       - name: Install dependencies
-        run: pnpm install
+        run: npm install
       
       # 构建项目
       - name: Build project
-        run: pnpm run build
+        run: npm run build
       
       # 部署到GitHub Pages
       - name: Deploy to GitHub Pages
