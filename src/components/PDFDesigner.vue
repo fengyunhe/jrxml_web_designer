@@ -14,7 +14,7 @@
         </button>
         <button @click="clearLocalStorage" class="btn-secondary">清空本地数据</button>
         <button @click="generateJRXML" class="btn-primary">生成JRXML</button>
-        <button @click="previewPDF" class="btn-secondary">预览</button>
+        <button @click="showRewardModal" class="btn-secondary">打赏</button>
       </div>
     </div>
     
@@ -603,9 +603,17 @@
         </div>
       </div>
     </div>
+    
+    <!-- 打赏弹窗 -->
+    <div v-if="showReward" class="reward-modal" @click.self="closeRewardModal">
+      <div class="reward-content">
+        <button class="close-btn" @click="closeRewardModal">×</button>
+        <h3>感谢您的支持！</h3>
+        <img src="/src/assets/FIREGOD_CN.jpg" alt="打赏码" class="reward-image">
+        <p>扫码打赏，感谢支持！</p>
+      </div>
+    </div>
   </div>
-  
-
 </template>
 
 <script setup lang="ts">
@@ -1850,9 +1858,15 @@ onUnmounted(() => {
   }
 });
 
-// 预览PDF
-const previewPDF = () => {
-  alert('预览功能开发中...');
+// 打赏相关
+const showReward = ref(false);
+
+const showRewardModal = () => {
+  showReward.value = true;
+};
+
+const closeRewardModal = () => {
+  showReward.value = false;
 };
 </script>
 
@@ -1901,6 +1915,70 @@ const previewPDF = () => {
   display: flex;
   justify-content: flex-start;
 }
+  /* 打赏弹窗样式 */
+  .reward-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+  }
+  
+  .reward-content {
+    background-color: white;
+    border-radius: 8px;
+    padding: 20px;
+    max-width: 400px;
+    width: 90%;
+    text-align: center;
+    position: relative;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  }
+  
+  .close-btn {
+    position: absolute;
+    top: 10px;
+    right: 15px;
+    font-size: 24px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: #666;
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    transition: background-color 0.2s;
+  }
+  
+  .close-btn:hover {
+    background-color: #f0f0f0;
+  }
+  
+  .reward-image {
+    max-width: 100%;
+    height: auto;
+    border-radius: 4px;
+    margin: 20px 0;
+  }
+  
+  .reward-content h3 {
+    margin-top: 10px;
+    color: #333;
+  }
+  
+  .reward-content p {
+    color: #666;
+    margin-top: 10px;
+  }
+
 
 /* 底部面板的过渡样式 */
 .tabs-container {
