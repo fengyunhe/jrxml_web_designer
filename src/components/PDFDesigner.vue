@@ -790,15 +790,12 @@ const handleDrop = (event: DragEvent) => {
     const targetBand = bands.value[bandIndex];
     if (targetBand && targetBand.elements) {
       // 确保元素不会超出边距限制
-      const { leftMargin, rightMargin } = reportProperties.value;
-      const availableWidth = paperWidth.value - leftMargin - rightMargin;
-      
-      // 限制元素左边界不小于左边距
-      newElement.x = Math.max(leftMargin, newElement.x);
+      const { rightMargin } = reportProperties.value;
+      const availableWidth = paperWidth.value - reportProperties.value.leftMargin - rightMargin;
       
       // 限制元素不超出右边界
-      if (newElement.x + newElement.width > paperWidth.value - rightMargin) {
-        newElement.x = paperWidth.value - rightMargin - newElement.width;
+      if (newElement.x + newElement.width > availableWidth) {
+        newElement.x = availableWidth - newElement.width;
       }
       
       // 确保元素宽度不超过可用空间
@@ -911,10 +908,9 @@ const startDragging = (event: MouseEvent, bandIndex: number, elementIndex: numbe
           const currentElement = currentBand?.elements[draggingInfo.value.elementIndex];
           
           if (currentBand && currentElement) {
-            // 获取报表边距设置
-            const { leftMargin, rightMargin } = reportProperties.value;
-            // 限制元素不超出左右边距
-            currentElement.x = Math.max(leftMargin, Math.min(e.clientX - draggingInfo.value.startX, paperWidth.value - rightMargin - currentElement.width));
+            // 限制元素在band内移动，不需要额外的边距限制，因为pager容器已经应用了边距
+            const availableWidth = paperWidth.value - reportProperties.value.leftMargin - reportProperties.value.rightMargin;
+            currentElement.x = Math.max(0, Math.min(e.clientX - draggingInfo.value.startX, availableWidth - currentElement.width));
             currentElement.y = Math.max(0, Math.min(e.clientY - draggingInfo.value.startY, currentBand.height - currentElement.height));
           }
         }
