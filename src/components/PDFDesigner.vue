@@ -894,16 +894,14 @@ function calculateOptimalZoom() {
   const designerContainer = document.querySelector('.designer-canvas') as HTMLElement;
   if (!designerContainer) return;
   
-  // 获取设计区域的实际可用宽度和高度
+  // 获取设计区域的实际可用宽度
   const availableWidth = designerContainer.clientWidth - 40; // 减去垂直标尺的宽度
-  const availableHeight = designerContainer.clientHeight - 40; // 减去水平标尺的高度
   
-  // 计算宽度和高度的缩放比例
+  // 计算宽度的缩放比例
   const widthRatio = availableWidth / paperWidth.value;
-  const heightRatio = availableHeight / paperHeight.value;
   
-  // 选择较小的缩放比例，确保整个报表都能显示在设计区域内
-  const optimalZoom = Math.min(widthRatio, heightRatio) * 0.9; // 乘以0.9留出一些边距
+  // 使用宽度缩放比例，确保报表宽度适应设计区域
+  const optimalZoom = widthRatio * 0.9; // 乘以0.9留出一些边距
   
   // 从预设的缩放级别中选择最接近的
   const zoomLevels = [0.25, 0.5, 0.75, 1, 1.25, 1.5, 2];
