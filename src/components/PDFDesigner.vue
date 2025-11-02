@@ -824,17 +824,48 @@ const maxZoom = 2; // 最大缩放级别
 
 // 缩放控制方法
 function zoomIn() {
-  if (zoomLevel.value < maxZoom) {
-    zoomLevel.value = Math.min(zoomLevel.value + zoomStep, maxZoom);
-    applyZoom();
+  // 预设的缩放级别
+  const zoomLevels = [0.25, 0.5, 0.75, 1, 1.25, 1.5, 2];
+  
+  // 找到当前缩放级别在预设级别中的索引
+  const currentIndex = zoomLevels.findIndex(level => level === zoomLevel.value);
+  
+  // 如果当前缩放级别是预设值，则使用下一个预设值
+  if (currentIndex !== -1 && currentIndex < zoomLevels.length - 1) {
+    zoomLevel.value = zoomLevels[currentIndex + 1];
+  } 
+  // 如果当前缩放级别不是预设值，找到最接近的下一个预设值
+  else {
+    const nextLevel = zoomLevels.find(level => level > zoomLevel.value);
+    if (nextLevel) {
+      zoomLevel.value = nextLevel;
+    }
   }
+  
+  applyZoom();
 }
 
 function zoomOut() {
-  if (zoomLevel.value > minZoom) {
-    zoomLevel.value = Math.max(zoomLevel.value - zoomStep, minZoom);
-    applyZoom();
+  // 预设的缩放级别
+  const zoomLevels = [0.25, 0.5, 0.75, 1, 1.25, 1.5, 2];
+  
+  // 找到当前缩放级别在预设级别中的索引
+  const currentIndex = zoomLevels.findIndex(level => level === zoomLevel.value);
+  
+  // 如果当前缩放级别是预设值，则使用上一个预设值
+  if (currentIndex !== -1 && currentIndex > 0) {
+    zoomLevel.value = zoomLevels[currentIndex - 1];
+  } 
+  // 如果当前缩放级别不是预设值，找到最接近的上一个预设值
+  else {
+    // 找到所有小于当前缩放级别的预设值
+    const lowerLevels = zoomLevels.filter(level => level < zoomLevel.value);
+    if (lowerLevels.length > 0) {
+      zoomLevel.value = lowerLevels[lowerLevels.length - 1];
+    }
   }
+  
+  applyZoom();
 }
 
 function resetZoom() {
