@@ -370,7 +370,7 @@
                 <h5>全局边框</h5>
                 <div class="form-group">
                   <label>边框样式</label>
-                  <select v-model="currentElement.box.border">
+                  <select v-if="currentElement && currentElement.box" v-model="currentElement.box.border">
                     <option value="">无</option>
                     <option value="Thin">细线 ({{ BORDER_CONSTANTS.THIN_WIDTH }}px)</option>
                     <option value="Medium">中等 ({{ BORDER_CONSTANTS.MEDIUM_WIDTH }}px)</option>
@@ -382,7 +382,7 @@
                 </div>
                 <div class="form-group">
                   <label>边框颜色</label>
-                  <input v-model="currentElement.box.borderColor" type="color" />
+                  <input v-if="currentElement && currentElement.box" v-model="currentElement.box.borderColor" type="color" />
                 </div>
               </div>
               
@@ -393,7 +393,7 @@
                 <!-- 上边 -->
                 <div class="border-side-group">
                   <label class="side-label">上边</label>
-                  <select v-model="currentElement.box.topBorder" class="side-control">
+                  <select v-if="currentElement && currentElement.box" v-model="currentElement.box.topBorder" class="side-control">
                     <option value="">使用全局</option>
                     <option value="Thin">细线 ({{ BORDER_CONSTANTS.THIN_WIDTH }}px)</option>
                     <option value="Medium">中等 ({{ BORDER_CONSTANTS.MEDIUM_WIDTH }}px)</option>
@@ -402,13 +402,13 @@
                     <option value="Dotted">点线</option>
                     <option value="Double">双线</option>
                   </select>
-                  <input v-model="currentElement.box.topBorderColor" type="color" class="color-control" />
+                  <input v-if="currentElement && currentElement.box" v-model="currentElement.box.topBorderColor" type="color" class="color-control" />
                 </div>
                 
                 <!-- 左边 -->
                 <div class="border-side-group">
                   <label class="side-label">左边</label>
-                  <select v-model="currentElement.box.leftBorder" class="side-control">
+                  <select v-if="currentElement && currentElement.box" v-model="currentElement.box.leftBorder" class="side-control">
                     <option value="">使用全局</option>
                     <option value="Thin">细线 ({{ BORDER_CONSTANTS.THIN_WIDTH }}px)</option>
                     <option value="Medium">中等 ({{ BORDER_CONSTANTS.MEDIUM_WIDTH }}px)</option>
@@ -417,13 +417,13 @@
                     <option value="Dotted">点线</option>
                     <option value="Double">双线</option>
                   </select>
-                  <input v-model="currentElement.box.leftBorderColor" type="color" class="color-control" />
+                  <input v-if="currentElement && currentElement.box" v-model="currentElement.box.leftBorderColor" type="color" class="color-control" />
                 </div>
                 
                 <!-- 下边 -->
                 <div class="border-side-group">
                   <label class="side-label">下边</label>
-                  <select v-model="currentElement.box.bottomBorder" class="side-control">
+                  <select v-if="currentElement && currentElement.box" v-model="currentElement.box.bottomBorder" class="side-control">
                     <option value="">使用全局</option>
                     <option value="Thin">细线 ({{ BORDER_CONSTANTS.THIN_WIDTH }}px)</option>
                     <option value="Medium">中等 ({{ BORDER_CONSTANTS.MEDIUM_WIDTH }}px)</option>
@@ -432,13 +432,13 @@
                     <option value="Dotted">点线</option>
                     <option value="Double">双线</option>
                   </select>
-                  <input v-model="currentElement.box.bottomBorderColor" type="color" class="color-control" />
+                  <input v-if="currentElement && currentElement.box" v-model="currentElement.box.bottomBorderColor" type="color" class="color-control" />
                 </div>
                 
                 <!-- 右边 -->
                 <div class="border-side-group">
                   <label class="side-label">右边</label>
-                  <select v-model="currentElement.box.rightBorder" class="side-control">
+                  <select v-if="currentElement && currentElement.box" v-model="currentElement.box.rightBorder" class="side-control">
                     <option value="">使用全局</option>
                     <option value="Thin">细线 ({{ BORDER_CONSTANTS.THIN_WIDTH }}px)</option>
                     <option value="Medium">中等 ({{ BORDER_CONSTANTS.MEDIUM_WIDTH }}px)</option>
@@ -447,7 +447,7 @@
                     <option value="Dotted">点线</option>
                     <option value="Double">双线</option>
                   </select>
-                  <input v-model="currentElement.box.rightBorderColor" type="color" class="color-control" />
+                  <input v-if="currentElement && currentElement.box" v-model="currentElement.box.rightBorderColor" type="color" class="color-control" />
                 </div>
               </div>
               
@@ -456,26 +456,26 @@
                 <h5>边距设置</h5>
                 <div class="form-group">
                   <label>全局边距（像素）</label>
-                  <input v-model.number="currentElement.box.padding" type="number" placeholder="全部边距" />
+                  <input v-if="currentElement && currentElement.box" v-model.number="currentElement.box.padding" type="number" placeholder="全部边距" />
                   <small>设置后会覆盖各边独立设置</small>
                 </div>
                 
                 <div class="padding-grid">
                   <div class="form-group">
                     <label>上边距</label>
-                    <input v-model.number="currentElement.box.topPadding" type="number" />
+                    <input v-if="currentElement && currentElement.box" v-model.number="currentElement.box.topPadding" type="number" />
                   </div>
                   <div class="form-group">
                     <label>左边距</label>
-                    <input v-model.number="currentElement.box.leftPadding" type="number" />
+                    <input v-if="currentElement && currentElement.box" v-model.number="currentElement.box.leftPadding" type="number" />
                   </div>
                   <div class="form-group">
                     <label>下边距</label>
-                    <input v-model.number="currentElement.box.bottomPadding" type="number" />
+                    <input v-if="currentElement && currentElement.box" v-model.number="currentElement.box.bottomPadding" type="number" />
                   </div>
                   <div class="form-group">
                     <label>右边距</label>
-                    <input v-model.number="currentElement.box.rightPadding" type="number" />
+                    <input v-if="currentElement && currentElement.box" v-model.number="currentElement.box.rightPadding" type="number" />
                   </div>
                 </div>
               </div>
@@ -1351,23 +1351,8 @@ const selectElement = (bandIndex: number, elementIndex: number) => {
   const element = band?.elements[elementIndex];
   
   if (element && !element.box) {
-    element.box = {
-      border: '',
-      borderColor: '#000000',
-      leftBorder: '',
-      leftBorderColor: '#000000',
-      rightBorder: '',
-      rightBorderColor: '#000000',
-      topBorder: '',
-      topBorderColor: '#000000',
-      bottomBorder: '',
-      bottomBorderColor: '#000000',
-      padding: 0,
-      leftPadding: 0,
-      rightPadding: 0,
-      topPadding: 0,
-      bottomPadding: 0
-    };
+    // 使用initBox函数初始化box属性
+    initBox();
   }
   
   // 移除了昂贵的DOM查询和动画效果，通过Vue的响应式系统和CSS类来管理选择状态
@@ -2162,7 +2147,7 @@ onMounted(() => {
   }
   
   // 添加报表区域滚动事件监听，用于同步标尺滚动
-  const handleScroll = (event: Event) => {
+  const handlePaperContainerScroll = (event: Event) => {
     const scrollElement = event.target as HTMLElement;
     if (scrollElement.classList.contains('paper-container')) {
       const scrollLeft = scrollElement.scrollLeft;
@@ -2182,11 +2167,41 @@ onMounted(() => {
     }
   };
   
+  // 添加标尺滚动事件监听，用于同步设计区域滚动
+  const handleRulerScroll = (event: Event) => {
+    const scrollElement = event.target as HTMLElement;
+    const paperContainer = document.querySelector('.paper-container') as HTMLElement;
+    
+    if (!paperContainer) return;
+    
+    if (scrollElement.classList.contains('horizontal-ruler')) {
+      // 水平标尺滚动时，同步设计区域的水平滚动
+      paperContainer.scrollLeft = scrollElement.scrollLeft;
+    } else if (scrollElement.classList.contains('vertical-ruler')) {
+      // 垂直标尺滚动时，同步设计区域的垂直滚动
+      paperContainer.scrollTop = scrollElement.scrollTop;
+    }
+  };
+  
   // 为paper-container添加滚动事件监听
   const paperContainer = document.querySelector('.paper-container');
   if (paperContainer) {
-    paperContainer.addEventListener('scroll', handleScroll);
-    (window as any).pdfDesignerScrollListener = handleScroll;
+    paperContainer.addEventListener('scroll', handlePaperContainerScroll);
+    (window as any).pdfDesignerScrollListener = handlePaperContainerScroll;
+  }
+  
+  // 为标尺添加滚动事件监听
+  const horizontalRuler = document.querySelector('.horizontal-ruler');
+  const verticalRuler = document.querySelector('.vertical-ruler');
+  
+  if (horizontalRuler) {
+    horizontalRuler.addEventListener('scroll', handleRulerScroll);
+    (window as any).pdfDesignerHorizontalRulerScrollListener = handleRulerScroll;
+  }
+  
+  if (verticalRuler) {
+    verticalRuler.addEventListener('scroll', handleRulerScroll);
+    (window as any).pdfDesignerVerticalRulerScrollListener = handleRulerScroll;
   }
   
   // 为底部面板和右侧属性面板添加点击事件以移除设计区域焦点
@@ -2240,6 +2255,20 @@ onUnmounted(() => {
   const paperContainer = document.querySelector('.paper-container');
   if (scrollListener && paperContainer) {
     paperContainer.removeEventListener('scroll', scrollListener);
+  }
+  
+  // 移除标尺滚动事件监听器
+  const horizontalRulerScrollListener = (window as any).pdfDesignerHorizontalRulerScrollListener;
+  const verticalRulerScrollListener = (window as any).pdfDesignerVerticalRulerScrollListener;
+  const horizontalRuler = document.querySelector('.horizontal-ruler');
+  const verticalRuler = document.querySelector('.vertical-ruler');
+  
+  if (horizontalRulerScrollListener && horizontalRuler) {
+    horizontalRuler.removeEventListener('scroll', horizontalRulerScrollListener);
+  }
+  
+  if (verticalRulerScrollListener && verticalRuler) {
+    verticalRuler.removeEventListener('scroll', verticalRulerScrollListener);
   }
   
   // 移除面板点击事件监听器
@@ -2999,6 +3028,14 @@ const handleBandSelectionChange = (): void => {
   overflow-y: hidden; /* 禁止垂直滚动 */
   width: 100%; /* 确保占满剩余宽度 */
   min-width: 0; /* 允许flex子项收缩 */
+  /* 隐藏滚动条但保留滚动功能 */
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE and Edge */
+}
+
+/* 隐藏Chrome, Safari和Opera的滚动条 */
+.horizontal-ruler::-webkit-scrollbar {
+  display: none;
 }
 
 .horizontal-ruler .tick {
@@ -3051,6 +3088,14 @@ const handleBandSelectionChange = (): void => {
   overflow-y: auto; /* 允许垂直滚动 */
   height: 100%; /* 确保占满整个高度 */
   min-height: 0; /* 允许flex子项收缩 */
+  /* 隐藏滚动条但保留滚动功能 */
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE and Edge */
+}
+
+/* 隐藏Chrome, Safari和Opera的滚动条 */
+.vertical-ruler::-webkit-scrollbar {
+  display: none;
 }
 
 .vertical-ruler .tick {
