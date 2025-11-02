@@ -1937,6 +1937,13 @@ const handleKeyDown = (event: KeyboardEvent) => {
   const isInputFocused = activeEl && (activeEl.tagName === 'INPUT' || activeEl.tagName === 'TEXTAREA' || activeEl.tagName === 'SELECT');
   const isTextareaFocused = activeEl && activeEl.tagName === 'TEXTAREA';
   
+  // CTRL+0 重置缩放比例
+  if (event.ctrlKey && event.key === '0') {
+    event.preventDefault();
+    resetZoom();
+    return;
+  }
+  
   // CTRL+B 快捷键切换底部面板显示状态
   if (event.ctrlKey && event.key === 'b') {
     event.preventDefault();
