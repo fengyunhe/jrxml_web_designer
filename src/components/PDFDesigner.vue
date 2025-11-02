@@ -67,9 +67,10 @@
       </div>
       
       <!-- 中间设计区域 -->
-      <div class="designer-canvas">
+      <div class="designer-canvas" @click="setDesignAreaFocused">
         <div class="paper" 
              :style="{ width: paperWidth + 'px', height: paperHeight + 'px' }"
+             :class="{'focused': isDesignAreaFocused}"
              @drop="handleDrop"
              @dragover.prevent
              @dragenter.prevent
@@ -658,6 +659,8 @@
               <li><strong>Ctrl+B</strong>：切换底部JRXML面板显示</li>
               <li><strong>Ctrl+Z</strong>：撤销操作</li>
               <li><strong>Ctrl+Y</strong>：重做操作</li>
+              <li><strong>Ctrl+C</strong>：复制选中元素</li>
+              <li><strong>Ctrl+V</strong>：粘贴元素</li>
               <li><strong>Delete/Backspace</strong>：删除选中元素（非编辑模式）</li>
               <li><strong>方向键</strong>：选择周围元素</li>
             </ul>
@@ -876,6 +879,19 @@ const selectedBandIndex = ref<number | null>(null);
 const selectedElement = ref<{bandIndex: number, elementIndex: number} | null>(null);
 const editingElement = ref<{bandIndex: number, elementIndex: number} | null>(null);
 const editInput = ref<HTMLInputElement | null>(null);
+
+// 报表设计区域焦点状态
+const isDesignAreaFocused = ref(true); // 默认聚焦设计区域
+
+// 设置设计区域焦点
+const setDesignAreaFocused = () => {
+  isDesignAreaFocused.value = true;
+};
+
+// 移除设计区域焦点
+const removeDesignAreaFocused = () => {
+  isDesignAreaFocused.value = false;
+};
 
 // 计算属性
 const paperWidth = computed(() => reportProperties.value.pageWidth);
@@ -1447,7 +1463,117 @@ const updateJRXML = () => {
   }
 };
 
-// 选中状态变量已在script setup顶部定义
+// 复制元素到剪贴板
+const copyElement = async () => {
+  if (selectedElement.value) {
+    const { bandIndex, elementIndex } = selectedElement.value;
+    const band = bands.value[bandIndex];
+    if (band && band.elements && band.elements[elementIndex]) {
+      try {
+        // 深拷贝元素数据
+        const elementData = JSON.parse(JSON.stringify(band.elements[elementIndex]));
+        // 创建要复制的数据对象，包含元数据标记以便识别这是PDF设计器的元素
+        const clipboardData = {
+          type: 'PDF_DESIGNER_ELEMENT',
+          version: '1.0',
+          elementData: elementData
+        };
+        // 将数据转换为JSON字符串并写入剪贴板
+        await navigator.clipboard.writeText(JSON.stringify(clipboardData));
+        console.log('元素已复制到剪贴板:', elementData);
+        // 可选：显示复制成功的提示
+      } catch (err) {
+        console.error('复制到剪贴板失败:', err);
+        // 降级方案：使用旧的内存存储方式作为备用
+        const elementData = JSON.parse(JSON.stringify(band.elements[elementIndex]));
+        sessionStorage.setItem('pdfDesignerCopiedElement', JSON.stringify({
+          type: 'PDF_DESIGNER_ELEMENT',
+          version: '1.0',
+          elementData: elementData
+        }));
+      }
+    }
+  }
+};
+
+// 从剪贴板粘贴元素
+const pasteElement = async () => {
+  try {
+    // 首先尝试从剪贴板读取
+    const clipboardText = await navigator.clipboard.readText();
+    const clipboardData = JSON.parse(clipboardText);
+    
+    // 验证是否是我们的PDF设计器元素数据
+    if (clipboardData.type === 'PDF_DESIGNER_ELEMENT' && clipboardData.elementData) {
+      processPastedElement(clipboardData.elementData);
+    }
+  } catch (err) {
+    console.error('从剪贴板读取失败:', err);
+    // 降级方案：尝试从sessionStorage读取
+    try {
+      const savedData = sessionStorage.getItem('pdfDesignerCopiedElement');
+      if (savedData) {
+        const clipboardData = JSON.parse(savedData);
+        if (clipboardData.type === 'PDF_DESIGNER_ELEMENT' && clipboardData.elementData) {
+          processPastedElement(clipboardData.elementData);
+        }
+      }
+    } catch (sessionErr) {
+      console.error('从sessionStorage读取失败:', sessionErr);
+    }
+  }
+};
+
+// 处理粘贴的元素数据（抽取为单独函数以便重用）
+const processPastedElement = (elementData: any) => {
+  saveStateToHistory();
+  
+  // 确定粘贴位置（使用当前选中的区域或默认使用第一个可编辑区域）
+  let targetBandIndex = selectedBandIndex.value !== null ? selectedBandIndex.value : 0;
+  
+  // 找到第一个包含elements数组的band
+  if (targetBandIndex === null) {
+    targetBandIndex = bands.value.findIndex(band => band.elements && Array.isArray(band.elements));
+    // 如果没有找到，使用detail区域（通常索引为3）
+    if (targetBandIndex === -1) {
+      targetBandIndex = 3;
+    }
+  }
+  
+  const targetBand = bands.value[targetBandIndex];
+  if (!targetBand) {
+    console.error('目标区域不存在');
+    return;
+  }
+  
+  // 创建新元素（深拷贝）
+  const newElement = JSON.parse(JSON.stringify(elementData));
+  
+  // 调整位置，避免与原元素重叠（向右下方移动一点）
+  newElement.x += 10;
+  newElement.y += 10;
+  
+  // 确保元素ID唯一
+  if (newElement.id) {
+    newElement.id = `element_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+  }
+  
+  // 添加到目标区域
+  if (!targetBand.elements) {
+    targetBand.elements = [];
+  }
+  
+  targetBand.elements.push(newElement);
+  
+  // 选中新添加的元素
+  const newElementIndex = targetBand.elements.length - 1;
+  selectElement(targetBandIndex, newElementIndex);
+  
+  // 更新JRXML
+  updateJRXML();
+  
+  console.log('元素已粘贴:', newElement);
+};
 
 // 组件挂载时加载数据
 onMounted(() => {
@@ -1457,23 +1583,35 @@ onMounted(() => {
   
   // 添加键盘事件监听器
   const handleKeyDown = (event: KeyboardEvent) => {
-    // CTRL+B 快捷键切换底部面板显示状态
-    if (event.ctrlKey && event.key === 'b') {
-      event.preventDefault();
-      toggleBottomPanel();
-    }
-    
-    // CTRL+Z 撤销操作
-    if (event.ctrlKey && event.key === 'z') {
-      event.preventDefault();
-      undo();
-    }
-    
-    // CTRL+Y 重做操作
-    if (event.ctrlKey && event.key === 'y') {
-      event.preventDefault();
-      redo();
-    }
+      // CTRL+B 快捷键切换底部面板显示状态
+      if (event.ctrlKey && event.key === 'b') {
+        event.preventDefault();
+        toggleBottomPanel();
+      }
+      
+      // CTRL+Z 撤销操作
+      if (event.ctrlKey && event.key === 'z') {
+        event.preventDefault();
+        undo();
+      }
+      
+      // CTRL+Y 重做操作
+      if (event.ctrlKey && event.key === 'y') {
+        event.preventDefault();
+        redo();
+      }
+      
+      // CTRL+C 复制元素（只有在选中元素时才执行复制功能）
+      if (event.ctrlKey && event.key === 'c' && selectedElement.value) {
+        event.preventDefault();
+        copyElement();
+      }
+      
+      // CTRL+V 粘贴元素（只要设计区域有焦点就执行自定义粘贴功能）
+      if (event.ctrlKey && event.key === 'v' && isDesignAreaFocused.value) {
+        event.preventDefault();
+        pasteElement();
+      }
     
     // Del键删除选中的组件（仅在非编辑模式下且没有输入框处于焦点状态时）
   const activeElement = document.activeElement;
@@ -1586,12 +1724,34 @@ onMounted(() => {
   // 获取paper元素并添加点击事件监听
   const paperElement = document.querySelector('.paper');
   if (paperElement) {
-    paperElement.addEventListener('click', handlePaperClick);
+    paperElement.addEventListener('click', (event) => {
+      handlePaperClick();
+      setDesignAreaFocused();
+    });
+  }
+  
+  // 为底部面板和右侧属性面板添加点击事件以移除设计区域焦点
+  const bottomPanel = document.querySelector('.bottom-panel');
+  if (bottomPanel) {
+    bottomPanel.addEventListener('click', removeDesignAreaFocused);
+  }
+  
+  const rightPanel = document.querySelector('.property-panel');
+  if (rightPanel) {
+    rightPanel.addEventListener('click', removeDesignAreaFocused);
+  }
+  
+  // 为左侧面板添加点击事件以移除设计区域焦点
+  const leftPanel = document.querySelector('.element-panel');
+  if (leftPanel) {
+    leftPanel.addEventListener('click', removeDesignAreaFocused);
   }
   
   // 保存监听器引用，以便在组件卸载时移除
   (window as any).pdfDesignerKeydownListener = handleKeyDown;
   (window as any).pdfDesignerPaperClickListener = handlePaperClick;
+  (window as any).pdfDesignerSetFocused = setDesignAreaFocused;
+  (window as any).pdfDesignerRemoveFocused = removeDesignAreaFocused;
 });
 
 // 组件卸载时清理事件监听器
@@ -1607,6 +1767,18 @@ onUnmounted(() => {
   const paperElement = document.querySelector('.paper');
   if (handlePaperClick && paperElement) {
     paperElement.removeEventListener('click', handlePaperClick);
+  }
+  
+  // 移除面板点击事件监听器
+  const bottomPanel = document.querySelector('.bottom-panel');
+  const rightPanel = document.querySelector('.property-panel');
+  const leftPanel = document.querySelector('.element-panel');
+  const removeDesignAreaFocused = (window as any).pdfDesignerRemoveFocused;
+  
+  if (removeDesignAreaFocused) {
+    if (bottomPanel) bottomPanel.removeEventListener('click', removeDesignAreaFocused);
+    if (rightPanel) rightPanel.removeEventListener('click', removeDesignAreaFocused);
+    if (leftPanel) leftPanel.removeEventListener('click', removeDesignAreaFocused);
   }
 });
 
@@ -2247,11 +2419,15 @@ const closeHelpModal = () => {
 
 .paper {
   background-color: #fff;
-  box-shadow: 0 4px 20px rgba(0,0,0,0.15), 0 0 0 1px rgba(0,0,0,0.05);
+  box-shadow: 0 2px 10px rgba(0,0,0,0.08), 0 0 0 1px rgba(0,0,0,0.05);
   position: relative;
   overflow: visible;
   border-radius: 2px;
   transition: box-shadow 0.3s ease;
+}
+
+.paper.focused {
+  box-shadow: 0 6px 24px rgba(0,0,0,0.2), 0 0 0 1px rgba(0,0,0,0.1);
 }
 
 .paper:hover {
