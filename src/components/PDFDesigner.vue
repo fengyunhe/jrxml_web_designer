@@ -17,16 +17,10 @@
         <div class="zoom-controls">
           <button @click="zoomOut" class="btn-zoom" title="缩小">-</button>
           <select v-model="zoomLevel" @change="applyZoom" class="zoom-select">
-            <option value="0.25">25%</option>
-            <option value="0.5">50%</option>
-            <option value="0.75">75%</option>
-            <option value="1">100%</option>
-            <option value="1.25">125%</option>
-            <option value="1.5">150%</option>
-            <option value="2">200%</option>
+            <option v-for="level in ZOOM_CONSTANTS.ZOOM_LEVELS" :key="level" :value="level">{{ level * 100 }}%</option>
           </select>
           <button @click="zoomIn" class="btn-zoom" title="放大">+</button>
-          <button @click="resetZoom" class="btn-zoom" title="重置缩放">100%</button>
+          <button @click="resetZoom" class="btn-zoom" title="重置缩放">{{ ZOOM_CONSTANTS.DEFAULT_ZOOM * 100 }}%</button>
           <button @click="calculateOptimalZoom" class="btn-zoom" title="适应窗口">⊡</button>
         </div>
         
@@ -157,7 +151,7 @@
                    width: '100%',
                    height: '100%',
                    position: 'relative',
-                   backgroundSize: '20px 20px'
+                   backgroundSize: UI_CONSTANTS.GRID_SIZE + 'px ' + UI_CONSTANTS.GRID_SIZE + 'px'
                  }"
             >
             
@@ -367,131 +361,124 @@
               </template>
             </div>
             
-            <!-- Box设置标签页 -->
+            <!-- 边框设置标签页 -->
             <div class="element-tab-content" v-show="activeElementTab === 'box'">
-              <h4>Box设置</h4>
+              <h4>边框设置</h4>
               
-              <!-- 初始化box对象（如果不存在） -->
-              <div v-if="!currentElement.box" class="init-box-section">
-                <button @click="initBox()" class="btn-secondary btn-small">初始化Box设置</button>
+              <!-- 全局边框设置 -->
+              <div class="box-section">
+                <h5>全局边框</h5>
+                <div class="form-group">
+                  <label>边框样式</label>
+                  <select v-model="currentElement.box.border">
+                    <option value="">无</option>
+                    <option value="Thin">细线 ({{ BORDER_CONSTANTS.THIN_WIDTH }}px)</option>
+                    <option value="Medium">中等 ({{ BORDER_CONSTANTS.MEDIUM_WIDTH }}px)</option>
+                    <option value="Thick">粗线 ({{ BORDER_CONSTANTS.THICK_WIDTH }}px)</option>
+                    <option value="Dashed">虚线</option>
+                    <option value="Dotted">点线</option>
+                    <option value="Double">双线</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label>边框颜色</label>
+                  <input v-model="currentElement.box.borderColor" type="color" />
+                </div>
               </div>
               
-              <template v-if="currentElement.box">
-                <!-- 全局边框设置 -->
-                <div class="box-section">
-                  <h5>全局边框</h5>
-                  <div class="form-group">
-                    <label>边框样式</label>
-                    <select v-model="currentElement.box.border">
-                      <option value="">无</option>
-                      <option value="Thin">细线 (1px)</option>
-                      <option value="Medium">中等 (2px)</option>
-                      <option value="Thick">粗线 (3px)</option>
-                      <option value="Dashed">虚线</option>
-                      <option value="Dotted">点线</option>
-                      <option value="Double">双线</option>
-                    </select>
-                  </div>
-                  <div class="form-group">
-                    <label>边框颜色</label>
-                    <input v-model="currentElement.box.borderColor" type="color" />
-                  </div>
+              <!-- 各边边框设置 -->
+              <div class="box-section">
+                <h5>各边边框（覆盖全局设置）</h5>
+                
+                <!-- 上边 -->
+                <div class="border-side-group">
+                  <label class="side-label">上边</label>
+                  <select v-model="currentElement.box.topBorder" class="side-control">
+                    <option value="">使用全局</option>
+                    <option value="Thin">细线 ({{ BORDER_CONSTANTS.THIN_WIDTH }}px)</option>
+                    <option value="Medium">中等 ({{ BORDER_CONSTANTS.MEDIUM_WIDTH }}px)</option>
+                    <option value="Thick">粗线 ({{ BORDER_CONSTANTS.THICK_WIDTH }}px)</option>
+                    <option value="Dashed">虚线</option>
+                    <option value="Dotted">点线</option>
+                    <option value="Double">双线</option>
+                  </select>
+                  <input v-model="currentElement.box.topBorderColor" type="color" class="color-control" />
                 </div>
                 
-                <!-- 各边边框设置 -->
-                <div class="box-section">
-                  <h5>各边边框（覆盖全局设置）</h5>
-                  
-                  <!-- 上边 -->
-                  <div class="border-side-group">
-                    <label class="side-label">上边</label>
-                    <select v-model="currentElement.box.topBorder" class="side-control">
-                      <option value="">使用全局</option>
-                      <option value="Thin">细线 (1px)</option>
-                      <option value="Medium">中等 (2px)</option>
-                      <option value="Thick">粗线 (3px)</option>
-                      <option value="Dashed">虚线</option>
-                      <option value="Dotted">点线</option>
-                      <option value="Double">双线</option>
-                    </select>
-                    <input v-model="currentElement.box.topBorderColor" type="color" class="color-control" />
-                  </div>
-                  
-                  <!-- 左边 -->
-                  <div class="border-side-group">
-                    <label class="side-label">左边</label>
-                    <select v-model="currentElement.box.leftBorder" class="side-control">
-                      <option value="">使用全局</option>
-                      <option value="Thin">细线 (1px)</option>
-                      <option value="Medium">中等 (2px)</option>
-                      <option value="Thick">粗线 (3px)</option>
-                      <option value="Dashed">虚线</option>
-                      <option value="Dotted">点线</option>
-                      <option value="Double">双线</option>
-                    </select>
-                    <input v-model="currentElement.box.leftBorderColor" type="color" class="color-control" />
-                  </div>
-                  
-                  <!-- 下边 -->
-                  <div class="border-side-group">
-                    <label class="side-label">下边</label>
-                    <select v-model="currentElement.box.bottomBorder" class="side-control">
-                      <option value="">使用全局</option>
-                      <option value="Thin">细线 (1px)</option>
-                      <option value="Medium">中等 (2px)</option>
-                      <option value="Thick">粗线 (3px)</option>
-                      <option value="Dashed">虚线</option>
-                      <option value="Dotted">点线</option>
-                      <option value="Double">双线</option>
-                    </select>
-                    <input v-model="currentElement.box.bottomBorderColor" type="color" class="color-control" />
-                  </div>
-                  
-                  <!-- 右边 -->
-                  <div class="border-side-group">
-                    <label class="side-label">右边</label>
-                    <select v-model="currentElement.box.rightBorder" class="side-control">
-                      <option value="">使用全局</option>
-                      <option value="Thin">细线 (1px)</option>
-                      <option value="Medium">中等 (2px)</option>
-                      <option value="Thick">粗线 (3px)</option>
-                      <option value="Dashed">虚线</option>
-                      <option value="Dotted">点线</option>
-                      <option value="Double">双线</option>
-                    </select>
-                    <input v-model="currentElement.box.rightBorderColor" type="color" class="color-control" />
-                  </div>
+                <!-- 左边 -->
+                <div class="border-side-group">
+                  <label class="side-label">左边</label>
+                  <select v-model="currentElement.box.leftBorder" class="side-control">
+                    <option value="">使用全局</option>
+                    <option value="Thin">细线 ({{ BORDER_CONSTANTS.THIN_WIDTH }}px)</option>
+                    <option value="Medium">中等 ({{ BORDER_CONSTANTS.MEDIUM_WIDTH }}px)</option>
+                    <option value="Thick">粗线 ({{ BORDER_CONSTANTS.THICK_WIDTH }}px)</option>
+                    <option value="Dashed">虚线</option>
+                    <option value="Dotted">点线</option>
+                    <option value="Double">双线</option>
+                  </select>
+                  <input v-model="currentElement.box.leftBorderColor" type="color" class="color-control" />
                 </div>
                 
-                <!-- 边距设置 -->
-                <div class="box-section">
-                  <h5>边距设置</h5>
+                <!-- 下边 -->
+                <div class="border-side-group">
+                  <label class="side-label">下边</label>
+                  <select v-model="currentElement.box.bottomBorder" class="side-control">
+                    <option value="">使用全局</option>
+                    <option value="Thin">细线 ({{ BORDER_CONSTANTS.THIN_WIDTH }}px)</option>
+                    <option value="Medium">中等 ({{ BORDER_CONSTANTS.MEDIUM_WIDTH }}px)</option>
+                    <option value="Thick">粗线 ({{ BORDER_CONSTANTS.THICK_WIDTH }}px)</option>
+                    <option value="Dashed">虚线</option>
+                    <option value="Dotted">点线</option>
+                    <option value="Double">双线</option>
+                  </select>
+                  <input v-model="currentElement.box.bottomBorderColor" type="color" class="color-control" />
+                </div>
+                
+                <!-- 右边 -->
+                <div class="border-side-group">
+                  <label class="side-label">右边</label>
+                  <select v-model="currentElement.box.rightBorder" class="side-control">
+                    <option value="">使用全局</option>
+                    <option value="Thin">细线 ({{ BORDER_CONSTANTS.THIN_WIDTH }}px)</option>
+                    <option value="Medium">中等 ({{ BORDER_CONSTANTS.MEDIUM_WIDTH }}px)</option>
+                    <option value="Thick">粗线 ({{ BORDER_CONSTANTS.THICK_WIDTH }}px)</option>
+                    <option value="Dashed">虚线</option>
+                    <option value="Dotted">点线</option>
+                    <option value="Double">双线</option>
+                  </select>
+                  <input v-model="currentElement.box.rightBorderColor" type="color" class="color-control" />
+                </div>
+              </div>
+              
+              <!-- 边距设置 -->
+              <div class="box-section">
+                <h5>边距设置</h5>
+                <div class="form-group">
+                  <label>全局边距（像素）</label>
+                  <input v-model.number="currentElement.box.padding" type="number" placeholder="全部边距" />
+                  <small>设置后会覆盖各边独立设置</small>
+                </div>
+                
+                <div class="padding-grid">
                   <div class="form-group">
-                    <label>全局边距（像素）</label>
-                    <input v-model.number="currentElement.box.padding" type="number" placeholder="全部边距" />
-                    <small>设置后会覆盖各边独立设置</small>
+                    <label>上边距</label>
+                    <input v-model.number="currentElement.box.topPadding" type="number" />
                   </div>
-                  
-                  <div class="padding-grid">
-                    <div class="form-group">
-                      <label>上边距</label>
-                      <input v-model.number="currentElement.box.topPadding" type="number" />
-                    </div>
-                    <div class="form-group">
-                      <label>左边距</label>
-                      <input v-model.number="currentElement.box.leftPadding" type="number" />
-                    </div>
-                    <div class="form-group">
-                      <label>下边距</label>
-                      <input v-model.number="currentElement.box.bottomPadding" type="number" />
-                    </div>
-                    <div class="form-group">
-                      <label>右边距</label>
-                      <input v-model.number="currentElement.box.rightPadding" type="number" />
-                    </div>
+                  <div class="form-group">
+                    <label>左边距</label>
+                    <input v-model.number="currentElement.box.leftPadding" type="number" />
+                  </div>
+                  <div class="form-group">
+                    <label>下边距</label>
+                    <input v-model.number="currentElement.box.bottomPadding" type="number" />
+                  </div>
+                  <div class="form-group">
+                    <label>右边距</label>
+                    <input v-model.number="currentElement.box.rightPadding" type="number" />
                   </div>
                 </div>
-              </template>
+              </div>
             </div>
             
             <!-- 样式设置标签页 -->
@@ -514,7 +501,7 @@
                     <option value="Times New Roman">Times New Roman</option>
                     <option value="Noto Serif SC">Noto Serif SC</option>
                   </select>
-                  <small style="display: block; margin-top: 4px; font-size: 12px; color: #666;">提示：可以直接在下拉框中输入字体名称</small>
+                  <small class="font-hint">提示：可以直接在下拉框中输入字体名称</small>
                 </div>
                 
                 <div class="form-group">
@@ -796,6 +783,23 @@
 import ElementFactory from './elements/ElementFactory.vue';
 import type { DesignElement, Band, ReportField, ReportParameter, BandType } from '../types';
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue';
+import {
+  ZOOM_CONSTANTS,
+  PANEL_CONSTANTS,
+  REPORT_CONSTANTS,
+  HISTORY_CONSTANTS,
+  DOM_CONSTANTS,
+  BORDER_CONSTANTS,
+  FONT_CONSTANTS,
+  ELEMENT_TYPE_CONSTANTS,
+  ELEMENT_CONSTANTS,
+  BAND_TYPE_CONSTANTS,
+  BAND_HEIGHT_CONSTANTS,
+  BAND_CONSTANTS,
+  KEYBOARD_CONSTANTS,
+  RULER_CONSTANTS,
+  UI_CONSTANTS
+} from '../constants/constants';
 
 // 确保浏览器环境中DOMParser可用
 // 移除未使用的getDOMParser函数
@@ -822,12 +826,12 @@ const showRightPanel = ref(true);
 const showBottomPanel = ref(true);
 
 // 缩放相关状态
-const zoomLevel = ref(1); // 默认缩放级别为100%
+const zoomLevel = ref(ZOOM_CONSTANTS.DEFAULT_ZOOM); // 默认缩放级别为100%
 
 // 缩放控制方法
 function zoomIn() {
   // 预设的缩放级别
-  const zoomLevels = [0.25, 0.5, 0.75, 1, 1.25, 1.5, 2];
+  const zoomLevels = ZOOM_CONSTANTS.ZOOM_LEVELS;
   
   // 找到当前缩放级别在预设级别中的索引
   const currentIndex = zoomLevels.findIndex(level => level === zoomLevel.value);
@@ -852,7 +856,7 @@ function zoomIn() {
 
 function zoomOut() {
   // 预设的缩放级别
-  const zoomLevels = [0.25, 0.5, 0.75, 1, 1.25, 1.5, 2];
+  const zoomLevels = ZOOM_CONSTANTS.ZOOM_LEVELS;
   
   // 找到当前缩放级别在预设级别中的索引
   const currentIndex = zoomLevels.findIndex(level => level === zoomLevel.value);
@@ -880,7 +884,7 @@ function zoomOut() {
 }
 
 function resetZoom() {
-  zoomLevel.value = 1;
+  zoomLevel.value = ZOOM_CONSTANTS.DEFAULT_ZOOM;
   applyZoom();
 }
 
@@ -895,26 +899,29 @@ function calculateOptimalZoom() {
   if (!designerContainer) return;
   
   // 获取设计区域的实际可用宽度
-  const availableWidth = designerContainer.clientWidth - 40; // 减去垂直标尺的宽度
+  const availableWidth = designerContainer.clientWidth - DOM_CONSTANTS.SCROLL_BAR_WIDTH; // 减去垂直标尺的宽度
   
   // 计算宽度的缩放比例
   const widthRatio = availableWidth / paperWidth.value;
   
   // 使用宽度缩放比例，确保报表宽度适应设计区域
-  const optimalZoom = widthRatio * 0.9; // 乘以0.9留出一些边距
+  const optimalZoom = widthRatio * ZOOM_CONSTANTS.OPTIMAL_ZOOM_MARGIN; // 乘以0.9留出一些边距
   
   // 从预设的缩放级别中选择最接近的
-  const zoomLevels = [0.25, 0.5, 0.75, 1, 1.25, 1.5, 2];
+  const zoomLevels = ZOOM_CONSTANTS.ZOOM_LEVELS;
   
   // 找到最接近optimalZoom的预设缩放级别
-  let closestZoom = zoomLevels[0];
-  let minDiff = Math.abs(zoomLevels[0] - optimalZoom);
+  let closestZoom = zoomLevels[0] || ZOOM_CONSTANTS.DEFAULT_ZOOM;
+  let minDiff = Math.abs((zoomLevels[0] || ZOOM_CONSTANTS.DEFAULT_ZOOM) - optimalZoom);
   
   for (let i = 1; i < zoomLevels.length; i++) {
-    const diff = Math.abs(zoomLevels[i] - optimalZoom);
-    if (diff < minDiff) {
-      minDiff = diff;
-      closestZoom = zoomLevels[i];
+    const level = zoomLevels[i];
+    if (level !== undefined) {
+      const diff = Math.abs(level - optimalZoom);
+      if (diff < minDiff) {
+        minDiff = diff;
+        closestZoom = level;
+      }
     }
   }
   
@@ -947,10 +954,10 @@ function updateExpressionFromFieldName() {
   }
 }
 // 底部面板高度
-const bottomPanelHeight = ref(400); // 默认高度400px
+const bottomPanelHeight = ref(PANEL_CONSTANTS.DEFAULT_BOTTOM_PANEL_HEIGHT); // 默认高度400px
 
 // 属性面板宽度
-const propertyPanelWidth = ref(300); // 默认宽度300px
+const propertyPanelWidth = ref(PANEL_CONSTANTS.DEFAULT_PROPERTY_PANEL_WIDTH); // 默认宽度300px
 
 // JRXML内容显示
 const jrxmlContent = ref('');
@@ -958,15 +965,15 @@ const jrxmlContent = ref('');
 // 报表属性
 const reportProperties = ref({
   name: 'NewReport',
-  pageWidth: 595,
-  pageHeight: 842,
-  leftMargin: 20,
-  rightMargin: 20,
-  topMargin: 20,
-  bottomMargin: 20,
+  pageWidth: REPORT_CONSTANTS.DEFAULT_PAGE_WIDTH,
+  pageHeight: REPORT_CONSTANTS.DEFAULT_PAGE_HEIGHT,
+  leftMargin: REPORT_CONSTANTS.DEFAULT_MARGIN,
+  rightMargin: REPORT_CONSTANTS.DEFAULT_MARGIN,
+  topMargin: REPORT_CONSTANTS.DEFAULT_MARGIN,
+  bottomMargin: REPORT_CONSTANTS.DEFAULT_MARGIN,
   defaultFont: {
-    name: 'SansSerif',
-    size: 12,
+    name: FONT_CONSTANTS.SANS_SERIF,
+    size: REPORT_CONSTANTS.DEFAULT_FONT_SIZE,
     isBold: false,
     isItalic: false,
     isUnderline: false
@@ -976,10 +983,10 @@ const reportProperties = ref({
 
 // 可用元素
 const elements = ref([
-  { type: 'staticText', name: '静态文本' },
-  { type: 'textField', name: '动态文本' },
-  { type: 'image', name: '图片' },
-  { type: 'line', name: '线条' }
+  { type: ELEMENT_TYPE_CONSTANTS.STATIC_TEXT, name: '静态文本' },
+  { type: ELEMENT_TYPE_CONSTANTS.TEXT_FIELD, name: '动态文本' },
+  { type: ELEMENT_TYPE_CONSTANTS.IMAGE, name: '图片' },
+  { type: ELEMENT_TYPE_CONSTANTS.LINE, name: '线条' }
 ]);
 
 // 定义元素接口
@@ -989,27 +996,27 @@ const elements = ref([
 
 // 报表区域
 const bands = ref<Band[]>([
-  { type: 'title', height: 80, elements: [] },
-  { type: 'pageHeader', height: 50, elements: [] },
-  { type: 'columnHeader', height: 30, elements: [] },
-  { type: 'detail', height: 100, elements: [] }, // 默认给detail区域100的高度
-  { type: 'columnFooter', height: 30, elements: [] },
-  { type: 'pageFooter', height: 40, elements: [] },
-  { type: 'summary', height: 60, elements: [] }
+  { type: BAND_TYPE_CONSTANTS.TITLE as BandType, height: BAND_HEIGHT_CONSTANTS[BAND_TYPE_CONSTANTS.TITLE] || 50, elements: [] },
+  { type: BAND_TYPE_CONSTANTS.PAGE_HEADER as BandType, height: BAND_HEIGHT_CONSTANTS[BAND_TYPE_CONSTANTS.PAGE_HEADER] || 50, elements: [] },
+  { type: BAND_TYPE_CONSTANTS.COLUMN_HEADER as BandType, height: BAND_HEIGHT_CONSTANTS[BAND_TYPE_CONSTANTS.COLUMN_HEADER] || 30, elements: [] },
+  { type: BAND_TYPE_CONSTANTS.DETAIL as BandType, height: BAND_HEIGHT_CONSTANTS[BAND_TYPE_CONSTANTS.DETAIL] || 100, elements: [] }, // 默认给detail区域100的高度
+  { type: BAND_TYPE_CONSTANTS.COLUMN_FOOTER as BandType, height: BAND_HEIGHT_CONSTANTS[BAND_TYPE_CONSTANTS.COLUMN_FOOTER] || 30, elements: [] },
+  { type: BAND_TYPE_CONSTANTS.PAGE_FOOTER as BandType, height: BAND_HEIGHT_CONSTANTS[BAND_TYPE_CONSTANTS.PAGE_FOOTER] || 40, elements: [] },
+  { type: BAND_TYPE_CONSTANTS.SUMMARY as BandType, height: BAND_HEIGHT_CONSTANTS[BAND_TYPE_CONSTANTS.SUMMARY] || 60, elements: [] }
 ]);
 
 // 所有可能的band类型
 const allBandTypes = [
-  { type: 'title', name: '标题', defaultHeight: 80 },
-  { type: 'pageHeader', name: '页眉', defaultHeight: 50 },
-  { type: 'columnHeader', name: '列标题', defaultHeight: 30 },
-  { type: 'detail', name: '详细数据', defaultHeight: 100 },
-  { type: 'columnFooter', name: '列脚', defaultHeight: 30 },
-  { type: 'pageFooter', name: '页脚', defaultHeight: 40 },
-  { type: 'summary', name: '汇总', defaultHeight: 60 },
-  { type: 'background', name: '背景', defaultHeight: 0 },
-  { type: 'lastPageFooter', name: '末页页脚', defaultHeight: 40 },
-  { type: 'noData', name: '无数据', defaultHeight: 50 }
+  { type: BAND_TYPE_CONSTANTS.TITLE as BandType, name: '标题', defaultHeight: BAND_HEIGHT_CONSTANTS[BAND_TYPE_CONSTANTS.TITLE] || 80 },
+  { type: BAND_TYPE_CONSTANTS.PAGE_HEADER as BandType, name: '页眉', defaultHeight: BAND_HEIGHT_CONSTANTS[BAND_TYPE_CONSTANTS.PAGE_HEADER] || 50 },
+  { type: BAND_TYPE_CONSTANTS.COLUMN_HEADER as BandType, name: '列标题', defaultHeight: BAND_HEIGHT_CONSTANTS[BAND_TYPE_CONSTANTS.COLUMN_HEADER] || 30 },
+  { type: BAND_TYPE_CONSTANTS.DETAIL as BandType, name: '详细数据', defaultHeight: BAND_HEIGHT_CONSTANTS[BAND_TYPE_CONSTANTS.DETAIL] || 100 },
+  { type: BAND_TYPE_CONSTANTS.COLUMN_FOOTER as BandType, name: '列脚', defaultHeight: BAND_HEIGHT_CONSTANTS[BAND_TYPE_CONSTANTS.COLUMN_FOOTER] || 30 },
+  { type: BAND_TYPE_CONSTANTS.PAGE_FOOTER as BandType, name: '页脚', defaultHeight: BAND_HEIGHT_CONSTANTS[BAND_TYPE_CONSTANTS.PAGE_FOOTER] || 40 },
+  { type: BAND_TYPE_CONSTANTS.SUMMARY as BandType, name: '汇总', defaultHeight: BAND_HEIGHT_CONSTANTS[BAND_TYPE_CONSTANTS.SUMMARY] || 60 },
+  { type: BAND_TYPE_CONSTANTS.BACKGROUND as BandType, name: '背景', defaultHeight: BAND_HEIGHT_CONSTANTS[BAND_TYPE_CONSTANTS.BACKGROUND] || 0 },
+  { type: BAND_TYPE_CONSTANTS.LAST_PAGE_FOOTER as BandType, name: '末页页脚', defaultHeight: BAND_HEIGHT_CONSTANTS[BAND_TYPE_CONSTANTS.LAST_PAGE_FOOTER] || 40 },
+  { type: BAND_TYPE_CONSTANTS.NO_DATA as BandType, name: '无数据', defaultHeight: BAND_HEIGHT_CONSTANTS[BAND_TYPE_CONSTANTS.NO_DATA] || 50 }
 ];
 
 // 当前选中的band类型
@@ -1033,7 +1040,7 @@ interface HistoryState {
 
 const historyStack = ref<HistoryState[]>([]);
 const redoStack = ref<HistoryState[]>([]);
-const MAX_HISTORY_SIZE = 50; // 最大历史记录数量
+const MAX_HISTORY_SIZE = HISTORY_CONSTANTS.MAX_HISTORY_SIZE; // 最大历史记录数量
 let isDraggingOrResizing = false; // 标记是否正在拖动或调整大小
 
 // 保存当前状态到历史记录
@@ -1145,12 +1152,12 @@ const currentElement = computed(() => {
 const horizontalRulerTicks = computed(() => {
   const ticks = [];
   const width = paperWidth.value;
-  const unit = 5; // 减小基本单位，从10px改为5px，增加刻度密度
+  const unit = RULER_CONSTANTS.UNIT_SIZE; // 减小基本单位，从10px改为5px，增加刻度密度
   
   for (let i = 0; i <= width; i += unit) {
     ticks.push({
       position: i * zoomLevel.value, // 应用缩放比例
-      major: i % 25 === 0 // 每25px一个主要刻度，从50px改为25px
+      major: i % RULER_CONSTANTS.MAJOR_TICK_INTERVAL === 0 // 每25px一个主要刻度，从50px改为25px
     });
   }
   
@@ -1161,7 +1168,7 @@ const horizontalRulerLabels = computed(() => {
   const labels = [];
   const width = paperWidth.value;
   
-  for (let i = 0; i <= width; i += 25) { // 每25px显示一个标签，从50px改为25px
+  for (let i = 0; i <= width; i += RULER_CONSTANTS.LABEL_INTERVAL) { // 每25px显示一个标签，从50px改为25px
     labels.push({
       position: i * zoomLevel.value, // 应用缩放比例
       value: i.toString()
@@ -1174,12 +1181,12 @@ const horizontalRulerLabels = computed(() => {
 const verticalRulerTicks = computed(() => {
   const ticks = [];
   const height = paperHeight.value;
-  const unit = 5; // 减小基本单位，从10px改为5px，增加刻度密度
+  const unit = RULER_CONSTANTS.UNIT_SIZE; // 减小基本单位，从10px改为5px，增加刻度密度
   
   for (let i = 0; i <= height; i += unit) {
     ticks.push({
       position: i * zoomLevel.value, // 应用缩放比例
-      major: i % 25 === 0 // 每25px一个主要刻度，从50px改为25px
+      major: i % RULER_CONSTANTS.MAJOR_TICK_INTERVAL === 0 // 每25px一个主要刻度，从50px改为25px
     });
   }
   
@@ -1190,7 +1197,7 @@ const verticalRulerLabels = computed(() => {
   const labels = [];
   const height = paperHeight.value;
   
-  for (let i = 0; i <= height; i += 25) { // 每25px显示一个标签，从50px改为25px
+  for (let i = 0; i <= height; i += RULER_CONSTANTS.LABEL_INTERVAL) { // 每25px显示一个标签，从50px改为25px
     labels.push({
       position: i * zoomLevel.value, // 应用缩放比例
       value: i.toString()
@@ -1338,6 +1345,30 @@ const selectElement = (bandIndex: number, elementIndex: number) => {
   
   // 自动隐藏底部面板
   showBottomPanel.value = false;
+  
+  // 确保元素有box属性，如果没有则初始化
+  const band = bands.value[bandIndex];
+  const element = band?.elements[elementIndex];
+  
+  if (element && !element.box) {
+    element.box = {
+      border: '',
+      borderColor: '#000000',
+      leftBorder: '',
+      leftBorderColor: '#000000',
+      rightBorder: '',
+      rightBorderColor: '#000000',
+      topBorder: '',
+      topBorderColor: '#000000',
+      bottomBorder: '',
+      bottomBorderColor: '#000000',
+      padding: 0,
+      leftPadding: 0,
+      rightPadding: 0,
+      topPadding: 0,
+      bottomPadding: 0
+    };
+  }
   
   // 移除了昂贵的DOM查询和动画效果，通过Vue的响应式系统和CSS类来管理选择状态
 };
@@ -1905,8 +1936,8 @@ const processPastedElement = (elementData: any) => {
   const newElement = JSON.parse(JSON.stringify(elementData));
   
   // 调整位置，避免与原元素重叠（向右下方移动一点）
-  newElement.x += 10;
-  newElement.y += 10;
+  newElement.x += KEYBOARD_CONSTANTS.ELEMENT_PASTE_OFFSET;
+  newElement.y += KEYBOARD_CONSTANTS.ELEMENT_PASTE_OFFSET;
   
   // 确保元素ID唯一
   if (newElement.id) {
@@ -2049,11 +2080,11 @@ const navigateElements = (direction: string) => {
         switch (direction) {
           case 'ArrowUp':
           case 'ArrowDown':
-            distance = Math.abs(elementY - currentY) + Math.abs(elementX - currentX) * 0.1; // Y方向为主，X方向为辅
+            distance = Math.abs(elementY - currentY) + Math.abs(elementX - currentX) * KEYBOARD_CONSTANTS.SECONDARY_AXIS_WEIGHT; // Y方向为主，X方向为辅
             break;
           case 'ArrowLeft':
           case 'ArrowRight':
-            distance = Math.abs(elementX - currentX) + Math.abs(elementY - currentY) * 0.1; // X方向为主，Y方向为辅
+            distance = Math.abs(elementX - currentX) + Math.abs(elementY - currentY) * KEYBOARD_CONSTANTS.SECONDARY_AXIS_WEIGHT; // X方向为主，Y方向为辅
             break;
         }
         
@@ -2090,7 +2121,7 @@ onMounted(() => {
   // 使用setTimeout确保DOM已经渲染完成
   setTimeout(() => {
     calculateOptimalZoom();
-  }, 100);
+  }, UI_CONSTANTS.DOM_RENDER_DELAY);
   
   // 添加键盘事件监听
   document.addEventListener('keydown', handleKeyDown);
@@ -2291,8 +2322,8 @@ const saveJRXML = (): void => {
         }
         
         // 确保所有元素大小合理
-        if (element.width < 20) element.width = 20; // 确保最小宽度
-        if (element.height < 10) element.height = 10; // 确保最小高度
+        if (element.width < ELEMENT_CONSTANTS.MIN_WIDTH) element.width = ELEMENT_CONSTANTS.MIN_WIDTH; // 确保最小宽度
+        if (element.height < ELEMENT_CONSTANTS.MIN_HEIGHT) element.height = ELEMENT_CONSTANTS.MIN_HEIGHT; // 确保最小高度
         
         // 对于box元素，确保解析的边框属性正确应用
         if (element.box) {
@@ -2423,8 +2454,8 @@ const saveJRXML = (): void => {
       });
       
       // 确保band高度足够
-      const additionalMargin = band.type === 'detail' ? 10 : 5;
-      band.height = Math.max(requiredHeight + additionalMargin, band.height, 20);
+      const additionalMargin = band.type === BAND_TYPE_CONSTANTS.DETAIL ? BAND_CONSTANTS.DETAIL_ADDITIONAL_MARGIN : BAND_CONSTANTS.DEFAULT_ADDITIONAL_MARGIN;
+      band.height = Math.max(requiredHeight + additionalMargin, band.height, BAND_CONSTANTS.MIN_HEIGHT);
     });
     
     // 保存到本地存储
@@ -2468,7 +2499,7 @@ const startResizingBand = (event: MouseEvent, bandIndex: number): void => {
     if (!bands.value || !bands.value[bandIndex]) return;
     // 考虑缩放比例计算高度变化，使用paperOffsetY来更准确地计算
     const deltaY = (e.clientY - paperOffsetY) / currentZoom - (startY - paperOffsetY) / currentZoom;
-    const newHeight = Math.max(20, startHeight + deltaY);
+    const newHeight = Math.max(BAND_CONSTANTS.MIN_HEIGHT, startHeight + deltaY);
     bands.value[bandIndex].height = newHeight;
     
     // 调整该区域内元素的位置，确保元素不会超出区域边界
@@ -2699,6 +2730,10 @@ const handleBandSelectionChange = (): void => {
       if (bandsToAdd.includes(bandType.type as BandType)) {
         const newBand = newBands.find(b => b.type === bandType.type);
         if (newBand) {
+          // 确保height属性不为undefined
+          if (newBand.height === undefined) {
+            newBand.height = BAND_HEIGHT_CONSTANTS[bandType.type] || 50;
+          }
           // 找到合适的插入位置
           let insertIndex = bands.value.length;
           for (let i = 0; i < bands.value.length; i++) {
@@ -2709,7 +2744,8 @@ const handleBandSelectionChange = (): void => {
               break;
             }
           }
-          bands.value.splice(insertIndex, 0, newBand);
+          // 使用类型断言确保newBand符合Band接口
+          bands.value.splice(insertIndex, 0, newBand as Band);
         }
       }
     });
@@ -2735,14 +2771,23 @@ const handleBandSelectionChange = (): void => {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 1rem;
+  padding: 0.5rem 1rem;
   background-color: #f5f5f5;
   border-bottom: 1px solid #ddd;
+  height: 60px;
+  flex-shrink: 0;
+}
+
+.designer-header h1 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
 }
 
 .header-actions {
   display: flex;
-  gap: 0.5rem;
+  gap: 6px;
+  align-items: center;
 }
 
 .designer-layout {
@@ -3311,11 +3356,11 @@ const handleBandSelectionChange = (): void => {
 .btn-primary,
 .btn-secondary,
 .btn-danger {
-  padding: 0.5rem 1rem;
+  padding: 0.3rem 0.8rem;
   border: none;
   border-radius: 4px;
   cursor: pointer;
-  font-size: 0.9rem;
+  font-size: 0.85rem;
 }
 
 .btn-primary {
@@ -3546,28 +3591,27 @@ const handleBandSelectionChange = (): void => {
   padding: 15px;
 }
 
-  /* 设置区域样式 */
   .settings-section {
     background-color: #f9f9f9;
-    border-radius: 6px;
-    padding: 12px;
-    border: 1px solid #e8e8e8;
+    border-radius: v-bind('UI_CONSTANTS.BORDER_RADIUS_MEDIUM + "px"');
+    padding: v-bind('UI_CONSTANTS.PANEL_PADDING + "px"');
+    border: v-bind('UI_CONSTANTS.BORDER_THIN + "px"') solid #e8e8e8;
   }
 
   .settings-section h4 {
     margin-top: 0;
-    margin-bottom: 12px;
+    margin-bottom: v-bind('UI_CONSTANTS.MEDIUM_MARGIN + "px"');
     color: #333;
-    font-size: 15px;
+    font-size: v-bind('UI_CONSTANTS.FONT_SIZE_MEDIUM + "px"');
     font-weight: 600;
-    border-bottom: 1px solid #e0e0e0;
-    padding-bottom: 6px;
+    border-bottom: v-bind('UI_CONSTANTS.BORDER_THIN + "px"') solid #e0e0e0;
+    padding-bottom: v-bind('UI_CONSTANTS.SMALL_MARGIN + "px"');
   }
 
   /* 表单行布局 */
   .form-row {
     display: flex;
-    gap: 12px;
+    gap: v-bind('UI_CONSTANTS.MEDIUM_MARGIN + "px"');
     margin-bottom: 0.75rem;
   }
 
@@ -3582,8 +3626,8 @@ const handleBandSelectionChange = (): void => {
 
   .font-settings-row {
     display: flex;
-    gap: 12px;
-    margin-bottom: 12px;
+    gap: v-bind('UI_CONSTANTS.MEDIUM_MARGIN + "px"');
+    margin-bottom: v-bind('UI_CONSTANTS.MEDIUM_MARGIN + "px"');
   }
 
   .font-setting-item {
@@ -3593,25 +3637,25 @@ const handleBandSelectionChange = (): void => {
   .font-setting-item select,
   .font-setting-item input {
     width: 100%;
-    padding: 6px 8px;
-    border: 1px solid #ddd;
-    border-radius: 4px;
-    font-size: 13px;
+    padding: v-bind('UI_CONSTANTS.INPUT_PADDING_SMALL');
+    border: v-bind('UI_CONSTANTS.BORDER_THIN + "px"') solid #ddd;
+    border-radius: v-bind('UI_CONSTANTS.BORDER_RADIUS_SMALL + "px"');
+    font-size: v-bind('UI_CONSTANTS.FONT_SIZE_SMALL + "px"');
   }
 
   .font-style-options {
     display: flex;
-    gap: 15px;
+    gap: v-bind('UI_CONSTANTS.MEDIUM_GAP + "px"');
     flex-wrap: wrap;
   }
 
   .font-style-options label {
     display: flex;
     align-items: center;
-    gap: 5px;
+    gap: v-bind('UI_CONSTANTS.SMALL_GAP + "px"');
     margin-bottom: 0;
     font-weight: normal;
-    font-size: 13px;
+    font-size: v-bind('UI_CONSTANTS.FONT_SIZE_SMALL + "px"');
   }
 
   /* 紧凑Band设置样式 */
@@ -3619,34 +3663,34 @@ const handleBandSelectionChange = (): void => {
     grid-column: span 1;
   }
 
-.font-settings-section {
+  .font-settings-section {
     grid-column: 1 / -1;
-    padding: 12px;
+    padding: v-bind('UI_CONSTANTS.PANEL_PADDING + "px"');
     background-color: #f9f9f9;
-    border-radius: 4px;
-    margin-top: 8px;
+    border-radius: v-bind('UI_CONSTANTS.BORDER_RADIUS_SMALL + "px"');
+    margin-top: v-bind('UI_CONSTANTS.SMALL_MARGIN + "px"');
   }
 
   .font-settings-section h4 {
     margin-top: 0;
-    margin-bottom: 10px;
+    margin-bottom: v-bind('UI_CONSTANTS.MEDIUM_MARGIN + "px"');
     color: #333;
-    font-size: 16px;
+    font-size: v-bind('UI_CONSTANTS.FONT_SIZE_HEADER + "px"');
   }
 
 .checkbox-group {
     display: flex;
-    gap: 15px;
+    gap: v-bind('UI_CONSTANTS.MEDIUM_GAP + "px"');
     flex-wrap: wrap;
   }
 
   .checkbox-group label {
     display: flex;
     align-items: center;
-    gap: 5px;
+    gap: v-bind('UI_CONSTANTS.SMALL_GAP + "px"');
     margin-bottom: 0;
     font-weight: normal;
-    font-size: 14px;
+    font-size: v-bind('UI_CONSTANTS.FONT_SIZE_DEFAULT + "px"');
   }
 
 .jrxml-tab {
@@ -3655,7 +3699,7 @@ const handleBandSelectionChange = (): void => {
 
 .jrxml-container {
   background-color: #f5f5f5;
-  border-radius: 6px;
+  border-radius: v-bind('UI_CONSTANTS.BORDER_RADIUS_SMALL + "px"');
   overflow: hidden;
   display: flex;
   flex-direction: column;
@@ -3668,9 +3712,9 @@ const handleBandSelectionChange = (): void => {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 10px 15px;
+  padding: v-bind('UI_CONSTANTS.SMALL_MARGIN + "px"') v-bind('UI_CONSTANTS.MEDIUM_MARGIN + "px"');
   background-color: #e9e9e9;
-  border-bottom: 1px solid #ddd;
+  border-bottom: v-bind('UI_CONSTANTS.BORDER_THIN + "px"') solid #ddd;
   flex-shrink: 0;
 }
 
@@ -3678,17 +3722,17 @@ const handleBandSelectionChange = (): void => {
   flex: 1;
   overflow: auto;
   min-height: 0;
-  border-radius: 4px;
-  border: 1px solid #ddd;
+  border-radius: v-bind('UI_CONSTANTS.BORDER_RADIUS_SMALL + "px"');
+  border: v-bind('UI_CONSTANTS.BORDER_THIN + "px"') solid #ddd;
 }
 
 .jrxml-pre {
   margin: 0;
-  padding: 15px;
+  padding: v-bind('UI_CONSTANTS.MEDIUM_MARGIN + "px"');
   background-color: #1e1e1e;
   color: #d4d4d4;
   font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
-  font-size: 14px;
+  font-size: v-bind('UI_CONSTANTS.FONT_SIZE_DEFAULT + "px"');
   white-space: pre-wrap;
   word-wrap: break-word;
   min-height: 100%;
@@ -3705,10 +3749,10 @@ const handleBandSelectionChange = (): void => {
 .jrxml-editor {
   width: 100%;
   height: 100%;
-  padding: 16px;
+  padding: v-bind('UI_CONSTANTS.PANEL_PADDING + "px"');
   background-color: #f8f9fa;
   font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
-  font-size: 13px;
+  font-size: v-bind('UI_CONSTANTS.FONT_SIZE_SMALL + "px"');
   line-height: 1.5;
   white-space: pre-wrap;
   word-wrap: break-word;
@@ -3722,7 +3766,7 @@ const handleBandSelectionChange = (): void => {
   text-shadow: 0 1px 0 rgba(255,255,255,.8);
   /* 增加行号效果的背景 */
   background-image: linear-gradient(transparent 19px, #eee 19px, #eee 20px, transparent 20px);
-  background-size: 100% 20px;
+  background-size: 100% v-bind('UI_CONSTANTS.LINE_HEIGHT_PX + "px"');
   background-position: 0 1em;
 }
 
@@ -3733,11 +3777,11 @@ const handleBandSelectionChange = (): void => {
 
 .jrxml-actions {
   display: flex;
-  gap: 8px;
+  gap: v-bind('UI_CONSTANTS.SMALL_GAP + "px"');
 }
 
 .jrxml-placeholder {
-  padding: 40px 20px;
+  padding: v-bind('UI_CONSTANTS.LARGE_MARGIN + "px"') v-bind('UI_CONSTANTS.MEDIUM_MARGIN + "px"');
   text-align: center;
   color: #999;
   height: 100%;
@@ -3748,23 +3792,23 @@ const handleBandSelectionChange = (): void => {
 
 /* 元素标签页样式 */
 .element-tabs {
-  border: 1px solid #ddd;
-  border-radius: 4px;
+  border: v-bind('UI_CONSTANTS.BORDER_THIN + "px"') solid #ddd;
+  border-radius: v-bind('UI_CONSTANTS.BORDER_RADIUS_SMALL + "px"');
   overflow: hidden;
 }
 
 .element-tab-navigation {
   display: flex;
   background-color: #f5f5f5;
-  border-bottom: 1px solid #ddd;
+  border-bottom: v-bind('UI_CONSTANTS.BORDER_THIN + "px"') solid #ddd;
 }
 
 .element-tab-button {
-  padding: 8px 16px;
+  padding: v-bind('UI_CONSTANTS.SMALL_MARGIN + "px"') v-bind('UI_CONSTANTS.MEDIUM_MARGIN + "px"');
   border: none;
   background: none;
   cursor: pointer;
-  font-size: 14px;
+  font-size: v-bind('UI_CONSTANTS.FONT_SIZE_DEFAULT + "px"');
   color: #666;
   transition: all 0.2s;
 }
@@ -3777,42 +3821,42 @@ const handleBandSelectionChange = (): void => {
 .element-tab-button.active {
   background-color: #fff;
   color: #1890ff;
-  border-bottom: 2px solid #1890ff;
+  border-bottom: v-bind('UI_CONSTANTS.BORDER_MEDIUM + "px"') solid #1890ff;
 }
 
 .element-tab-content {
-  padding: 16px;
-  min-height: 200px;
+  padding: v-bind('UI_CONSTANTS.PANEL_PADDING + "px"');
+  min-height: v-bind('(UI_CONSTANTS.LARGE_MARGIN * 5) + "px"');
   overflow: auto;
 }
 
 /* 左侧数据字段区域样式 */
 .data-fields-section {
-  margin-top: 20px;
-  padding-top: 15px;
-  border-top: 1px solid #e0e0e0;
+  margin-top: v-bind('UI_CONSTANTS.MEDIUM_MARGIN + "px"');
+  padding-top: v-bind('UI_CONSTANTS.MEDIUM_MARGIN + "px"');
+  border-top: v-bind('UI_CONSTANTS.BORDER_THIN + "px"') solid #e0e0e0;
 }
 
 .data-fields-section h4 {
-  font-size: 14px;
-  margin-bottom: 10px;
+  font-size: v-bind('UI_CONSTANTS.FONT_SIZE_DEFAULT + "px"');
+  margin-bottom: v-bind('UI_CONSTANTS.MEDIUM_MARGIN + "px"');
   color: #666;
 }
 
 .fields-mini-view {
-  max-height: 200px;
+  max-height: v-bind('(UI_CONSTANTS.LARGE_MARGIN * 5) + "px"');
   overflow-y: auto;
-  font-size: 12px;
+  font-size: v-bind('UI_CONSTANTS.FONT_SIZE_TINY + "px"');
 }
 
 .field-mini-item {
-  padding: 4px 8px;
-  margin-bottom: 4px;
+  padding: v-bind('UI_CONSTANTS.SMALL_MARGIN + "px"') v-bind('UI_CONSTANTS.MEDIUM_MARGIN + "px"');
+  margin-bottom: v-bind('UI_CONSTANTS.SMALL_MARGIN + "px"');
   background-color: #f5f5f5;
-  border-radius: 3px;
+  border-radius: v-bind('UI_CONSTANTS.BORDER_RADIUS_SMALL + "px"');
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: v-bind('UI_CONSTANTS.SMALL_GAP + "px"');
 }
 
 .field-name {
@@ -3822,14 +3866,14 @@ const handleBandSelectionChange = (): void => {
 
 .field-type {
   color: #666;
-  font-size: 11px;
+  font-size: v-bind('UI_CONSTANTS.FONT_SIZE_MINI + "px"');
 }
 
 /* Box设置相关样式 */
 .box-section {
-  margin-bottom: 20px;
-  padding-bottom: 15px;
-  border-bottom: 1px solid #eee;
+  margin-bottom: v-bind('UI_CONSTANTS.MEDIUM_MARGIN + "px"');
+  padding-bottom: v-bind('UI_CONSTANTS.MEDIUM_MARGIN + "px"');
+  border-bottom: v-bind('UI_CONSTANTS.BORDER_THIN + "px"') solid #eee;
 }
 
 .box-section:last-child {
@@ -3838,8 +3882,8 @@ const handleBandSelectionChange = (): void => {
 
 .box-section h5 {
   margin-top: 0;
-  margin-bottom: 10px;
-  font-size: 14px;
+  margin-bottom: v-bind('UI_CONSTANTS.MEDIUM_MARGIN + "px"');
+  font-size: v-bind('UI_CONSTANTS.FONT_SIZE_DEFAULT + "px"');
   color: #333;
   font-weight: 600;
 }
@@ -3847,13 +3891,13 @@ const handleBandSelectionChange = (): void => {
 .border-side-group {
   display: flex;
   align-items: center;
-  margin-bottom: 10px;
-  gap: 10px;
+  margin-bottom: v-bind('UI_CONSTANTS.MEDIUM_MARGIN + "px"');
+  gap: v-bind('UI_CONSTANTS.MEDIUM_MARGIN + "px"');
 }
 
 .side-label {
-  min-width: 40px;
-  font-size: 14px;
+  min-width: v-bind('(UI_CONSTANTS.MEDIUM_MARGIN * 2) + "px"');
+  font-size: v-bind('UI_CONSTANTS.FONT_SIZE_DEFAULT + "px"');
 }
 
 .side-control {
@@ -3862,32 +3906,32 @@ const handleBandSelectionChange = (): void => {
 }
 
 .color-control {
-  width: 50px;
-  height: 32px;
-  padding: 2px;
-  border: 1px solid #d9d9d9;
-  border-radius: 4px;
+  width: v-bind('(UI_CONSTANTS.MEDIUM_MARGIN * 2.5) + "px"');
+  height: v-bind('(UI_CONSTANTS.MEDIUM_MARGIN * 2) + "px"');
+  padding: v-bind('UI_CONSTANTS.SMALL_GAP + "px"');
+  border: v-bind('UI_CONSTANTS.BORDER_THIN + "px"') solid #d9d9d9;
+  border-radius: v-bind('UI_CONSTANTS.BORDER_RADIUS_SMALL + "px"');
   cursor: pointer;
 }
 
 .init-box-section {
-  padding: 20px;
+  padding: v-bind('UI_CONSTANTS.MEDIUM_MARGIN + "px"');
   text-align: center;
   background-color: #f9f9f9;
-  border-radius: 4px;
+  border-radius: v-bind('UI_CONSTANTS.BORDER_RADIUS_SMALL + "px"');
 }
 
 .padding-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 10px;
+  gap: v-bind('UI_CONSTANTS.MEDIUM_MARGIN + "px"');
 }
 
 /* 按钮样式 */
 .btn-small {
-  padding: 4px 12px;
+  padding: 3px 8px;
   font-size: 12px;
-  border-radius: 4px;
+  border-radius: v-bind('UI_CONSTANTS.BORDER_RADIUS_SMALL + "px"');
   cursor: pointer;
   transition: all 0.2s;
 }
@@ -3895,7 +3939,9 @@ const handleBandSelectionChange = (): void => {
 .btn-secondary {
   background-color: #f0f0f0;
   color: #666;
-  border: 1px solid #d9d9d9;
+  border: v-bind('UI_CONSTANTS.BORDER_THIN + "px"') solid #d9d9d9;
+  padding: 4px 8px;
+  font-size: 12px;
 }
 
 .btn-secondary:hover {
@@ -3906,7 +3952,9 @@ const handleBandSelectionChange = (): void => {
 .btn-primary {
   background-color: #1890ff;
   color: white;
-  border: 1px solid #1890ff;
+  border: v-bind('UI_CONSTANTS.BORDER_THIN + "px"') solid #1890ff;
+  padding: 4px 8px;
+  font-size: 12px;
 }
 
 .btn-primary:hover {
@@ -3917,7 +3965,7 @@ const handleBandSelectionChange = (): void => {
 .btn-danger {
   background-color: #ff4d4f;
   color: white;
-  border: 1px solid #ff4d4f;
+  border: v-bind('UI_CONSTANTS.BORDER_THIN + "px"') solid #ff4d4f;
 }
 
 .btn-danger:hover {
@@ -3929,20 +3977,20 @@ const handleBandSelectionChange = (): void => {
 .zoom-controls {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  margin-right: 1rem;
+  gap: 4px;
+  margin-right: 8px;
 }
 
 /* 缩放按钮样式 */
 .btn-zoom {
-  padding: 0.5rem 0.75rem;
-  border: 1px solid #d9d9d9;
-  border-radius: 4px;
+  padding: 3px 6px;
+  border: v-bind('UI_CONSTANTS.BORDER_THIN + "px"') solid #d9d9d9;
+  border-radius: v-bind('UI_CONSTANTS.BORDER_RADIUS_SMALL + "px"');
   cursor: pointer;
-  font-size: 0.9rem;
+  font-size: 12px;
   background-color: #f0f0f0;
   color: #666;
-  min-width: 36px;
+  min-width: 24px;
   font-weight: bold;
   transition: all 0.2s;
 }
@@ -3954,34 +4002,34 @@ const handleBandSelectionChange = (): void => {
 
 /* 缩放选择框样式 */
 .zoom-select {
-  padding: 0.5rem;
-  border: 1px solid #d9d9d9;
-  border-radius: 4px;
+  padding: 3px 6px;
+  border: v-bind('UI_CONSTANTS.BORDER_THIN + "px"') solid #d9d9d9;
+  border-radius: v-bind('UI_CONSTANTS.BORDER_RADIUS_SMALL + "px"');
   background-color: white;
-  font-size: 0.9rem;
+  font-size: 12px;
 }
 
 .element-actions {
-  margin-top: 16px;
+  margin-top: v-bind('UI_CONSTANTS.MEDIUM_MARGIN + "px"');
   text-align: right;
 }
 
 /* 对齐控制样式 */
 .alignment-controls {
   display: flex;
-  gap: 8px;
-  margin-top: 8px;
+  gap: v-bind('UI_CONSTANTS.SMALL_MARGIN + "px"');
+  margin-top: v-bind('UI_CONSTANTS.SMALL_MARGIN + "px"');
 }
 
 .align-button {
   flex: 1;
-  padding: 6px 12px;
-  border: 1px solid #d9d9d9;
+  padding: v-bind('(UI_CONSTANTS.SMALL_MARGIN + 2) + "px"') v-bind('UI_CONSTANTS.MEDIUM_MARGIN + "px"');
+  border: v-bind('UI_CONSTANTS.BORDER_THIN + "px"') solid #d9d9d9;
   background: #fff;
   cursor: pointer;
-  border-radius: 4px;
+  border-radius: v-bind('UI_CONSTANTS.BORDER_RADIUS_SMALL + "px"');
   transition: all 0.2s;
-  font-size: 12px;
+  font-size: v-bind('UI_CONSTANTS.FONT_SIZE_TINY + "px"');
 }
 
 .align-button:hover {
@@ -4010,8 +4058,8 @@ const handleBandSelectionChange = (): void => {
 .jrxml-header {
   display: flex;
   justify-content: flex-end;
-  padding: 10px 16px;
-  border-bottom: 1px solid #eee;
+  padding: v-bind('(UI_CONSTANTS.SMALL_MARGIN + 2) + "px"') v-bind('UI_CONSTANTS.MEDIUM_MARGIN + "px"');
+  border-bottom: v-bind('UI_CONSTANTS.BORDER_THIN + "px"') solid #eee;
 }
 
 .jrxml-content {
@@ -4029,7 +4077,7 @@ const handleBandSelectionChange = (): void => {
   align-items: center;
   justify-content: center;
   color: #999;
-  font-size: 14px;
+  font-size: v-bind('UI_CONSTANTS.FONT_SIZE_DEFAULT + "px"');
   background-color: #fafafa;
 }
 
@@ -4037,14 +4085,14 @@ const handleBandSelectionChange = (): void => {
 .selection-box {
   position: absolute;
   background-color: rgba(24, 144, 255, 0.2);
-  border: 1px solid #1890ff;
+  border: v-bind('UI_CONSTANTS.BORDER_THIN + "px"') solid #1890ff;
   pointer-events: none;
   z-index: 1000;
 }
 
 /* 选中元素高亮样式 */
 .design-element.selected {
-  box-shadow: 0 0 0 2px #1890ff;
+  box-shadow: 0 0 0 v-bind('UI_CONSTANTS.BORDER_MEDIUM + "px"') #1890ff;
   position: relative;
 }
 
@@ -4055,13 +4103,13 @@ const handleBandSelectionChange = (): void => {
 
 @keyframes pulse {
   0% {
-    box-shadow: 0 0 0 2px #1890ff;
+    box-shadow: 0 0 0 v-bind('UI_CONSTANTS.BORDER_MEDIUM + "px"') #1890ff;
   }
   50% {
-    box-shadow: 0 0 0 4px rgba(24, 144, 255, 0.5);
+    box-shadow: 0 0 0 v-bind('UI_CONSTANTS.BORDER_THICK + "px"') rgba(24, 144, 255, 0.5);
   }
   100% {
-    box-shadow: 0 0 0 2px #1890ff;
+    box-shadow: 0 0 0 v-bind('UI_CONSTANTS.BORDER_MEDIUM + "px"') #1890ff;
   }
 }
 
@@ -4082,11 +4130,11 @@ const handleBandSelectionChange = (): void => {
   background-image: repeating-linear-gradient(
     45deg,
     transparent,
-    transparent 10px,
-    rgba(200, 200, 200, 0.2) 10px,
-    rgba(200, 200, 200, 0.2) 20px
+    transparent v-bind('UI_CONSTANTS.MEDIUM_MARGIN + "px"'),
+    rgba(200, 200, 200, 0.2) v-bind('UI_CONSTANTS.MEDIUM_MARGIN + "px"'),
+    rgba(200, 200, 200, 0.2) v-bind('(UI_CONSTANTS.MEDIUM_MARGIN * 2) + "px"')
   );
-  background-size: 20px 20px;
+  background-size: v-bind('(UI_CONSTANTS.MEDIUM_MARGIN * 2) + "px"') v-bind('(UI_CONSTANTS.MEDIUM_MARGIN * 2) + "px"');
 }
 
 /* 坐标显示样式 */
@@ -4094,12 +4142,20 @@ const handleBandSelectionChange = (): void => {
   position: absolute;
   background-color: rgba(0, 0, 0, 0.8);
   color: white;
-  padding: 4px 8px;
-  border-radius: 4px;
-  font-size: 12px;
+  padding: v-bind('UI_CONSTANTS.SMALL_MARGIN + "px"') v-bind('UI_CONSTANTS.MEDIUM_MARGIN + "px"');
+  border-radius: v-bind('UI_CONSTANTS.BORDER_RADIUS_SMALL + "px"');
+  font-size: v-bind('UI_CONSTANTS.FONT_SIZE_TINY + "px"');
   pointer-events: none;
   z-index: 1000;
   white-space: nowrap;
+}
+
+/* 字体提示样式 */
+.font-hint {
+  display: block;
+  margin-top: v-bind('UI_CONSTANTS.SMALL_MARGIN + "px"');
+  font-size: v-bind('UI_CONSTANTS.FONT_SIZE_TINY + "px"');
+  color: #666;
 }
 
 </style>
