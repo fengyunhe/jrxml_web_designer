@@ -2123,6 +2123,34 @@ onMounted(() => {
     });
   }
   
+  // 添加报表区域滚动事件监听，用于同步标尺滚动
+  const handleScroll = (event: Event) => {
+    const scrollElement = event.target as HTMLElement;
+    if (scrollElement.classList.contains('paper-container')) {
+      const scrollLeft = scrollElement.scrollLeft;
+      const scrollTop = scrollElement.scrollTop;
+      
+      // 同步水平标尺滚动
+      const horizontalRuler = document.querySelector('.horizontal-ruler');
+      if (horizontalRuler) {
+        horizontalRuler.scrollLeft = scrollLeft;
+      }
+      
+      // 同步垂直标尺滚动
+      const verticalRuler = document.querySelector('.vertical-ruler');
+      if (verticalRuler) {
+        verticalRuler.scrollTop = scrollTop;
+      }
+    }
+  };
+  
+  // 为paper-container添加滚动事件监听
+  const paperContainer = document.querySelector('.paper-container');
+  if (paperContainer) {
+    paperContainer.addEventListener('scroll', handleScroll);
+    (window as any).pdfDesignerScrollListener = handleScroll;
+  }
+  
   // 为底部面板和右侧属性面板添加点击事件以移除设计区域焦点
   const bottomPanel = document.querySelector('.bottom-panel');
   if (bottomPanel) {
@@ -2167,6 +2195,13 @@ onUnmounted(() => {
   const paperElement = document.querySelector('.paper');
   if (handlePaperClick && paperElement) {
     paperElement.removeEventListener('click', handlePaperClick);
+  }
+  
+  // 移除滚动事件监听器
+  const scrollListener = (window as any).pdfDesignerScrollListener;
+  const paperContainer = document.querySelector('.paper-container');
+  if (scrollListener && paperContainer) {
+    paperContainer.removeEventListener('scroll', scrollListener);
   }
   
   // 移除面板点击事件监听器
@@ -2908,7 +2943,8 @@ const handleBandSelectionChange = (): void => {
   border: 1px solid #ddd;
   border-bottom: none;
   position: relative;
-  overflow: hidden;
+  overflow-x: auto; /* 允许水平滚动 */
+  overflow-y: hidden; /* 禁止垂直滚动 */
   width: 100%; /* 确保占满剩余宽度 */
   min-width: 0; /* 允许flex子项收缩 */
 }
@@ -2959,7 +2995,8 @@ const handleBandSelectionChange = (): void => {
   border: 1px solid #ddd;
   border-right: none;
   position: relative;
-  overflow: hidden;
+  overflow-x: hidden; /* 禁止水平滚动 */
+  overflow-y: auto; /* 允许垂直滚动 */
   height: 100%; /* 确保占满整个高度 */
   min-height: 0; /* 允许flex子项收缩 */
 }
