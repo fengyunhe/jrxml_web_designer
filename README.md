@@ -19,3 +19,21 @@ https://fengyunhe.github.io/jrxml_web_designer/
 本项目采用MIT许可证 - 详情请查看 [LICENSE](LICENSE) 文件，生成的 jrxml 文件的版权归您所有，您可以自由使用、修改、分发和商业使用。
 
 JasperReport 版权归 [Jaspersoft 公司](https://www.jaspersoft.com/) 所有。
+
+## 变更记录
+
+本项目遵循 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) 规范维护变更记录。
+
+### 查看变更历史
+请查看 [CHANGELOG.md](CHANGELOG.md) 文件获取详细的版本变更历史。
+
+### 更新变更记录
+在进行代码更新后，可以使用以下命令快速添加新的变更记录条目：
+
+```bash
+pnpm run update-changelog
+```
+
+然后手动编辑 CHANGELOG.md 文件，添加具体的变更内容，并根据变更类型选择合适的分类（Added/Changed/Deprecated/Removed/Fixed/Security）。
+
+发布新版本时，将 Unreleased 部分的内容移动到新的版本章节中，并更新日期。

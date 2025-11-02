@@ -7,7 +7,8 @@
   "scripts": {
     "dev": "vite",
     "build": "vue-tsc -b && vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "update-changelog": "echo '## [Unreleased]\n\n### Added\n- ' >> CHANGELOG.md && echo '请手动编辑CHANGELOG.md文件添加具体变更内容'"
   },
   "dependencies": {
     "vue": "^3.5.22",

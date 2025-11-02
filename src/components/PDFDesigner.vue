@@ -103,17 +103,6 @@
           >
             <div class="band-header">
               <span>{{ band.type }}</span>
-              <div class="band-actions">
-              <input 
-                v-model.number="band.height" 
-                type="number" 
-                class="band-height-input"
-                min="20"
-                @change="updateBandHeight(bandIndex)"
-                @blur="updateBandHeight(bandIndex)"
-              />
-
-            </div>
             </div>
             <div class="band-content">
               <ElementFactory
@@ -529,51 +518,59 @@
       
       <!-- 页面设置标签 -->
       <div class="tab-content page-settings-tab" v-show="activeTab === 'pageSettings'">
-        <h3 style="margin-top: 0; margin-bottom: 12px; font-size: 18px;">页面设置</h3>
         <div class="settings-grid">
-          <div class="form-group">
-            <label>报表名称</label>
-            <input v-model="reportProperties.name" type="text" />
-          </div>
-          <div class="form-group">
-            <label>页面宽度</label>
-            <input v-model.number="reportProperties.pageWidth" type="number" />
-          </div>
-          <div class="form-group">
-            <label>页面高度</label>
-            <input v-model.number="reportProperties.pageHeight" type="number" />
-          </div>
-          <div class="form-group">
-            <label>左/右/上/下边距</label>
-            <div class="margin-inputs">
-              <input v-model.number="reportProperties.leftMargin" type="number" placeholder="左" />
-              <input v-model.number="reportProperties.rightMargin" type="number" placeholder="右" />
-              <input v-model.number="reportProperties.topMargin" type="number" placeholder="上" />
-              <input v-model.number="reportProperties.bottomMargin" type="number" placeholder="下" />
+          <div class="settings-section">
+            <h4>基本信息</h4>
+            <div class="form-group">
+              <label>报表名称</label>
+              <input v-model="reportProperties.name" type="text" />
+            </div>
+            <div class="form-row">
+              <div class="form-group flex-1">
+                <label>页面宽度</label>
+                <input v-model.number="reportProperties.pageWidth" type="number" />
+              </div>
+              <div class="form-group flex-1">
+                <label>页面高度</label>
+                <input v-model.number="reportProperties.pageHeight" type="number" />
+              </div>
             </div>
           </div>
           
+          <div class="settings-section">
+            <h4>页边距设置</h4>
+            <div class="form-group">
+              <label>页边距 (px)</label>
+              <div class="margin-inputs">
+                <input v-model.number="reportProperties.leftMargin" type="number" placeholder="左" />
+                <input v-model.number="reportProperties.rightMargin" type="number" placeholder="右" />
+                <input v-model.number="reportProperties.topMargin" type="number" placeholder="上" />
+                <input v-model.number="reportProperties.bottomMargin" type="number" placeholder="下" />
+              </div>
+            </div>
+          </div>
 
-          <!-- 字体设置 -->
-          <div class="font-settings-section">
+          <!-- 字体设置 - 紧凑布局 -->
+          <div class="settings-section font-settings-compact">
             <h4>默认字体设置</h4>
-            <div class="form-group">
-              <label>字体名称</label>
-              <select v-model="reportProperties.defaultFont.name" style="appearance: none; -webkit-appearance: none;">
-                <option value="SansSerif">SansSerif</option>
-                <option value="Serif">Serif</option>
-                <option value="Monospaced">Monospaced</option>
-                <option value="Arial">Arial</option>
-                <option value="Times New Roman">Times New Roman</option>
-                <option value="Noto Serif SC">Noto Serif SC</option>
-              </select>
-              <small style="display: block; margin-top: 4px; font-size: 12px; color: #666;">提示：可以直接在下拉框中输入字体名称</small>
+            <div class="font-settings-row">
+              <div class="font-setting-item">
+                <label>字体名称</label>
+                <select v-model="reportProperties.defaultFont.name">
+                  <option value="SansSerif">SansSerif</option>
+                  <option value="Serif">Serif</option>
+                  <option value="Monospaced">Monospaced</option>
+                  <option value="Arial">Arial</option>
+                  <option value="Times New Roman">Times New Roman</option>
+                  <option value="Noto Serif SC">Noto Serif SC</option>
+                </select>
+              </div>
+              <div class="font-setting-item">
+                <label>字体大小</label>
+                <input v-model.number="reportProperties.defaultFont.size" type="number" />
+              </div>
             </div>
-            <div class="form-group">
-              <label>字体大小</label>
-              <input v-model.number="reportProperties.defaultFont.size" type="number" />
-            </div>
-            <div class="checkbox-group">
+            <div class="font-style-options">
               <label>
                 <input v-model="reportProperties.defaultFont.isBold" type="checkbox" />
                 粗体
@@ -588,6 +585,48 @@
               </label>
             </div>
           </div>
+
+          <!-- Band高度设置 -->
+          <div class="settings-section band-settings-compact">
+            <h4>Band高度设置</h4>
+            <div class="band-heights-grid">
+              <div v-for="(band, index) in bands" :key="index" class="band-height-item">
+                <label>{{ getBandDisplayName(band.type) }}</label>
+                <div class="band-height-control">
+                  <input 
+                    v-model.number="band.height" 
+                    type="number" 
+                    min="0"
+                    class="band-height-input"
+                    @change="updateBandHeight(index)"
+                    @blur="updateBandHeight(index)"
+                  />
+                  <span class="band-height-unit">px</span>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Band选择 -->
+          <div class="settings-section band-selection-section">
+            <h4>Band选择</h4>
+            <div class="band-selection-grid">
+              <div v-for="bandType in allBandTypes" :key="bandType.type" class="band-selection-item">
+                <label>
+                  <input 
+                    type="checkbox" 
+                    :value="bandType.type"
+                    v-model="selectedBandTypes"
+                    @change="handleBandSelectionChange"
+                  />
+                  {{ bandType.name }}
+                </label>
+              </div>
+            </div>
+            <div class="band-selection-note">
+              <small>勾选的band将自动添加到报表中，取消勾选的band将从报表中移除</small>
+            </div>
+          </div>
         </div>
       </div>
       
@@ -595,7 +634,6 @@
       <div class="tab-content jrxml-tab" v-show="activeTab === 'jrxml'">
         <div class="jrxml-container">
           <div class="jrxml-header">
-            <h3>JRXML内容（可编辑）</h3>
             <div class="jrxml-actions">
               <button @click="copyJRXML" class="btn-secondary btn-small">复制</button>
               <button @click="saveJRXML" class="btn-primary btn-small">应用</button>
@@ -680,7 +718,7 @@
 
 <script setup lang="ts">
 import ElementFactory from './elements/ElementFactory.vue';
-import type { DesignElement, Band, ReportField, ReportParameter } from '../types';
+import type { DesignElement, Band, ReportField, ReportParameter, BandType } from '../types';
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue';
 
 // 确保浏览器环境中DOMParser可用
@@ -779,6 +817,23 @@ const bands = ref<Band[]>([
   { type: 'pageFooter', height: 40, elements: [] },
   { type: 'summary', height: 60, elements: [] }
 ]);
+
+// 所有可能的band类型
+const allBandTypes = [
+  { type: 'title', name: '标题', defaultHeight: 80 },
+  { type: 'pageHeader', name: '页眉', defaultHeight: 50 },
+  { type: 'columnHeader', name: '列标题', defaultHeight: 30 },
+  { type: 'detail', name: '详细数据', defaultHeight: 100 },
+  { type: 'columnFooter', name: '列脚', defaultHeight: 30 },
+  { type: 'pageFooter', name: '页脚', defaultHeight: 40 },
+  { type: 'summary', name: '汇总', defaultHeight: 60 },
+  { type: 'background', name: '背景', defaultHeight: 0 },
+  { type: 'lastPageFooter', name: '末页页脚', defaultHeight: 40 },
+  { type: 'noData', name: '无数据', defaultHeight: 50 }
+];
+
+// 当前选中的band类型
+const selectedBandTypes = ref<string[]>(bands.value.map(band => band.type));
 
 // 数据字段
 const reportFields = ref<ReportField[]>([
@@ -1247,24 +1302,7 @@ const startDragging = (event: MouseEvent, bandIndex: number, elementIndex: numbe
 
 // 移除未使用的getBorderStyle函数
 
-// 更新区域高度
-const updateBandHeight = (bandIndex: number) => {
-  const band = bands.value[bandIndex];
-  if (band) {
-    // 确保高度不小于最小值
-    band.height = Math.max(20, band.height);
-    
-    // 调整该区域内元素的位置，确保元素不会超出区域边界
-    if (band.elements) {
-      band.elements.forEach(element => {
-        if (element.y + element.height > band.height) {
-          element.y = band.height - element.height;
-          if (element.y < 0) element.y = 0;
-        }
-      });
-    }
-  }
-};
+// 移除重复的updateBandHeight函数定义，使用下面的新版本
 
 // 添加字段
 // 移除未使用的字段管理函数
@@ -1575,148 +1613,154 @@ const processPastedElement = (elementData: any) => {
   console.log('元素已粘贴:', newElement);
 };
 
+// 在组件顶层定义handleKeyDown函数
+const handleKeyDown = (event: KeyboardEvent) => {
+  // 获取当前活动元素，用于判断焦点状态
+  const activeEl = document.activeElement;
+  const isInputFocused = activeEl && (activeEl.tagName === 'INPUT' || activeEl.tagName === 'TEXTAREA' || activeEl.tagName === 'SELECT');
+  const isTextareaFocused = activeEl && activeEl.tagName === 'TEXTAREA';
+  
+  // CTRL+B 快捷键切换底部面板显示状态
+  if (event.ctrlKey && event.key === 'b') {
+    event.preventDefault();
+    toggleBottomPanel();
+    return;
+  }
+  
+  // CTRL+Z 撤销操作
+  if (event.ctrlKey && event.key === 'z') {
+    event.preventDefault();
+    undo();
+    return;
+  }
+  
+  // CTRL+Y 重做操作
+  if (event.ctrlKey && event.key === 'y') {
+    event.preventDefault();
+    redo();
+    return;
+  }
+  
+  // CTRL+C 复制元素（只有在选中元素时才执行复制功能）
+  if (event.ctrlKey && event.key === 'c' && selectedElement.value) {
+    event.preventDefault();
+    copyElement();
+    return;
+  }
+  
+  // CTRL+V 粘贴元素（只要设计区域有焦点且不在textarea中时才执行自定义粘贴功能）
+  if (event.ctrlKey && event.key === 'v' && isDesignAreaFocused.value && !isTextareaFocused) {
+    event.preventDefault();
+    pasteElement();
+    return;
+  }
+  
+  // Del键删除选中的组件（仅在非编辑模式下且没有输入框处于焦点状态时）
+  if ((event.key === 'Delete' || event.key === 'Backspace') && selectedElement.value && !editingElement.value && !isInputFocused) {
+    event.preventDefault();
+    deleteElement();
+    return;
+  }
+  
+  // 方向键选择周围组件
+  if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(event.key)) {
+    event.preventDefault();
+    navigateElements(event.key);
+    return;
+  }
+};
+
+// 键盘导航选择周围组件
+const navigateElements = (direction: string) => {
+  if (!selectedElement.value) return;
+  
+  const { bandIndex: currentBandIndex, elementIndex: currentElementIndex } = selectedElement.value;
+  const currentBand = bands.value[currentBandIndex];
+  const currentElement = currentBand?.elements[currentElementIndex];
+  
+  if (!currentBand || !currentElement) return;
+  
+  let nearestElement: { bandIndex: number; elementIndex: number; distance: number } | null = null;
+  let currentBandY = 0;
+  
+  // 计算当前元素的绝对位置
+  const currentX = currentElement.x;
+  const currentY = currentBandY + currentElement.y;
+  
+  // 遍历所有元素，找到最近的符合方向条件的元素
+  bands.value.forEach((band, bandIdx) => {
+    // 累计带的Y坐标
+    const bandOffsetY = currentBandY;
+    currentBandY += band.height;
+    
+    band.elements.forEach((element, elementIdx) => {
+      // 跳过当前选中的元素
+      if (bandIdx === currentBandIndex && elementIdx === currentElementIndex) return;
+      
+      // 计算元素的绝对位置
+      const elementX = element.x;
+      const elementY = bandOffsetY + element.y;
+      
+      // 根据方向计算是否符合条件
+      let isValidDirection = false;
+      
+      switch (direction) {
+        case 'ArrowUp':
+          isValidDirection = elementY < currentY;
+          break;
+        case 'ArrowDown':
+          isValidDirection = elementY > currentY;
+          break;
+        case 'ArrowLeft':
+          isValidDirection = elementX < currentX;
+          break;
+        case 'ArrowRight':
+          isValidDirection = elementX > currentX;
+          break;
+      }
+      
+      if (isValidDirection) {
+        // 计算距离
+        let distance = 0;
+        switch (direction) {
+          case 'ArrowUp':
+          case 'ArrowDown':
+            distance = Math.abs(elementY - currentY) + Math.abs(elementX - currentX) * 0.1; // Y方向为主，X方向为辅
+            break;
+          case 'ArrowLeft':
+          case 'ArrowRight':
+            distance = Math.abs(elementX - currentX) + Math.abs(elementY - currentY) * 0.1; // X方向为主，Y方向为辅
+            break;
+        }
+        
+        // 更新最近的元素
+        if (!nearestElement || distance < nearestElement.distance) {
+          nearestElement = { bandIndex: bandIdx, elementIndex: elementIdx, distance };
+        }
+      }
+    });
+  });
+  
+  // 选择最近的元素
+  if (nearestElement) {
+    // 使用类型断言确保属性访问有效
+    const element = nearestElement as { bandIndex: number; elementIndex: number };
+    selectElement(element.bandIndex, element.elementIndex);
+  }
+};
+
+// 处理报表区域的点击事件，取消选中状态
+const handlePaperClick = () => {
+  // 只有在没有其他元素被点击的情况下才取消选中
+  selectedElement.value = null;
+  selectedBandIndex.value = null;
+};
+
 // 组件挂载时加载数据
 onMounted(() => {
   loadFromLocalStorage();
   // 初始加载后更新JRXML
   updateJRXML();
-  
-  // 添加键盘事件监听器
-  const handleKeyDown = (event: KeyboardEvent) => {
-      // CTRL+B 快捷键切换底部面板显示状态
-      if (event.ctrlKey && event.key === 'b') {
-        event.preventDefault();
-        toggleBottomPanel();
-      }
-      
-      // CTRL+Z 撤销操作
-      if (event.ctrlKey && event.key === 'z') {
-        event.preventDefault();
-        undo();
-      }
-      
-      // CTRL+Y 重做操作
-      if (event.ctrlKey && event.key === 'y') {
-        event.preventDefault();
-        redo();
-      }
-      
-      // CTRL+C 复制元素（只有在选中元素时才执行复制功能）
-      if (event.ctrlKey && event.key === 'c' && selectedElement.value) {
-        event.preventDefault();
-        copyElement();
-      }
-      
-      // CTRL+V 粘贴元素（只要设计区域有焦点就执行自定义粘贴功能）
-      if (event.ctrlKey && event.key === 'v' && isDesignAreaFocused.value) {
-        event.preventDefault();
-        pasteElement();
-      }
-    
-    // Del键删除选中的组件（仅在非编辑模式下且没有输入框处于焦点状态时）
-  const activeElement = document.activeElement;
-  const isInputFocused = activeElement && (activeElement.tagName === 'INPUT' || activeElement.tagName === 'TEXTAREA' || activeElement.tagName === 'SELECT');
-  if ((event.key === 'Delete' || event.key === 'Backspace') && selectedElement.value && !editingElement.value && !isInputFocused) {
-    event.preventDefault();
-    deleteElement();
-    }
-    
-    // 方向键选择周围组件
-    if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(event.key)) {
-      event.preventDefault();
-      navigateElements(event.key);
-    }
-  };
-  
-  // 键盘导航选择周围组件
-  const navigateElements = (direction: string) => {
-    if (!selectedElement.value) return;
-    
-    const { bandIndex: currentBandIndex, elementIndex: currentElementIndex } = selectedElement.value;
-    const currentBand = bands.value[currentBandIndex];
-    const currentElement = currentBand?.elements[currentElementIndex];
-    
-    if (!currentBand || !currentElement) return;
-    
-    let nearestElement: { bandIndex: number; elementIndex: number; distance: number } | null = null;
-    let currentBandY = 0;
-    
-    // 计算当前元素的绝对位置
-    const currentX = currentElement.x;
-    const currentY = currentBandY + currentElement.y;
-    
-    // 遍历所有元素，找到最近的符合方向条件的元素
-    bands.value.forEach((band, bandIdx) => {
-      // 累计带的Y坐标
-      const bandOffsetY = currentBandY;
-      currentBandY += band.height;
-      
-      band.elements.forEach((element, elementIdx) => {
-        // 跳过当前选中的元素
-        if (bandIdx === currentBandIndex && elementIdx === currentElementIndex) return;
-        
-        // 计算元素的绝对位置
-        const elementX = element.x;
-        const elementY = bandOffsetY + element.y;
-        
-        // 根据方向计算是否符合条件
-        let isValidDirection = false;
-        
-        switch (direction) {
-          case 'ArrowUp':
-            isValidDirection = elementY < currentY;
-            break;
-          case 'ArrowDown':
-            isValidDirection = elementY > currentY;
-            break;
-          case 'ArrowLeft':
-            isValidDirection = elementX < currentX;
-            break;
-          case 'ArrowRight':
-            isValidDirection = elementX > currentX;
-            break;
-        }
-        
-        if (isValidDirection) {
-          // 计算距离
-          let distance = 0;
-          switch (direction) {
-            case 'ArrowUp':
-            case 'ArrowDown':
-              distance = Math.abs(elementY - currentY) + Math.abs(elementX - currentX) * 0.1; // Y方向为主，X方向为辅
-              break;
-            case 'ArrowLeft':
-            case 'ArrowRight':
-              distance = Math.abs(elementX - currentX) + Math.abs(elementY - currentY) * 0.1; // X方向为主，Y方向为辅
-              break;
-          }
-          
-          // 更新最近的元素
-          if (!nearestElement || distance < nearestElement.distance) {
-            nearestElement = { bandIndex: bandIdx, elementIndex: elementIdx, distance };
-          }
-        }
-      });
-    });
-    
-    // 选择最近的元素
-    if (nearestElement) {
-      // 使用类型断言确保属性访问有效
-      const element = nearestElement as { bandIndex: number; elementIndex: number };
-      selectElement(element.bandIndex, element.elementIndex);
-    }
-  };
-  
-  // 单个选择已在其他函数中实现
-  
-  // 处理报表区域的点击事件，取消选中状态
-  const handlePaperClick = () => {
-    // 只有在没有其他元素被点击的情况下才取消选中
-    selectedElement.value = null;
-    selectedBandIndex.value = null;
-  };
-  
-  // 移除了框选相关函数
   
   // 添加键盘事件监听
   document.addEventListener('keydown', handleKeyDown);
@@ -1724,7 +1768,7 @@ onMounted(() => {
   // 获取paper元素并添加点击事件监听
   const paperElement = document.querySelector('.paper');
   if (paperElement) {
-    paperElement.addEventListener('click', (event) => {
+    paperElement.addEventListener('click', () => {
       handlePaperClick();
       setDesignAreaFocused();
     });
@@ -1757,9 +1801,9 @@ onMounted(() => {
 // 组件卸载时清理事件监听器
 onUnmounted(() => {
   // 移除键盘事件监听器
-  const handleKeyDown = (window as any).pdfDesignerKeydownListener;
-  if (handleKeyDown) {
-    document.removeEventListener('keydown', handleKeyDown);
+  const keydownListener = (window as any).pdfDesignerKeydownListener;
+  if (keydownListener) {
+    document.removeEventListener('keydown', keydownListener);
   }
   
   // 移除paper点击事件监听器
@@ -1833,6 +1877,9 @@ const saveJRXML = (): void => {
     
     // 更新bands
     bands.value = parsedData.bands;
+    
+    // 更新选中的band类型
+    selectedBandTypes.value = parsedData.bands.map(band => band.type);
     
     // 为矩形元素添加默认边框，确保显示效果
     bands.value.forEach(band => {
@@ -2130,6 +2177,105 @@ const showHelpModal = () => {
 const closeHelpModal = () => {
   showHelp.value = false;
 };
+
+// 获取Band显示名称
+const getBandDisplayName = (bandType: string): string => {
+  const bandNames: { [key: string]: string } = {
+    'background': '背景',
+    'title': '标题',
+    'pageHeader': '页眉',
+    'columnHeader': '列标题',
+    'detail': '详细数据',
+    'columnFooter': '列脚',
+    'pageFooter': '页脚',
+    'lastPageFooter': '末页页脚',
+    'summary': '汇总',
+    'noData': '无数据'
+  };
+  return bandNames[bandType] || bandType;
+};
+
+// 更新Band高度
+const updateBandHeight = (index: number): void => {
+  if (bands.value[index]) {
+    // 确保高度不小于0
+    bands.value[index].height = Math.max(0, bands.value[index].height);
+    
+    // 调整该区域内元素的位置，确保元素不会超出区域边界
+    const band = bands.value[index];
+    if (band && band.elements) {
+      band.elements.forEach(element => {
+        if (element.y + element.height > band.height) {
+          element.y = Math.max(0, band.height - element.height);
+        }
+      });
+    }
+    
+    // 保存状态到历史记录
+    saveStateToHistory();
+    
+    // 更新JRXML
+    updateJRXML();
+  }
+};
+
+// 处理Band选择变化
+const handleBandSelectionChange = (): void => {
+  // 获取当前选中的band类型
+  const currentSelectedTypes = [...selectedBandTypes.value] as BandType[];
+  
+  // 获取当前bands中的类型
+  const currentBandTypes = bands.value.map(band => band.type);
+  
+  // 找出需要添加的band（在selectedBandTypes中但不在currentBandTypes中）
+  const bandsToAdd = currentSelectedTypes.filter(type => !currentBandTypes.includes(type));
+  
+  // 找出需要移除的band（在currentBandTypes中但不在selectedBandTypes中）
+  const bandsToRemove = currentBandTypes.filter(type => !currentSelectedTypes.includes(type));
+  
+  // 移除不需要的band
+  if (bandsToRemove.length > 0) {
+    bands.value = bands.value.filter(band => !bandsToRemove.includes(band.type));
+  }
+  
+  // 添加新的band
+  if (bandsToAdd.length > 0) {
+    const newBands = bandsToAdd.map(type => {
+      const bandTypeConfig = allBandTypes.find(bt => bt.type === type);
+      return {
+        type: type as BandType,
+        height: bandTypeConfig ? bandTypeConfig.defaultHeight : 50,
+        elements: []
+      };
+    });
+    
+    // 按照allBandTypes的顺序插入新band
+    allBandTypes.forEach(bandType => {
+      if (bandsToAdd.includes(bandType.type as BandType)) {
+        const newBand = newBands.find(b => b.type === bandType.type);
+        if (newBand) {
+          // 找到合适的插入位置
+          let insertIndex = bands.value.length;
+          for (let i = 0; i < bands.value.length; i++) {
+            const currentBandTypeIndex = allBandTypes.findIndex(bt => bt.type === bands.value[i]?.type);
+            const newBandTypeIndex = allBandTypes.findIndex(bt => bt.type === bandType.type);
+            if (newBandTypeIndex < currentBandTypeIndex) {
+              insertIndex = i;
+              break;
+            }
+          }
+          bands.value.splice(insertIndex, 0, newBand);
+        }
+      }
+    });
+  }
+  
+  // 保存状态到历史记录
+  saveStateToHistory();
+  
+  // 更新JRXML
+  updateJRXML();
+};
 </script>
 
 <style scoped>
@@ -2311,7 +2457,6 @@ const closeHelpModal = () => {
 
 /* 底部面板的过渡样式 */
 .tabs-container {
-  transition: height 0.3s ease;
   overflow: hidden;
   border-top: 1px solid #ddd;
   background-color: #f5f5f5;
@@ -2321,14 +2466,12 @@ const closeHelpModal = () => {
 
 /* 底部面板调整手柄 */
 .tabs-resize-handle {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
+  position: relative;
   height: 4px;
   cursor: ns-resize;
   background-color: transparent;
   z-index: 10;
+  flex-shrink: 0; /* 确保调整手柄不会被压缩 */
 }
 
 .tabs-resize-handle:hover {
@@ -2647,6 +2790,85 @@ const closeHelpModal = () => {
     font-size: 12px;
     color: #666;
   }
+  
+  /* Band高度设置部分样式 */
+  .band-settings-section {
+    margin-top: 1.5rem;
+    padding-top: 1rem;
+    border-top: 1px solid #e0e0e0;
+  }
+  
+  .band-heights-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem;
+    margin-top: 0.5rem;
+  }
+  
+  .band-height-item {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+  }
+  
+  .band-height-item label {
+    font-size: 0.85rem;
+    font-weight: bold;
+    color: #333;
+  }
+  
+  .band-height-control {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+  }
+  
+  .band-height-unit {
+    font-size: 0.8rem;
+    color: #666;
+  }
+  
+  .band-height-hint {
+    font-size: 0.75rem;
+    color: #888;
+    margin-top: 0.25rem;
+  }
+  
+  /* Band选择样式 */
+  .band-selection-section {
+    grid-column: span 1;
+  }
+  
+  .band-selection-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.5rem;
+    margin-top: 0.5rem;
+  }
+  
+  .band-selection-item {
+    display: flex;
+    align-items: center;
+  }
+  
+  .band-selection-item label {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.9rem;
+    cursor: pointer;
+    margin-bottom: 0;
+  }
+  
+  .band-selection-item input[type="checkbox"] {
+    margin: 0;
+  }
+  
+  .band-selection-note {
+    margin-top: 0.75rem;
+    padding-top: 0.5rem;
+    border-top: 1px dashed #e0e0e0;
+  }
 
 .field-item {
   display: flex;
@@ -2682,6 +2904,10 @@ const closeHelpModal = () => {
 .tabs-container {
   background-color: #f5f5f5;
   border-top: 1px solid #ddd;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  max-height: 70vh; /* 限制最大高度，避免占用过多屏幕空间 */
 }
 
 .tab-navigation {
@@ -2689,6 +2915,10 @@ const closeHelpModal = () => {
   background-color: #e9e9e9;
   border-bottom: 1px solid #ddd;
   padding: 0 10px;
+  flex-shrink: 0; /* 确保导航栏不会被压缩 */
+  position: sticky;
+  top: 0;
+  z-index: 10;
 }
 
 .tab-button {
@@ -2712,31 +2942,111 @@ const closeHelpModal = () => {
 }
 
 .tab-content {
-  min-height: 300px;
+  flex: 1;
   overflow: auto;
+  min-height: 0; /* 确保flex子元素可以收缩 */
+  padding: 15px;
+  box-sizing: border-box;
 }
 
 .jrxml-tab {
+  background-color: white;
   height: 100%;
+  display: flex;
+  flex-direction: column;
   overflow: hidden;
 }
 
 .page-settings-tab {
     background-color: white;
-    padding: 15px;
     height: 100%;
     box-sizing: border-box;
     display: flex;
     flex-direction: column;
+    overflow: hidden;
   }
 
   .settings-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 16px;
+  overflow-y: auto;
+  flex: 1;
+  min-height: 0;
+  padding: 15px;
+}
+
+  /* 设置区域样式 */
+  .settings-section {
+    background-color: #f9f9f9;
+    border-radius: 6px;
+    padding: 12px;
+    border: 1px solid #e8e8e8;
+  }
+
+  .settings-section h4 {
+    margin-top: 0;
+    margin-bottom: 12px;
+    color: #333;
+    font-size: 15px;
+    font-weight: 600;
+    border-bottom: 1px solid #e0e0e0;
+    padding-bottom: 6px;
+  }
+
+  /* 表单行布局 */
+  .form-row {
+    display: flex;
     gap: 12px;
-    overflow-y: auto;
+    margin-bottom: 0.75rem;
+  }
+
+  .flex-1 {
     flex: 1;
-    min-height: 0;
+  }
+
+  /* 紧凑字体设置样式 */
+  .font-settings-compact {
+    grid-column: span 1;
+  }
+
+  .font-settings-row {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 12px;
+  }
+
+  .font-setting-item {
+    flex: 1;
+  }
+
+  .font-setting-item select,
+  .font-setting-item input {
+    width: 100%;
+    padding: 6px 8px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 13px;
+  }
+
+  .font-style-options {
+    display: flex;
+    gap: 15px;
+    flex-wrap: wrap;
+  }
+
+  .font-style-options label {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    margin-bottom: 0;
+    font-weight: normal;
+    font-size: 13px;
+  }
+
+  /* 紧凑Band设置样式 */
+  .band-settings-compact {
+    grid-column: span 1;
   }
 
 .font-settings-section {
@@ -2780,6 +3090,8 @@ const closeHelpModal = () => {
   display: flex;
   flex-direction: column;
   height: 100%;
+  flex: 1;
+  min-height: 0;
 }
 
 .jrxml-header {
@@ -2794,9 +3106,8 @@ const closeHelpModal = () => {
 
 .jrxml-content {
   flex: 1;
-  overflow: hidden;
+  overflow: auto;
   min-height: 0;
-  max-height: 600px; /* 限制最大高度，确保不超出面板区域 */
   border-radius: 4px;
   border: 1px solid #ddd;
 }
@@ -3091,6 +3402,8 @@ const closeHelpModal = () => {
 }
 
 .jrxml-header {
+  display: flex;
+  justify-content: flex-end;
   padding: 10px 16px;
   border-bottom: 1px solid #eee;
 }

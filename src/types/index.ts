@@ -2,7 +2,7 @@
 export type ElementType = 'staticText' | 'textField' | 'image' | 'line' | 'rectangle';
 
 // Band类型枚举
-export type BandType = 'detail' | 'pageHeader' | 'pageFooter' | 'title' | 'summary' | 'columnHeader' | 'columnFooter';
+export type BandType = 'detail' | 'pageHeader' | 'pageFooter' | 'title' | 'summary' | 'columnHeader' | 'columnFooter' | 'background' | 'lastPageFooter' | 'noData';
 
 // 笔样式接口
 export interface Pen {
