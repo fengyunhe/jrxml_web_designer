@@ -2669,9 +2669,12 @@ const handleBandSelectionChange = (): void => {
 }
 
 /* 面板切换时的过渡样式 */
-.element-panel,
-.property-panel {
+.element-panel {
   transition: width 0.3s ease;
+  overflow: hidden;
+}
+
+.property-panel {
   overflow: hidden;
 }
 
