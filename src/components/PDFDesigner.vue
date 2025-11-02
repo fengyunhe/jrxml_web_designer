@@ -88,7 +88,9 @@
         <!-- 顶部标尺容器 -->
         <div class="top-ruler-container">
           <!-- 左上角空白区域 -->
-          <div class="corner-space"></div>
+          <div class="corner-space">
+          <div class="unit-label">mm</div>
+        </div>
           <!-- 水平标尺 -->
           <div class="horizontal-ruler" :style="{ width: paperWidth + 'px' }">
             <div 
@@ -2845,6 +2847,17 @@ const handleBandSelectionChange = (): void => {
   border: 1px solid #ddd;
   border-right: none;
   border-bottom: none;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.corner-space .unit-label {
+  font-size: 10px;
+  font-weight: bold;
+  color: #666;
+  text-transform: uppercase;
 }
 
 .horizontal-ruler {
