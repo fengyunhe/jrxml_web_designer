@@ -204,7 +204,9 @@
       </div>
       
       <!-- 右侧属性面板 -->
-      <div class="property-panel" v-show="showRightPanel">
+      <div class="property-panel" v-show="showRightPanel" :style="{ width: propertyPanelWidth + 'px' }">
+        <!-- 左侧调整手柄 -->
+        <div class="property-panel-resize-handle" @mousedown.stop="startResizingPropertyPanel"></div>
         <h3>属性设置</h3>
         
         <!-- 报表属性 -->
@@ -909,6 +911,9 @@ function updateExpressionFromFieldName() {
 }
 // 底部面板高度
 const bottomPanelHeight = ref(400); // 默认高度400px
+
+// 属性面板宽度
+const propertyPanelWidth = ref(300); // 默认宽度300px
 
 // JRXML内容显示
 const jrxmlContent = ref('');
@@ -1722,6 +1727,29 @@ const startResizingBottomPanel = (event: MouseEvent): void => {
     const deltaY = (startY - e.clientY) / currentZoom;
     const newHeight = Math.max(100, Math.min(800, startHeight + deltaY)); // 限制最小100px，最大800px
     bottomPanelHeight.value = newHeight;
+  };
+  
+  const handleMouseUp = (): void => {
+    document.removeEventListener('mousemove', handleMouseMove);
+    document.removeEventListener('mouseup', handleMouseUp);
+  };
+  
+  document.addEventListener('mousemove', handleMouseMove);
+  document.addEventListener('mouseup', handleMouseUp);
+};
+
+// 开始调整属性面板宽度
+const startResizingPropertyPanel = (event: MouseEvent): void => {
+  event.preventDefault();
+  
+  const startX = event.clientX;
+  const startWidth = propertyPanelWidth.value;
+  
+  const handleMouseMove = (e: MouseEvent): void => {
+    // 计算宽度变化（鼠标向左移动增加宽度，向右移动减少宽度）
+    const deltaX = startX - e.clientX;
+    const newWidth = Math.max(200, Math.min(600, startWidth + deltaX)); // 限制最小200px，最大600px
+    propertyPanelWidth.value = newWidth;
   };
   
   const handleMouseUp = (): void => {
@@ -3107,6 +3135,39 @@ const handleBandSelectionChange = (): void => {
   background-color: #f8f9fa;
   border-left: 1px solid #ddd;
   overflow-y: auto;
+  position: relative;
+}
+
+/* 属性面板调整手柄 */
+.property-panel-resize-handle {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 4px;
+  cursor: ew-resize;
+  background-color: transparent;
+  z-index: 10;
+}
+
+.property-panel-resize-handle:hover {
+  background-color: rgba(25, 118, 210, 0.1);
+}
+
+.property-panel-resize-handle::before {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: 2px;
+  height: 30px;
+  background-color: #1976d2;
+  opacity: 0;
+}
+
+.property-panel-resize-handle:hover::before {
+  opacity: 1;
 }
 
 .property-section {
