@@ -27,6 +27,7 @@
           </select>
           <button @click="zoomIn" class="btn-zoom" title="放大">+</button>
           <button @click="resetZoom" class="btn-zoom" title="重置缩放">100%</button>
+          <button @click="calculateOptimalZoom" class="btn-zoom" title="适应窗口">⊡</button>
         </div>
         
         <button @click="clearLocalStorage" class="btn-secondary">清空本地数据</button>
@@ -885,6 +886,42 @@ function resetZoom() {
 
 function applyZoom() {
   // 这里不需要额外操作，因为zoomLevel是响应式的，会自动更新视图
+}
+
+// 根据报表大小自动计算最佳缩放比例
+function calculateOptimalZoom() {
+  // 获取设计区域的可用大小
+  const designerContainer = document.querySelector('.designer-canvas') as HTMLElement;
+  if (!designerContainer) return;
+  
+  // 获取设计区域的实际可用宽度和高度
+  const availableWidth = designerContainer.clientWidth - 40; // 减去垂直标尺的宽度
+  const availableHeight = designerContainer.clientHeight - 40; // 减去水平标尺的高度
+  
+  // 计算宽度和高度的缩放比例
+  const widthRatio = availableWidth / paperWidth.value;
+  const heightRatio = availableHeight / paperHeight.value;
+  
+  // 选择较小的缩放比例，确保整个报表都能显示在设计区域内
+  const optimalZoom = Math.min(widthRatio, heightRatio) * 0.9; // 乘以0.9留出一些边距
+  
+  // 从预设的缩放级别中选择最接近的
+  const zoomLevels = [0.25, 0.5, 0.75, 1, 1.25, 1.5, 2];
+  
+  // 找到最接近optimalZoom的预设缩放级别
+  let closestZoom = zoomLevels[0];
+  let minDiff = Math.abs(zoomLevels[0] - optimalZoom);
+  
+  for (let i = 1; i < zoomLevels.length; i++) {
+    const diff = Math.abs(zoomLevels[i] - optimalZoom);
+    if (diff < minDiff) {
+      minDiff = diff;
+      closestZoom = zoomLevels[i];
+    }
+  }
+  
+  // 设置计算出的最佳缩放比例
+  zoomLevel.value = closestZoom;
 }
 
 // 设置水平对齐方式
@@ -2044,6 +2081,12 @@ onMounted(() => {
   // 初始加载后更新JRXML
   updateJRXML();
   
+  // 根据报表大小自动计算最佳缩放比例
+  // 使用setTimeout确保DOM已经渲染完成
+  setTimeout(() => {
+    calculateOptimalZoom();
+  }, 100);
+  
   // 添加键盘事件监听
   document.addEventListener('keydown', handleKeyDown);
   
@@ -2841,7 +2884,7 @@ const handleBandSelectionChange = (): void => {
 }
 
 .corner-space {
-  width: 25px; /* 减小宽度以避免遮挡标尺刻度值 */
+  width: 40px; /* 保持固定宽度以匹配垂直标尺的标签 */
   height: 40px;
   background-color: #f8f8f8;
   border: 1px solid #ddd;
@@ -2921,7 +2964,6 @@ const handleBandSelectionChange = (): void => {
   overflow: hidden;
   height: 100%; /* 确保占满整个高度 */
   min-height: 0; /* 允许flex子项收缩 */
-  margin-left: -15px; /* 向左偏移以补偿corner-space宽度的减小 */
 }
 
 .vertical-ruler .tick {
