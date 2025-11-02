@@ -818,9 +818,6 @@ const showBottomPanel = ref(true);
 
 // 缩放相关状态
 const zoomLevel = ref(1); // 默认缩放级别为100%
-const zoomStep = 0.25; // 缩放步长
-const minZoom = 0.25; // 最小缩放级别
-const maxZoom = 2; // 最大缩放级别
 
 // 缩放控制方法
 function zoomIn() {
@@ -832,7 +829,10 @@ function zoomIn() {
   
   // 如果当前缩放级别是预设值，则使用下一个预设值
   if (currentIndex !== -1 && currentIndex < zoomLevels.length - 1) {
-    zoomLevel.value = zoomLevels[currentIndex + 1];
+    const nextLevel = zoomLevels[currentIndex + 1];
+    if (nextLevel !== undefined) {
+      zoomLevel.value = nextLevel;
+    }
   } 
   // 如果当前缩放级别不是预设值，找到最接近的下一个预设值
   else {
@@ -854,14 +854,20 @@ function zoomOut() {
   
   // 如果当前缩放级别是预设值，则使用上一个预设值
   if (currentIndex !== -1 && currentIndex > 0) {
-    zoomLevel.value = zoomLevels[currentIndex - 1];
+    const prevLevel = zoomLevels[currentIndex - 1];
+    if (prevLevel !== undefined) {
+      zoomLevel.value = prevLevel;
+    }
   } 
   // 如果当前缩放级别不是预设值，找到最接近的上一个预设值
   else {
     // 找到所有小于当前缩放级别的预设值
     const lowerLevels = zoomLevels.filter(level => level < zoomLevel.value);
     if (lowerLevels.length > 0) {
-      zoomLevel.value = lowerLevels[lowerLevels.length - 1];
+      const lastLevel = lowerLevels[lowerLevels.length - 1];
+      if (lastLevel !== undefined) {
+        zoomLevel.value = lastLevel;
+      }
     }
   }
   
