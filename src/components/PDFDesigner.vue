@@ -2841,7 +2841,7 @@ const handleBandSelectionChange = (): void => {
 }
 
 .corner-space {
-  width: 40px; /* 保持固定宽度以匹配垂直标尺的标签 */
+  width: 25px; /* 减小宽度以避免遮挡标尺刻度值 */
   height: 40px;
   background-color: #f8f8f8;
   border: 1px solid #ddd;
@@ -2921,6 +2921,7 @@ const handleBandSelectionChange = (): void => {
   overflow: hidden;
   height: 100%; /* 确保占满整个高度 */
   min-height: 0; /* 允许flex子项收缩 */
+  margin-left: -15px; /* 向左偏移以补偿corner-space宽度的减小 */
 }
 
 .vertical-ruler .tick {
