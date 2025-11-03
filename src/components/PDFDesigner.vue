@@ -185,8 +185,8 @@
                   v-for="element in elements" 
                   :key="getElementKey(element)"
                   class="report-element-item"
-                  :class="{ 'selected': isElementSelected(element) }"
-                  @click="selectElementFromList(element)"
+                  :class="{ 'selected': isElementSelected(element,selectedElement) }"
+                  @click="selectElementFromList(element, selectElement)"
                 >
                   <span class="element-icon">{{ getElementIcon(element.element.type) }}</span>
                   <span class="element-info">{{ getElementDisplayInfoWithoutBand(element.element) }}</span>
@@ -203,7 +203,7 @@
                 v-for="(param, index) in reportParameters" 
                 :key="index" 
                 class="field-mini-item"
-                @click="selectElementsByParameter(param.name)"
+                @click="selectElementsByParameterWrapper(param.name)"
               >
                 <span class="field-name">$P{ {{ param.name }} }</span>
                 <span class="field-type">({{ param.class }})</span>
@@ -219,7 +219,7 @@
                 v-for="(field, index) in reportFields" 
                 :key="index" 
                 class="field-mini-item"
-                @click="selectElementsByField(field.name)"
+                @click="selectElementsByFieldWrapper(field.name)"
               >
                 <span class="field-name">$F{ {{ field.name }} }</span>
                 <span class="field-type">({{ field.class }})</span>
@@ -845,29 +845,45 @@ interface DesignerFile {
 
 import ResizablePanel from './ResizablePanel.vue';
 import DesignerCanvas from './designer/DesignerCanvas.vue';
-import type { DesignElement, Band, ReportField, ReportParameter, BandType } from '../types';
-import { ref, computed, watch, onMounted, onUnmounted } from 'vue';
+import type {Band, BandType, DesignElement, ReportField, ReportParameter} from '../types';
+import {computed, onMounted, onUnmounted, ref, watch} from 'vue';
 import {
-  ZOOM_CONSTANTS,
+  BAND_CONSTANTS,
+  BAND_HEIGHT_CONSTANTS,
+  BAND_TYPE_CONSTANTS,
+  BORDER_CONSTANTS,
+  DOM_CONSTANTS,
+  ELEMENT_CONSTANTS,
+  ELEMENT_TYPE_CONSTANTS,
+  FONT_CONSTANTS,
+  HISTORY_CONSTANTS,
+  KEYBOARD_CONSTANTS,
   PANEL_CONSTANTS,
   REPORT_CONSTANTS,
-  HISTORY_CONSTANTS,
-  DOM_CONSTANTS,
-  BORDER_CONSTANTS,
-  FONT_CONSTANTS,
-  ELEMENT_TYPE_CONSTANTS,
-  ELEMENT_CONSTANTS,
-  BAND_TYPE_CONSTANTS,
-  BAND_HEIGHT_CONSTANTS,
-  BAND_CONSTANTS,
-  KEYBOARD_CONSTANTS,
   RULER_CONSTANTS,
-  UI_CONSTANTS
+  UI_CONSTANTS,
+  ZOOM_CONSTANTS
 } from '../constants/constants';
+
+// 导入新创建的工具函数和常量
+import {
+  getElementDisplayInfoWithoutBand,
+  getElementIcon,
+  getElementKey,
+  getElementTypeName,
+  isElementSelected,
+  selectElementFromList,
+  selectElementsByField,
+  selectElementsByParameter
+} from '../utils/elementUtils';
+
+import {getBandDisplayName} from '../utils/bandUtils';
+
+import {clearLocalStorage, loadFromLocalStorage, saveToLocalStorage} from '../utils/fileUtils';
 
 // 确保浏览器环境中DOMParser可用
 // 移除未使用的getDOMParser函数
-import { generateJRXMLContent, parseJRXMLContent } from '../utils/jrxmlGenerator';
+import {generateJRXMLContent, parseJRXMLContent} from '../utils/jrxmlGenerator';
 
 // 标签页相关
 const activeTab = ref('pageSettings');
@@ -1580,12 +1596,12 @@ const removeDesignAreaFocused = () => {
 };
 
 // 计算属性
-const paperWidth = computed(() => reportProperties.value.pageWidth);
-const paperHeight = computed(() => reportProperties.value.pageHeight);
+const paperWidth = computed(() => reportProperties.value?.pageWidth || REPORT_CONSTANTS.DEFAULT_PAGE_WIDTH);
+const paperHeight = computed(() => reportProperties.value?.pageHeight || REPORT_CONSTANTS.DEFAULT_PAGE_HEIGHT);
 const currentElement = computed(() => {
-  if (selectedElement.value) {
+  if (selectedElement.value && bands.value && Array.isArray(bands.value)) {
     const band = bands.value[selectedElement.value.bandIndex];
-    if (band && band.elements) {
+    if (band && band.elements && Array.isArray(band.elements)) {
       return band.elements[selectedElement.value.elementIndex];
     }
   }
@@ -1596,17 +1612,19 @@ const currentElement = computed(() => {
 const getAllReportElements = computed(() => {
   const allElements: { element: DesignElement, bandIndex: number, elementIndex: number }[] = [];
   
-  bands.value.forEach((band, bandIndex) => {
-    if (band.elements) {
-      band.elements.forEach((element, elementIndex) => {
-        allElements.push({
-          element,
-          bandIndex,
-          elementIndex
+  if (bands.value && Array.isArray(bands.value)) {
+    bands.value.forEach((band, bandIndex) => {
+      if (band && band.elements && Array.isArray(band.elements)) {
+        band.elements.forEach((element, elementIndex) => {
+          allElements.push({
+            element,
+            bandIndex,
+            elementIndex
+          });
         });
-      });
-    }
-  });
+      }
+    });
+  }
   
   return allElements;
 });
@@ -1641,8 +1659,12 @@ const filteredReportElements = computed(() => {
 const groupedReportElements = computed(() => {
   const groups: Record<string, Array<{ element: DesignElement, bandIndex: number, elementIndex: number }>> = {};
   
+  if (!filteredReportElements.value || !bands.value || !Array.isArray(bands.value)) {
+    return groups;
+  }
+  
   filteredReportElements.value.forEach(item => {
-    if (!bands.value[item.bandIndex]) return;
+    if (!bands.value || item.bandIndex >= bands.value.length) return;
     const band = bands.value[item.bandIndex];
     if (!band) return;
     const bandType = band.type;
@@ -1754,14 +1776,16 @@ const handleDrop = (event: DragEvent) => {
     // 找到对应的band
     let bandIndex = 0;
     let currentY = 0;
-    for (let i = 0; i < bands.value.length; i++) {
-      const band = bands.value[i];
-      if (band && scaledY >= currentY && scaledY <= currentY + band.height) {
-        bandIndex = i;
-        break;
-      }
-      if (band) {
-        currentY += band.height;
+    if (bands.value && Array.isArray(bands.value)) {
+      for (let i = 0; i < bands.value.length; i++) {
+        const band = bands.value[i];
+        if (band && scaledY >= currentY && scaledY <= currentY + band.height) {
+          bandIndex = i;
+          break;
+        }
+        if (band) {
+          currentY += band.height;
+        }
       }
     }
     
@@ -1779,7 +1803,7 @@ const handleDrop = (event: DragEvent) => {
     if (targetBand && targetBand.elements) {
       // 确保元素不会超出边距限制
       // 注意：由于现在使用padding，元素坐标是相对于内容区域的
-      const availableWidth = paperWidth.value - reportProperties.value.leftMargin - reportProperties.value.rightMargin;
+      const availableWidth = paperWidth.value - (reportProperties.value?.leftMargin || 0) - (reportProperties.value?.rightMargin || 0);
       
       // 限制元素不超出右边界
       if (newElement.x + newElement.width > availableWidth) {
@@ -1866,7 +1890,7 @@ const detectAlignmentLines = (currentElement: DesignElement, currentBandIndex: n
   };
   
   // 获取页边距
-  const { leftMargin, topMargin } = reportProperties.value;
+  const { leftMargin = 0, topMargin = 0 } = reportProperties.value || {};
   
   // 计算当前band的Y坐标偏移
   let currentBandY = 0;
@@ -2065,11 +2089,11 @@ const clearAlignmentLines = () => {
 const getDefaultElementProperties = (type: string): Partial<DesignElement> => {
   // 使用报表的默认字体设置
   const defaultFontProps = {
-    fontFamily: reportProperties.value.defaultFont.name,
-    fontSize: reportProperties.value.defaultFont.size,
-    isBold: reportProperties.value.defaultFont.isBold,
-    isItalic: reportProperties.value.defaultFont.isItalic,
-    isUnderline: reportProperties.value.defaultFont.isUnderline
+    fontFamily: reportProperties.value?.defaultFont?.name || FONT_CONSTANTS.SANS_SERIF,
+    fontSize: reportProperties.value?.defaultFont?.size || REPORT_CONSTANTS.DEFAULT_FONT_SIZE,
+    isBold: reportProperties.value?.defaultFont?.isBold || false,
+    isItalic: reportProperties.value?.defaultFont?.isItalic || false,
+    isUnderline: reportProperties.value?.defaultFont?.isUnderline || false
   };
   
   switch (type) {
@@ -2188,7 +2212,7 @@ const startDragging = (event: MouseEvent, bandIndex: number, elementIndex: numbe
             // 计算元素相对于paper的位置，考虑缩放比例
             // 注意：由于现在使用padding，元素坐标是相对于内容区域的
             // 计算可用宽度，不除以currentZoom因为newX计算已经考虑了缩放
-            const availableWidth = (paperWidth.value - reportProperties.value.leftMargin - reportProperties.value.rightMargin);
+            const availableWidth = (paperWidth.value - (reportProperties.value?.leftMargin || 0) - (reportProperties.value?.rightMargin || 0));
             
             // 获取paper元素的位置信息，用于更准确的坐标计算
             let paperOffsetX = 0;
@@ -2481,7 +2505,7 @@ const startEditing = (bandIndex: number, elementIndex: number) => {
 const finishEditing = () => {
   editingElement.value = null;
   // 保存数据
-  saveToLocalStorage();
+  saveToLocalStorageWrapper();
   updateJRXML();
 };
 
@@ -2490,45 +2514,26 @@ const cancelEditing = () => {
   editingElement.value = null;
 };
 
-// 保存数据到localStorage
-const saveToLocalStorage = () => {
-  try {
-    const dataToSave = {
+// fileUtils函数的包装函数
+const saveToLocalStorageWrapper = () => {
+  saveToLocalStorage(
+    {
       reportProperties: reportProperties.value,
       bands: bands.value,
       reportFields: reportFields.value,
       jrxmlContent: jrxmlContent.value
-    };
-    localStorage.setItem('pdfDesignerData', JSON.stringify(dataToSave));
-    console.log('数据已保存到localStorage');
-  } catch (error) {
-    console.error('保存到localStorage失败:', error);
-  }
+    },
+    reportProperties.value.name
+  );
 };
 
-// 从localStorage加载数据
-const loadFromLocalStorage = () => {
-  try {
-    const savedData = localStorage.getItem('pdfDesignerData');
-    if (savedData) {
-      const data = JSON.parse(savedData);
-      if (data.reportProperties) reportProperties.value = data.reportProperties;
-      if (data.bands) bands.value = data.bands;
-      if (data.reportFields) reportFields.value = data.reportFields;
-      if (data.jrxmlContent) jrxmlContent.value = data.jrxmlContent;
-      console.log('从localStorage恢复数据成功');
-    }
-  } catch (error) {
-    console.error('从localStorage加载失败:', error);
-  }
-};
-
-// 清空localStorage数据
-const clearLocalStorage = () => {
-  if (confirm('确定要清空所有本地数据吗？此操作不可恢复。')) {
-    localStorage.removeItem('pdfDesignerData');
-    alert('本地数据已清空');
-    location.reload();
+const loadFromLocalStorageWrapper = () => {
+  const loadedData = loadFromLocalStorage(); 
+  if (loadedData && loadedData.reportData) {
+    reportProperties.value = loadedData.reportData.reportProperties;
+    bands.value = loadedData.reportData.bands;
+    reportFields.value = loadedData.reportData.reportFields;
+    jrxmlContent.value = loadedData.reportData.jrxmlContent;
   }
 };
 
@@ -2574,14 +2579,14 @@ const generateJRXML = () => {
   const url = URL.createObjectURL(blob);
   const link = document.createElement('a');
   link.href = url;
-  link.download = `${reportProperties.value.name}.jrxml`;
+  link.download = `${reportProperties.value?.name || 'report'}.jrxml`;
   document.body.appendChild(link);
   link.click();
   document.body.removeChild(link);
   URL.revokeObjectURL(url);
   
   // 保存数据
-  saveToLocalStorage();
+  saveToLocalStorageWrapper();
 };
 
 // 面板显示控制函数
@@ -2597,231 +2602,15 @@ const toggleBottomPanel = () => {
   showBottomPanel.value = !showBottomPanel.value;
 };
 
-// 获取元素的唯一键
-const getElementKey = (element: { element: DesignElement, bandIndex: number, elementIndex: number }) => {
-  return `${element.element.type}-${element.bandIndex}-${element.elementIndex}`;
-};
-
-// 获取元素类型名称
-const getElementTypeName = (type: string) => {
-  const typeMap: Record<string, string> = {
-    'staticText': '静态文本',
-    'textField': '动态文本',
-    'image': '图片',
-    'line': '线条',
-    'rectangle': '矩形'
-  };
-  return typeMap[type] || type;
-};
-
-// 获取元素类型图标
-const getElementIcon = (type: string) => {
-  const iconMap: Record<string, string> = {
-    'staticText': 'T',
-    'textField': '{ }',
-    'image': '🖼',
-    'line': '─',
-    'rectangle': '▭'
-  };
-  return iconMap[type] || '?';
-};
-
-// 获取元素显示信息
-// @ts-ignore
-const getElementDisplayInfo = (element: { element: DesignElement, bandIndex: number, elementIndex: number }) => {
-  const { element: el } = element;
-  if (!bands.value[element.bandIndex]) return '';
-  const band = bands.value[element.bandIndex];
-  if (!band) return '';
-  const bandName = getBandDisplayName(band.type);
-  
-  let info = `${bandName}`;
-  
-  // 根据元素类型添加特定信息
-  if (el.type === 'staticText' && el.text) {
-    info += ` - ${el.text.substring(0, 15)}${el.text.length > 15 ? '...' : ''}`;
-  } else if (el.type === 'textField' && el.fieldName) {
-    info += ` - $F{${el.fieldName}}`;
-  } else if (el.type === 'image' && (el as any).imagePath) {
-    info += ` - ${(el as any).imagePath}`;
-  }
-  
-  return info;
-};
-
-// 获取元素显示信息（不包含band名称）
-const getElementDisplayInfoWithoutBand = (element: DesignElement) => {
-  let info = '';
-  
-  // 根据元素类型添加特定信息
-  if (element.type === 'staticText' && element.text) {
-    info = `${element.text.substring(0, 15)}${element.text.length > 15 ? '...' : ''}`;
-  } else if (element.type === 'textField' && element.fieldName) {
-    info = `$F{${element.fieldName}}`;
-  } else if (element.type === 'image' && (element as any).imagePath) {
-    info = (element as any).imagePath;
-  }
-  
-  return info;
-};
-
-// 检查元素是否被选中
-const isElementSelected = (element: { element: DesignElement, bandIndex: number, elementIndex: number }) => {
-  return selectedElement.value !== null && 
-         selectedElement.value.bandIndex === element.bandIndex && 
-         selectedElement.value.elementIndex === element.elementIndex;
-};
-
-// 从列表中选择元素
-const selectElementFromList = (element: { element: DesignElement, bandIndex: number, elementIndex: number }) => {
-  selectElement(element.bandIndex, element.elementIndex);
-};
-
 // 根据参数选择元素
-const selectElementsByParameter = (paramName: string) => {
-  // 查找使用该参数的元素
-  let foundElement = false;
-  
-  bands.value.forEach((band, bandIndex) => {
-    if (band.elements) {
-      band.elements.forEach((element, elementIndex) => {
-        // 检查元素的表达式是否包含该参数
-        if (element.type === 'textField' && element.expression && element.expression.includes(`$P{${paramName}}`)) {
-          selectElement(bandIndex, elementIndex);
-          foundElement = true;
-          return;
-        }
-      });
-    }
-  });
-  
-  // 如果没有找到使用该参数的元素，可以显示提示
-  if (!foundElement) {
-    // 可以添加提示逻辑，这里暂时不实现
-    console.log(`没有找到使用参数 $P{${paramName}} 的元素`);
-  }
+const selectElementsByParameterWrapper = (paramName: string) => {
+  selectElementsByParameter(bands.value, paramName, selectElement);
 };
 
 // 根据字段选择元素
-const selectElementsByField = (fieldName: string) => {
-  // 查找使用该字段的元素
-  let foundElement = false;
-  
-  bands.value.forEach((band, bandIndex) => {
-    if (band.elements) {
-      band.elements.forEach((element, elementIndex) => {
-        // 检查元素的字段名或表达式是否包含该字段
-        if ((element.type === 'textField' && element.fieldName === fieldName) || 
-            (element.type === 'textField' && element.expression && element.expression.includes(`$F{${fieldName}}`))) {
-          selectElement(bandIndex, elementIndex);
-          foundElement = true;
-          return;
-        }
-      });
-    }
-  });
-  
-  // 如果没有找到使用该字段的元素，可以显示提示
-  if (!foundElement) {
-    // 可以添加提示逻辑，这里暂时不实现
-    console.log(`没有找到使用字段 $F{${fieldName}} 的元素`);
-  }
+const selectElementsByFieldWrapper = (fieldName: string) => {
+  selectElementsByField(bands.value, fieldName, selectElement);
 };
-
-// 获取Band显示名称
-const getBandDisplayName = (bandType: string) => {
-  const bandMap: Record<string, string> = {
-    'title': '标题',
-    'pageHeader': '页眉',
-    'columnHeader': '列标题',
-    'detail': '详细数据',
-    'columnFooter': '列脚',
-    'pageFooter': '页脚',
-    'summary': '汇总',
-    'background': '背景',
-    'lastPageFooter': '末页页脚',
-    'noData': '无数据'
-  };
-  return bandMap[bandType] || bandType;
-};
-
-// 开始调整底部面板高度
-// @ts-ignore
-const startResizingBottomPanel = (event: MouseEvent): void => {
-  event.preventDefault();
-  
-  // 获取当前缩放比例
-  const currentZoom = zoomLevel.value;
-  
-  const startY = event.clientY;
-  const startHeight = bottomPanelHeight.value;
-  
-  const handleMouseMove = (e: MouseEvent): void => {
-    // 计算高度变化（鼠标向上移动增加高度，向下移动减少高度）
-    // 考虑缩放比例计算高度变化
-    const deltaY = (startY - e.clientY) / currentZoom;
-    const newHeight = Math.max(100, Math.min(800, startHeight + deltaY)); // 限制最小100px，最大800px
-    bottomPanelHeight.value = newHeight;
-  };
-  
-  const handleMouseUp = (): void => {
-    document.removeEventListener('mousemove', handleMouseMove);
-    document.removeEventListener('mouseup', handleMouseUp);
-  };
-  
-  document.addEventListener('mousemove', handleMouseMove);
-  document.addEventListener('mouseup', handleMouseUp);
-};
-
-// 开始调整左侧面板宽度
-// @ts-ignore
-const startResizingLeftPanel = (event: MouseEvent): void => {
-  event.preventDefault();
-  
-  const startX = event.clientX;
-  const startWidth = leftPanelWidth.value;
-  
-  const handleMouseMove = (e: MouseEvent): void => {
-    // 计算宽度变化（鼠标向右移动增加宽度，向左移动减少宽度）
-    const deltaX = e.clientX - startX;
-    const newWidth = Math.max(PANEL_CONSTANTS.LEFT_PANEL_MIN_WIDTH, 
-                      Math.min(PANEL_CONSTANTS.LEFT_PANEL_MAX_WIDTH, startWidth + deltaX)); // 使用常量限制宽度
-    leftPanelWidth.value = newWidth;
-  };
-  
-  const handleMouseUp = (): void => {
-    document.removeEventListener('mousemove', handleMouseMove);
-    document.removeEventListener('mouseup', handleMouseUp);
-  };
-  
-  document.addEventListener('mousemove', handleMouseMove);
-  document.addEventListener('mouseup', handleMouseUp);
-};
-
-// 开始调整属性面板宽度
-// @ts-ignore
-const startResizingPropertyPanel = (event: MouseEvent): void => {
-  event.preventDefault();
-  
-  const startX = event.clientX;
-  const startWidth = propertyPanelWidth.value;
-  
-  const handleMouseMove = (e: MouseEvent): void => {
-    // 计算宽度变化（鼠标向左移动增加宽度，向右移动减少宽度）
-    const deltaX = startX - e.clientX;
-    const newWidth = Math.max(200, Math.min(600, startWidth + deltaX)); // 限制最小200px，最大600px
-    propertyPanelWidth.value = newWidth;
-  };
-  
-  const handleMouseUp = (): void => {
-    document.removeEventListener('mousemove', handleMouseMove);
-    document.removeEventListener('mouseup', handleMouseUp);
-  };
-  
-  document.addEventListener('mousemove', handleMouseMove);
-  document.addEventListener('mouseup', handleMouseUp);
-};
-
 // 处理左侧面板大小变化
 const handleLeftPanelSizeChange = (newSize: number) => {
   leftPanelWidth.value = newSize;
@@ -2870,7 +2659,7 @@ const updateJRXML = () => {
       console.log('JRXML内容已更新到响应式变量，新长度:', jrxmlContent.value.length);
       
       // 立即保存到本地存储，确保JRXML内容被保存
-      saveToLocalStorage();
+      saveToLocalStorageWrapper();
     } else {
       console.log('JRXML内容未变化');
     }
@@ -3151,7 +2940,7 @@ const handlePaperClick = () => {
 // 组件挂载时加载数据
 onMounted(() => {
   console.log('组件挂载开始...');
-  loadFromLocalStorage();
+  loadFromLocalStorageWrapper();
   console.log('本地数据加载完成');
   
   // 尝试加载最后编辑的文件
@@ -3259,7 +3048,7 @@ watch(
     // 只在非拖拽/调整大小状态下更新
     if (!isDraggingOrResizing.value) {
       console.log('开始保存到本地存储和更新JRXML...');
-      saveToLocalStorage();
+      saveToLocalStorageWrapper();
       updateJRXML();
     } else {
       console.log('拖拽/调整大小中，跳过更新');
@@ -3295,7 +3084,13 @@ const saveJRXML = (): void => {
     // 更新报表属性
     reportProperties.value = {
       ...parsedData.properties,
-      defaultFont: reportProperties.value.defaultFont // 保留默认字体设置
+      defaultFont: reportProperties.value?.defaultFont || {
+        name: FONT_CONSTANTS.SANS_SERIF,
+        size: REPORT_CONSTANTS.DEFAULT_FONT_SIZE,
+        isBold: false,
+        isItalic: false,
+        isUnderline: false
+      }
     };
     
     // 更新字段定义
@@ -3462,7 +3257,7 @@ const saveJRXML = (): void => {
     });
     
     // 保存到本地存储
-    saveToLocalStorage();
+    saveToLocalStorageWrapper();
     
     // 显示成功提示
     alert('JRXML编辑已保存，界面已更新');
@@ -3625,7 +3420,7 @@ const startResizingElement = (event: MouseEvent, bandIndex: number, elementIndex
             if (snapInfo.horizontal && Math.abs(snapInfo.horizontal.offset) < 3) {
               // 根据对齐线位置计算新的宽度
               // 注意：snapInfo.horizontal.position已经包含了leftMargin
-              const targetPosition = snapInfo.horizontal.position - reportProperties.value.leftMargin;
+              const targetPosition = snapInfo.horizontal.position - (reportProperties.value?.leftMargin || 0);
               
               // 判断是左边对齐还是右边对齐
               if (Math.abs(element.x - targetPosition) < 3) {
@@ -3645,7 +3440,7 @@ const startResizingElement = (event: MouseEvent, bandIndex: number, elementIndex
               // 根据对齐线位置计算新的高度
               // 注意：snapInfo.vertical.position已经包含了topMargin和band偏移
               const bandOffsetY = getBandOffsetY(resizingInfo.value.bandIndex);
-              const targetPosition = snapInfo.vertical.position - reportProperties.value.topMargin - bandOffsetY;
+              const targetPosition = snapInfo.vertical.position - (reportProperties.value?.topMargin || 0) - bandOffsetY;
               
               // 判断是顶部对齐还是底部对齐
               if (Math.abs(element.y - targetPosition) < 3) {

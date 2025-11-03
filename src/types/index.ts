@@ -44,6 +44,13 @@ export interface Box {
   [key: string]: any;
 }
 
+export interface ReportData {
+      reportProperties: ReportProperties;
+      bands: Band[];
+      reportFields: ReportField[];
+      jrxmlContent: string;
+}
+
 // 报表字段接口
 export interface ReportField {
   name: string;
@@ -145,6 +152,7 @@ export interface Band {
   type: BandType;
   height: number;
   elements: DesignElement[];
+  splitType?: 'Stretch' | 'Prevent' | 'Immediate';
 }
 
 // 选中元素信息接口
