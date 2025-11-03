@@ -1338,7 +1338,7 @@ const detectAlignmentLines = (currentElement: DesignElement, currentBandIndex: n
   
   // 遍历所有band和元素，检测对齐关系
   bands.value.forEach((band, bandIndex) => {
-    band.elements.forEach((element, elementIndex) => {
+    band.elements.forEach((element, _elementIndex) => {
       // 跳过当前元素
       if (bandIndex === currentBandIndex && element === currentElement) return;
       
