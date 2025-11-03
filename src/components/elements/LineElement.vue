@@ -4,6 +4,7 @@
     :band-index="bandIndex"
     :element-index="elementIndex"
     :selected-element="selectedElement"
+    :is-dragging="isDragging"
     :report-font-family="reportFontFamily"
     :report-font-size="reportFontSize"
     :report-is-bold="reportIsBold"
@@ -31,6 +32,7 @@ const props = defineProps<{
   bandIndex: number;
   elementIndex: number;
   selectedElement: SelectedElementInfo | null;
+  isDragging?: boolean;
   reportFontFamily?: string;
   reportFontSize?: number;
   reportIsBold?: boolean;

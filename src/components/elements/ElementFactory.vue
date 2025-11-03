@@ -25,6 +25,7 @@ const props = defineProps<{
   elementIndex: number;
   selectedElement: SelectedElementInfo | null;
   editingElement: EditingElementInfo | null;
+  isDragging?: boolean;
   reportFontFamily?: string;
   reportFontSize?: number;
   reportIsBold?: boolean;
@@ -68,6 +69,7 @@ const commonProps = computed(() => ({
   elementIndex: props.elementIndex,
   selectedElement: props.selectedElement,
   editingElement: props.editingElement,
+  isDragging: props.isDragging,
   reportFontFamily: props.reportFontFamily,
   reportFontSize: props.reportFontSize,
   reportIsBold: props.reportIsBold,

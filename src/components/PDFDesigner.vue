@@ -4,14 +4,22 @@
       <h1>PDF模板设计器</h1>
       <div class="header-actions">
           <button @click="toggleLeftPanel" class="btn-secondary">
-            {{ showLeftPanel ? '隐藏左侧面板' : '显示左侧面板' }}
-          </button>
-          <button @click="toggleRightPanel" class="btn-secondary">
+          {{ showLeftPanel ? '隐藏左侧面板' : '显示左侧面板' }}
+        </button>
+        <button @click="toggleRightPanel" class="btn-secondary">
           {{ showRightPanel ? '隐藏右侧面板' : '显示右侧面板' }}
         </button>
         <button @click="toggleBottomPanel" class="btn-secondary">
           {{ showBottomPanel ? '隐藏底部面板' : '显示底部面板' }}
         </button>
+        
+        <!-- 自动吸附开关 -->
+        <div class="snap-toggle">
+          <label>
+            <input type="checkbox" v-model="enableSnapToGrid" />
+            自动吸附
+          </label>
+        </div>
         
         <!-- 缩放控制 -->
         <div class="zoom-controls">
@@ -179,6 +187,7 @@
                   :element-index="index"
                   :selected-element="selectedElement"
                   :editing-element="editingElement"
+                  :is-dragging="isDraggingOrResizing"
                   :report-font-family="reportProperties.defaultFont.name"
                   :report-font-size="reportProperties.defaultFont.size"
                   :report-is-bold="reportProperties.defaultFont.isBold"
@@ -194,6 +203,24 @@
               </div>
               <!-- 区域高度调整手柄 -->
               <div class="band-resize-handle" @mousedown.stop="startResizingBand($event, bandIndex)"></div>
+            </div>
+            
+            <!-- 对齐线 -->
+            <div v-if="isDraggingOrResizing" class="alignment-lines">
+              <!-- 水平对齐线 -->
+              <div 
+                v-for="(line, index) in alignmentLines.horizontal" 
+                :key="'h-' + index"
+                class="alignment-line horizontal"
+                :style="{ left: line + 'px' }"
+              ></div>
+              <!-- 垂直对齐线 -->
+              <div 
+                v-for="(line, index) in alignmentLines.vertical" 
+                :key="'v-' + index"
+                class="alignment-line vertical"
+                :style="{ top: line + 'px' }"
+              ></div>
             </div></div>
           </div>
           </div>
@@ -825,6 +852,15 @@ const showLeftPanel = ref(true);
 const showRightPanel = ref(true);
 const showBottomPanel = ref(true);
 
+// 自动吸附功能开关
+const enableSnapToGrid = ref(false);
+
+// 对齐线相关状态
+const alignmentLines = ref({
+  horizontal: [] as number[],
+  vertical: [] as number[]
+});
+
 // 缩放相关状态
 const zoomLevel = ref(ZOOM_CONSTANTS.DEFAULT_ZOOM); // 默认缩放级别为100%
 
@@ -1286,7 +1322,94 @@ const handleDrop = (event: DragEvent) => {
   }
 };
 
-// 获取元素默认属性
+// 检测对齐线
+const detectAlignmentLines = (currentElement: DesignElement, currentBandIndex: number) => {
+  const threshold = 5; // 对齐阈值，像素
+  const horizontalLines: number[] = [];
+  const verticalLines: number[] = [];
+  
+  // 获取当前元素的边界
+  const currentLeft = currentElement.x;
+  const currentRight = currentElement.x + currentElement.width;
+  const currentTop = currentElement.y;
+  const currentBottom = currentElement.y + currentElement.height;
+  const currentCenterX = currentElement.x + currentElement.width / 2;
+  const currentCenterY = currentElement.y + currentElement.height / 2;
+  
+  // 遍历所有band和元素，检测对齐关系
+  bands.value.forEach((band, bandIndex) => {
+    band.elements.forEach((element, elementIndex) => {
+      // 跳过当前元素
+      if (bandIndex === currentBandIndex && element === currentElement) return;
+      
+      // 获取其他元素的边界
+      const otherLeft = element.x;
+      const otherRight = element.x + element.width;
+      const otherTop = element.y;
+      const otherBottom = element.y + element.height;
+      const otherCenterX = element.x + element.width / 2;
+      const otherCenterY = element.y + element.height / 2;
+      
+      // 检测水平对齐线
+      // 左边对齐
+      if (Math.abs(currentLeft - otherLeft) < threshold) {
+        horizontalLines.push(otherLeft);
+      }
+      // 右边对齐
+      if (Math.abs(currentRight - otherRight) < threshold) {
+        horizontalLines.push(otherRight);
+      }
+      // 中心对齐
+      if (Math.abs(currentCenterX - otherCenterX) < threshold) {
+        horizontalLines.push(otherCenterX);
+      }
+      // 左边对齐到其他元素的右边
+      if (Math.abs(currentLeft - otherRight) < threshold) {
+        horizontalLines.push(otherRight);
+      }
+      // 右边对齐到其他元素的左边
+      if (Math.abs(currentRight - otherLeft) < threshold) {
+        horizontalLines.push(otherLeft);
+      }
+      
+      // 检测垂直对齐线
+      // 顶部对齐
+      if (Math.abs(currentTop - otherTop) < threshold) {
+        verticalLines.push(otherTop);
+      }
+      // 底部对齐
+      if (Math.abs(currentBottom - otherBottom) < threshold) {
+        verticalLines.push(otherBottom);
+      }
+      // 中心对齐
+      if (Math.abs(currentCenterY - otherCenterY) < threshold) {
+        verticalLines.push(otherCenterY);
+      }
+      // 顶部对齐到其他元素的底部
+      if (Math.abs(currentTop - otherBottom) < threshold) {
+        verticalLines.push(otherBottom);
+      }
+      // 底部对齐到其他元素的顶部
+      if (Math.abs(currentBottom - otherTop) < threshold) {
+        verticalLines.push(otherTop);
+      }
+    });
+  });
+  
+  // 更新对齐线状态
+  alignmentLines.value = {
+    horizontal: [...new Set(horizontalLines)], // 去重
+    vertical: [...new Set(verticalLines)] // 去重
+  };
+};
+
+// 清除对齐线
+const clearAlignmentLines = () => {
+  alignmentLines.value = {
+    horizontal: [],
+    vertical: []
+  };
+};
 const getDefaultElementProperties = (type: string): Partial<DesignElement> => {
   // 使用报表的默认字体设置
   const defaultFontProps = {
@@ -1428,11 +1551,36 @@ const startDragging = (event: MouseEvent, bandIndex: number, elementIndex: numbe
             }
             
             // 计算新的X和Y坐标，考虑缩放和偏移
-            const newX = Math.max(0, Math.min(((e.clientX - paperOffsetX) / currentZoom) - draggingInfo.value.startX, availableWidth - currentElement.width));
-            const newY = ((e.clientY - paperOffsetY) / currentZoom) - draggingInfo.value.startY; // 移除y坐标的下限限制
+            let newX = Math.max(0, Math.min(((e.clientX - paperOffsetX) / currentZoom) - draggingInfo.value.startX, availableWidth - currentElement.width));
+            let newY = ((e.clientY - paperOffsetY) / currentZoom) - draggingInfo.value.startY; // 移除y坐标的下限限制
+            
+            // 应用自动吸附功能
+            if (enableSnapToGrid.value) {
+              // 定义网格大小为5像素
+              const gridSize = 5;
+              
+              // 对X坐标进行吸附
+              const remainderX = newX % gridSize;
+              if (remainderX < gridSize / 2) {
+                newX = newX - remainderX;
+              } else {
+                newX = newX + (gridSize - remainderX);
+              }
+              
+              // 对Y坐标进行吸附
+              const remainderY = newY % gridSize;
+              if (remainderY < gridSize / 2) {
+                newY = newY - remainderY;
+              } else {
+                newY = newY + (gridSize - remainderY);
+              }
+            }
             
             currentElement.x = newX;
             currentElement.y = newY;
+            
+            // 检测对齐线
+            detectAlignmentLines(currentElement, draggingInfo.value.bandIndex);
             
             // 更新并显示坐标信息
             // 显示元素的相对坐标值
@@ -1580,6 +1728,9 @@ const startDragging = (event: MouseEvent, bandIndex: number, elementIndex: numbe
         // 清除高亮和坐标显示
         highlightedBandIndex.value = null;
         dragCoordinates.value.visible = false;
+        
+        // 清除对齐线
+        clearAlignmentLines();
         
         draggingInfo.value = null;
         isDraggingOrResizing = false;
@@ -4026,6 +4177,29 @@ const handleBandSelectionChange = (): void => {
   margin-right: 8px;
 }
 
+/* 自动吸附开关样式 */
+.snap-toggle {
+  display: flex;
+  align-items: center;
+  margin-right: 8px;
+  padding: 4px 8px;
+  background-color: #f5f5f5;
+  border-radius: 4px;
+  border: 1px solid #d9d9d9;
+}
+
+.snap-toggle label {
+  display: flex;
+  align-items: center;
+  font-size: 12px;
+  cursor: pointer;
+  margin: 0;
+}
+
+.snap-toggle input[type="checkbox"] {
+  margin-right: 4px;
+}
+
 /* 缩放按钮样式 */
 .btn-zoom {
   padding: 3px 6px;
@@ -4126,7 +4300,34 @@ const handleBandSelectionChange = (): void => {
   background-color: #fafafa;
 }
 
-/* 框选样式 */
+/* 对齐线样式 */
+.alignment-lines {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 1000;
+}
+
+.alignment-line {
+  position: absolute;
+  background-color: rgba(24, 144, 255, 0.8);
+  pointer-events: none;
+}
+
+.alignment-line.horizontal {
+  width: 1px;
+  height: 100%;
+  top: 0;
+}
+
+.alignment-line.vertical {
+  width: 100%;
+  height: 1px;
+  left: 0;
+}
 .selection-box {
   position: absolute;
   background-color: rgba(24, 144, 255, 0.2);

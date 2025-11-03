@@ -1,7 +1,7 @@
 <template>
   <div 
     class="design-element"
-    :class="{ 'selected': isSelected }"
+    :class="{ 'selected': isSelected && !isDragging }"
     @click.stop="handleSelect"
     :style="elementStyle"
     @mousedown.stop="handleMouseDown"
@@ -28,6 +28,7 @@ const props = defineProps<{
   bandIndex: number;
   elementIndex: number;
   selectedElement: SelectedElementInfo | null;
+  isDragging?: boolean;
   reportFontFamily?: string;
   reportFontSize?: number;
   reportIsBold?: boolean;
@@ -141,9 +142,49 @@ const handleSelect = () => {
 
 // 处理鼠标按下（拖拽）
 const handleMouseDown = (event: MouseEvent) => {
-  // 直接触发dragStart事件，让父组件处理拖拽逻辑
-  // 这样可以避免延迟，提高响应速度
-  emit('dragStart', event, props.bandIndex, props.elementIndex);
+  // 记录鼠标按下的初始位置和时间
+  const startX = event.clientX;
+  const startY = event.clientY;
+  const startTime = Date.now();
+  
+  // 拖动状态标志
+  let isDragging = false;
+  let dragTimer: number | null = null;
+  
+  // 鼠标移动处理函数
+  const handleMouseMove = (moveEvent: MouseEvent) => {
+    // 计算移动距离
+    const deltaX = Math.abs(moveEvent.clientX - startX);
+    const deltaY = Math.abs(moveEvent.clientY - startY);
+    
+    // 只有在鼠标按下超过100毫秒后才允许拖动
+    const elapsed = Date.now() - startTime;
+    
+    if (elapsed > 100 && (deltaX > 5 || deltaY > 5)) {
+      if (!isDragging) {
+        isDragging = true;
+        // 触发拖动开始事件
+        emit('dragStart', moveEvent, props.bandIndex, props.elementIndex);
+      }
+    }
+  };
+  
+  // 鼠标释放处理函数
+  const handleMouseUp = () => {
+    // 清除定时器（如果有）
+    if (dragTimer !== null) {
+      clearTimeout(dragTimer);
+      dragTimer = null;
+    }
+    
+    // 移除事件监听器
+    document.removeEventListener('mousemove', handleMouseMove);
+    document.removeEventListener('mouseup', handleMouseUp);
+  };
+  
+  // 添加事件监听器
+  document.addEventListener('mousemove', handleMouseMove);
+  document.addEventListener('mouseup', handleMouseUp);
 };
 
 // 处理调整大小
