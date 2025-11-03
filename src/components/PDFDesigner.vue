@@ -3,7 +3,36 @@
     <div class="designer-header">
       <h1>PDF模板设计器</h1>
       <div class="header-actions">
-          <button @click="toggleLeftPanel" class="btn-secondary">
+        <!-- 文件管理菜单 -->
+        <div class="file-menu-container" ref="fileMenuContainer">
+          <button @click="toggleFileMenu" class="file-menu-button">文件管理</button>
+          <div v-if="showFileMenu" class="file-menu-dropdown">
+            <div class="menu-item" @click="createNewFile">
+              <span class="menu-icon">📄</span>
+              <span>新建文件</span>
+            </div>
+            <div class="menu-item" @click="openLocalFile">
+              <span class="menu-icon">📂</span>
+              <span>打开本地文件</span>
+            </div>
+            <div class="menu-item" @click="saveCurrentFileToStorage" :disabled="!currentFileName || currentFileName === '未命名报表'">
+              <span class="menu-icon">💾</span>
+              <span>保存</span>
+            </div>
+            <div class="menu-item" @click="saveAsLocalFile">
+              <span class="menu-icon">💾</span>
+              <span>另存为</span>
+            </div>
+            <div class="menu-divider"></div>
+            <div class="menu-item" @click="showFileList = true">
+              <span class="menu-icon">📋</span>
+              <span>文件列表</span>
+            </div>
+          </div>
+        </div>
+        <span class="current-file-name">{{ currentFileName }}</span>
+        
+        <button @click="toggleLeftPanel" class="btn-secondary">
           {{ showLeftPanel ? '隐藏左侧面板' : '显示左侧面板' }}
         </button>
         <button @click="toggleRightPanel" class="btn-secondary">
@@ -17,7 +46,11 @@
         <div class="snap-toggle">
           <label>
             <input type="checkbox" v-model="enableSnapToGrid" />
-            自动吸附
+            网格吸附
+          </label>
+          <label>
+            <input type="checkbox" v-model="enableSnapToAlignment" />
+            对齐线吸附
           </label>
         </div>
         
@@ -204,8 +237,8 @@
                  }"
                  :class="{'focused': isDesignAreaFocused}"
                  @drop="handleDrop"
-                 @dragover.prevent
-                 @dragenter.prevent
+                 @dragover="handleDragOver"
+                 @dragleave="handleDragLeave"
             >
             <!-- 报表边距容器 -->
             <div class="pager"
@@ -227,7 +260,8 @@
               @click="selectBand(bandIndex)"
               :class="{ 
                 'selected': selectedBandIndex === bandIndex,
-                'dragging-target': highlightedBandIndex === bandIndex
+                'dragging-target': highlightedBandIndex === bandIndex,
+                'drag-over': highlightedBandIndex === bandIndex
               }"
             >
               <div class="band-header">
@@ -847,12 +881,32 @@
           </div>
         </div>
       </div>
+    
+    <!-- 文件列表弹窗 -->
+    <div v-if="showFileList" class="modal-overlay" @click.self="showFileList = false">
+      <div class="file-list-modal">
+        <div class="modal-header">
+          <h3>文件列表</h3>
+          <button @click="showFileList = false" class="btn-close">×</button>
+        </div>
+        <div class="modal-body">
+          <FileManager 
+            @close="showFileList = false"
+            @load-file="loadFile"
+            @save-file="() => { /* 文件已在FileManager中保存 */ }"
+            :current-file-name="currentFileName"
+            :current-file-data="saveCurrentFile()"
+          />
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
 <script setup lang="ts">
 import ElementFactory from './elements/ElementFactory.vue';
 import ResizablePanel from './ResizablePanel.vue';
+import FileManager from './FileManager.vue';
 import type { DesignElement, Band, ReportField, ReportParameter, BandType } from '../types';
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue';
 import {
@@ -895,7 +949,7 @@ const elementTabs = ref([
 // 面板显示状态
 const showLeftPanel = ref(true);
 const showRightPanel = ref(true);
-const showBottomPanel = ref(true);
+const showBottomPanel = ref(false);
 
 // 属性面板宽度
 const propertyPanelWidth = ref(PANEL_CONSTANTS.DEFAULT_PROPERTY_PANEL_WIDTH); // 默认宽度300px
@@ -905,6 +959,7 @@ const leftPanelWidth = ref(PANEL_CONSTANTS.DEFAULT_LEFT_PANEL_WIDTH); // 默认�
 
 // 自动吸附功能开关
 const enableSnapToGrid = ref(false);
+const enableSnapToAlignment = ref(true); // 默认开启对齐线吸附
 
 // 对齐线相关状态
 const alignmentLines = ref({
@@ -1064,6 +1119,225 @@ const reportProperties = ref({
   },
   
 });
+
+// 文件管理相关状态
+const showFileMenu = ref(false);
+const showFileList = ref(false);
+const currentFileName = ref('未命名报表');
+const currentFileId = ref<string | null>(null);
+const fileMenuContainer = ref<HTMLElement | null>(null);
+
+// 文件操作方法
+function toggleFileMenu() {
+  showFileMenu.value = !showFileMenu.value;
+}
+
+// 点击外部关闭菜单
+function handleClickOutside(event: MouseEvent) {
+  if (fileMenuContainer.value && !fileMenuContainer.value.contains(event.target as Node)) {
+    showFileMenu.value = false;
+  }
+}
+
+// 监听点击事件
+onMounted(() => {
+  document.addEventListener('click', handleClickOutside);
+});
+
+onUnmounted(() => {
+  document.removeEventListener('click', handleClickOutside);
+});
+
+function createNewFile() {
+  showFileMenu.value = false;
+  // 创建新文件的逻辑
+  const timestamp = new Date().getTime();
+  currentFileName.value = `未命名报表${timestamp}`;
+  currentFileId.value = `file_${timestamp}`;
+  
+  // 重置报表数据
+  reportProperties.value = {
+    name: 'NewReport',
+    pageWidth: 595,
+    pageHeight: 842,
+    leftMargin: 20,
+    rightMargin: 20,
+    topMargin: 20,
+    bottomMargin: 20,
+    defaultFont: {
+      name: 'SansSerif',
+      size: 12,
+      isBold: false,
+      isItalic: false,
+      isUnderline: false
+    }
+  };
+  
+  bands.value = [
+    { type: BAND_TYPE_CONSTANTS.TITLE as BandType, height: BAND_HEIGHT_CONSTANTS[BAND_TYPE_CONSTANTS.TITLE] || 50, elements: [] },
+    { type: BAND_TYPE_CONSTANTS.PAGE_HEADER as BandType, height: BAND_HEIGHT_CONSTANTS[BAND_TYPE_CONSTANTS.PAGE_HEADER] || 50, elements: [] },
+    { type: BAND_TYPE_CONSTANTS.COLUMN_HEADER as BandType, height: BAND_HEIGHT_CONSTANTS[BAND_TYPE_CONSTANTS.COLUMN_HEADER] || 30, elements: [] },
+    { type: BAND_TYPE_CONSTANTS.DETAIL as BandType, height: BAND_HEIGHT_CONSTANTS[BAND_TYPE_CONSTANTS.DETAIL] || 100, elements: [] },
+    { type: BAND_TYPE_CONSTANTS.COLUMN_FOOTER as BandType, height: BAND_HEIGHT_CONSTANTS[BAND_TYPE_CONSTANTS.COLUMN_FOOTER] || 30, elements: [] },
+    { type: BAND_TYPE_CONSTANTS.PAGE_FOOTER as BandType, height: BAND_HEIGHT_CONSTANTS[BAND_TYPE_CONSTANTS.PAGE_FOOTER] || 40, elements: [] },
+    { type: BAND_TYPE_CONSTANTS.SUMMARY as BandType, height: BAND_HEIGHT_CONSTANTS[BAND_TYPE_CONSTANTS.SUMMARY] || 60, elements: [] }
+  ];
+  
+  reportFields.value = [];
+  reportParameters.value = [];
+  jrxmlContent.value = '';
+  
+  // 清除当前选中的元素
+  selectedElement.value = null;
+  selectedBandIndex.value = null;
+}
+
+function openLocalFile() {
+  showFileMenu.value = false;
+  // 打开本地文件的逻辑
+  const input = document.createElement('input');
+  input.type = 'file';
+  input.accept = '.json';
+  input.onchange = (e) => {
+    const file = (e.target as HTMLInputElement).files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        try {
+          const content = e.target?.result as string;
+          JSON.parse(content); // 验证JSON格式
+          loadFile({
+            id: null,
+            name: file.name,
+            content: content
+          });
+        } catch (error) {
+          console.error('加载文件失败:', error);
+          alert('文件格式不正确，无法加载');
+        }
+      };
+      reader.readAsText(file);
+    }
+  };
+  input.click();
+}
+
+function saveCurrentFileToStorage() {
+  showFileMenu.value = false;
+  // 保存当前文件到本地存储
+  const fileData = saveCurrentFile();
+  
+  try {
+    // 从localStorage获取现有文件列表
+    const storedFiles = localStorage.getItem('pdfDesignerFiles');
+    const files = storedFiles ? JSON.parse(storedFiles) : [];
+    
+    // 查找当前文件是否已存在
+    const existingFileIndex = files.findIndex((file: any) => file.id === currentFileId.value);
+    
+    if (existingFileIndex !== -1) {
+      // 更新现有文件
+      files[existingFileIndex] = {
+        ...files[existingFileIndex],
+        content: JSON.stringify(fileData),
+        lastModified: new Date().toISOString()
+      };
+    } else if (currentFileId.value) {
+      // 添加新文件
+      files.push({
+        id: currentFileId.value,
+        name: currentFileName.value,
+        content: JSON.stringify(fileData),
+        lastModified: new Date().toISOString(),
+        createdAt: new Date().toISOString()
+      });
+    } else {
+      // 如果没有文件ID，创建一个新文件
+      const newId = `file_${new Date().getTime()}`;
+      currentFileId.value = newId;
+      files.push({
+        id: newId,
+        name: currentFileName.value,
+        content: JSON.stringify(fileData),
+        lastModified: new Date().toISOString(),
+        createdAt: new Date().toISOString()
+      });
+    }
+    
+    // 保存更新后的文件列表
+    localStorage.setItem('pdfDesignerFiles', JSON.stringify(files));
+    alert('文件保存成功');
+  } catch (error) {
+    console.error('保存文件失败:', error);
+    alert('保存文件失败');
+  }
+}
+
+function saveAsLocalFile() {
+  showFileMenu.value = false;
+  // 另存为文件的逻辑
+  const fileData = saveCurrentFile();
+  const content = JSON.stringify(fileData, null, 2);
+  const blob = new Blob([content], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `${currentFileName.value}.json`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+function loadFile(fileData: any) {
+  try {
+    // 解析文件内容
+    const fileContent = typeof fileData.content === 'string' 
+      ? JSON.parse(fileData.content) 
+      : fileData;
+      
+    // 加载文件数据到当前报表
+    if (fileContent.reportProperties) {
+      reportProperties.value = { ...reportProperties.value, ...fileContent.reportProperties };
+    }
+    
+    if (fileContent.bands) {
+      bands.value = fileContent.bands;
+    }
+    
+    if (fileContent.jrxmlContent) {
+      jrxmlContent.value = fileContent.jrxmlContent;
+    }
+    
+    // 更新当前文件信息
+    currentFileName.value = fileData.name || '未命名报表';
+    currentFileId.value = fileData.id || null;
+    
+    // 清除当前选中的元素
+    selectedElement.value = null;
+    selectedBandIndex.value = null;
+  } catch (error) {
+    console.error('加载文件失败:', error);
+    alert('文件格式不正确，无法加载');
+  }
+}
+
+function saveCurrentFile() {
+  // 准备要保存的数据
+  const fileData = {
+    id: currentFileId.value,
+    name: currentFileName.value,
+    reportProperties: reportProperties.value,
+    bands: bands.value,
+    reportFields: reportFields.value,
+    reportParameters: reportParameters.value,
+    jrxmlContent: jrxmlContent.value,
+    lastModified: new Date().toISOString()
+  };
+  
+  // 返回文件数据
+  return fileData;
+}
 
 // 可用元素
 const elements = ref([
@@ -1389,12 +1663,17 @@ const handleDrop = (event: DragEvent) => {
     const x = event.clientX - paperRect.left;
     const y = event.clientY - paperRect.top;
     
+    // 考虑缩放比例
+    const currentZoom = zoomLevel.value;
+    const scaledX = x / currentZoom;
+    const scaledY = y / currentZoom;
+    
     // 找到对应的band
     let bandIndex = 0;
     let currentY = 0;
     for (let i = 0; i < bands.value.length; i++) {
       const band = bands.value[i];
-      if (band && y >= currentY && y <= currentY + band.height) {
+      if (band && scaledY >= currentY && scaledY <= currentY + band.height) {
         bandIndex = i;
         break;
       }
@@ -1406,8 +1685,8 @@ const handleDrop = (event: DragEvent) => {
     // 创建新元素
     const newElement: DesignElement = {
       type: elementData.type,
-      x: Math.max(0, x - 50), // 减去元素宽度的一半以居中
-      y: Math.max(0, y - currentY), // 直接使用相对于band的位置
+      x: Math.max(0, scaledX - 50), // 减去元素宽度的一半以居中
+      y: Math.max(0, scaledY - currentY), // 相对于band的位置
       width: 100,
       height: 30,
       ...getDefaultElementProperties(elementData.type)
@@ -1435,15 +1714,82 @@ const handleDrop = (event: DragEvent) => {
       }
       
       targetBand.elements.push(newElement);
+      
+      // 选中刚添加的元素
+      selectElement(bandIndex, targetBand.elements.length - 1);
+      
+      // 更新JRXML
+      updateJRXML();
     }
+  }
+  
+  // 清除高亮状态
+  highlightedBandIndex.value = null;
+};
+
+// 处理拖动过程中的视觉反馈
+const handleDragOver = (event: DragEvent) => {
+  event.preventDefault();
+  
+  // 获取paper元素作为参考点
+  const paper = document.querySelector('.paper') as HTMLElement;
+  if (!paper) return;
+  
+  const paperRect = paper.getBoundingClientRect();
+  // 计算相对于paper的坐标
+  const y = event.clientY - paperRect.top;
+  
+  // 考虑缩放比例
+  const currentZoom = zoomLevel.value;
+  const scaledY = y / currentZoom;
+  
+  // 找到对应的band
+  let bandIndex = -1;
+  let currentY = 0;
+  for (let i = 0; i < bands.value.length; i++) {
+    const band = bands.value[i];
+    if (band && scaledY >= currentY && scaledY <= currentY + band.height) {
+      bandIndex = i;
+      break;
+    }
+    if (band) {
+      currentY += band.height;
+    }
+  }
+  
+  // 更新高亮状态
+  highlightedBandIndex.value = bandIndex;
+};
+
+// 处理拖动离开事件
+const handleDragLeave = (event: DragEvent) => {
+  // 检查是否真的离开了paper区域
+  const paper = document.querySelector('.paper') as HTMLElement;
+  if (paper && !paper.contains(event.relatedTarget as Node)) {
+    highlightedBandIndex.value = null;
   }
 };
 
 // 检测对齐线
-const detectAlignmentLines = (currentElement: DesignElement, currentBandIndex: number) => {
+const detectAlignmentLines = (currentElement: DesignElement, currentBandIndex: number, updateState: boolean = true) => {
   const threshold = 5; // 对齐阈值，像素
   const horizontalLines: number[] = [];
   const verticalLines: number[] = [];
+  
+  // 用于存储吸附信息的对象
+  const snapInfo = {
+    horizontal: null as { position: number; offset: number } | null,
+    vertical: null as { position: number; offset: number } | null
+  };
+  
+  // 获取页边距
+  const { leftMargin, topMargin } = reportProperties.value;
+  
+  // 计算当前band的Y坐标偏移
+  let currentBandY = 0;
+  for (let i = 0; i < currentBandIndex; i++) {
+    currentBandY += bands.value[i]?.height || 0;
+  }
   
   // 获取当前元素的边界
   const currentLeft = currentElement.x;
@@ -1454,6 +1800,7 @@ const detectAlignmentLines = (currentElement: DesignElement, currentBandIndex: n
   const currentCenterY = currentElement.y + currentElement.height / 2;
   
   // 遍历所有band和元素，检测对齐关系
+  let bandOffsetY = 0;
   bands.value.forEach((band, bandIndex) => {
     band.elements.forEach((element, _elementIndex) => {
       // 跳过当前元素
@@ -1467,57 +1814,162 @@ const detectAlignmentLines = (currentElement: DesignElement, currentBandIndex: n
       const otherCenterX = element.x + element.width / 2;
       const otherCenterY = element.y + element.height / 2;
       
-      // 检测水平对齐线
+      // 检测水平对齐线（所有band中的元素都考虑）
       // 左边对齐
       if (Math.abs(currentLeft - otherLeft) < threshold) {
-        horizontalLines.push(otherLeft);
+        const linePosition = otherLeft + leftMargin;
+        horizontalLines.push(linePosition);
+        
+        // 更新吸附信息
+        if (!snapInfo.horizontal || Math.abs(currentLeft - otherLeft) < Math.abs(snapInfo.horizontal.offset)) {
+          snapInfo.horizontal = {
+            position: linePosition,
+            offset: otherLeft - currentLeft
+          };
+        }
       }
       // 右边对齐
       if (Math.abs(currentRight - otherRight) < threshold) {
-        horizontalLines.push(otherRight);
+        const linePosition = otherRight + leftMargin;
+        horizontalLines.push(linePosition);
+        
+        // 更新吸附信息
+        if (!snapInfo.horizontal || Math.abs(currentRight - otherRight) < Math.abs(snapInfo.horizontal.offset)) {
+          snapInfo.horizontal = {
+            position: linePosition,
+            offset: otherRight - currentRight
+          };
+        }
       }
       // 中心对齐
       if (Math.abs(currentCenterX - otherCenterX) < threshold) {
-        horizontalLines.push(otherCenterX);
+        const linePosition = otherCenterX + leftMargin;
+        horizontalLines.push(linePosition);
+        
+        // 更新吸附信息
+        if (!snapInfo.horizontal || Math.abs(currentCenterX - otherCenterX) < Math.abs(snapInfo.horizontal.offset)) {
+          snapInfo.horizontal = {
+            position: linePosition,
+            offset: otherCenterX - currentCenterX
+          };
+        }
       }
       // 左边对齐到其他元素的右边
       if (Math.abs(currentLeft - otherRight) < threshold) {
-        horizontalLines.push(otherRight);
+        const linePosition = otherRight + leftMargin;
+        horizontalLines.push(linePosition);
+        
+        // 更新吸附信息
+        if (!snapInfo.horizontal || Math.abs(currentLeft - otherRight) < Math.abs(snapInfo.horizontal.offset)) {
+          snapInfo.horizontal = {
+            position: linePosition,
+            offset: otherRight - currentLeft
+          };
+        }
       }
       // 右边对齐到其他元素的左边
       if (Math.abs(currentRight - otherLeft) < threshold) {
-        horizontalLines.push(otherLeft);
+        const linePosition = otherLeft + leftMargin;
+        horizontalLines.push(linePosition);
+        
+        // 更新吸附信息
+        if (!snapInfo.horizontal || Math.abs(currentRight - otherLeft) < Math.abs(snapInfo.horizontal.offset)) {
+          snapInfo.horizontal = {
+            position: linePosition,
+            offset: otherLeft - currentRight
+          };
+        }
       }
       
-      // 检测垂直对齐线
-      // 顶部对齐
-      if (Math.abs(currentTop - otherTop) < threshold) {
-        verticalLines.push(otherTop);
-      }
-      // 底部对齐
-      if (Math.abs(currentBottom - otherBottom) < threshold) {
-        verticalLines.push(otherBottom);
-      }
-      // 中心对齐
-      if (Math.abs(currentCenterY - otherCenterY) < threshold) {
-        verticalLines.push(otherCenterY);
-      }
-      // 顶部对齐到其他元素的底部
-      if (Math.abs(currentTop - otherBottom) < threshold) {
-        verticalLines.push(otherBottom);
-      }
-      // 底部对齐到其他元素的顶部
-      if (Math.abs(currentBottom - otherTop) < threshold) {
-        verticalLines.push(otherTop);
+      // 检测垂直对齐线（只考虑相同band中的元素）
+      if (bandIndex === currentBandIndex) {
+        // 顶部对齐
+        if (Math.abs(currentTop - otherTop) < threshold) {
+          // 添加当前band的Y坐标偏移到参考线位置
+          const linePosition = otherTop + topMargin + bandOffsetY;
+          verticalLines.push(linePosition);
+          
+          // 更新吸附信息，元素坐标不需要考虑band偏移
+          if (!snapInfo.vertical || Math.abs(currentTop - otherTop) < Math.abs(snapInfo.vertical.offset)) {
+            snapInfo.vertical = {
+              position: linePosition,
+              offset: otherTop - currentTop
+            };
+          }
+        }
+        // 底部对齐
+        if (Math.abs(currentBottom - otherBottom) < threshold) {
+          // 添加当前band的Y坐标偏移到参考线位置
+          const linePosition = otherBottom + topMargin + bandOffsetY;
+          verticalLines.push(linePosition);
+          
+          // 更新吸附信息，元素坐标不需要考虑band偏移
+          if (!snapInfo.vertical || Math.abs(currentBottom - otherBottom) < Math.abs(snapInfo.vertical.offset)) {
+            snapInfo.vertical = {
+              position: linePosition,
+              offset: otherBottom - currentBottom
+            };
+          }
+        }
+        // 中心对齐
+        if (Math.abs(currentCenterY - otherCenterY) < threshold) {
+          // 添加当前band的Y坐标偏移到参考线位置
+          const linePosition = otherCenterY + topMargin + bandOffsetY;
+          verticalLines.push(linePosition);
+          
+          // 更新吸附信息，元素坐标不需要考虑band偏移
+          if (!snapInfo.vertical || Math.abs(currentCenterY - otherCenterY) < Math.abs(snapInfo.vertical.offset)) {
+            snapInfo.vertical = {
+              position: linePosition,
+              offset: otherCenterY - currentCenterY
+            };
+          }
+        }
+        // 顶部对齐到其他元素的底部
+        if (Math.abs(currentTop - otherBottom) < threshold) {
+          // 添加当前band的Y坐标偏移到参考线位置
+          const linePosition = otherBottom + topMargin + bandOffsetY;
+          verticalLines.push(linePosition);
+          
+          // 更新吸附信息，元素坐标不需要考虑band偏移
+          if (!snapInfo.vertical || Math.abs(currentTop - otherBottom) < Math.abs(snapInfo.vertical.offset)) {
+            snapInfo.vertical = {
+              position: linePosition,
+              offset: otherBottom - currentTop
+            };
+          }
+        }
+        // 底部对齐到其他元素的顶部
+        if (Math.abs(currentBottom - otherTop) < threshold) {
+          // 添加当前band的Y坐标偏移到参考线位置
+          const linePosition = otherTop + topMargin + bandOffsetY;
+          verticalLines.push(linePosition);
+          
+          // 更新吸附信息，元素坐标不需要考虑band偏移
+          if (!snapInfo.vertical || Math.abs(currentBottom - otherTop) < Math.abs(snapInfo.vertical.offset)) {
+            snapInfo.vertical = {
+              position: linePosition,
+              offset: otherTop - currentBottom
+            };
+          }
+        }
       }
     });
+    
+    // 更新band的Y坐标偏移
+    bandOffsetY += band.height;
   });
   
   // 更新对齐线状态
-  alignmentLines.value = {
-    horizontal: [...new Set(horizontalLines)], // 去重
-    vertical: [...new Set(verticalLines)] // 去重
-  };
+  if (updateState) {
+    alignmentLines.value = {
+      horizontal: [...new Set(horizontalLines)], // 去重
+      vertical: [...new Set(verticalLines)] // 去重
+    };
+  }
+  
+  // 返回吸附信息
+  return snapInfo;
 };
 
 // 清除对齐线
@@ -1693,10 +2145,27 @@ const startDragging = (event: MouseEvent, bandIndex: number, elementIndex: numbe
               }
             }
             
+            // 应用对齐线吸附功能
+            if (enableSnapToAlignment.value) {
+              // 创建临时元素对象用于检测对齐线
+              const tempElement = { ...currentElement, x: newX, y: newY };
+              const snapInfo = detectAlignmentLines(tempElement, draggingInfo.value.bandIndex, false);
+              
+              // 应用水平吸附
+              if (snapInfo.horizontal) {
+                newX += snapInfo.horizontal.offset;
+              }
+              
+              // 应用垂直吸附
+              if (snapInfo.vertical) {
+                newY += snapInfo.vertical.offset;
+              }
+            }
+            
             currentElement.x = newX;
             currentElement.y = newY;
             
-            // 检测对齐线
+            // 检测对齐线（使用最终位置）
             detectAlignmentLines(currentElement, draggingInfo.value.bandIndex);
             
             // 更新并显示坐标信息
@@ -3082,9 +3551,9 @@ const startResizingElement = (event: MouseEvent, bandIndex: number, elementIndex
     const handleMouseMove = (e: MouseEvent) => {
       if (resizingInfo.value) {
         const currentBand = bands.value[resizingInfo.value.bandIndex];
-        const currentElement = currentBand?.elements[resizingInfo.value.elementIndex];
+        const element = currentBand?.elements[resizingInfo.value.elementIndex];
         
-        if (currentBand && currentElement) {
+        if (currentBand && element) {
           // 获取当前缩放比例
           const currentZoom = zoomLevel.value;
           
@@ -3113,13 +3582,13 @@ const startResizingElement = (event: MouseEvent, bandIndex: number, elementIndex
           const { rightMargin } = reportProperties.value;
           // 限制不能超出纸张右边界（考虑右边距）和band底部边界
           // 修正计算：使用正确的缩放比例计算
-          const availableWidth = (paperWidth.value - rightMargin - currentElement.x);
-          const availableHeight = (currentBand.height - currentElement.y);
+          const availableWidth = (paperWidth.value - rightMargin - element.x);
+          const availableHeight = (currentBand.height - element.y);
           newWidth = Math.min(newWidth, availableWidth);
           newHeight = Math.min(newHeight, availableHeight);
           
-          currentElement.width = newWidth;
-          currentElement.height = newHeight;
+          element.width = newWidth;
+          element.height = newHeight;
         }
       }
     };
@@ -3262,6 +3731,16 @@ const handleBandSelectionChange = (): void => {
 </script>
 
 <style scoped>
+/* CSS变量定义 */
+:root {
+  --primary-color: #1890ff;
+  --primary-hover: #40a9ff;
+  --text-color: #333;
+  --border-color: #ddd;
+  --hover-color: #f0f0f0;
+  --font-size-medium: 14px;
+}
+
 .pdf-designer {
   display: flex;
   flex-direction: column;
@@ -3747,6 +4226,10 @@ const handleBandSelectionChange = (): void => {
 .band.dragging-target {
   background-color: #e6f7ff;
   border-color: #1890ff;
+}
+
+.band.drag-over {
+  background-color: #e6f7ff;
 }
 
 .band-resize-handle {
@@ -4773,6 +5256,20 @@ const handleBandSelectionChange = (): void => {
   -ms-user-select: none;
   user-select: none;
 }
+/* 文件管理相关样式 */
+.current-file-name {
+  margin: 0 v-bind('UI_CONSTANTS.MEDIUM_MARGIN + "px"');
+  padding: v-bind('UI_CONSTANTS.SMALL_MARGIN + "px"') v-bind('UI_CONSTANTS.MEDIUM_MARGIN + "px"');
+  background-color: #f0f0f0;
+  border-radius: v-bind('UI_CONSTANTS.BORDER_RADIUS_SMALL + "px"');
+  font-size: v-bind('UI_CONSTANTS.FONT_SIZE_SMALL + "px"');
+  color: #666;
+  max-width: 200px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 /* 报表边距容器样式 */
 .pager {
   position: relative;
@@ -4965,4 +5462,153 @@ const handleBandSelectionChange = (): void => {
   font-size: v-bind('UI_CONSTANTS.FONT_SIZE_MINI + "px"');
 }
 
+/* 文件管理弹窗样式 */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.file-manager-modal {
+  background-color: white;
+  border-radius: v-bind('UI_CONSTANTS.BORDER_RADIUS_MEDIUM + "px"');
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  width: 90%;
+  max-width: 800px;
+  max-height: 80vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: v-bind('UI_CONSTANTS.MEDIUM_MARGIN + "px"') v-bind('UI_CONSTANTS.LARGE_MARGIN + "px"');
+  border-bottom: v-bind('UI_CONSTANTS.BORDER_THIN + "px"') solid #e0e0e0;
+  background-color: #fafafa;
+}
+
+.modal-header h3 {
+  margin: 0;
+  font-size: v-bind('UI_CONSTANTS.FONT_SIZE_HEADER + "px"');
+  color: #333;
+}
+
+.btn-close {
+  background: none;
+  border: none;
+  font-size: 24px;
+  cursor: pointer;
+  color: #999;
+  padding: 0;
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: all 0.2s;
+}
+
+.btn-close:hover {
+  background-color: #f0f0f0;
+  color: #666;
+}
+
+.modal-body {
+  padding: 0;
+  overflow-y: auto;
+  flex: 1;
+}
+
+/* 文件菜单样式 */
+.file-menu-container {
+  position: relative;
+  display: inline-block;
+}
+
+.file-menu-button {
+  background-color: #1890ff;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 8px 16px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  transition: background-color 0.2s;
+}
+
+.file-menu-button:hover {
+  background-color: #40a9ff;
+}
+
+.file-menu-dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  background-color: white;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  z-index: 1000;
+  min-width: 180px;
+  margin-top: 4px;
+}
+
+.menu-item {
+  padding: 10px 16px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: #333;
+  font-size: 14px;
+}
+
+.menu-item:hover {
+  background-color: #f0f0f0;
+}
+
+.menu-item i {
+  width: 16px;
+  text-align: center;
+  color: #1890ff;
+}
+
+.menu-divider {
+  height: 1px;
+  background-color: #ddd;
+  margin: 4px 0;
+}
+
+/* 文件列表弹窗样式 */
+.file-list-modal {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background-color: white;
+  border-radius: 8px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
+  z-index: 1001;
+  width: 800px;
+  max-width: 90vw;
+  max-height: 80vh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
 </style>
