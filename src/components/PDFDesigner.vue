@@ -2373,7 +2373,6 @@ const startDragging = (event: MouseEvent, bandIndex: number, elementIndex: numbe
                 currentBand.elements.splice(draggingInfo.value.elementIndex, 1);
                 
                 // 计算元素相对于目标band的y坐标
-                const paperRect = paperEl.getBoundingClientRect();
                 const targetBandElement = document.querySelectorAll('.band')[targetBandIndex] as HTMLElement | undefined;
                 if (targetBandElement) {
                   const targetBandRect = targetBandElement.getBoundingClientRect();

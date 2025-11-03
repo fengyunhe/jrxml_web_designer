@@ -234,20 +234,14 @@ const selectElement = (bandIndex: number, elementIndex: number) => {
 };
 
 const startDragging = (event: MouseEvent, bandIndex: number, elementIndex: number) => {
-  // 从bands中获取element对象
-  const element = props.bands[bandIndex].elements[elementIndex];
   emit('start-dragging', event, bandIndex, elementIndex);
 };
 
 const startResizingElement = (event: MouseEvent, bandIndex: number, elementIndex: number) => {
-  // 从bands中获取element对象
-  const element = props.bands[bandIndex].elements[elementIndex];
   emit('start-resizing-element', event, bandIndex, elementIndex, 'se'); // 默认方向为'se'
 };
 
 const startEditing = (bandIndex: number, elementIndex: number) => {
-  // 从bands中获取element对象
-  const element = props.bands[bandIndex].elements[elementIndex];
   emit('start-editing', bandIndex, elementIndex);
 };
 
