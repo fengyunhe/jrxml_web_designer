@@ -24,9 +24,62 @@
               <span>另存为</span>
             </div>
             <div class="menu-divider"></div>
-            <div class="menu-item" @click="showFileList = true">
+            <div class="menu-item file-submenu-container" @click="toggleFileSubmenu">
               <span class="menu-icon">📋</span>
               <span>文件列表</span>
+              <span class="submenu-arrow">▶</span>
+              <div v-if="showFileSubmenu" class="file-submenu" @click.stop>
+                <div class="submenu-header">
+                  <h4>文件列表</h4>
+                  <div class="file-filter">
+                    <input 
+                      v-model="fileFilterText" 
+                      type="text" 
+                      placeholder="搜索文件..." 
+                      class="filter-input"
+                      @click.stop
+                    />
+                    <button 
+                      v-if="fileFilterText" 
+                      @click.stop="fileFilterText = ''" 
+                      class="clear-filter-btn"
+                      title="清除搜索"
+                    >
+                      ✕
+                    </button>
+                  </div>
+                </div>
+                <div class="submenu-file-list">
+                  <div 
+                    v-for="file in filteredFiles" 
+                    :key="file.id"
+                    class="submenu-file-item"
+                    :class="{ 'active': currentFileName === file.name }"
+                    @click.stop="selectFileFromSubmenu(file)"
+                  >
+                    <div class="file-info">
+                      <span class="file-name">{{ file.name }}</span>
+                      <span class="file-date">{{ formatDate(file.lastModified) }}</span>
+                    </div>
+                    <div class="file-item-actions">
+                      <button @click.stop="renameFileFromSubmenu(file)" class="btn-icon" title="重命名">
+                        ✏️
+                      </button>
+                      <button @click.stop="deleteFileFromSubmenu(file)" class="btn-icon btn-danger" title="删除">
+                        🗑️
+                      </button>
+                    </div>
+                  </div>
+                  <div v-if="filteredFiles.length === 0" class="empty-state">
+                    <p>没有找到文件</p>
+                    <button @click.stop="createNewFile" class="btn-primary">创建新文件</button>
+                  </div>
+                </div>
+                <div class="submenu-footer">
+                  <button @click.stop="createNewFile" class="btn-small btn-primary">新建文件</button>
+                  <button @click.stop="openLocalFile" class="btn-small btn-secondary">打开本地文件</button>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -91,84 +144,86 @@
         :collapsible="false"
         @size-change="handleLeftPanelSizeChange"
       >
-        <h3>元素库</h3>
-        <div class="element-list">
-          <div 
-            v-for="element in elements" 
-            :key="element.type"
-            class="element-item"
-            @dragstart="handleDragStart($event, element)"
-            draggable="true"
-          >
-            <span class="element-icon">{{ getElementIcon(element.type) }}</span>
-            <span class="element-name">{{ element.name }}</span>
-          </div>
-        </div>
-        
-        <!-- 报表元素区域 -->
-        <div class="report-elements-section">
-          <h4>报表元素</h4>
-          <div class="filter-input-container">
-            <input 
-              v-model="elementFilterText" 
-              type="text" 
-              placeholder="过滤元素..." 
-              class="filter-input"
-            />
-            <button 
-              v-if="elementFilterText" 
-              @click="elementFilterText = ''" 
-              class="clear-filter-btn"
-              title="清除过滤"
+        <div class="left-panel-content">
+          <h3>元素库</h3>
+          <div class="element-list">
+            <div 
+              v-for="element in elements" 
+              :key="element.type"
+              class="element-item"
+              @dragstart="handleDragStart($event, element)"
+              draggable="true"
             >
-              ✕
-            </button>
+              <span class="element-icon">{{ getElementIcon(element.type) }}</span>
+              <span class="element-name">{{ element.name }}</span>
+            </div>
           </div>
-          <div class="report-elements-list">
-            <div v-for="(elements, bandName) in groupedReportElements" :key="bandName" class="band-group">
-              <div class="band-group-header">{{ bandName }}</div>
-              <div 
-                v-for="element in elements" 
-                :key="getElementKey(element)"
-                class="report-element-item"
-                :class="{ 'selected': isElementSelected(element) }"
-                @click="selectElementFromList(element)"
+          
+          <!-- 报表元素区域 -->
+          <div class="report-elements-section">
+            <h4>报表元素</h4>
+            <div class="filter-input-container">
+              <input 
+                v-model="elementFilterText" 
+                type="text" 
+                placeholder="过滤元素..." 
+                class="filter-input"
+              />
+              <button 
+                v-if="elementFilterText" 
+                @click="elementFilterText = ''" 
+                class="clear-filter-btn"
+                title="清除过滤"
               >
-                <span class="element-icon">{{ getElementIcon(element.element.type) }}</span>
-                <span class="element-info">{{ getElementDisplayInfoWithoutBand(element.element) }}</span>
+                ✕
+              </button>
+            </div>
+            <div class="report-elements-list">
+              <div v-for="(elements, bandName) in groupedReportElements" :key="bandName" class="band-group">
+                <div class="band-group-header">{{ bandName }}</div>
+                <div 
+                  v-for="element in elements" 
+                  :key="getElementKey(element)"
+                  class="report-element-item"
+                  :class="{ 'selected': isElementSelected(element) }"
+                  @click="selectElementFromList(element)"
+                >
+                  <span class="element-icon">{{ getElementIcon(element.element.type) }}</span>
+                  <span class="element-info">{{ getElementDisplayInfoWithoutBand(element.element) }}</span>
+                </div>
               </div>
             </div>
           </div>
-        </div>
-        
-        <!-- 报表参数区域 -->
-        <div class="data-parameters-section">
-          <h4>报表参数</h4>
-          <div class="parameters-mini-view">
-            <div 
-              v-for="(param, index) in reportParameters" 
-              :key="index" 
-              class="field-mini-item"
-              @click="selectElementsByParameter(param.name)"
-            >
-              <span class="field-name">$P{ {{ param.name }} }</span>
-              <span class="field-type">({{ param.class }})</span>
+          
+          <!-- 报表参数区域 -->
+          <div class="data-parameters-section">
+            <h4>报表参数</h4>
+            <div class="parameters-mini-view">
+              <div 
+                v-for="(param, index) in reportParameters" 
+                :key="index" 
+                class="field-mini-item"
+                @click="selectElementsByParameter(param.name)"
+              >
+                <span class="field-name">$P{ {{ param.name }} }</span>
+                <span class="field-type">({{ param.class }})</span>
+              </div>
             </div>
           </div>
-        </div>
-        
-        <!-- 数据字段区域 -->
-        <div class="data-fields-section">
-          <h4>数据字段</h4>
-          <div class="fields-mini-view">
-            <div 
-              v-for="(field, index) in reportFields" 
-              :key="index" 
-              class="field-mini-item"
-              @click="selectElementsByField(field.name)"
-            >
-              <span class="field-name">$F{ {{ field.name }} }</span>
-              <span class="field-type">({{ field.class }})</span>
+          
+          <!-- 数据字段区域 -->
+          <div class="data-fields-section">
+            <h4>数据字段</h4>
+            <div class="fields-mini-view">
+              <div 
+                v-for="(field, index) in reportFields" 
+                :key="index" 
+                class="field-mini-item"
+                @click="selectElementsByField(field.name)"
+              >
+                <span class="field-name">$F{ {{ field.name }} }</span>
+                <span class="field-type">({{ field.class }})</span>
+              </div>
             </div>
           </div>
         </div>
@@ -880,33 +935,22 @@
             </ul>
           </div>
         </div>
-      </div>
-    
-    <!-- 文件列表弹窗 -->
-    <div v-if="showFileList" class="modal-overlay" @click.self="showFileList = false">
-      <div class="file-list-modal">
-        <div class="modal-header">
-          <h3>文件列表</h3>
-          <button @click="showFileList = false" class="btn-close">×</button>
-        </div>
-        <div class="modal-body">
-          <FileManager 
-            @close="showFileList = false"
-            @load-file="loadFile"
-            @save-file="() => { /* 文件已在FileManager中保存 */ }"
-            :current-file-name="currentFileName"
-            :current-file-data="saveCurrentFile()"
-          />
-        </div>
-      </div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
+// 定义文件接口类型
+interface DesignerFile {
+  id: string;
+  name: string;
+  content?: string;
+  lastModified?: Date | string;
+  createdAt?: Date | string;
+}
+
 import ElementFactory from './elements/ElementFactory.vue';
 import ResizablePanel from './ResizablePanel.vue';
-import FileManager from './FileManager.vue';
 import type { DesignElement, Band, ReportField, ReportParameter, BandType } from '../types';
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue';
 import {
@@ -1122,20 +1166,121 @@ const reportProperties = ref({
 
 // 文件管理相关状态
 const showFileMenu = ref(false);
-const showFileList = ref(false);
+const showFileSubmenu = ref(false);
 const currentFileName = ref('未命名报表');
 const currentFileId = ref<string | null>(null);
 const fileMenuContainer = ref<HTMLElement | null>(null);
 
+// 文件列表相关
+const files = ref<DesignerFile[]>([]);
+const fileFilterText = ref('');
+
 // 文件操作方法
 function toggleFileMenu() {
   showFileMenu.value = !showFileMenu.value;
+  // 关闭文件列表子菜单
+  showFileSubmenu.value = false;
+}
+
+// 切换文件列表子菜单
+function toggleFileSubmenu() {
+  showFileSubmenu.value = !showFileSubmenu.value;
+  // 加载文件列表
+  if (showFileSubmenu.value) {
+    loadFilesFromStorage();
+  }
+}
+
+// 从localStorage加载文件列表
+function loadFilesFromStorage() {
+  try {
+    const storedFiles = localStorage.getItem('pdfDesignerFiles');
+    if (storedFiles) {
+      const parsedFiles = JSON.parse(storedFiles) as DesignerFile[];
+      files.value = parsedFiles.map((file: DesignerFile) => ({
+        ...file,
+        lastModified: new Date(file.lastModified || Date.now()),
+        createdAt: new Date(file.createdAt || Date.now())
+      }));
+    }
+  } catch (error) {
+    console.error('加载文件列表失败:', error);
+  }
+}
+
+// 保存文件列表到localStorage
+function saveFilesToStorage() {
+  try {
+    localStorage.setItem('pdfDesignerFiles', JSON.stringify(files.value));
+  } catch (error) {
+    console.error('保存文件列表失败:', error);
+  }
+}
+
+// 格式化日期
+function formatDate(date: Date | string | undefined) {
+  if (!date) return '';
+  const d = new Date(date);
+  return `${d.getFullYear()}-${(d.getMonth() + 1).toString().padStart(2, '0')}-${d.getDate().toString().padStart(2, '0')} ${d.getHours().toString().padStart(2, '0')}:${d.getMinutes().toString().padStart(2, '0')}`;
+}
+
+// 计算属性：过滤后的文件列表
+const filteredFiles = computed(() => {
+  if (!fileFilterText.value) {
+    return files.value;
+  }
+  return files.value.filter((file: DesignerFile) => 
+    file.name.toLowerCase().includes(fileFilterText.value.toLowerCase())
+  );
+});
+
+// 从子菜单选择文件
+function selectFileFromSubmenu(file: DesignerFile) {
+  showFileSubmenu.value = false;
+  showFileMenu.value = false;
+  loadFile(file);
+}
+
+// 从子菜单重命名文件
+function renameFileFromSubmenu(file: DesignerFile) {
+  const newName = prompt('请输入新的文件名:', file.name);
+  if (newName && newName !== file.name) {
+    const fileIndex = files.value.findIndex((f: DesignerFile) => f.id === file.id);
+    if (fileIndex !== -1 && files.value[fileIndex]) {
+      files.value[fileIndex].name = newName;
+      files.value[fileIndex].lastModified = new Date();
+      saveFilesToStorage();
+      
+      // 如果重命名的是当前文件，更新当前文件名
+      if (currentFileId.value === file.id) {
+        currentFileName.value = newName;
+      }
+    }
+  }
+}
+
+// 从子菜单删除文件
+function deleteFileFromSubmenu(file: DesignerFile) {
+  if (confirm(`确定要删除文件 "${file.name}" 吗？此操作不可撤销。`)) {
+    const fileIndex = files.value.findIndex((f: DesignerFile) => f.id === file.id);
+    if (fileIndex !== -1) {
+      files.value.splice(fileIndex, 1);
+      saveFilesToStorage();
+      
+      // 如果删除的是当前文件，重置当前文件
+      if (currentFileId.value === file.id) {
+        currentFileName.value = '未命名报表';
+        currentFileId.value = null;
+      }
+    }
+  }
 }
 
 // 点击外部关闭菜单
 function handleClickOutside(event: MouseEvent) {
   if (fileMenuContainer.value && !fileMenuContainer.value.contains(event.target as Node)) {
     showFileMenu.value = false;
+    showFileSubmenu.value = false;
   }
 }
 
@@ -1305,6 +1450,14 @@ function loadFile(fileData: any) {
       bands.value = fileContent.bands;
     }
     
+    if (fileContent.reportFields) {
+      reportFields.value = fileContent.reportFields;
+    }
+    
+    if (fileContent.reportParameters) {
+      reportParameters.value = fileContent.reportParameters;
+    }
+    
     if (fileContent.jrxmlContent) {
       jrxmlContent.value = fileContent.jrxmlContent;
     }
@@ -1399,7 +1552,7 @@ interface HistoryState {
 const historyStack = ref<HistoryState[]>([]);
 const redoStack = ref<HistoryState[]>([]);
 const MAX_HISTORY_SIZE = HISTORY_CONSTANTS.MAX_HISTORY_SIZE; // 最大历史记录数量
-let isDraggingOrResizing = false; // 标记是否正在拖动或调整大小
+const isDraggingOrResizing = ref(false); // 标记是否正在拖动或调整大小
 
 // 保存当前状态到历史记录
 function saveStateToHistory() {
@@ -1772,7 +1925,7 @@ const handleDragLeave = (event: DragEvent) => {
 
 // 检测对齐线
 const detectAlignmentLines = (currentElement: DesignElement, currentBandIndex: number, updateState: boolean = true) => {
-  const threshold = 5; // 对齐阈值，像素
+  const threshold = 3; // 对齐阈值，像素 - 减小阈值使吸附更精确
   const horizontalLines: number[] = [];
   const verticalLines: number[] = [];
   
@@ -2089,7 +2242,7 @@ const startDragging = (event: MouseEvent, bandIndex: number, elementIndex: numbe
       startY: ((event.clientY - paperOffsetY) / currentZoom) - element.y
     };
     
-    isDraggingOrResizing = true;
+    isDraggingOrResizing.value = true;
     
     // 使用缓存的事件处理函数，避免每次拖拽都创建新的函数
     if (!cachedMouseMoveHandler) {
@@ -2125,8 +2278,8 @@ const startDragging = (event: MouseEvent, bandIndex: number, elementIndex: numbe
             
             // 应用自动吸附功能
             if (enableSnapToGrid.value) {
-              // 定义网格大小为5像素
-              const gridSize = 5;
+              // 定义网格大小为3像素，减小吸附距离
+              const gridSize = 3;
               
               // 对X坐标进行吸附
               const remainderX = newX % gridSize;
@@ -2319,7 +2472,7 @@ const startDragging = (event: MouseEvent, bandIndex: number, elementIndex: numbe
         clearAlignmentLines();
         
         draggingInfo.value = null;
-        isDraggingOrResizing = false;
+        isDraggingOrResizing.value = false;
         
         // 更新JRXML
         updateJRXML();
@@ -2766,7 +2919,7 @@ const updateJRXML = () => {
     if (content !== jrxmlContent.value) {
       console.log('JRXML内容已变化，更新中...');
       // 只在非拖拽/调整大小状态下保存历史
-      if (!isDraggingOrResizing && historyStack.value.length === 0) {
+      if (!isDraggingOrResizing.value && historyStack.value.length === 0) {
         // 初始化时保存第一次状态
         saveStateToHistory();
       }
@@ -3243,9 +3396,9 @@ onUnmounted(() => {
 watch(
   [reportProperties, bands, reportFields, reportParameters],
   () => {
-    console.log('watch监听器被触发，isDraggingOrResizing:', isDraggingOrResizing);
+    console.log('watch监听器被触发，isDraggingOrResizing:', isDraggingOrResizing.value);
     // 只在非拖拽/调整大小状态下更新
-    if (!isDraggingOrResizing) {
+    if (!isDraggingOrResizing.value) {
       console.log('开始保存到本地存储和更新JRXML...');
       saveToLocalStorage();
       updateJRXML();
@@ -3297,6 +3450,9 @@ const saveJRXML = (): void => {
     
     // 更新选中的band类型
     selectedBandTypes.value = parsedData.bands.map(band => band.type);
+    
+    // 重新生成JRXML内容，确保参数被包含
+    updateJRXML();
     
     // 为矩形元素添加默认边框，确保显示效果
     bands.value.forEach(band => {
@@ -3511,6 +3667,15 @@ const startResizingBand = (event: MouseEvent, bandIndex: number): void => {
   document.addEventListener('mouseup', handleMouseUp);
 };
 
+// 获取指定Band的Y坐标偏移
+const getBandOffsetY = (bandIndex: number): number => {
+  let offset = 0;
+  for (let i = 0; i < bandIndex; i++) {
+    offset += bands.value[i]?.height || 0;
+  }
+  return offset;
+};
+
 // 开始调整元素大小
 const startResizingElement = (event: MouseEvent, bandIndex: number, elementIndex: number): void => {
   event.preventDefault();
@@ -3546,7 +3711,7 @@ const startResizingElement = (event: MouseEvent, bandIndex: number, elementIndex
       startHeight: element.height
     };
     
-    isDraggingOrResizing = true;
+    isDraggingOrResizing.value = true;
     
     const handleMouseMove = (e: MouseEvent) => {
       if (resizingInfo.value) {
@@ -3587,18 +3752,73 @@ const startResizingElement = (event: MouseEvent, bandIndex: number, elementIndex
           newWidth = Math.min(newWidth, availableWidth);
           newHeight = Math.min(newHeight, availableHeight);
           
+          // 先应用基本的大小调整
           element.width = newWidth;
           element.height = newHeight;
+          
+          // 然后应用对齐线吸附功能（如果启用）
+          if (enableSnapToAlignment.value) {
+            // 创建临时元素对象用于检测对齐线
+            const tempElement = { ...element, width: newWidth, height: newHeight };
+            const snapInfo = detectAlignmentLines(tempElement, resizingInfo.value.bandIndex, true); // 更新对齐线状态
+            
+            // 应用水平吸附（调整宽度）- 只在接近对齐线时才吸附
+            if (snapInfo.horizontal && Math.abs(snapInfo.horizontal.offset) < 3) {
+              // 根据对齐线位置计算新的宽度
+              // 注意：snapInfo.horizontal.position已经包含了leftMargin
+              const targetPosition = snapInfo.horizontal.position - reportProperties.value.leftMargin;
+              
+              // 判断是左边对齐还是右边对齐
+              if (Math.abs(element.x - targetPosition) < 3) {
+                // 左边对齐，保持x不变，调整宽度
+                element.width = element.width + (element.x - targetPosition);
+              } else if (Math.abs((element.x + newWidth) - targetPosition) < 3) {
+                // 右边对齐，调整宽度
+                element.width = targetPosition - element.x;
+              } else if (Math.abs((element.x + newWidth/2) - targetPosition) < 3) {
+                // 中心对齐，调整宽度
+                element.width = (targetPosition - element.x) * 2;
+              }
+            }
+            
+            // 应用垂直吸附（调整高度）- 只在接近对齐线时才吸附
+            if (snapInfo.vertical && Math.abs(snapInfo.vertical.offset) < 3) {
+              // 根据对齐线位置计算新的高度
+              // 注意：snapInfo.vertical.position已经包含了topMargin和band偏移
+              const bandOffsetY = getBandOffsetY(resizingInfo.value.bandIndex);
+              const targetPosition = snapInfo.vertical.position - reportProperties.value.topMargin - bandOffsetY;
+              
+              // 判断是顶部对齐还是底部对齐
+              if (Math.abs(element.y - targetPosition) < 3) {
+                // 顶部对齐，保持y不变，调整高度
+                element.height = element.height + (element.y - targetPosition);
+              } else if (Math.abs((element.y + newHeight) - targetPosition) < 3) {
+                // 底部对齐，调整高度
+                element.height = targetPosition - element.y;
+              } else if (Math.abs((element.y + newHeight/2) - targetPosition) < 3) {
+                // 中心对齐，调整高度
+                element.height = (targetPosition - element.y) * 2;
+              }
+            }
+          }
+          
+          // 使用最终尺寸再次检测对齐线（确保对齐线正确显示）
+          if (enableSnapToAlignment.value) {
+            detectAlignmentLines(element, resizingInfo.value.bandIndex);
+          }
         }
       }
     };
     
     const handleMouseUp = () => {
+      // 清除对齐线
+      clearAlignmentLines();
+      
       // 保存状态到历史记录
       saveStateToHistory();
       
       resizingInfo.value = null;
-      isDraggingOrResizing = false;
+      isDraggingOrResizing.value = false;
       
       // 更新JRXML
       updateJRXML();
@@ -4124,11 +4344,20 @@ const handleBandSelectionChange = (): void => {
   position: relative; /* 为调整手柄提供定位上下文 */
 }
 
+/* 左侧面板内容容器 */
+.left-panel-content {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+}
+
 .element-list {
   display: flex;
   flex-wrap: wrap;
   justify-content: space-between;
   margin-bottom: 1rem;
+  flex-shrink: 0;
 }
 
 /* 左侧面板调整手柄 */
@@ -4914,11 +5143,37 @@ const handleBandSelectionChange = (): void => {
   overflow: auto;
 }
 
+/* 左侧报表参数区域样式 */
+.data-parameters-section {
+  margin-bottom: v-bind('UI_CONSTANTS.MEDIUM_MARGIN + "px"');
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  max-height: 200px;
+}
+
+.data-parameters-section h4 {
+  font-size: v-bind('UI_CONSTANTS.FONT_SIZE_DEFAULT + "px"');
+  margin-bottom: v-bind('UI_CONSTANTS.MEDIUM_MARGIN + "px"');
+  color: #666;
+}
+
+.parameters-mini-view {
+  flex: 1;
+  min-height: 150px;
+  overflow-y: auto;
+  font-size: v-bind('UI_CONSTANTS.FONT_SIZE_TINY + "px"');
+}
+
 /* 左侧数据字段区域样式 */
 .data-fields-section {
   margin-top: v-bind('UI_CONSTANTS.MEDIUM_MARGIN + "px"');
   padding-top: v-bind('UI_CONSTANTS.MEDIUM_MARGIN + "px"');
   border-top: v-bind('UI_CONSTANTS.BORDER_THIN + "px"') solid #e0e0e0;
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  max-height: 200px;
 }
 
 .data-fields-section h4 {
@@ -4928,7 +5183,8 @@ const handleBandSelectionChange = (): void => {
 }
 
 .fields-mini-view {
-  max-height: v-bind('(UI_CONSTANTS.LARGE_MARGIN * 5) + "px"');
+  flex: 1;
+  min-height: 150px;
   overflow-y: auto;
   font-size: v-bind('UI_CONSTANTS.FONT_SIZE_TINY + "px"');
 }
@@ -5309,6 +5565,10 @@ const handleBandSelectionChange = (): void => {
 /* 报表元素列表样式 */
 .report-elements-section {
   margin-bottom: v-bind('UI_CONSTANTS.MEDIUM_MARGIN + "px"');
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
 }
 
 .report-elements-section h4 {
@@ -5361,7 +5621,8 @@ const handleBandSelectionChange = (): void => {
 }
 
 .report-elements-list {
-  max-height: v-bind('(UI_CONSTANTS.LARGE_MARGIN * 6) + "px"');
+  flex: 1;
+  min-height: 200px;
   overflow-y: auto;
   border: v-bind('UI_CONSTANTS.BORDER_THIN + "px"') solid #e0e0e0;
   border-radius: v-bind('UI_CONSTANTS.BORDER_RADIUS_SMALL + "px"');
@@ -5592,6 +5853,165 @@ const handleBandSelectionChange = (): void => {
   height: 1px;
   background-color: #ddd;
   margin: 4px 0;
+}
+
+/* 文件列表二级菜单样式 */
+.file-submenu-container {
+  position: relative;
+}
+
+.submenu-arrow {
+  margin-left: auto;
+  font-size: 12px;
+  transition: transform 0.2s;
+}
+
+.file-submenu-container:hover .submenu-arrow {
+  transform: rotate(90deg);
+}
+
+.file-submenu {
+  position: absolute;
+  top: 0;
+  left: 100%;
+  background-color: white;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  z-index: 1001;
+  width: 300px;
+  max-height: 400px;
+  display: flex;
+  flex-direction: column;
+}
+
+.submenu-header {
+  padding: 10px;
+  border-bottom: 1px solid #eee;
+}
+
+.submenu-header h4 {
+  margin: 0 0 8px 0;
+  font-size: 14px;
+  color: #333;
+}
+
+.file-filter {
+  display: flex;
+  align-items: center;
+}
+
+.filter-input {
+  flex: 1;
+  padding: 6px 8px;
+  border: 1px solid #ddd;
+  border-radius: 3px;
+  font-size: 12px;
+}
+
+.clear-filter-btn {
+  background: none;
+  border: none;
+  color: #999;
+  cursor: pointer;
+  padding: 4px;
+  margin-left: 4px;
+  font-size: 12px;
+}
+
+.clear-filter-btn:hover {
+  color: #666;
+}
+
+.submenu-file-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 5px 0;
+}
+
+.submenu-file-item {
+  padding: 8px 12px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.submenu-file-item:hover {
+  background-color: #f5f5f5;
+}
+
+.submenu-file-item.active {
+  background-color: #e6f7ff;
+  border-left: 3px solid #1890ff;
+}
+
+.file-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.file-name {
+  display: block;
+  font-size: 13px;
+  color: #333;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.file-date {
+  display: block;
+  font-size: 11px;
+  color: #999;
+  margin-top: 2px;
+}
+
+.file-item-actions {
+  display: flex;
+  gap: 4px;
+}
+
+.btn-icon {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px;
+  font-size: 14px;
+  opacity: 0.7;
+  transition: opacity 0.2s;
+}
+
+.btn-icon:hover {
+  opacity: 1;
+}
+
+.btn-danger:hover {
+  color: #ff4d4f;
+}
+
+.empty-state {
+  padding: 20px;
+  text-align: center;
+  color: #999;
+}
+
+.empty-state p {
+  margin: 0 0 10px 0;
+}
+
+.submenu-footer {
+  padding: 8px;
+  border-top: 1px solid #eee;
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+}
+
+.btn-small {
+  padding: 4px 8px;
+  font-size: 12px;
 }
 
 /* 文件列表弹窗样式 */

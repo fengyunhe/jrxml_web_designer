@@ -278,7 +278,9 @@ onUnmounted(() => {
 .panel-content {
   width: 100%;
   height: 100%;
-  overflow: auto;
+  overflow: hidden; /* 改为hidden，让子元素自己处理滚动 */
   padding: 8px;
+  display: flex;
+  flex-direction: column;
 }
 </style>
