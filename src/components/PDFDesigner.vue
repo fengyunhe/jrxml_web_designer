@@ -49,7 +49,15 @@
       
       <div class="designer-layout">
       <!-- 左侧元素库 -->
-      <div class="element-panel" v-show="showLeftPanel">  
+      <ResizablePanel 
+        v-show="showLeftPanel"
+        position="left"
+        :initial-size="leftPanelWidth"
+        :min-size="PANEL_CONSTANTS.LEFT_PANEL_MIN_WIDTH"
+        :max-size="PANEL_CONSTANTS.LEFT_PANEL_MAX_WIDTH"
+        :collapsible="false"
+        @size-change="handleLeftPanelSizeChange"
+      >
         <h3>元素库</h3>
         <div class="element-list">
           <div 
@@ -59,7 +67,44 @@
             @dragstart="handleDragStart($event, element)"
             draggable="true"
           >
-            {{ element.name }}
+            <span class="element-icon">{{ getElementIcon(element.type) }}</span>
+            <span class="element-name">{{ element.name }}</span>
+          </div>
+        </div>
+        
+        <!-- 报表元素区域 -->
+        <div class="report-elements-section">
+          <h4>报表元素</h4>
+          <div class="filter-input-container">
+            <input 
+              v-model="elementFilterText" 
+              type="text" 
+              placeholder="过滤元素..." 
+              class="filter-input"
+            />
+            <button 
+              v-if="elementFilterText" 
+              @click="elementFilterText = ''" 
+              class="clear-filter-btn"
+              title="清除过滤"
+            >
+              ✕
+            </button>
+          </div>
+          <div class="report-elements-list">
+            <div v-for="(elements, bandName) in groupedReportElements" :key="bandName" class="band-group">
+              <div class="band-group-header">{{ bandName }}</div>
+              <div 
+                v-for="element in elements" 
+                :key="getElementKey(element)"
+                class="report-element-item"
+                :class="{ 'selected': isElementSelected(element) }"
+                @click="selectElementFromList(element)"
+              >
+                <span class="element-icon">{{ getElementIcon(element.element.type) }}</span>
+                <span class="element-info">{{ getElementDisplayInfoWithoutBand(element.element) }}</span>
+              </div>
+            </div>
           </div>
         </div>
         
@@ -67,7 +112,12 @@
         <div class="data-parameters-section">
           <h4>报表参数</h4>
           <div class="parameters-mini-view">
-            <div v-for="(param, index) in reportParameters" :key="index" class="field-mini-item">
+            <div 
+              v-for="(param, index) in reportParameters" 
+              :key="index" 
+              class="field-mini-item"
+              @click="selectElementsByParameter(param.name)"
+            >
               <span class="field-name">$P{ {{ param.name }} }</span>
               <span class="field-type">({{ param.class }})</span>
             </div>
@@ -78,13 +128,18 @@
         <div class="data-fields-section">
           <h4>数据字段</h4>
           <div class="fields-mini-view">
-            <div v-for="(field, index) in reportFields" :key="index" class="field-mini-item">
+            <div 
+              v-for="(field, index) in reportFields" 
+              :key="index" 
+              class="field-mini-item"
+              @click="selectElementsByField(field.name)"
+            >
               <span class="field-name">$F{ {{ field.name }} }</span>
               <span class="field-type">({{ field.class }})</span>
             </div>
           </div>
         </div>
-      </div>
+      </ResizablePanel>
       
       <!-- 中间设计区域 -->
       <div class="designer-canvas" @click="setDesignAreaFocused">
@@ -228,33 +283,39 @@
       </div>
       
       <!-- 右侧属性面板 -->
-      <div class="property-panel" v-show="showRightPanel" :style="{ width: propertyPanelWidth + 'px' }">
-        <!-- 左侧调整手柄 -->
-        <div class="property-panel-resize-handle" @mousedown.stop="startResizingPropertyPanel"></div>
+      <ResizablePanel 
+        v-show="showRightPanel"
+        position="right"
+        :initial-size="propertyPanelWidth"
+        :min-size="200"
+        :max-size="600"
+        :collapsible="false"
+        @size-change="handlePropertyPanelSizeChange"
+      >
         <h3>属性设置</h3>
         
         <!-- 报表属性 -->
         <div v-if="!selectedBandIndex && !selectedElement" class="property-section">
           <h4>报表属性</h4>
+          
+          <!-- Band高度设置 -->
           <div class="form-group">
-            <label>报表名称</label>
-            <input v-model="reportProperties.name" type="text" />
-          </div>
-          <div class="form-group">
-            <label>页面宽度</label>
-            <input v-model.number="reportProperties.pageWidth" type="number" />
-          </div>
-          <div class="form-group">
-            <label>页面高度</label>
-            <input v-model.number="reportProperties.pageHeight" type="number" />
-          </div>
-          <div class="form-group">
-            <label>左/右/上/下边距</label>
-            <div class="margin-inputs">
-              <input v-model.number="reportProperties.leftMargin" type="number" placeholder="左" />
-              <input v-model.number="reportProperties.rightMargin" type="number" placeholder="右" />
-              <input v-model.number="reportProperties.topMargin" type="number" placeholder="上" />
-              <input v-model.number="reportProperties.bottomMargin" type="number" placeholder="下" />
+            <h4>Band高度设置</h4>
+            <div class="band-heights-grid">
+              <div v-for="(band, index) in bands" :key="index" class="band-height-item">
+                <label>{{ getBandDisplayName(band.type) }}</label>
+                <div class="band-height-control">
+                  <input 
+                    v-model.number="band.height" 
+                    type="number" 
+                    min="0"
+                    class="band-height-input"
+                    @change="updateBandHeight(index)"
+                    @blur="updateBandHeight(index)"
+                  />
+                  <span class="band-height-unit">px</span>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -316,9 +377,9 @@
                   <label>字段名称</label>
                   <input v-model="currentElement.fieldName" type="text" @input="updateExpressionFromFieldName" />
                 </div>
-                <div class="form-group">
+                <div class="form-group" v-if="currentElement.type === 'textField'">
                   <label>表达式</label>
-                  <input v-model="currentElement.expression" type="text" />
+                  <input v-model="(currentElement as any).expression" type="text" />
                   <small>例如: $F{字段名} 或 $F{字段名}.toString()</small>
                 </div>
                 <div class="form-group">
@@ -585,15 +646,19 @@
             <button @click="deleteElement" class="btn-danger">删除元素</button>
           </div>
         </div>
-        
-
-      </div>
+      </ResizablePanel>
     </div>
     
     <!-- 底部标签页区域 -->
-    <div class="tabs-container" v-show="showBottomPanel" :style="{ height: bottomPanelHeight + 'px' }">
-      <!-- 顶部调整手柄 -->
-      <div class="tabs-resize-handle" @mousedown.stop="startResizingBottomPanel"></div>
+    <ResizablePanel 
+      v-show="showBottomPanel"
+      position="bottom"
+      :initial-size="bottomPanelHeight"
+      :min-size="150"
+      :max-size="400"
+      :collapsible="true"
+      @size-change="handleBottomPanelSizeChange"
+    >
       <div class="tab-navigation">
         <button 
           v-for="tab in tabs" 
@@ -675,27 +740,6 @@
               </label>
             </div>
           </div>
-
-          <!-- Band高度设置 -->
-          <div class="settings-section band-settings-compact">
-            <h4>Band高度设置</h4>
-            <div class="band-heights-grid">
-              <div v-for="(band, index) in bands" :key="index" class="band-height-item">
-                <label>{{ getBandDisplayName(band.type) }}</label>
-                <div class="band-height-control">
-                  <input 
-                    v-model.number="band.height" 
-                    type="number" 
-                    min="0"
-                    class="band-height-input"
-                    @change="updateBandHeight(index)"
-                    @blur="updateBandHeight(index)"
-                  />
-                  <span class="band-height-unit">px</span>
-                </div>
-              </div>
-            </div>
-          </div>
           
           <!-- Band选择 -->
           <div class="settings-section band-selection-section">
@@ -742,7 +786,7 @@
           </div>
         </div>
       </div>
-    </div>
+    </ResizablePanel>
     
     <!-- 打赏弹窗 -->
       <div v-if="showReward" class="reward-modal" @click.self="closeRewardModal">
@@ -808,6 +852,7 @@
 
 <script setup lang="ts">
 import ElementFactory from './elements/ElementFactory.vue';
+import ResizablePanel from './ResizablePanel.vue';
 import type { DesignElement, Band, ReportField, ReportParameter, BandType } from '../types';
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue';
 import {
@@ -851,6 +896,12 @@ const elementTabs = ref([
 const showLeftPanel = ref(true);
 const showRightPanel = ref(true);
 const showBottomPanel = ref(true);
+
+// 属性面板宽度
+const propertyPanelWidth = ref(PANEL_CONSTANTS.DEFAULT_PROPERTY_PANEL_WIDTH); // 默认宽度300px
+
+// 左侧面板宽度
+const leftPanelWidth = ref(PANEL_CONSTANTS.DEFAULT_LEFT_PANEL_WIDTH); // 默认宽度200px
 
 // 自动吸附功能开关
 const enableSnapToGrid = ref(false);
@@ -991,9 +1042,6 @@ function updateExpressionFromFieldName() {
 }
 // 底部面板高度
 const bottomPanelHeight = ref(PANEL_CONSTANTS.DEFAULT_BOTTOM_PANEL_HEIGHT); // 默认高度400px
-
-// 属性面板宽度
-const propertyPanelWidth = ref(PANEL_CONSTANTS.DEFAULT_PROPERTY_PANEL_WIDTH); // 默认宽度300px
 
 // JRXML内容显示
 const jrxmlContent = ref('');
@@ -1158,6 +1206,9 @@ const selectedElement = ref<{bandIndex: number, elementIndex: number} | null>(nu
 const editingElement = ref<{bandIndex: number, elementIndex: number} | null>(null);
 const editInput = ref<HTMLInputElement | null>(null);
 
+// 报表元素过滤文本
+const elementFilterText = ref('');
+
 // 报表设计区域焦点状态
 const isDesignAreaFocused = ref(true); // 默认聚焦设计区域
 
@@ -1182,6 +1233,72 @@ const currentElement = computed(() => {
     }
   }
   return null;
+});
+
+// 获取所有报表元素
+const getAllReportElements = computed(() => {
+  const allElements: { element: DesignElement, bandIndex: number, elementIndex: number }[] = [];
+  
+  bands.value.forEach((band, bandIndex) => {
+    if (band.elements) {
+      band.elements.forEach((element, elementIndex) => {
+        allElements.push({
+          element,
+          bandIndex,
+          elementIndex
+        });
+      });
+    }
+  });
+  
+  return allElements;
+});
+
+// 过滤后的报表元素
+const filteredReportElements = computed(() => {
+  if (!elementFilterText.value) {
+    return getAllReportElements.value;
+  }
+  
+  const filterText = elementFilterText.value.toLowerCase();
+  return getAllReportElements.value.filter(item => {
+    const element = item.element;
+    
+    // 对静态文本通过内容过滤
+    if (element.type === 'staticText' && element.text) {
+      return element.text.toLowerCase().includes(filterText);
+    }
+    
+    // 对动态文本通过变量名过滤
+    if (element.type === 'textField' && element.fieldName) {
+      return element.fieldName.toLowerCase().includes(filterText);
+    }
+    
+    // 对其他类型，通过类型名称过滤
+    const typeName = getElementTypeName(element.type).toLowerCase();
+    return typeName.includes(filterText);
+  });
+});
+
+// 按band分组的报表元素
+const groupedReportElements = computed(() => {
+  const groups: Record<string, Array<{ element: DesignElement, bandIndex: number, elementIndex: number }>> = {};
+  
+  filteredReportElements.value.forEach(item => {
+    if (!bands.value[item.bandIndex]) return;
+    const band = bands.value[item.bandIndex];
+    if (!band) return;
+    const bandType = band.type;
+    const bandName = getBandDisplayName(bandType);
+    
+    if (!groups[bandName]) {
+      groups[bandName] = [];
+    }
+    
+    groups[bandName].push(item);
+  });
+  
+  return groups;
 });
 
 // 标尺相关计算属性
@@ -1915,7 +2032,156 @@ const toggleBottomPanel = () => {
   showBottomPanel.value = !showBottomPanel.value;
 };
 
+// 获取元素的唯一键
+const getElementKey = (element: { element: DesignElement, bandIndex: number, elementIndex: number }) => {
+  return `${element.element.type}-${element.bandIndex}-${element.elementIndex}`;
+};
+
+// 获取元素类型名称
+const getElementTypeName = (type: string) => {
+  const typeMap: Record<string, string> = {
+    'staticText': '静态文本',
+    'textField': '动态文本',
+    'image': '图片',
+    'line': '线条',
+    'rectangle': '矩形'
+  };
+  return typeMap[type] || type;
+};
+
+// 获取元素类型图标
+const getElementIcon = (type: string) => {
+  const iconMap: Record<string, string> = {
+    'staticText': 'T',
+    'textField': '{ }',
+    'image': '🖼',
+    'line': '─',
+    'rectangle': '▭'
+  };
+  return iconMap[type] || '?';
+};
+
+// 获取元素显示信息
+// @ts-ignore
+const getElementDisplayInfo = (element: { element: DesignElement, bandIndex: number, elementIndex: number }) => {
+  const { element: el } = element;
+  if (!bands.value[element.bandIndex]) return '';
+  const band = bands.value[element.bandIndex];
+  if (!band) return '';
+  const bandName = getBandDisplayName(band.type);
+  
+  let info = `${bandName}`;
+  
+  // 根据元素类型添加特定信息
+  if (el.type === 'staticText' && el.text) {
+    info += ` - ${el.text.substring(0, 15)}${el.text.length > 15 ? '...' : ''}`;
+  } else if (el.type === 'textField' && el.fieldName) {
+    info += ` - $F{${el.fieldName}}`;
+  } else if (el.type === 'image' && (el as any).imagePath) {
+    info += ` - ${(el as any).imagePath}`;
+  }
+  
+  return info;
+};
+
+// 获取元素显示信息（不包含band名称）
+const getElementDisplayInfoWithoutBand = (element: DesignElement) => {
+  let info = '';
+  
+  // 根据元素类型添加特定信息
+  if (element.type === 'staticText' && element.text) {
+    info = `${element.text.substring(0, 15)}${element.text.length > 15 ? '...' : ''}`;
+  } else if (element.type === 'textField' && element.fieldName) {
+    info = `$F{${element.fieldName}}`;
+  } else if (element.type === 'image' && (element as any).imagePath) {
+    info = (element as any).imagePath;
+  }
+  
+  return info;
+};
+
+// 检查元素是否被选中
+const isElementSelected = (element: { element: DesignElement, bandIndex: number, elementIndex: number }) => {
+  return selectedElement.value !== null && 
+         selectedElement.value.bandIndex === element.bandIndex && 
+         selectedElement.value.elementIndex === element.elementIndex;
+};
+
+// 从列表中选择元素
+const selectElementFromList = (element: { element: DesignElement, bandIndex: number, elementIndex: number }) => {
+  selectElement(element.bandIndex, element.elementIndex);
+};
+
+// 根据参数选择元素
+const selectElementsByParameter = (paramName: string) => {
+  // 查找使用该参数的元素
+  let foundElement = false;
+  
+  bands.value.forEach((band, bandIndex) => {
+    if (band.elements) {
+      band.elements.forEach((element, elementIndex) => {
+        // 检查元素的表达式是否包含该参数
+        if (element.type === 'textField' && element.expression && element.expression.includes(`$P{${paramName}}`)) {
+          selectElement(bandIndex, elementIndex);
+          foundElement = true;
+          return;
+        }
+      });
+    }
+  });
+  
+  // 如果没有找到使用该参数的元素，可以显示提示
+  if (!foundElement) {
+    // 可以添加提示逻辑，这里暂时不实现
+    console.log(`没有找到使用参数 $P{${paramName}} 的元素`);
+  }
+};
+
+// 根据字段选择元素
+const selectElementsByField = (fieldName: string) => {
+  // 查找使用该字段的元素
+  let foundElement = false;
+  
+  bands.value.forEach((band, bandIndex) => {
+    if (band.elements) {
+      band.elements.forEach((element, elementIndex) => {
+        // 检查元素的字段名或表达式是否包含该字段
+        if ((element.type === 'textField' && element.fieldName === fieldName) || 
+            (element.type === 'textField' && element.expression && element.expression.includes(`$F{${fieldName}}`))) {
+          selectElement(bandIndex, elementIndex);
+          foundElement = true;
+          return;
+        }
+      });
+    }
+  });
+  
+  // 如果没有找到使用该字段的元素，可以显示提示
+  if (!foundElement) {
+    // 可以添加提示逻辑，这里暂时不实现
+    console.log(`没有找到使用字段 $F{${fieldName}} 的元素`);
+  }
+};
+
+// 获取Band显示名称
+const getBandDisplayName = (bandType: string) => {
+  const bandMap: Record<string, string> = {
+    'title': '标题',
+    'pageHeader': '页眉',
+    'columnHeader': '列标题',
+    'detail': '详细数据',
+    'columnFooter': '列脚',
+    'pageFooter': '页脚',
+    'summary': '汇总',
+    'background': '背景',
+    'lastPageFooter': '末页页脚',
+    'noData': '无数据'
+  };
+  return bandMap[bandType] || bandType;
+};
+
 // 开始调整底部面板高度
+// @ts-ignore
 const startResizingBottomPanel = (event: MouseEvent): void => {
   event.preventDefault();
   
@@ -1942,7 +2208,33 @@ const startResizingBottomPanel = (event: MouseEvent): void => {
   document.addEventListener('mouseup', handleMouseUp);
 };
 
+// 开始调整左侧面板宽度
+// @ts-ignore
+const startResizingLeftPanel = (event: MouseEvent): void => {
+  event.preventDefault();
+  
+  const startX = event.clientX;
+  const startWidth = leftPanelWidth.value;
+  
+  const handleMouseMove = (e: MouseEvent): void => {
+    // 计算宽度变化（鼠标向右移动增加宽度，向左移动减少宽度）
+    const deltaX = e.clientX - startX;
+    const newWidth = Math.max(PANEL_CONSTANTS.LEFT_PANEL_MIN_WIDTH, 
+                      Math.min(PANEL_CONSTANTS.LEFT_PANEL_MAX_WIDTH, startWidth + deltaX)); // 使用常量限制宽度
+    leftPanelWidth.value = newWidth;
+  };
+  
+  const handleMouseUp = (): void => {
+    document.removeEventListener('mousemove', handleMouseMove);
+    document.removeEventListener('mouseup', handleMouseUp);
+  };
+  
+  document.addEventListener('mousemove', handleMouseMove);
+  document.addEventListener('mouseup', handleMouseUp);
+};
+
 // 开始调整属性面板宽度
+// @ts-ignore
 const startResizingPropertyPanel = (event: MouseEvent): void => {
   event.preventDefault();
   
@@ -1965,20 +2257,57 @@ const startResizingPropertyPanel = (event: MouseEvent): void => {
   document.addEventListener('mouseup', handleMouseUp);
 };
 
+// 处理左侧面板大小变化
+const handleLeftPanelSizeChange = (newSize: number) => {
+  leftPanelWidth.value = newSize;
+};
+
+// 处理属性面板大小变化
+const handlePropertyPanelSizeChange = (newSize: number) => {
+  propertyPanelWidth.value = newSize;
+};
+
+// 处理底部面板大小变化
+const handleBottomPanelSizeChange = (newSize: number) => {
+  bottomPanelHeight.value = newSize;
+};
+
 
 // 自动更新JRXML内容
 const updateJRXML = () => {
   try {
+    console.log('开始更新JRXML内容...');
+    
+    // 确保所有数据都已初始化
+    if (!reportProperties.value || !bands.value || !reportFields.value || !reportParameters.value) {
+      console.log('数据未完全初始化，跳过JRXML更新');
+      return;
+    }
+    
+    console.log('当前reportProperties:', reportProperties.value);
+    console.log('当前bands数量:', bands.value.length);
+    console.log('当前reportFields数量:', reportFields.value.length);
+    console.log('当前reportParameters数量:', reportParameters.value.length);
+    
     const content = generateJRXMLContent(reportProperties.value, bands.value, reportFields.value, reportParameters.value);
+    console.log('生成的JRXML内容长度:', content.length);
+    console.log('生成的JRXML内容预览:', content.substring(0, 200) + '...');
     
     // 如果内容有变化，保存到历史记录
     if (content !== jrxmlContent.value) {
+      console.log('JRXML内容已变化，更新中...');
       // 只在非拖拽/调整大小状态下保存历史
       if (!isDraggingOrResizing && historyStack.value.length === 0) {
         // 初始化时保存第一次状态
         saveStateToHistory();
       }
       jrxmlContent.value = content;
+      console.log('JRXML内容已更新到响应式变量，新长度:', jrxmlContent.value.length);
+      
+      // 立即保存到本地存储，确保JRXML内容被保存
+      saveToLocalStorage();
+    } else {
+      console.log('JRXML内容未变化');
     }
   } catch (error) {
     console.error('更新JRXML失败:', error);
@@ -2249,9 +2578,15 @@ const handlePaperClick = () => {
 
 // 组件挂载时加载数据
 onMounted(() => {
+  console.log('组件挂载开始...');
   loadFromLocalStorage();
-  // 初始加载后更新JRXML
-  updateJRXML();
+  console.log('本地数据加载完成');
+  
+  // 初始加载后更新JRXML，使用setTimeout确保所有数据都已加载
+  setTimeout(() => {
+    console.log('开始初始JRXML生成...');
+    updateJRXML();
+  }, 100);
   
   // 根据报表大小自动计算最佳缩放比例
   // 使用setTimeout确保DOM已经渲染完成
@@ -2439,10 +2774,14 @@ onUnmounted(() => {
 watch(
   [reportProperties, bands, reportFields, reportParameters],
   () => {
+    console.log('watch监听器被触发，isDraggingOrResizing:', isDraggingOrResizing);
     // 只在非拖拽/调整大小状态下更新
     if (!isDraggingOrResizing) {
+      console.log('开始保存到本地存储和更新JRXML...');
       saveToLocalStorage();
       updateJRXML();
+    } else {
+      console.log('拖拽/调整大小中，跳过更新');
     }
   },
   { deep: true }
@@ -2832,23 +3171,6 @@ const showHelpModal = () => {
 
 const closeHelpModal = () => {
   showHelp.value = false;
-};
-
-// 获取Band显示名称
-const getBandDisplayName = (bandType: string): string => {
-  const bandNames: { [key: string]: string } = {
-    'background': '背景',
-    'title': '标题',
-    'pageHeader': '页眉',
-    'columnHeader': '列标题',
-    'detail': '详细数据',
-    'columnFooter': '列脚',
-    'pageFooter': '页脚',
-    'lastPageFooter': '末页页脚',
-    'summary': '汇总',
-    'noData': '无数据'
-  };
-  return bandNames[bandType] || bandType;
 };
 
 // 更新Band高度
@@ -3315,25 +3637,86 @@ const handleBandSelectionChange = (): void => {
 }
 
 .element-panel {
-  width: 200px;
+  /* 移除固定宽度，使用动态宽度 */
   padding: 1rem;
   background-color: #f8f9fa;
   border-right: 1px solid #ddd;
   overflow-y: auto;
+  position: relative; /* 为调整手柄提供定位上下文 */
+}
+
+.element-list {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+}
+
+/* 左侧面板调整手柄 */
+.left-panel-resize-handle {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 4px;
+  height: 100%;
+  cursor: ew-resize;
+  background-color: transparent;
+  z-index: 10;
+}
+
+.left-panel-resize-handle:hover {
+  background-color: rgba(25, 118, 210, 0.1);
+}
+
+.left-panel-resize-handle::before {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: 2px;
+  height: 30px;
+  background-color: #1976d2;
+  opacity: 0;
+}
+
+.left-panel-resize-handle:hover::before {
+  opacity: 1;
 }
 
 .element-item {
   padding: 0.5rem;
-  margin: 0.5rem 0;
-  background-color: #fff;
-  border: 1px solid #ddd;
+  margin: 0.25rem;
+  background-color: #e6f3ff; /* 浅蓝色背景 */
+  border: 1px solid #b3d9ff; /* 蓝色边框 */
   border-radius: 4px;
   cursor: grab;
-  text-align: center;
+  text-align: left; /* 修改文本对齐为左对齐 */
+  display: flex;
+  align-items: center;
+  justify-content: flex-start; /* 修改为左对齐 */
+  gap: 0.5rem;
+  width: calc(50% - 0.5rem); /* 两列布局，减去边距 */
+  box-sizing: border-box;
 }
 
 .element-item:hover {
-  background-color: #e9ecef;
+  background-color: #cce7ff; /* 悬停时更深的蓝色 */
+  border-color: #80c0ff; /* 悬停时更深的边框 */
+}
+
+.element-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  background-color: #f0f8ff; /* 更浅的蓝色背景 */
+  border-radius: 3px;
+  font-size: 12px;
+  font-weight: bold;
+  color: #1890ff;
+  flex-shrink: 0;
 }
 
 .paper {
@@ -3643,6 +4026,28 @@ const handleBandSelectionChange = (): void => {
     font-size: 0.75rem;
     color: #888;
     margin-top: 0.25rem;
+  }
+  
+  /* 右侧面板中的 band 高度设置样式 */
+  .property-section .band-heights-grid {
+    grid-template-columns: 1fr;
+    gap: 0.75rem;
+    margin-top: 0.75rem;
+  }
+  
+  .property-section .band-height-item {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+  }
+  
+  .property-section .band-height-item label {
+    margin-bottom: 0;
+    flex: 1;
+  }
+  
+  .property-section .band-height-control {
+    flex: 0 0 auto;
   }
   
   /* Band选择样式 */
@@ -4402,6 +4807,162 @@ const handleBandSelectionChange = (): void => {
   margin-top: v-bind('UI_CONSTANTS.SMALL_MARGIN + "px"');
   font-size: v-bind('UI_CONSTANTS.FONT_SIZE_TINY + "px"');
   color: #666;
+}
+
+/* 报表元素列表样式 */
+.report-elements-section {
+  margin-bottom: v-bind('UI_CONSTANTS.MEDIUM_MARGIN + "px"');
+}
+
+.report-elements-section h4 {
+  font-size: v-bind('UI_CONSTANTS.FONT_SIZE_DEFAULT + "px"');
+  margin-bottom: v-bind('UI_CONSTANTS.SMALL_MARGIN + "px"');
+  color: #666;
+}
+
+.filter-input-container {
+  position: relative;
+  margin-bottom: v-bind('UI_CONSTANTS.SMALL_MARGIN + "px"');
+}
+
+.filter-input {
+  width: 100%;
+  padding: v-bind('UI_CONSTANTS.SMALL_MARGIN + "px"') v-bind('UI_CONSTANTS.MEDIUM_MARGIN + "px"');
+  border: v-bind('UI_CONSTANTS.BORDER_THIN + "px"') solid #ddd;
+  border-radius: v-bind('UI_CONSTANTS.BORDER_RADIUS_SMALL + "px"');
+  font-size: v-bind('UI_CONSTANTS.FONT_SIZE_SMALL + "px"');
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.filter-input:focus {
+  border-color: #1890ff;
+}
+
+.clear-filter-btn {
+  position: absolute;
+  right: v-bind('UI_CONSTANTS.SMALL_MARGIN + "px"');
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  color: #999;
+  cursor: pointer;
+  font-size: v-bind('UI_CONSTANTS.FONT_SIZE_DEFAULT + "px"');
+  padding: 2px;
+  border-radius: 50%;
+  width: 18px;
+  height: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.clear-filter-btn:hover {
+  background-color: #f0f0f0;
+  color: #666;
+}
+
+.report-elements-list {
+  max-height: v-bind('(UI_CONSTANTS.LARGE_MARGIN * 6) + "px"');
+  overflow-y: auto;
+  border: v-bind('UI_CONSTANTS.BORDER_THIN + "px"') solid #e0e0e0;
+  border-radius: v-bind('UI_CONSTANTS.BORDER_RADIUS_SMALL + "px"');
+  background-color: #fafafa;
+}
+
+.band-group {
+  margin-bottom: v-bind('UI_CONSTANTS.SMALL_MARGIN + "px"');
+}
+
+.band-group:last-child {
+  margin-bottom: 0;
+}
+
+.band-group-header {
+  padding: v-bind('UI_CONSTANTS.SMALL_MARGIN + "px"') v-bind('UI_CONSTANTS.MEDIUM_MARGIN + "px"');
+  background-color: #e0e0e0;
+  font-weight: 500;
+  color: #333;
+  font-size: v-bind('UI_CONSTANTS.FONT_SIZE_SMALL + "px"');
+  border-bottom: v-bind('UI_CONSTANTS.BORDER_THIN + "px"') solid #d0d0d0;
+}
+
+.report-element-item {
+  padding: v-bind('UI_CONSTANTS.SMALL_MARGIN + "px"') v-bind('UI_CONSTANTS.MEDIUM_MARGIN + "px"');
+  border-bottom: v-bind('UI_CONSTANTS.BORDER_THIN + "px"') solid #e0e0e0;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  display: flex;
+  align-items: center;
+  gap: v-bind('UI_CONSTANTS.SMALL_GAP + "px"');
+  justify-content: flex-start;
+}
+
+.report-element-item:last-child {
+  border-bottom: none;
+}
+
+.report-element-item:hover {
+  background-color: #f0f0f0;
+}
+
+.report-element-item.selected {
+  background-color: #e6f7ff;
+  border-color: #1890ff;
+}
+
+.element-type-info {
+  display: flex;
+  align-items: center;
+  gap: v-bind('UI_CONSTANTS.SMALL_GAP + "px"');
+  flex: 1;
+}
+
+.element-type-icon {
+  width: 16px;
+  height: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #f0f0f0;
+  border-radius: 3px;
+  color: #1890ff;
+  font-size: v-bind('UI_CONSTANTS.FONT_SIZE_SMALL + "px"');
+  font-weight: bold;
+  flex-shrink: 0;
+}
+
+.element-type-name {
+  font-weight: 500;
+  color: #333;
+  white-space: nowrap;
+}
+
+.element-content-preview {
+  font-size: v-bind('UI_CONSTANTS.FONT_SIZE_TINY + "px"');
+  color: #666;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 150px;
+  flex-shrink: 0;
+}
+
+.element-band-info {
+  font-size: v-bind('UI_CONSTANTS.FONT_SIZE_MINI + "px"');
+  color: #999;
+  display: flex;
+  align-items: center;
+  gap: v-bind('UI_CONSTANTS.SMALL_GAP + "px"');
+  flex-shrink: 0;
+}
+
+.band-tag {
+  background-color: #f0f0f0;
+  padding: 1px 4px;
+  border-radius: 2px;
+  font-size: v-bind('UI_CONSTANTS.FONT_SIZE_MINI + "px"');
 }
 
 </style>
