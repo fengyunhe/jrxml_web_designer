@@ -230,146 +230,39 @@
       </ResizablePanel>
       
       <!-- 中间设计区域 -->
-      <div class="designer-canvas" @click="setDesignAreaFocused">
-        <!-- 顶部标尺容器 -->
-        <div class="top-ruler-container">
-          <!-- 左上角空白区域 -->
-          <div class="corner-space">
-          <div class="unit-label">mm</div>
-        </div>
-          <!-- 水平标尺 -->
-          <div class="horizontal-ruler" :style="{ width: paperWidth + 'px' }">
-            <div 
-              v-for="tick in horizontalRulerTicks" 
-              :key="tick.position" 
-              class="tick" 
-              :class="{ 'major': tick.major, 'minor': !tick.major }"
-              :style="{ left: tick.position + 'px' }"
-            ></div>
-            <div 
-              v-for="label in horizontalRulerLabels" 
-              :key="label.position" 
-              class="label" 
-              :style="{ left: label.position + 'px' }"
-            >
-              {{ label.value }}
-            </div>
-          </div>
-        </div>
-        
-        <!-- 左侧标尺和纸张容器 -->
-        <div class="main-content">
-          <!-- 垂直标尺 -->
-          <div class="vertical-ruler-container">
-            <div class="vertical-ruler" >
-              <div 
-                v-for="tick in verticalRulerTicks" 
-                :key="tick.position" 
-                class="tick" 
-                :class="{ 'major': tick.major, 'minor': !tick.major }"
-                :style="{ top: tick.position + 'px' }"
-              ></div>
-              <div 
-                v-for="label in verticalRulerLabels" 
-                :key="label.position" 
-                class="label" 
-                :style="{ top: label.position + 'px' }"
-              >
-                {{ label.value }}
-              </div>
-            </div>
-          </div>
-          
-          <!-- 纸张容器 -->
-          <div class="paper-container">
-            <!-- 纸张 -->
-            <div class="paper" 
-                 :style="{ 
-                   width: paperWidth + 'px', 
-                   height: paperHeight + 'px',
-                   transform: `scale(${zoomLevel})`,
-                   transformOrigin: 'top left'
-                 }"
-                 :class="{'focused': isDesignAreaFocused}"
-                 @drop="handleDrop"
-                 @dragover="handleDragOver"
-                 @dragleave="handleDragLeave"
-            >
-            <!-- 报表边距容器 -->
-            <div class="pager"
-                 :style="{ 
-                   padding: reportProperties.topMargin + 'px ' + reportProperties.rightMargin + 'px ' + reportProperties.bottomMargin + 'px ' + reportProperties.leftMargin + 'px',
-                   width: '100%',
-                   height: '100%',
-                   position: 'relative',
-                   backgroundSize: UI_CONSTANTS.GRID_SIZE + 'px ' + UI_CONSTANTS.GRID_SIZE + 'px'
-                 }"
-            >
-            
-            <!-- 报表区域 -->
-            <div 
-              v-for="(band, bandIndex) in bands" 
-              :key="band.type"
-              class="band"
-              :style="{ height: band.height + 'px' }"
-              @click="selectBand(bandIndex)"
-              :class="{ 
-                'selected': selectedBandIndex === bandIndex,
-                'dragging-target': highlightedBandIndex === bandIndex,
-                'drag-over': highlightedBandIndex === bandIndex
-              }"
-            >
-              <div class="band-header">
-                <span>{{ band.type }}</span>
-              </div>
-              <div class="band-content">
-                <ElementFactory
-                  v-for="(item, index) in band.elements"
-                  :key="index"
-                  :element="item"
-                  :band-index="bandIndex"
-                  :element-index="index"
-                  :selected-element="selectedElement"
-                  :editing-element="editingElement"
-                  :is-dragging="isDraggingOrResizing"
-                  :report-font-family="reportProperties.defaultFont.name"
-                  :report-font-size="reportProperties.defaultFont.size"
-                  :report-is-bold="reportProperties.defaultFont.isBold"
-                  :report-is-italic="reportProperties.defaultFont.isItalic"
-                  :report-is-underline="reportProperties.defaultFont.isUnderline"
-                  @select="selectElement"
-                  @drag-start="startDragging"
-                  @resize-start="startResizingElement"
-                  @start-editing="startEditing"
-                  @finish-editing="finishEditing"
-                  @cancel-editing="cancelEditing"
-                />
-              </div>
-              <!-- 区域高度调整手柄 -->
-              <div class="band-resize-handle" @mousedown.stop="startResizingBand($event, bandIndex)"></div>
-            </div>
-            
-            <!-- 对齐线 -->
-            <div v-if="isDraggingOrResizing" class="alignment-lines">
-              <!-- 水平对齐线 -->
-              <div 
-                v-for="(line, index) in alignmentLines.horizontal" 
-                :key="'h-' + index"
-                class="alignment-line horizontal"
-                :style="{ left: line + 'px' }"
-              ></div>
-              <!-- 垂直对齐线 -->
-              <div 
-                v-for="(line, index) in alignmentLines.vertical" 
-                :key="'v-' + index"
-                class="alignment-line vertical"
-                :style="{ top: line + 'px' }"
-              ></div>
-            </div></div>
-          </div>
-          </div>
-        </div>
-      </div>
+      <DesignerCanvas
+        ref="designerCanvasRef"
+        :paper-width="paperWidth"
+        :paper-height="paperHeight"
+        :zoom-level="zoomLevel"
+        :report-properties="reportProperties"
+        :bands="bands"
+        :selected-band-index="selectedBandIndex"
+        :highlighted-band-index="highlightedBandIndex"
+        :selected-element="selectedElement"
+        :editing-element="editingElement"
+        :is-dragging-or-resizing="isDraggingOrResizing"
+        :alignment-lines="alignmentLines"
+        :horizontal-ruler-ticks="horizontalRulerTicks"
+        :horizontal-ruler-labels="horizontalRulerLabels"
+        :vertical-ruler-ticks="verticalRulerTicks"
+        :vertical-ruler-labels="verticalRulerLabels"
+        :is-design-area-focused="isDesignAreaFocused"
+        :ui-constants="UI_CONSTANTS"
+        @set-design-area-focused="setDesignAreaFocused"
+        @select-band="selectBand"
+        @select-element="selectElement"
+        @start-dragging="startDragging"
+        @start-resizing-element="startResizingElement"
+        @start-editing="startEditing"
+        @finish-editing="finishEditing"
+        @cancel-editing="cancelEditing"
+        @handle-drop="handleDrop"
+        @handle-drag-over="handleDragOver"
+        @handle-drag-leave="handleDragLeave"
+        @start-resizing-band="startResizingBand"
+        @zoom-change="handleZoomChange"
+      />
       
       <!-- 右侧属性面板 -->
       <ResizablePanel 
@@ -917,6 +810,7 @@
             
             <h4>4. 快捷键</h4>
             <ul>
+              <li><strong>Ctrl+S</strong>：保存当前文件</li>
               <li><strong>Ctrl+B</strong>：切换底部JRXML面板显示</li>
               <li><strong>Ctrl+Z</strong>：撤销操作</li>
               <li><strong>Ctrl+Y</strong>：重做操作</li>
@@ -949,8 +843,8 @@ interface DesignerFile {
   createdAt?: Date | string;
 }
 
-import ElementFactory from './elements/ElementFactory.vue';
 import ResizablePanel from './ResizablePanel.vue';
+import DesignerCanvas from './designer/DesignerCanvas.vue';
 import type { DesignElement, Band, ReportField, ReportParameter, BandType } from '../types';
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue';
 import {
@@ -999,7 +893,7 @@ const showBottomPanel = ref(false);
 const propertyPanelWidth = ref(PANEL_CONSTANTS.DEFAULT_PROPERTY_PANEL_WIDTH); // 默认宽度300px
 
 // 左侧面板宽度
-const leftPanelWidth = ref(PANEL_CONSTANTS.DEFAULT_LEFT_PANEL_WIDTH); // 默认宽度200px
+const leftPanelWidth = ref(PANEL_CONSTANTS.DEFAULT_LEFT_PANEL_WIDTH); 
 
 // 自动吸附功能开关
 const enableSnapToGrid = ref(false);
@@ -1013,6 +907,9 @@ const alignmentLines = ref({
 
 // 缩放相关状态
 const zoomLevel = ref(ZOOM_CONSTANTS.DEFAULT_ZOOM); // 默认缩放级别为100%
+
+// DesignerCanvas组件引用
+const designerCanvasRef = ref<any>(null);
 
 // 缩放控制方法
 function zoomIn() {
@@ -1078,10 +975,35 @@ function applyZoom() {
   // 这里不需要额外操作，因为zoomLevel是响应式的，会自动更新视图
 }
 
+// 处理来自DesignerCanvas的缩放变化
+function handleZoomChange(delta: number) {
+  // 计算新的缩放级别
+  const newZoom = Math.max(ZOOM_CONSTANTS.MIN_ZOOM, Math.min(ZOOM_CONSTANTS.MAX_ZOOM, zoomLevel.value + delta));
+  
+  // 从预设的缩放级别中选择最接近的
+  const zoomLevels = ZOOM_CONSTANTS.ZOOM_LEVELS;
+  let closestZoom = zoomLevels[0] || ZOOM_CONSTANTS.DEFAULT_ZOOM;
+  let minDiff = Math.abs((zoomLevels[0] || ZOOM_CONSTANTS.DEFAULT_ZOOM) - newZoom);
+  
+  for (let i = 1; i < zoomLevels.length; i++) {
+    const level = zoomLevels[i];
+    if (level !== undefined) {
+      const diff = Math.abs(level - newZoom);
+      if (diff < minDiff) {
+        minDiff = diff;
+        closestZoom = level;
+      }
+    }
+  }
+  
+  // 设置新的缩放级别
+  zoomLevel.value = closestZoom;
+}
+
 // 根据报表大小自动计算最佳缩放比例
 function calculateOptimalZoom() {
-  // 获取设计区域的可用大小
-  const designerContainer = document.querySelector('.designer-canvas') as HTMLElement;
+  // 获取设计区域的可用大小 - 使用ref引用
+  const designerContainer = designerCanvasRef.value?.$el;
   if (!designerContainer) return;
   
   // 获取设计区域的实际可用宽度
@@ -1466,6 +1388,14 @@ function loadFile(fileData: any) {
     currentFileName.value = fileData.name || '未命名报表';
     currentFileId.value = fileData.id || null;
     
+    // 保存最后编辑的文件信息到localStorage
+    if (fileData.id) {
+      localStorage.setItem('pdfDesignerLastFile', JSON.stringify({
+        id: fileData.id,
+        name: fileData.name
+      }));
+    }
+    
     // 清除当前选中的元素
     selectedElement.value = null;
     selectedBandIndex.value = null;
@@ -1736,7 +1666,7 @@ const horizontalRulerTicks = computed(() => {
   
   for (let i = 0; i <= width; i += unit) {
     ticks.push({
-      position: i * zoomLevel.value, // 应用缩放比例
+      position: i, // 不应用缩放比例，保持实际位置
       major: i % RULER_CONSTANTS.MAJOR_TICK_INTERVAL === 0 // 每25px一个主要刻度，从50px改为25px
     });
   }
@@ -1750,7 +1680,7 @@ const horizontalRulerLabels = computed(() => {
   
   for (let i = 0; i <= width; i += RULER_CONSTANTS.LABEL_INTERVAL) { // 每25px显示一个标签，从50px改为25px
     labels.push({
-      position: i * zoomLevel.value, // 应用缩放比例
+      position: i, // 不应用缩放比例，保持实际位置
       value: i.toString()
     });
   }
@@ -1765,7 +1695,7 @@ const verticalRulerTicks = computed(() => {
   
   for (let i = 0; i <= height; i += unit) {
     ticks.push({
-      position: i * zoomLevel.value, // 应用缩放比例
+      position: i, // 不应用缩放比例，保持实际位置
       major: i % RULER_CONSTANTS.MAJOR_TICK_INTERVAL === 0 // 每25px一个主要刻度，从50px改为25px
     });
   }
@@ -1779,7 +1709,7 @@ const verticalRulerLabels = computed(() => {
   
   for (let i = 0; i <= height; i += RULER_CONSTANTS.LABEL_INTERVAL) { // 每25px显示一个标签，从50px改为25px
     labels.push({
-      position: i * zoomLevel.value, // 应用缩放比例
+      position: i, // 不应用缩放比例，保持实际位置
       value: i.toString()
     });
   }
@@ -1926,8 +1856,8 @@ const handleDragLeave = (event: DragEvent) => {
 // 检测对齐线
 const detectAlignmentLines = (currentElement: DesignElement, currentBandIndex: number, updateState: boolean = true) => {
   const threshold = 3; // 对齐阈值，像素 - 减小阈值使吸附更精确
-  const horizontalLines: number[] = [];
-  const verticalLines: number[] = [];
+  const verticalAlignmentLines: number[] = []; // 垂直对齐线（X坐标）
+  const horizontalAlignmentLines: number[] = []; // 水平对齐线（Y坐标）
   
   // 用于存储吸附信息的对象
   const snapInfo = {
@@ -1967,11 +1897,11 @@ const detectAlignmentLines = (currentElement: DesignElement, currentBandIndex: n
       const otherCenterX = element.x + element.width / 2;
       const otherCenterY = element.y + element.height / 2;
       
-      // 检测水平对齐线（所有band中的元素都考虑）
+      // 检测垂直对齐线（左右对齐）
       // 左边对齐
       if (Math.abs(currentLeft - otherLeft) < threshold) {
         const linePosition = otherLeft + leftMargin;
-        horizontalLines.push(linePosition);
+        verticalAlignmentLines.push(linePosition);
         
         // 更新吸附信息
         if (!snapInfo.horizontal || Math.abs(currentLeft - otherLeft) < Math.abs(snapInfo.horizontal.offset)) {
@@ -1984,7 +1914,7 @@ const detectAlignmentLines = (currentElement: DesignElement, currentBandIndex: n
       // 右边对齐
       if (Math.abs(currentRight - otherRight) < threshold) {
         const linePosition = otherRight + leftMargin;
-        horizontalLines.push(linePosition);
+        verticalAlignmentLines.push(linePosition);
         
         // 更新吸附信息
         if (!snapInfo.horizontal || Math.abs(currentRight - otherRight) < Math.abs(snapInfo.horizontal.offset)) {
@@ -1997,7 +1927,7 @@ const detectAlignmentLines = (currentElement: DesignElement, currentBandIndex: n
       // 中心对齐
       if (Math.abs(currentCenterX - otherCenterX) < threshold) {
         const linePosition = otherCenterX + leftMargin;
-        horizontalLines.push(linePosition);
+        verticalAlignmentLines.push(linePosition);
         
         // 更新吸附信息
         if (!snapInfo.horizontal || Math.abs(currentCenterX - otherCenterX) < Math.abs(snapInfo.horizontal.offset)) {
@@ -2010,7 +1940,7 @@ const detectAlignmentLines = (currentElement: DesignElement, currentBandIndex: n
       // 左边对齐到其他元素的右边
       if (Math.abs(currentLeft - otherRight) < threshold) {
         const linePosition = otherRight + leftMargin;
-        horizontalLines.push(linePosition);
+        verticalAlignmentLines.push(linePosition);
         
         // 更新吸附信息
         if (!snapInfo.horizontal || Math.abs(currentLeft - otherRight) < Math.abs(snapInfo.horizontal.offset)) {
@@ -2023,7 +1953,7 @@ const detectAlignmentLines = (currentElement: DesignElement, currentBandIndex: n
       // 右边对齐到其他元素的左边
       if (Math.abs(currentRight - otherLeft) < threshold) {
         const linePosition = otherLeft + leftMargin;
-        horizontalLines.push(linePosition);
+        verticalAlignmentLines.push(linePosition);
         
         // 更新吸附信息
         if (!snapInfo.horizontal || Math.abs(currentRight - otherLeft) < Math.abs(snapInfo.horizontal.offset)) {
@@ -2034,13 +1964,13 @@ const detectAlignmentLines = (currentElement: DesignElement, currentBandIndex: n
         }
       }
       
-      // 检测垂直对齐线（只考虑相同band中的元素）
+      // 检测水平对齐线（上下对齐，只考虑相同band中的元素）
       if (bandIndex === currentBandIndex) {
         // 顶部对齐
         if (Math.abs(currentTop - otherTop) < threshold) {
           // 添加当前band的Y坐标偏移到参考线位置
           const linePosition = otherTop + topMargin + bandOffsetY;
-          verticalLines.push(linePosition);
+          horizontalAlignmentLines.push(linePosition);
           
           // 更新吸附信息，元素坐标不需要考虑band偏移
           if (!snapInfo.vertical || Math.abs(currentTop - otherTop) < Math.abs(snapInfo.vertical.offset)) {
@@ -2054,7 +1984,7 @@ const detectAlignmentLines = (currentElement: DesignElement, currentBandIndex: n
         if (Math.abs(currentBottom - otherBottom) < threshold) {
           // 添加当前band的Y坐标偏移到参考线位置
           const linePosition = otherBottom + topMargin + bandOffsetY;
-          verticalLines.push(linePosition);
+          horizontalAlignmentLines.push(linePosition);
           
           // 更新吸附信息，元素坐标不需要考虑band偏移
           if (!snapInfo.vertical || Math.abs(currentBottom - otherBottom) < Math.abs(snapInfo.vertical.offset)) {
@@ -2068,7 +1998,7 @@ const detectAlignmentLines = (currentElement: DesignElement, currentBandIndex: n
         if (Math.abs(currentCenterY - otherCenterY) < threshold) {
           // 添加当前band的Y坐标偏移到参考线位置
           const linePosition = otherCenterY + topMargin + bandOffsetY;
-          verticalLines.push(linePosition);
+          horizontalAlignmentLines.push(linePosition);
           
           // 更新吸附信息，元素坐标不需要考虑band偏移
           if (!snapInfo.vertical || Math.abs(currentCenterY - otherCenterY) < Math.abs(snapInfo.vertical.offset)) {
@@ -2082,7 +2012,7 @@ const detectAlignmentLines = (currentElement: DesignElement, currentBandIndex: n
         if (Math.abs(currentTop - otherBottom) < threshold) {
           // 添加当前band的Y坐标偏移到参考线位置
           const linePosition = otherBottom + topMargin + bandOffsetY;
-          verticalLines.push(linePosition);
+          horizontalAlignmentLines.push(linePosition);
           
           // 更新吸附信息，元素坐标不需要考虑band偏移
           if (!snapInfo.vertical || Math.abs(currentTop - otherBottom) < Math.abs(snapInfo.vertical.offset)) {
@@ -2096,7 +2026,7 @@ const detectAlignmentLines = (currentElement: DesignElement, currentBandIndex: n
         if (Math.abs(currentBottom - otherTop) < threshold) {
           // 添加当前band的Y坐标偏移到参考线位置
           const linePosition = otherTop + topMargin + bandOffsetY;
-          verticalLines.push(linePosition);
+          horizontalAlignmentLines.push(linePosition);
           
           // 更新吸附信息，元素坐标不需要考虑band偏移
           if (!snapInfo.vertical || Math.abs(currentBottom - otherTop) < Math.abs(snapInfo.vertical.offset)) {
@@ -2116,8 +2046,8 @@ const detectAlignmentLines = (currentElement: DesignElement, currentBandIndex: n
   // 更新对齐线状态
   if (updateState) {
     alignmentLines.value = {
-      horizontal: [...new Set(horizontalLines)], // 去重
-      vertical: [...new Set(verticalLines)] // 去重
+      horizontal: [...new Set(horizontalAlignmentLines)], // 水平对齐线（Y坐标）
+      vertical: [...new Set(verticalAlignmentLines)] // 垂直对齐线（X坐标）
     };
   }
   
@@ -2216,9 +2146,9 @@ const startDragging = (event: MouseEvent, bandIndex: number, elementIndex: numbe
   showBottomPanel.value = false;
   
   const band = bands.value[bandIndex];
-  const element = band?.elements[elementIndex];
+  const draggedElement = band?.elements[elementIndex];
   
-  if (element) {
+  if (draggedElement) {
     // 获取当前缩放比例
     const currentZoom = zoomLevel.value;
     
@@ -2238,8 +2168,8 @@ const startDragging = (event: MouseEvent, bandIndex: number, elementIndex: numbe
     draggingInfo.value = {
       bandIndex,
       elementIndex,
-      startX: ((event.clientX - paperOffsetX) / currentZoom) - element.x,
-      startY: ((event.clientY - paperOffsetY) / currentZoom) - element.y
+      startX: ((event.clientX - paperOffsetX) / currentZoom) - draggedElement.x,
+      startY: ((event.clientY - paperOffsetY) / currentZoom) - draggedElement.y
     };
     
     isDraggingOrResizing.value = true;
@@ -2335,14 +2265,19 @@ const startDragging = (event: MouseEvent, bandIndex: number, elementIndex: numbe
                 // 如果有高亮的band（表示鼠标当前所在的band），计算元素相对于这个band的坐标
                 const targetBandElement = bandElements[highlightedBandIndex.value] as HTMLElement;
                 const targetBandRect = targetBandElement.getBoundingClientRect();
-                const currentBandElement = bandElements[draggingInfo.value.bandIndex] as HTMLElement;
-                const currentBandRect = currentBandElement.getBoundingClientRect();
+                const paperRect = paperEl.getBoundingClientRect();
                 
                 // 计算元素相对于目标band的Y坐标
-                // 1. 计算元素在当前band中的相对位置
-                // 2. 加上当前band与目标band之间的偏移
-                const currentElementInPage = (currentBandRect.top / currentZoom) + currentElement.y;
-                relativeY = Math.round(currentElementInPage - (targetBandRect.top / currentZoom));
+                // 1. 计算元素在页面中的绝对位置（基于鼠标位置）
+                const elementTopInPage = (e.clientY - paperRect.top) / currentZoom;
+                // 2. 计算元素相对于目标band的位置
+                relativeY = Math.round(elementTopInPage - (targetBandRect.top - paperRect.top) / currentZoom);
+                
+                // 确保Y坐标是相对于目标band的相对值
+                // 如果元素跨越了多个band，需要调整计算方式
+                if (relativeY < 0) {
+                  relativeY = 0;
+                }
               }
             }
             
@@ -2392,8 +2327,8 @@ const startDragging = (event: MouseEvent, bandIndex: number, elementIndex: numbe
               coordinatesElement.style.top = (e.clientY - 30) + 'px';
               
               // 更新dragCoordinates的值，让模板显示正确的坐标和band名称
-              dragCoordinates.value.x = Math.round(newX);
-              dragCoordinates.value.y = Math.round(newY);
+              dragCoordinates.value.x = relativeX;
+              dragCoordinates.value.y = relativeY;
               dragCoordinates.value.bandName = bandName;
             }
           }
@@ -2442,12 +2377,13 @@ const startDragging = (event: MouseEvent, bandIndex: number, elementIndex: numbe
                 const targetBandElement = document.querySelectorAll('.band')[targetBandIndex] as HTMLElement | undefined;
                 if (targetBandElement) {
                   const targetBandRect = targetBandElement.getBoundingClientRect();
+                  const currentZoom = zoomLevel.value;
                 
                   // 将元素绝对坐标转换为相对于目标band的坐标
-                  // 1. 计算元素在页面中的绝对位置（基于paper的位置和当前元素y坐标）
-                  const elementTopInPage = paperRect.top + currentElement.y;
-                  // 2. 计算元素相对于目标band的位置
-                  currentElement.y = Math.max(0, elementTopInPage - targetBandRect.top);
+                  // 1. 计算元素在页面中的绝对位置（基于鼠标位置和当前缩放比例）
+                  const elementTopInPage = e.clientY;
+                  // 2. 计算元素相对于目标band的位置，考虑缩放比例
+                  currentElement.y = Math.max(0, (elementTopInPage - targetBandRect.top) / currentZoom);
                 
                   // 添加到新band中，使用相对于band的坐标
                   targetBand.elements.push(currentElement);
@@ -2491,6 +2427,14 @@ const startDragging = (event: MouseEvent, bandIndex: number, elementIndex: numbe
     // 添加事件监听器
     document.addEventListener('mousemove', cachedMouseMoveHandler);
     document.addEventListener('mouseup', cachedMouseUpHandler);
+    
+    // 立即触发一次mousemove事件，确保元素能够立即跟随鼠标
+    // 这解决了在按下鼠标键100毫秒内移动鼠标，元素没有立即跟上鼠标位置的问题
+    setTimeout(() => {
+      if (cachedMouseMoveHandler) {
+        cachedMouseMoveHandler(event);
+      }
+    }, 0);
   }
 };
 
@@ -3062,6 +3006,13 @@ const handleKeyDown = (event: KeyboardEvent) => {
     return;
   }
   
+  // CTRL+S 保存当前文件
+  if (event.ctrlKey && event.key === 's') {
+    event.preventDefault();
+    saveCurrentFileToStorage();
+    return;
+  }
+  
   // CTRL+B 快捷键切换底部面板显示状态
   if (event.ctrlKey && event.key === 'b') {
     event.preventDefault();
@@ -3204,6 +3155,28 @@ onMounted(() => {
   loadFromLocalStorage();
   console.log('本地数据加载完成');
   
+  // 尝试加载最后编辑的文件
+  try {
+    const lastFileData = localStorage.getItem('pdfDesignerLastFile');
+    if (lastFileData) {
+      const lastFile = JSON.parse(lastFileData);
+      console.log('找到最后编辑的文件:', lastFile.name);
+      
+      // 从文件列表中查找最后编辑的文件
+      const storedFiles = localStorage.getItem('pdfDesignerFiles');
+      if (storedFiles) {
+        const files = JSON.parse(storedFiles);
+        const lastFileInList = files.find((file: any) => file.id === lastFile.id);
+        if (lastFileInList) {
+          console.log('加载最后编辑的文件内容');
+          loadFile(lastFileInList);
+        }
+      }
+    }
+  } catch (error) {
+    console.error('加载最后编辑的文件失败:', error);
+  }
+  
   // 初始加载后更新JRXML，使用setTimeout确保所有数据都已加载
   setTimeout(() => {
     console.log('开始初始JRXML生成...');
@@ -3238,12 +3211,8 @@ onMounted(() => {
     }
   };
   
-  // 为设计画布添加滚轮事件监听
-  const designerCanvas = document.querySelector('.designer-canvas');
-  if (designerCanvas) {
-    designerCanvas.addEventListener('wheel', handleWheel, { passive: false });
-    (window as any).pdfDesignerWheelListener = handleWheel;
-  }
+  document.addEventListener('wheel', handleWheel, { passive: false });
+  (window as any).pdfDesignerWheelListener = handleWheel;
   
   // 获取paper元素并添加点击事件监听
   const paperElement = document.querySelector('.paper');
@@ -3252,81 +3221,6 @@ onMounted(() => {
       handlePaperClick();
       setDesignAreaFocused();
     });
-  }
-  
-  // 添加报表区域滚动事件监听，用于同步标尺滚动
-  const handlePaperContainerScroll = (event: Event) => {
-    const scrollElement = event.target as HTMLElement;
-    if (scrollElement.classList.contains('paper-container')) {
-      const scrollLeft = scrollElement.scrollLeft;
-      const scrollTop = scrollElement.scrollTop;
-      
-      // 同步水平标尺滚动
-      const horizontalRuler = document.querySelector('.horizontal-ruler');
-      if (horizontalRuler) {
-        horizontalRuler.scrollLeft = scrollLeft;
-      }
-      
-      // 同步垂直标尺滚动
-      const verticalRuler = document.querySelector('.vertical-ruler');
-      if (verticalRuler) {
-        verticalRuler.scrollTop = scrollTop;
-      }
-    }
-  };
-  
-  // 添加标尺滚动事件监听，用于同步设计区域滚动
-  const handleRulerScroll = (event: Event) => {
-    const scrollElement = event.target as HTMLElement;
-    const paperContainer = document.querySelector('.paper-container') as HTMLElement;
-    
-    if (!paperContainer) return;
-    
-    if (scrollElement.classList.contains('horizontal-ruler')) {
-      // 水平标尺滚动时，同步设计区域的水平滚动
-      paperContainer.scrollLeft = scrollElement.scrollLeft;
-    } else if (scrollElement.classList.contains('vertical-ruler')) {
-      // 垂直标尺滚动时，同步设计区域的垂直滚动
-      paperContainer.scrollTop = scrollElement.scrollTop;
-    }
-  };
-  
-  // 为paper-container添加滚动事件监听
-  const paperContainer = document.querySelector('.paper-container');
-  if (paperContainer) {
-    paperContainer.addEventListener('scroll', handlePaperContainerScroll);
-    (window as any).pdfDesignerScrollListener = handlePaperContainerScroll;
-  }
-  
-  // 为标尺添加滚动事件监听
-  const horizontalRuler = document.querySelector('.horizontal-ruler');
-  const verticalRuler = document.querySelector('.vertical-ruler');
-  
-  if (horizontalRuler) {
-    horizontalRuler.addEventListener('scroll', handleRulerScroll);
-    (window as any).pdfDesignerHorizontalRulerScrollListener = handleRulerScroll;
-  }
-  
-  if (verticalRuler) {
-    verticalRuler.addEventListener('scroll', handleRulerScroll);
-    (window as any).pdfDesignerVerticalRulerScrollListener = handleRulerScroll;
-  }
-  
-  // 为底部面板和右侧属性面板添加点击事件以移除设计区域焦点
-  const bottomPanel = document.querySelector('.bottom-panel');
-  if (bottomPanel) {
-    bottomPanel.addEventListener('click', removeDesignAreaFocused);
-  }
-  
-  const rightPanel = document.querySelector('.property-panel');
-  if (rightPanel) {
-    rightPanel.addEventListener('click', removeDesignAreaFocused);
-  }
-  
-  // 为左侧面板添加点击事件以移除设计区域焦点
-  const leftPanel = document.querySelector('.element-panel');
-  if (leftPanel) {
-    leftPanel.addEventListener('click', removeDesignAreaFocused);
   }
   
   // 保存监听器引用，以便在组件卸载时移除
@@ -3346,9 +3240,8 @@ onUnmounted(() => {
   
   // 移除鼠标滚轮事件监听器
   const wheelListener = (window as any).pdfDesignerWheelListener;
-  const designerCanvas = document.querySelector('.designer-canvas');
-  if (wheelListener && designerCanvas) {
-    designerCanvas.removeEventListener('wheel', wheelListener);
+  if (wheelListener) {
+    document.removeEventListener('wheel', wheelListener);
   }
   
   // 移除paper点击事件监听器
@@ -3356,39 +3249,6 @@ onUnmounted(() => {
   const paperElement = document.querySelector('.paper');
   if (handlePaperClick && paperElement) {
     paperElement.removeEventListener('click', handlePaperClick);
-  }
-  
-  // 移除滚动事件监听器
-  const scrollListener = (window as any).pdfDesignerScrollListener;
-  const paperContainer = document.querySelector('.paper-container');
-  if (scrollListener && paperContainer) {
-    paperContainer.removeEventListener('scroll', scrollListener);
-  }
-  
-  // 移除标尺滚动事件监听器
-  const horizontalRulerScrollListener = (window as any).pdfDesignerHorizontalRulerScrollListener;
-  const verticalRulerScrollListener = (window as any).pdfDesignerVerticalRulerScrollListener;
-  const horizontalRuler = document.querySelector('.horizontal-ruler');
-  const verticalRuler = document.querySelector('.vertical-ruler');
-  
-  if (horizontalRulerScrollListener && horizontalRuler) {
-    horizontalRuler.removeEventListener('scroll', horizontalRulerScrollListener);
-  }
-  
-  if (verticalRulerScrollListener && verticalRuler) {
-    verticalRuler.removeEventListener('scroll', verticalRulerScrollListener);
-  }
-  
-  // 移除面板点击事件监听器
-  const bottomPanel = document.querySelector('.bottom-panel');
-  const rightPanel = document.querySelector('.property-panel');
-  const leftPanel = document.querySelector('.element-panel');
-  const removeDesignAreaFocused = (window as any).pdfDesignerRemoveFocused;
-  
-  if (removeDesignAreaFocused) {
-    if (bottomPanel) bottomPanel.removeEventListener('click', removeDesignAreaFocused);
-    if (rightPanel) rightPanel.removeEventListener('click', removeDesignAreaFocused);
-    if (leftPanel) leftPanel.removeEventListener('click', removeDesignAreaFocused);
   }
 });
 
@@ -4010,17 +3870,8 @@ const handleBandSelectionChange = (): void => {
 }
 
 /* 当左右面板隐藏时，中间设计区域扩展 */
-.designer-canvas {
-  flex: 1;
-  transition: all 0.3s ease;
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
-  padding: 0; /* 移除内边距，让标尺占满整个区域 */
-  position: relative;
-}
-  /* 打赏弹窗样式 */
-  .reward-modal {
+/* 打赏弹窗样式 */
+.reward-modal {
     position: fixed;
     top: 0;
     left: 0;
@@ -5444,34 +5295,7 @@ const handleBandSelectionChange = (): void => {
   background-color: #fafafa;
 }
 
-/* 对齐线样式 */
-.alignment-lines {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  pointer-events: none;
-  z-index: 1000;
-}
 
-.alignment-line {
-  position: absolute;
-  background-color: rgba(24, 144, 255, 0.8);
-  pointer-events: none;
-}
-
-.alignment-line.horizontal {
-  width: 1px;
-  height: 100%;
-  top: 0;
-}
-
-.alignment-line.vertical {
-  width: 100%;
-  height: 1px;
-  left: 0;
-}
 .selection-box {
   position: absolute;
   background-color: rgba(24, 144, 255, 0.2);

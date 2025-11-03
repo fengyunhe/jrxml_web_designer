@@ -53,7 +53,24 @@ const isSelected = computed(() => {
 // 元素样式 - 使用更适合的类型断言方式
 const elementStyle = computed(() => {
   // 为复杂表达式单独计算值并添加类型断言
-  const verticalAlign = props.element.verticalAlignment?.toLowerCase() || 'flex-start';
+  // 修正垂直对齐值的映射
+  let verticalAlign = 'flex-start'; // 默认值
+  if (props.element.verticalAlignment) {
+    switch (props.element.verticalAlignment) {
+      case 'Top':
+        verticalAlign = 'flex-start';
+        break;
+      case 'Middle':
+        verticalAlign = 'center';
+        break;
+      case 'Bottom':
+        verticalAlign = 'flex-end';
+        break;
+      default:
+        verticalAlign = 'flex-start';
+    }
+  }
+  
   const justifyContent = props.element.textAlignment === 'Justified' ? 'space-between' : (props.element.textAlignment?.toLowerCase() || 'flex-start');
   const textAlign = props.element.textAlignment === 'Justified' ? 'justify' : (props.element.textAlignment?.toLowerCase() || 'left');
   
