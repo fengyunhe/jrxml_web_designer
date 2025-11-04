@@ -131,7 +131,7 @@ export function createNewElement(type: string, x: number, y: number): DesignElem
     case ELEMENT_TYPE_CONSTANTS.IMAGE:
       return { ...baseElement, type: 'image' as any, imagePath: '' };
     case ELEMENT_TYPE_CONSTANTS.LINE:
-      return { ...baseElement, type: 'line' as any, lineDirection: 'Horizontal' as any };
+      return { ...baseElement, type: 'line' as any, lineDirection: 'TopDown' as any };
     case ELEMENT_TYPE_CONSTANTS.RECTANGLE:
       return { ...baseElement, type: 'rectangle' as any };
     default:

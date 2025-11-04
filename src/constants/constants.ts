@@ -142,7 +142,7 @@ export const BAND_CONSTANTS = {
   MIN_HEIGHT: 20,
   DEFAULT_ADDITIONAL_MARGIN: 10,
   DETAIL_ADDITIONAL_MARGIN: 15,
-  SPACING: 5, // band之间的间距
+  SPACING: 0, // band之间的间距
 };
 
 // 评估时间常量

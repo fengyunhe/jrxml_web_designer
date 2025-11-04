@@ -151,8 +151,6 @@ export const ELEMENT_STYLE_OPTIONS = {
   lineDirections: [
     { value: 'TopDown', label: '从上到下' },
     { value: 'BottomUp', label: '从下到上' },
-    { value: 'LeftToRight', label: '从左到右' },
-    { value: 'RightToLeft', label: '从右到左' },
   ],
 };
 

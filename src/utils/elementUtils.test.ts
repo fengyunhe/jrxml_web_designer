@@ -370,7 +370,7 @@ describe('elementUtils', () => {
       expect(element.y).toBe(20)
       expect(element.width).toBe(100)
       expect(element.height).toBe(30)
-      expect((element as any).lineDirection).toBe('Horizontal')
+      expect((element as any).lineDirection).toBe('TopDown')
     })
 
     it('should create a new rectangle element', () => {

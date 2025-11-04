@@ -51,22 +51,37 @@ const emit = defineEmits<{
 
 // 线条样式
 const lineStyle = computed(() => {
-  const direction = props.element.lineDirection || 'Horizontal';
+  const direction = props.element.lineDirection || 'TopDown';
   const width = props.element.lineWidth || 1;
   
-  if (direction === 'Horizontal') {
+  // 根据XSD规范，线条是对角线
+  // TopDown: 从左上角到右下角的对角线
+  // BottomUp: 从左下角到右上角的对角线
+  const diagonalLength = Math.sqrt(props.element.width ** 2 + props.element.height ** 2);
+  
+  if (direction === 'TopDown') {
+    // 从左上角到右下角的对角线
     return {
-      width: '100%',
+      position: 'absolute' as const,
+      top: '0',
+      left: '0',
+      width: `${diagonalLength}px`,
       height: `${width}px`,
       backgroundColor: '#000',
-      marginTop: `${(props.element.height - width) / 2}px`
+      transformOrigin: '0 0',
+      transform: `rotate(${Math.atan2(props.element.height, props.element.width)}rad)`
     };
   } else {
+    // BottomUp - 从左下角到右上角的对角线
     return {
-      height: '100%',
-      width: `${width}px`,
+      position: 'absolute' as const,
+      bottom: '0',
+      left: '0',
+      width: `${diagonalLength}px`,
+      height: `${width}px`,
       backgroundColor: '#000',
-      marginLeft: `${(props.element.width - width) / 2}px`
+      transformOrigin: '0 0',
+      transform: `rotate(${-Math.atan2(props.element.height, props.element.width)}rad)`
     };
   }
 });

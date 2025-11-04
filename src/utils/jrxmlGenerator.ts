@@ -485,7 +485,7 @@ function generateImageXML(element: any): string {
 
 // 生成线条XML
 function generateLineXML(element: any): string {
-  const direction = element.lineDirection || element.direction || 'TopDown'; // DTD中默认是TopDown
+  const direction = element.lineDirection || element.direction || 'TopDown'; // XSD中默认是TopDown
   let xml = `    <line direction="${direction}">
       <reportElement x="${toInt(element.x)}" y="${toInt(element.y)}" width="${toInt(element.width)}" height="${toInt(element.height)}"/>
     </line>\n`;
@@ -796,7 +796,8 @@ function parseImageElement(element: Element, result: any): void {
 // 解析线条元素
 function parseLineElement(element: Element, result: any): void {
   if (element.hasAttribute('direction')) {
-    result.direction = element.getAttribute('direction');
+    // 将XML中的direction属性映射到lineDirection
+    result.lineDirection = element.getAttribute('direction');
   }
 }
 

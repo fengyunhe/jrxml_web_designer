@@ -131,7 +131,7 @@ export interface ImageElement extends DesignElementBase {
 // 线条元素接口
 export interface LineElement extends DesignElementBase {
   type: 'line';
-  lineDirection?: 'Horizontal' | 'Vertical';
+  lineDirection?: 'TopDown' | 'BottomUp';
   lineWidth?: number;
 }
 

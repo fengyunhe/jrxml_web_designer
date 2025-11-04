@@ -21,19 +21,21 @@ export function validateElementBounds(
   exceedsLeft: boolean;
   exceedsRight: boolean;
   exceedsBottom: boolean;
+  exceedsTop: boolean;
   exceedsBandTop: boolean;
   exceedsBandBottom: boolean;
   exceedsBand: boolean;
   bandOffsetY: number;
 } {
-  // 计算Band的Y轴偏移量，考虑band之间的间距
-  let bandOffsetY = 0;
-  const bandSpacing = BAND_CONSTANTS.SPACING; // band之间的间距，与DesignerCanvas.vue中的margin-bottom一致
+  // 计算当前band在页面中的Y位置（考虑前面所有band的高度和间距）
+  let bandOffsetY = reportProperties.topMargin; // 从页面顶部边距开始
   
+  // 累加前面所有band的高度和间距
   for (let i = 0; i < bandIndex; i++) {
-    const band = bands[i];
-    if (band) {
-      bandOffsetY += band.height + bandSpacing; // 添加band高度和间距
+    const currentBand = bands[i];
+    if (currentBand) {
+      const bandSpacing = BAND_CONSTANTS.SPACING; // band之间的间距
+      bandOffsetY += currentBand.height + bandSpacing; // 添加band高度和间距
     }
   }
   
@@ -52,23 +54,47 @@ export function validateElementBounds(
   // 检查是否超出band右侧（元素坐标是相对于band的，所以右侧边界是可用宽度）
   const exceedsRight = elementRight > availableWidth;
   
-  // 检查是否超出页面底部
-  // 元素的实际底部位置 = bandOffsetY + elementBottom
-  // 页面底部边界 = reportProperties.pageHeight - reportProperties.bottomMargin
-  const elementActualBottom = bandOffsetY + elementBottom;
-  const pageBottomBoundary = reportProperties.pageHeight - reportProperties.bottomMargin;
-  const exceedsBottom = elementActualBottom > pageBottomBoundary;
-  
   // 检查是否超出当前Band
   const exceedsBandTop = element.y < 0;
   const exceedsBandBottom = elementBottom > band.height;
   const exceedsBand = exceedsBandTop || exceedsBandBottom;
   
+  // 检查是否超出页面顶部（仅对第一个band）
+  let exceedsTop = false;
+  if (bandIndex === 0) {
+    // 第一个band的元素不能超出页面顶部
+    const elementActualTop = bandOffsetY + element.y;
+    const pageTopBoundary = reportProperties.topMargin;
+    exceedsTop = elementActualTop < pageTopBoundary;
+  }
+  
+  // 检查是否超出页面底部（仅对最后一个band）
+  let exceedsPageBottom = false;
+  if (bandIndex === bands.length - 1) {
+    // 最后一个band的元素不能超出页面底部
+    const elementActualBottom = bandOffsetY + elementBottom;
+    const pageBottomBoundary = reportProperties.pageHeight - reportProperties.bottomMargin;
+    exceedsPageBottom = elementActualBottom > pageBottomBoundary;
+  }
+  
+  // 检查是否超出页面底部（对非最后一个band）
+  let exceedsBottom = false;
+  if (bandIndex < bands.length - 1) {
+    // 非最后一个band的元素不能超出页面底部
+    const elementActualBottom = bandOffsetY + elementBottom;
+    const pageBottomBoundary = reportProperties.pageHeight - reportProperties.bottomMargin;
+    exceedsBottom = elementActualBottom > pageBottomBoundary;
+  } else {
+    // 最后一个band使用exceedsPageBottom的值
+    exceedsBottom = exceedsPageBottom;
+  }
+  
   return {
-    isOutOfBounds: exceedsLeft || exceedsRight || exceedsBottom || exceedsBand,
+    isOutOfBounds: exceedsLeft || exceedsRight || exceedsBottom || exceedsBand || exceedsTop,
     exceedsLeft,
     exceedsRight,
     exceedsBottom,
+    exceedsTop,
     exceedsBandTop,
     exceedsBandBottom,
     exceedsBand,
@@ -92,6 +118,7 @@ export function getOutOfBoundsElements(
   exceedsLeft: boolean;
   exceedsRight: boolean;
   exceedsBottom: boolean;
+  exceedsTop: boolean;
   exceedsBandTop: boolean;
   exceedsBandBottom: boolean;
   exceedsBand: boolean;
@@ -103,6 +130,7 @@ export function getOutOfBoundsElements(
     exceedsLeft: boolean;
     exceedsRight: boolean;
     exceedsBottom: boolean;
+    exceedsTop: boolean;
     exceedsBandTop: boolean;
     exceedsBandBottom: boolean;
     exceedsBand: boolean;
@@ -120,6 +148,7 @@ export function getOutOfBoundsElements(
           exceedsLeft: validation.exceedsLeft,
           exceedsRight: validation.exceedsRight,
           exceedsBottom: validation.exceedsBottom,
+          exceedsTop: validation.exceedsTop,
           exceedsBandTop: validation.exceedsBandTop,
           exceedsBandBottom: validation.exceedsBandBottom,
           exceedsBand: validation.exceedsBand
@@ -170,10 +199,14 @@ export function getReportDesignValidationErrors(
   }
   
   // 检查每个超出边界的元素
-  outOfBoundsElements.forEach(({ bandIndex, elementIndex, exceedsLeft, exceedsRight, exceedsBottom, exceedsBandTop, exceedsBandBottom, exceedsBand }) => {
+  outOfBoundsElements.forEach(({ bandIndex, elementIndex, exceedsLeft, exceedsRight, exceedsBottom, exceedsTop, exceedsBandTop, exceedsBandBottom, exceedsBand }) => {
     if (bands[bandIndex]) {
       const bandName = bands[bandIndex].type;
       const elementInfo = `${bandName}区域中的元素${elementIndex + 1}`;
+      
+      if (exceedsTop) {
+        errors.push(`${elementInfo}超出页面顶部边界`);
+      }
       
       if (exceedsLeft) {
         errors.push(`${elementInfo}超出${bandName}区域左边界`);
