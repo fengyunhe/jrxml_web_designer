@@ -1511,6 +1511,12 @@ const outOfBoundsElements = ref<Array<{bandIndex: number, elementIndex: number, 
 
 // 检查并更新超出边界的元素
 function updateOutOfBoundsElements() {
+  // 安全检查，确保bands和reportProperties已初始化
+  if (!bands.value || !reportProperties.value) {
+    console.warn('bands或reportProperties未初始化，跳过边界检查');
+    return;
+  }
+  
   // 获取所有超出边界的元素
   const outOfBounds = getOutOfBoundsElements(bands.value, reportProperties.value);
   outOfBoundsElements.value = outOfBounds;
@@ -1921,8 +1927,12 @@ const detectAlignmentLines = (currentElement: DesignElement, currentBandIndex: n
   
   // 计算当前band的Y坐标偏移
   let currentBandY = 0;
+  const bandSpacing = BAND_CONSTANTS.SPACING; // band之间的间距，与DesignerCanvas.vue中的margin-bottom一致
   for (let i = 0; i < currentBandIndex; i++) {
     currentBandY += bands.value[i]?.height || 0;
+    if (i < currentBandIndex - 1) {
+      currentBandY += bandSpacing; // 只在band之间添加间距，不在最后一个band后添加
+    }
   }
   
   // 获取当前元素的边界
@@ -2090,8 +2100,8 @@ const detectAlignmentLines = (currentElement: DesignElement, currentBandIndex: n
       }
     });
     
-    // 更新band的Y坐标偏移
-    bandOffsetY += band.height;
+    // 更新band的Y坐标偏移，考虑band之间的间距
+    bandOffsetY += band.height + bandSpacing;
   });
   
   // 更新对齐线状态
@@ -2543,6 +2553,12 @@ const cancelEditing = () => {
 
 // fileUtils函数的包装函数
 const saveToLocalStorageWrapper = () => {
+  // 安全检查，确保reportProperties.value存在
+  if (!reportProperties.value) {
+    console.error('reportProperties.value未定义，无法保存到本地存储');
+    return;
+  }
+  
   saveToLocalStorage(
     {
       reportProperties: reportProperties.value,
@@ -2550,7 +2566,7 @@ const saveToLocalStorageWrapper = () => {
       reportFields: reportFields.value,
       jrxmlContent: jrxmlContent.value
     },
-    reportProperties.value.name
+    reportProperties.value?.name || 'report'
   );
 };
 
@@ -2562,7 +2578,11 @@ const loadFromLocalStorageWrapper = () => {
     reportFields.value = loadedData.reportData.reportFields;
     jrxmlContent.value = loadedData.reportData.jrxmlContent;
     // 更新selectedBandTypes以匹配加载的bands
-    selectedBandTypes.value = loadedData.reportData.bands.map((band: Band) => band.type);
+    if (loadedData.reportData.bands && Array.isArray(loadedData.reportData.bands)) {
+      selectedBandTypes.value = loadedData.reportData.bands.map((band: Band) => band.type);
+    } else {
+      selectedBandTypes.value = [];
+    }
   }
 };
 

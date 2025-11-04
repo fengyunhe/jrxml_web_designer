@@ -1,7 +1,7 @@
 // Band相关的工具函数
 
 import type { Band,BandType } from '@/types';
-import { BAND_TYPE_CONSTANTS, BAND_HEIGHT_CONSTANTS } from '@/constants/constants';
+import { BAND_TYPE_CONSTANTS, BAND_HEIGHT_CONSTANTS, BAND_CONSTANTS } from '@/constants/constants';
 
 // 获取Band的显示名称
 export function getBandDisplayName(bandType: string): string {
@@ -43,11 +43,19 @@ export function isPointInBand(y: number, band: Band, bandY: number): boolean {
 // 获取Band在画布上的Y坐标
 export function getBandYPosition(bands: Band[], targetBandType: string): number {
   let y = 0;
+  const bandSpacing = BAND_CONSTANTS.SPACING; // band之间的间距
+  let bandCount = 0;
+  
   for (const band of bands) {
     if (band.type === targetBandType) {
       return y;
     }
     y += band.height;
+    // 在band之间添加间距，但不在最后一个band后添加
+    if (bandCount < bands.length - 1) {
+      y += bandSpacing;
+    }
+    bandCount++;
   }
   return y;
 }
@@ -55,18 +63,35 @@ export function getBandYPosition(bands: Band[], targetBandType: string): number 
 // 获取指定Y坐标所在的Band
 export function getBandAtY(bands: Band[], y: number): { band: Band | null, bandY: number } {
   let currentY = 0;
-  for (const band of bands) {
-    if (y >= currentY && y <= currentY + band.height) {
+  const bandSpacing = BAND_CONSTANTS.SPACING; // band之间的间距
+  
+  for (let i = 0; i < bands.length; i++) {
+    const band = bands[i];
+    if (!band) continue;
+    
+    const bandBottom = currentY + band.height;
+    
+    if (y >= currentY && y <= bandBottom) {
       return { band, bandY: currentY };
     }
     currentY += band.height;
+    // 在band之间添加间距，但不在最后一个band后添加
+    if (i < bands.length - 1) {
+      currentY += bandSpacing;
+    }
   }
   return { band: null, bandY: currentY };
 }
 
 // 获取所有Band的总高度
 export function getTotalBandsHeight(bands: Band[]): number {
-  return bands.reduce((total, band) => total + band.height, 0);
+  if (bands.length === 0) return 0;
+  
+  const bandSpacing = BAND_CONSTANTS.SPACING; // band之间的间距
+  const totalBandHeight = bands.reduce((total, band) => total + band.height, 0);
+  const totalSpacing = (bands.length - 1) * bandSpacing; // 只在band之间添加间距
+  
+  return totalBandHeight + totalSpacing;
 }
 
 // 调整Band高度

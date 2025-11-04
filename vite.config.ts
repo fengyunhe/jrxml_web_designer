@@ -10,7 +10,7 @@ export default defineConfig({
   base: '',
   resolve: {
     alias: {
-      '@': resolve(__dirname, 'src')
+      '@': resolve(process.cwd(), 'src')
     }
   }
 })

@@ -49,8 +49,9 @@ export function getElementDisplayInfoWithoutBand(element: DesignElement): string
 }
 
 // 检查元素是否被选中
-export function isElementSelected(element: { element: DesignElement, bandIndex: number, elementIndex: number }, selectedElement: { bandIndex: number, elementIndex: number } | null): boolean {
+export function isElementSelected(element: { element: DesignElement, bandIndex: number, elementIndex: number }, selectedElement: { bandIndex: number, elementIndex: number } | null | undefined): boolean {
   return selectedElement !== null && 
+         selectedElement !== undefined &&
          selectedElement.bandIndex === element.bandIndex && 
          selectedElement.elementIndex === element.elementIndex;
 }

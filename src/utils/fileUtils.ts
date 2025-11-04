@@ -198,3 +198,87 @@ export function validateReportData(reportData: any): { isValid: boolean, errors:
   
   return { isValid: errors.length === 0, errors };
 }
+
+// 格式化文件大小
+export function formatFileSize(bytes: number): string {
+  if (bytes === 0) return '0 Bytes';
+  
+  const k = 1024;
+  const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB'];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+}
+
+// 导出报表数据为JSON Blob
+export function exportToJSON(reportData: ReportData): Blob {
+  const jsonString = JSON.stringify(reportData, null, 2);
+  return new Blob([jsonString], { type: 'application/json' });
+}
+
+// 从JSON文件导入报表数据
+export async function importFromJSON(file: File): Promise<ReportData> {
+  try {
+    const content = await readFileAsText(file);
+    return JSON.parse(content) as ReportData;
+  } catch (error) {
+    throw new Error(`导入JSON失败: ${error instanceof Error ? error.message : String(error)}`);
+  }
+}
+
+// 导出JRXML内容为Blob
+export function exportToJRXML(jrxmlContent: string): Blob {
+  return new Blob([jrxmlContent], { type: 'application/xml' });
+}
+
+// 从JRXML文件导入内容
+export async function importFromJRXML(file: File): Promise<string> {
+  try {
+    return await readFileAsText(file);
+  } catch (error) {
+    throw new Error(`导入JRXML失败: ${error instanceof Error ? error.message : String(error)}`);
+  }
+}
+
+// 验证JRXML格式
+export function validateJRXML(jrxmlContent: string): { isValid: boolean, errors: string[] } {
+  const errors: string[] = [];
+  
+  try {
+    // 基本的XML格式检查
+    const parser = new DOMParser();
+    const xmlDoc = parser.parseFromString(jrxmlContent.trim(), 'application/xml');
+    
+    // 检查解析错误 - 不同浏览器可能有不同的错误检测方式
+    const parseError = xmlDoc.getElementsByTagName('parsererror');
+    if (parseError.length > 0) {
+      errors.push('XML格式错误: 无法解析XML内容');
+      return { isValid: false, errors };
+    }
+    
+    // 检查根元素是否为jasperReport
+    const rootElement = xmlDoc.documentElement;
+    if (rootElement.tagName !== 'jasperReport') {
+      errors.push('JRXML必须以jasperReport作为根元素');
+      return { isValid: false, errors };
+    }
+    
+    // 检查必要的属性
+    if (!rootElement.hasAttribute('name')) {
+      errors.push('jasperReport元素缺少name属性');
+    }
+    
+    if (!rootElement.hasAttribute('pageWidth')) {
+      errors.push('jasperReport元素缺少pageWidth属性');
+    }
+    
+    if (!rootElement.hasAttribute('pageHeight')) {
+      errors.push('jasperReport元素缺少pageHeight属性');
+    }
+    
+    return { isValid: errors.length === 0, errors };
+  } catch (error) {
+    errors.push(`验证JRXML时发生错误: ${error instanceof Error ? error.message : String(error)}`);
+    return { isValid: false, errors };
+  }
+}

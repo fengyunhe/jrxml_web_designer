@@ -8,6 +8,9 @@
     "dev": "vite",
     "build": "vue-tsc -b && vite build",
     "preview": "vite preview",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:ui": "vitest --ui",
     "update-changelog": "echo '## [Unreleased]\n\n### Added\n- ' >> CHANGELOG.md && echo '请手动编辑CHANGELOG.md文件添加具体变更内容'"
   },
   "dependencies": {
@@ -16,11 +19,16 @@
     "xml-formatter": "^3.6.7"
   },
   "devDependencies": {
+    "@testing-library/jest-dom": "^6.9.1",
     "@types/node": "^24.6.0",
     "@vitejs/plugin-vue": "^6.0.1",
+    "@vitest/ui": "^4.0.6",
+    "@vue/test-utils": "^2.4.6",
     "@vue/tsconfig": "^0.8.1",
+    "jsdom": "^27.1.0",
     "typescript": "~5.9.3",
     "vite": "npm:rolldown-vite@7.1.14",
+    "vitest": "^4.0.6",
     "vue-tsc": "^3.1.0"
   },
   "overrides": {

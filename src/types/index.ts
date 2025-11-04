@@ -83,6 +83,7 @@ export interface ReportProperties {
   topMargin: number;
   bottomMargin: number;
   defaultFont: FontSettings;
+  orientation?: 'portrait' | 'landscape';
 }
 
 // 设计元素基础接口

@@ -150,6 +150,7 @@
 <script setup lang="ts">
 import { onMounted, onUnmounted } from 'vue';
 import ElementFactory from '../elements/ElementFactory.vue';
+import { BAND_CONSTANTS } from '@/constants/constants';
 
 // Props
 interface Props {
@@ -462,7 +463,7 @@ onUnmounted(() => {
 
 .band {
   border: 1px solid #ddd;
-  margin-bottom: 5px;
+  margin-bottom: v-bind('BAND_CONSTANTS.SPACING + "px"');
   position: relative;
   background-color: rgba(255, 255, 255, 0.8);
   transition: background-color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
