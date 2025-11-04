@@ -5,6 +5,7 @@
     :element-index="elementIndex"
     :selected-element="selectedElement"
     :is-dragging="isDragging"
+    :is-out-of-bounds="isOutOfBounds"
     :report-font-family="reportFontFamily"
     :report-font-size="reportFontSize"
     :report-is-bold="reportIsBold"
@@ -44,6 +45,7 @@ const props = defineProps<{
   selectedElement: SelectedElementInfo | null;
   editingElement: EditingElementInfo | null;
   isDragging?: boolean;
+  isOutOfBounds?: boolean;
   reportFontFamily?: string;
   reportFontSize?: number;
   reportIsBold?: boolean;

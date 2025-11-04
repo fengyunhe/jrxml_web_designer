@@ -110,6 +110,7 @@
               :report-is-bold="reportProperties.defaultFont.isBold"
               :report-is-italic="reportProperties.defaultFont.isItalic"
               :report-is-underline="reportProperties.defaultFont.isUnderline"
+              :is-out-of-bounds="isElementOutOfBounds(bandIndex, index)"
               @select="selectElement"
               @drag-start="startDragging"
               @resize-start="startResizingElement"
@@ -169,6 +170,7 @@ interface Props {
   alignmentLines: any;
   isDesignAreaFocused: boolean;
   uiConstants: any;
+  outOfBoundsElements: Array<{bandIndex: number, elementIndex: number, element: any}>;
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -188,7 +190,8 @@ const props = withDefaults(defineProps<Props>(), {
   verticalRulerLabels: () => [],
   alignmentLines: () => ({ horizontal: [], vertical: [] }),
   isDesignAreaFocused: false,
-  uiConstants: () => ({})
+  uiConstants: () => ({}),
+  outOfBoundsElements: () => []
 });
 
 // Emits
@@ -261,6 +264,13 @@ const cancelEditing = () => {
 
 const startResizingBand = (event: MouseEvent, bandIndex: number) => {
   emit('start-resizing-band', event, bandIndex);
+};
+
+// 检查元素是否超出边界
+const isElementOutOfBounds = (bandIndex: number, elementIndex: number) => {
+  return props.outOfBoundsElements.some(
+    item => item.bandIndex === bandIndex && item.elementIndex === elementIndex
+  );
 };
 
 // 滚动事件处理

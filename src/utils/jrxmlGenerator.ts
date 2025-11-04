@@ -30,6 +30,11 @@ export interface Parameter {
   defaultValue?: string;
 }
 
+// 辅助函数：确保坐标值为整数
+function toInt(value: any): number {
+  return Math.round(Number(value) || 0);
+}
+
 // 生成JRXML内容
 export function generateJRXMLContent(
   properties: ReportProperties,
@@ -37,17 +42,65 @@ export function generateJRXMLContent(
   fields: Field[],
   parameters: Parameter[] = []
 ): string {
+  // 确保页边距有默认值，如果没有设置则使用0
+  const safeProperties = {
+    ...properties,
+    leftMargin: properties.leftMargin || 0,
+    rightMargin: properties.rightMargin || 0,
+    topMargin: properties.topMargin || 0,
+    bottomMargin: properties.bottomMargin || 0
+  };
+  
+  // 创建字段名称的映射，用于快速查找
+  const fieldMap = new Map<string, Field>();
+  fields.forEach(field => {
+    if (field.name) {
+      fieldMap.set(field.name, field);
+    }
+  });
+  
+  // 遍历所有元素，收集使用的字段名
+  const usedFieldNames = new Set<string>();
+  bands.forEach(band => {
+    band.elements.forEach(element => {
+      if (element.type === 'textField' && element.fieldName) {
+        usedFieldNames.add(element.fieldName);
+      }
+      // 也检查表达式中是否包含字段引用
+      if (element.type === 'textField' && element.expression) {
+        const fieldMatches = element.expression.match(/\$F\{([^}]+)\}/g);
+        if (fieldMatches) {
+          fieldMatches.forEach(match => {
+            const fieldName = match.substring(3, match.length - 1); // 去掉 $F{ 和 }
+            usedFieldNames.add(fieldName);
+          });
+        }
+      }
+    });
+  });
+  
+  // 添加缺失的字段到字段列表
+  usedFieldNames.forEach(fieldName => {
+    if (!fieldMap.has(fieldName)) {
+      fieldMap.set(fieldName, { name: fieldName, class: 'java.lang.String' });
+    }
+  });
+  
+  // 获取更新后的字段列表
+  const updatedFields = Array.from(fieldMap.values());
+  
   let jrxml = `<?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE jasperReport PUBLIC "-//JasperReports//DTD Report Design//EN" "http://jasperreports.sourceforge.net/dtds/jasperreport.dtd">
-<jasperReport
-    name="${properties.name}"
-    pageWidth="${properties.pageWidth}"
-    pageHeight="${properties.pageHeight}"
-    columnWidth="${properties.pageWidth - properties.leftMargin - properties.rightMargin}"
-    leftMargin="${properties.leftMargin}"
-    rightMargin="${properties.rightMargin}"
-    topMargin="${properties.topMargin}"
-    bottomMargin="${properties.bottomMargin}">
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports"
+              xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+              xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" 
+    name="${safeProperties.name}"
+    pageWidth="${safeProperties.pageWidth}"
+    pageHeight="${safeProperties.pageHeight}"
+    columnWidth="${safeProperties.pageWidth - safeProperties.leftMargin - safeProperties.rightMargin}"
+    leftMargin="${safeProperties.leftMargin}"
+    rightMargin="${safeProperties.rightMargin}"
+    topMargin="${safeProperties.topMargin}"
+    bottomMargin="${safeProperties.bottomMargin}">
 `;
 
   // 添加参数定义
@@ -65,9 +118,9 @@ export function generateJRXMLContent(
   }
   
   // 添加字段定义
-  if (fields.length > 0) {
+  if (updatedFields.length > 0) {
     jrxml += '\n  <!-- 数据字段定义 -->\n';
-    fields.forEach(field => {
+    updatedFields.forEach(field => {
       if (field.name && field.class) {
         jrxml += `  <field name="${field.name}" class="${field.class}"/>
 `;
@@ -80,12 +133,15 @@ export function generateJRXMLContent(
     if (band.elements.length > 0 || band.height > 0) {
       jrxml += `\n  <${band.type}>`;
       
-      // 根据DTD规范，height属性应该在band元素上
+      // 根据XSD规范，height属性应该在band元素上
       jrxml += `\n    <band height="${band.height}">`;
       
-      // 添加区域内的元素
+      // 添加区域内的元素，根据band类型验证元素位置
+      const bandTypeHeight = getDefaultBandHeight(band.type);
       band.elements.forEach(element => {
-        jrxml += generateElementXML(element);
+        // 为每个元素验证位置，使用当前band类型的高度限制
+        const validatedElement = validateElementPosition(element, bandTypeHeight);
+        jrxml += generateElementXML(validatedElement);
       });
       
       jrxml += `\n    </band>\n  </${band.type}>`;
@@ -114,6 +170,28 @@ function generateElementXML(element: any): string {
   }
 }
 
+// 验证border值是否符合XSD要求
+function validateBorderValue(borderValue: string): string {
+  if (!borderValue) return '';
+  
+  // XSD中允许的border枚举值
+  const validBorderValues = ['None', 'Thin', '1Point', '2Point', '4Point', 'Dotted'];
+  
+  // 如果值已经是有效的，直接返回
+  if (validBorderValues.includes(borderValue)) {
+    return borderValue;
+  }
+  
+  // 尝试将数字值转换为对应的枚举值
+  if (borderValue === '0' || borderValue === 'false') return 'None';
+  if (borderValue === '1') return '1Point';
+  if (borderValue === '2') return '2Point';
+  if (borderValue === '4') return '4Point';
+  
+  // 默认返回None，确保符合XSD
+  return 'None';
+}
+
 // 生成box元素XML
 function generateBoxXML(box: any): string {
   if (!box) return '';
@@ -122,19 +200,19 @@ function generateBoxXML(box: any): string {
   
   // 添加box的属性
   if (box.padding !== undefined) xml += ` padding="${box.padding}"`;
-  if (box.border) xml += ` border="${box.border}"`;
+  if (box.border) xml += ` border="${validateBorderValue(box.border)}"`;
   if (box.borderColor) xml += ` borderColor="${box.borderColor}"`;
   if (box.topPadding !== undefined) xml += ` topPadding="${box.topPadding}"`;
-  if (box.topBorder) xml += ` topBorder="${box.topBorder}"`;
+  if (box.topBorder) xml += ` topBorder="${validateBorderValue(box.topBorder)}"`;
   if (box.topBorderColor) xml += ` topBorderColor="${box.topBorderColor}"`;
   if (box.leftPadding !== undefined) xml += ` leftPadding="${box.leftPadding}"`;
-  if (box.leftBorder) xml += ` leftBorder="${box.leftBorder}"`;
+  if (box.leftBorder) xml += ` leftBorder="${validateBorderValue(box.leftBorder)}"`;
   if (box.leftBorderColor) xml += ` leftBorderColor="${box.leftBorderColor}"`;
   if (box.bottomPadding !== undefined) xml += ` bottomPadding="${box.bottomPadding}"`;
-  if (box.bottomBorder) xml += ` bottomBorder="${box.bottomBorder}"`;
+  if (box.bottomBorder) xml += ` bottomBorder="${validateBorderValue(box.bottomBorder)}"`;
   if (box.bottomBorderColor) xml += ` bottomBorderColor="${box.bottomBorderColor}"`;
   if (box.rightPadding !== undefined) xml += ` rightPadding="${box.rightPadding}"`;
-  if (box.rightBorder) xml += ` rightBorder="${box.rightBorder}"`;
+  if (box.rightBorder) xml += ` rightBorder="${validateBorderValue(box.rightBorder)}"`;
   if (box.rightBorderColor) xml += ` rightBorderColor="${box.rightBorderColor}"`;
   
   xml += '>\n';
@@ -185,9 +263,55 @@ function generateBoxXML(box: any): string {
   return xml;
 }
 
+// 验证并调整元素位置，确保在band范围内
+function validateElementPosition(element: any, bandHeight: number): any {
+  if (!element) return element;
+  
+  // 创建元素的副本以避免修改原始对象
+  const validatedElement = { ...element };
+  
+  // 确保元素有默认值
+  validatedElement.x = validatedElement.x || 0;
+  validatedElement.y = validatedElement.y || 0;
+  validatedElement.width = validatedElement.width || 100;
+  validatedElement.height = validatedElement.height || 20;
+  
+  // 检查元素是否超出band高度
+  const elementBottom = validatedElement.y + validatedElement.height;
+  if (elementBottom > bandHeight) {
+    // 如果元素超出band高度，调整元素高度以适应band
+    validatedElement.height = Math.max(10, bandHeight - validatedElement.y);
+    console.warn(`元素位置超出band高度范围，已调整元素高度从${element.height}到${validatedElement.height}`);
+  }
+  
+  return validatedElement;
+}
+
+// 根据band类型获取默认高度
+function getDefaultBandHeight(bandType: string): number {
+  switch (bandType) {
+    case 'title':
+      return 50;
+    case 'pageHeader':
+      return 40;
+    case 'columnHeader':
+      return 30;
+    case 'detail':
+      return 353; // 默认detail band高度
+    case 'columnFooter':
+      return 30;
+    case 'pageFooter':
+      return 40;
+    case 'summary':
+      return 50;
+    default:
+      return 50;
+  }
+}
+
 // 生成静态文本XML
 function generateStaticTextXML(element: any): string {
-  let xml = `    <staticText>\n      <reportElement x="${element.x || 0}" y="${element.y || 0}" width="${element.width || 100}" height="${element.height || 30}"`;
+  let xml = `    <staticText>\n      <reportElement x="${toInt(element.x)}" y="${toInt(element.y)}" width="${toInt(element.width)}" height="${toInt(element.height)}"`;
   
   if (element.backcolor) {
     xml += ` backcolor="${element.backcolor}"`;
@@ -245,7 +369,7 @@ function generateStaticTextXML(element: any): string {
 function generateTextFieldXML(element: any): string {
   let xml = `    <textField`;
   
-  // 添加textField的特有属性，确保符合DTD规范
+  // 添加textField的特有属性，确保符合XSD规范
   if (element.isStretchWithOverflow !== undefined) {
     xml += ` isStretchWithOverflow="${element.isStretchWithOverflow}"`;
   }
@@ -269,7 +393,7 @@ function generateTextFieldXML(element: any): string {
     xml += ` isBlankWhenNull="${element.isBlankWhenNull}"`;
   }
   
-  xml += `>\n      <reportElement x="${element.x || 0}" y="${element.y || 0}" width="${element.width || 100}" height="${element.height || 30}"`;
+  xml += `>\n      <reportElement x="${toInt(element.x)}" y="${toInt(element.y)}" width="${toInt(element.width)}" height="${toInt(element.height)}"`;
   
   if (element.backcolor) {
     xml += ` backcolor="${element.backcolor}"`;
@@ -352,7 +476,7 @@ function generateImageXML(element: any): string {
   }
   
   xml += `>
-      <reportElement x="${element.x || 0}" y="${element.y || 0}" width="${element.width || 100}" height="${element.height || 30}"/>
+      <reportElement x="${toInt(element.x)}" y="${toInt(element.y)}" width="${toInt(element.width)}" height="${toInt(element.height)}"/>
 `;
   
   xml += `      <imageExpression><![CDATA[${element.imagePath || '""'}]]></imageExpression>\n    </image>\n`;
@@ -363,7 +487,7 @@ function generateImageXML(element: any): string {
 function generateLineXML(element: any): string {
   const direction = element.lineDirection || element.direction || 'TopDown'; // DTD中默认是TopDown
   let xml = `    <line direction="${direction}">
-      <reportElement x="${element.x || 0}" y="${element.y || 0}" width="${element.width || 100}" height="${element.height || 1}"/>
+      <reportElement x="${toInt(element.x)}" y="${toInt(element.y)}" width="${toInt(element.width)}" height="${toInt(element.height)}"/>
     </line>\n`;
   return xml;
 }
@@ -371,7 +495,7 @@ function generateLineXML(element: any): string {
 // 生成矩形XML
 function generateRectangleXML(element: any): string {
   let xml = `    <rectangle>
-      <reportElement x="${element.x || 0}" y="${element.y || 0}" width="${element.width || 100}" height="${element.height || 30}"`;
+      <reportElement x="${toInt(element.x)}" y="${toInt(element.y)}" width="${toInt(element.width)}" height="${toInt(element.height)}"`;
   
   if (element.backcolor) {
     xml += ` backcolor="${element.backcolor}"`;

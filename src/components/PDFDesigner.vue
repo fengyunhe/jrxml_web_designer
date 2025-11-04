@@ -248,6 +248,7 @@
         :vertical-ruler-ticks="verticalRulerTicks"
         :vertical-ruler-labels="verticalRulerLabels"
         :is-design-area-focused="isDesignAreaFocused"
+        :out-of-bounds-elements="outOfBoundsElements"
         :ui-constants="UI_CONSTANTS"
         @set-design-area-focused="setDesignAreaFocused"
         @select-band="selectBand"
@@ -323,55 +324,55 @@
               <h4>基本属性</h4>
               <div class="form-group">
                 <label>X坐标</label>
-                <input v-model.number="currentElement.x" type="number" />
+                <input v-if="currentElement" v-model.number="currentElement.x" type="number" />
               </div>
               <div class="form-group">
                 <label>Y坐标</label>
-                <input v-model.number="currentElement.y" type="number" />
+                <input v-if="currentElement" v-model.number="currentElement.y" type="number" />
               </div>
               <div class="form-group">
                 <label>宽度</label>
-                <input v-model.number="currentElement.width" type="number" />
+                <input v-if="currentElement" v-model.number="currentElement.width" type="number" />
               </div>
               <div class="form-group">
                 <label>高度</label>
-                <input v-model.number="currentElement.height" type="number" />
+                <input v-if="currentElement" v-model.number="currentElement.height" type="number" />
               </div>
               
               <!-- 根据元素类型显示特定属性 -->
-              <template v-if="currentElement.type === 'staticText'">
+              <template v-if="currentElement && currentElement.type === 'staticText'">
                 <div class="form-group">
                   <label>文本内容</label>
-                  <textarea v-model="currentElement.text"></textarea>
+                  <textarea v-if="currentElement" v-model="currentElement.text"></textarea>
                 </div>
                 <div class="form-group">
                   <label>字体大小</label>
-                  <input v-model.number="currentElement.fontSize" type="number" />
+                  <input v-if="currentElement" v-model.number="currentElement.fontSize" type="number" />
                 </div>
                 <div class="form-group">
                   <label>是否粗体</label>
-                  <input v-model="currentElement.isBold" type="checkbox" />
+                  <input v-if="currentElement" v-model="currentElement.isBold" type="checkbox" />
                 </div>
               </template>
               
-              <template v-else-if="currentElement.type === 'textField'">
+              <template v-else-if="currentElement && currentElement.type === 'textField'">
                 <div class="form-group">
                   <label>字段名称</label>
-                  <input v-model="currentElement.fieldName" type="text" @input="updateExpressionFromFieldName" />
+                  <input v-if="currentElement" v-model="currentElement.fieldName" type="text" @input="updateExpressionFromFieldName" />
                 </div>
-                <div class="form-group" v-if="currentElement.type === 'textField'">
+                <div class="form-group" v-if="currentElement && currentElement.type === 'textField'">
                   <label>表达式</label>
-                  <input v-model="(currentElement as any).expression" type="text" />
+                  <input v-if="currentElement" v-model="(currentElement as any).expression" type="text" />
                   <small>例如: $F{字段名} 或 $F{字段名}.toString()</small>
                 </div>
                 <div class="form-group">
                   <label>格式模式</label>
-                  <input v-model="currentElement.pattern" type="text" />
+                  <input v-if="currentElement" v-model="currentElement.pattern" type="text" />
                   <small>例如: 日期格式 "yyyy-MM-dd"，数字格式 "#,##0.00"</small>
                 </div>
                 <div class="form-group">
                   <label>文本对齐</label>
-                  <select v-model="currentElement.textAlignment">
+                  <select v-if="currentElement" v-model="currentElement.textAlignment">
                     <option value="Left">左对齐</option>
                     <option value="Center">居中</option>
                     <option value="Right">右对齐</option>
@@ -380,7 +381,7 @@
                 </div>
                 <div class="form-group">
                   <label>垂直对齐</label>
-                  <select v-model="currentElement.verticalAlignment">
+                  <select v-if="currentElement" v-model="currentElement.verticalAlignment">
                     <option value="Top">顶部</option>
                     <option value="Middle">中间</option>
                     <option value="Bottom">底部</option>
@@ -388,37 +389,37 @@
                 </div>
                 <div class="form-group">
                   <label>字体大小</label>
-                  <input v-model.number="currentElement.fontSize" type="number" />
+                  <input v-if="currentElement" v-model.number="currentElement.fontSize" type="number" />
                 </div>
                 <div class="checkbox-group">
                   <label>
-                    <input v-model="currentElement.isBold" type="checkbox" />
+                    <input v-if="currentElement" v-model="currentElement.isBold" type="checkbox" />
                     粗体
                   </label>
                   <label>
-                    <input v-model="currentElement.isItalic" type="checkbox" />
+                    <input v-if="currentElement" v-model="currentElement.isItalic" type="checkbox" />
                     斜体
                   </label>
                   <label>
-                    <input v-model="currentElement.isUnderline" type="checkbox" />
+                    <input v-if="currentElement" v-model="currentElement.isUnderline" type="checkbox" />
                     下划线
                   </label>
                 </div>
                 <div class="form-group">
                   <label>
-                    <input v-model="currentElement.isStretchWithOverflow" type="checkbox" />
+                    <input v-if="currentElement" v-model="currentElement.isStretchWithOverflow" type="checkbox" />
                     内容超出时自动拉伸
                   </label>
                 </div>
                 <div class="form-group">
                   <label>
-                    <input v-model="currentElement.isBlankWhenNull" type="checkbox" />
+                    <input v-if="currentElement" v-model="currentElement.isBlankWhenNull" type="checkbox" />
                     值为null时显示空白
                   </label>
                 </div>
                 <div class="form-group">
                   <label>表达式计算时机</label>
-                  <select v-model="currentElement.evaluationTime">
+                  <select v-if="currentElement" v-model="currentElement.evaluationTime">
                     <option value="Now">当前</option>
                     <option value="Report">报表结束时</option>
                     <option value="Page">页结束时</option>
@@ -556,13 +557,13 @@
               <h4>样式设置</h4>
               <div class="form-group">
                 <label>背景颜色</label>
-                <input v-model="currentElement.backcolor" type="color" />
+                <input v-if="currentElement" v-model="currentElement.backcolor" type="color" />
               </div>
               
-              <template v-if="currentElement.type !== 'line' && currentElement.type !== 'image'">
+              <template v-if="currentElement && currentElement.type !== 'line' && currentElement.type !== 'image'">
                 <div class="form-group">
                   <label>字体名称</label>
-                  <select v-model="currentElement.fontFamily" style="appearance: none; -webkit-appearance: none;">
+                  <select v-if="currentElement" v-model="currentElement.fontFamily" style="appearance: none; -webkit-appearance: none;">
                     <option value="">使用默认字体</option>
                     <option value="SansSerif">SansSerif</option>
                     <option value="Serif">Serif</option>
@@ -581,7 +582,7 @@
                       v-for="align in ['Left', 'Center', 'Right']" 
                       :key="align"
                       @click="setHorizontalAlignment(align as 'Left' | 'Center' | 'Right')"
-                      :class="{ active: currentElement.textAlignment === align }"
+                      :class="{ active: currentElement && currentElement.textAlignment === align }"
                       class="align-button"
                       title="水平对齐: {{ align }}"
                     >
@@ -597,7 +598,7 @@
                       v-for="align in ['Top', 'Middle', 'Bottom']" 
                       :key="align"
                       @click="setVerticalAlignment(align as 'Top' | 'Middle' | 'Bottom')"
-                      :class="{ active: currentElement.verticalAlignment === align }"
+                      :class="{ active: currentElement && currentElement.verticalAlignment === align }"
                       class="align-button"
                       title="垂直对齐: {{ align }}"
                     >
@@ -608,15 +609,15 @@
                 
                 <div class="checkbox-group">
                   <label>
-                    <input v-model="currentElement.isBold" type="checkbox" />
+                    <input v-if="currentElement" v-model="currentElement.isBold" type="checkbox" />
                     粗体
                   </label>
                   <label>
-                    <input v-model="currentElement.isItalic" type="checkbox" />
+                    <input v-if="currentElement" v-model="currentElement.isItalic" type="checkbox" />
                     斜体
                   </label>
                   <label>
-                    <input v-model="currentElement.isUnderline" type="checkbox" />
+                    <input v-if="currentElement" v-model="currentElement.isUnderline" type="checkbox" />
                     下划线
                   </label>
                 </div>
@@ -880,6 +881,11 @@ import {
 import {getBandDisplayName} from '../utils/bandUtils';
 
 import {clearLocalStorage, loadFromLocalStorage, saveToLocalStorage} from '../utils/fileUtils';
+
+// 导入元素边界验证工具
+import {
+  getOutOfBoundsElements
+} from '../utils/elementBoundsValidator';
 
 // 确保浏览器环境中DOMParser可用
 // 移除未使用的getDOMParser函数
@@ -1266,6 +1272,9 @@ function createNewFile() {
     { type: BAND_TYPE_CONSTANTS.SUMMARY as BandType, height: BAND_HEIGHT_CONSTANTS[BAND_TYPE_CONSTANTS.SUMMARY] || 60, elements: [] }
   ];
   
+  // 更新selectedBandTypes以匹配新的bands
+  selectedBandTypes.value = bands.value.map(band => band.type);
+  
   reportFields.value = [];
   reportParameters.value = [];
   jrxmlContent.value = '';
@@ -1386,6 +1395,8 @@ function loadFile(fileData: any) {
     
     if (fileContent.bands) {
       bands.value = fileContent.bands;
+      // 更新selectedBandTypes以匹配加载的bands
+      selectedBandTypes.value = fileContent.bands.map((band: Band) => band.type);
     }
     
     if (fileContent.reportFields) {
@@ -1495,6 +1506,22 @@ interface HistoryState {
   reportParameters: typeof reportParameters.value;
 }
 
+// 超出边界的元素
+const outOfBoundsElements = ref<Array<{bandIndex: number, elementIndex: number, element: DesignElement}>>([]);
+
+// 检查并更新超出边界的元素
+function updateOutOfBoundsElements() {
+  // 获取所有超出边界的元素
+  const outOfBounds = getOutOfBoundsElements(bands.value, reportProperties.value);
+  outOfBoundsElements.value = outOfBounds;
+  
+  // 如果有超出边界的元素，在控制台输出警告
+  if (outOfBounds.length > 0) {
+    console.warn(`发现 ${outOfBounds.length} 个超出边界的元素:`, outOfBounds);
+  }
+}
+
+// 历史记录栈 - 用于撤销功能
 const historyStack = ref<HistoryState[]>([]);
 const redoStack = ref<HistoryState[]>([]);
 const MAX_HISTORY_SIZE = HISTORY_CONSTANTS.MAX_HISTORY_SIZE; // 最大历史记录数量
@@ -2534,6 +2561,8 @@ const loadFromLocalStorageWrapper = () => {
     bands.value = loadedData.reportData.bands;
     reportFields.value = loadedData.reportData.reportFields;
     jrxmlContent.value = loadedData.reportData.jrxmlContent;
+    // 更新selectedBandTypes以匹配加载的bands
+    selectedBandTypes.value = loadedData.reportData.bands.map((band: Band) => band.type);
   }
 };
 
@@ -3050,11 +3079,24 @@ watch(
       console.log('开始保存到本地存储和更新JRXML...');
       saveToLocalStorageWrapper();
       updateJRXML();
+      // 更新超出边界的元素
+      updateOutOfBoundsElements();
     } else {
       console.log('拖拽/调整大小中，跳过更新');
     }
   },
   { deep: true }
+);
+
+// 监听拖拽状态变化，在拖拽结束时更新超出边界的元素
+watch(
+  isDraggingOrResizing,
+  (newValue, oldValue) => {
+    // 当从拖拽状态变为非拖拽状态时，更新超出边界的元素
+    if (oldValue === true && newValue === false) {
+      updateOutOfBoundsElements();
+    }
+  }
 );
 
 // 复制JRXML内容到剪贴板
@@ -3398,12 +3440,13 @@ const startResizingElement = (event: MouseEvent, bandIndex: number, elementIndex
           
           // 获取报表边距设置
           // 注意：由于现在使用padding，元素坐标是相对于内容区域的
-          const { rightMargin } = reportProperties.value;
+          const { leftMargin = 0, rightMargin = 0 } = reportProperties.value;
           // 限制不能超出纸张右边界（考虑右边距）和band底部边界
           // 修正计算：使用正确的缩放比例计算
-          const availableWidth = (paperWidth.value - rightMargin - element.x);
+          // 元素的x坐标是相对于内容区域的，所以最大宽度应该是页面宽度减去左右边距再减去元素的x坐标
+          const maxElementWidth = paperWidth.value - leftMargin - rightMargin - element.x;
           const availableHeight = (currentBand.height - element.y);
-          newWidth = Math.min(newWidth, availableWidth);
+          newWidth = Math.min(newWidth, maxElementWidth);
           newHeight = Math.min(newHeight, availableHeight);
           
           // 先应用基本的大小调整

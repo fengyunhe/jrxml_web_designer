@@ -1,7 +1,10 @@
 <template>
   <div 
     class="design-element"
-    :class="{ 'selected': isSelected && !isDragging }"
+    :class="{ 
+      'selected': isSelected && !isDragging,
+      'out-of-bounds': isOutOfBounds
+    }"
     @click.stop="handleSelect"
     :style="elementStyle"
     @mousedown.stop="handleMouseDown"
@@ -34,6 +37,7 @@ const props = defineProps<{
   reportIsBold?: boolean;
   reportIsItalic?: boolean;
   reportIsUnderline?: boolean;
+  isOutOfBounds?: boolean;
 }>();
 
 // Emits
@@ -227,6 +231,14 @@ const handleResize = (event: MouseEvent) => {
   outline-offset: -1px;
   /* 提高选中元素的层级，确保可以正确交互 */
   z-index: 10;
+}
+
+.design-element.out-of-bounds {
+  /* 超出边界元素的高亮样式 */
+  outline: 2px dashed #ff4d4f;
+  outline-offset: -1px;
+  background-color: rgba(255, 77, 79, 0.1);
+  box-shadow: 0 0 5px rgba(255, 77, 79, 0.5);
 }
 
 .resize-handle {

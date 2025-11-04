@@ -31,6 +31,7 @@ const props = defineProps<{
   reportIsBold?: boolean;
   reportIsItalic?: boolean;
   reportIsUnderline?: boolean;
+  isOutOfBounds?: boolean;
 }>();
 
 // Emits
@@ -74,7 +75,8 @@ const commonProps = computed(() => ({
   reportFontSize: props.reportFontSize,
   reportIsBold: props.reportIsBold,
   reportIsItalic: props.reportIsItalic,
-  reportIsUnderline: props.reportIsUnderline
+  reportIsUnderline: props.reportIsUnderline,
+  isOutOfBounds: props.isOutOfBounds
 }));
 
 // 通用事件
