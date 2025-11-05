@@ -2346,6 +2346,7 @@ const startDragging = (event: MouseEvent, bandIndex: number, elementIndex: numbe
               
               // 计算第一个band和最后一个band相对于页面的位置
               const firstBandTopInPage = (firstBandRect.top - paperRect.top) / currentZoom;
+              const lastBandTopInPage = (lastBandRect.top - paperRect.top) / currentZoom;
               const lastBandBottomInPage = (lastBandRect.bottom - paperRect.top) / currentZoom;
               
               // 限制元素顶部不能超出第一个band的上边界
@@ -2361,6 +2362,27 @@ const startDragging = (event: MouseEvent, bandIndex: number, elementIndex: numbe
               if (elementBottomInPage > pageBottomBoundary) {
                 const adjustment = elementBottomInPage - pageBottomBoundary;
                 newY -= adjustment;
+              }
+              
+              // 检查元素是否在最后一个band中
+              const currentBandElement = document.querySelectorAll('.band')[draggingInfo.value.bandIndex] as HTMLElement;
+              const currentBandRect = currentBandElement.getBoundingClientRect();
+              const currentBandTopInPage = (currentBandRect.top - paperRect.top) / currentZoom;
+              const currentBandBottomInPage = (currentBandRect.bottom - paperRect.top) / currentZoom;
+              
+              // 如果当前元素在最后一个band中，增加额外的边界限制
+              if (draggingInfo.value.bandIndex === bands.value.length - 1) {
+                // 限制元素顶部不能超出最后一个band的顶部
+                if (elementTopInPage < lastBandTopInPage) {
+                  const adjustment = lastBandTopInPage - elementTopInPage;
+                  newY += adjustment;
+                }
+                
+                // 限制元素底部不能超出最后一个band的底部
+                if (elementBottomInPage > lastBandBottomInPage) {
+                  const adjustment = elementBottomInPage - lastBandBottomInPage;
+                  newY -= adjustment;
+                }
               }
             }
             
