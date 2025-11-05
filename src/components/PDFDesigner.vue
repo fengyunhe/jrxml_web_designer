@@ -1919,8 +1919,7 @@ const detectAlignmentLines = (currentElement: DesignElement, currentBandIndex: n
   // 用于存储吸附信息的对象
   const snapInfo = {
     horizontal: null as { position: number; offset: number } | null,
-    vertical: null as { position: number; offset: number } | null,
-    hasAlignment: false // 添加hasAlignment属性，用于判断是否存在对齐线
+    vertical: null as { position: number; offset: number } | null
   };
   
   // 获取页边距
@@ -2102,33 +2101,43 @@ const detectAlignmentLines = (currentElement: DesignElement, currentBandIndex: n
       }
       // 对于不同band中的元素，只显示参考线但不进行吸附
       else {
+        // 计算当前元素在全局坐标系中的Y坐标
+        const currentGlobalTop = currentTop + currentBandY;
+        const currentGlobalBottom = currentBottom + currentBandY;
+        const currentGlobalCenterY = currentCenterY + currentBandY;
+        
+        // 计算其他元素在全局坐标系中的Y坐标
+        const otherGlobalTop = otherTop + bandOffsetY;
+        const otherGlobalBottom = otherBottom + bandOffsetY;
+        const otherGlobalCenterY = otherCenterY + bandOffsetY;
+        
         // 使用与同band相同的对齐检测逻辑，但不进行吸附
         // 顶部对齐
-        if (Math.abs(currentTop - otherTop) < threshold) {
+        if (Math.abs(currentGlobalTop - otherGlobalTop) < threshold) {
           // 添加其他band的Y坐标偏移到参考线位置
           const linePosition = otherTop + topMargin + bandOffsetY;
           horizontalAlignmentLines.push(linePosition);
         }
         // 底部对齐
-        if (Math.abs(currentBottom - otherBottom) < threshold) {
+        if (Math.abs(currentGlobalBottom - otherGlobalBottom) < threshold) {
           // 添加其他band的Y坐标偏移到参考线位置
           const linePosition = otherBottom + topMargin + bandOffsetY;
           horizontalAlignmentLines.push(linePosition);
         }
         // 中心对齐
-        if (Math.abs(currentCenterY - otherCenterY) < threshold) {
+        if (Math.abs(currentGlobalCenterY - otherGlobalCenterY) < threshold) {
           // 添加其他band的Y坐标偏移到参考线位置
           const linePosition = otherCenterY + topMargin + bandOffsetY;
           horizontalAlignmentLines.push(linePosition);
         }
         // 顶部对齐到其他元素的底部
-        if (Math.abs(currentTop - otherBottom) < threshold) {
+        if (Math.abs(currentGlobalTop - otherGlobalBottom) < threshold) {
           // 添加其他band的Y坐标偏移到参考线位置
           const linePosition = otherBottom + topMargin + bandOffsetY;
           horizontalAlignmentLines.push(linePosition);
         }
         // 底部对齐到其他元素的顶部
-        if (Math.abs(currentBottom - otherTop) < threshold) {
+        if (Math.abs(currentGlobalBottom - otherGlobalTop) < threshold) {
           // 添加其他band的Y坐标偏移到参考线位置
           const linePosition = otherTop + topMargin + bandOffsetY;
           horizontalAlignmentLines.push(linePosition);
@@ -2149,11 +2158,6 @@ const detectAlignmentLines = (currentElement: DesignElement, currentBandIndex: n
   }
   
   // 返回吸附信息
-  // 添加hasAlignment属性，用于判断是否存在对齐线
-  snapInfo.hasAlignment = snapInfo.horizontal !== null || snapInfo.vertical !== null || 
-                          alignmentLines.value.horizontal.length > 0 || 
-                          alignmentLines.value.vertical.length > 0;
-  
   return snapInfo;
 };
 
@@ -2383,18 +2387,7 @@ const startDragging = (event: MouseEvent, bandIndex: number, elementIndex: numbe
             // 检测对齐线（使用最终位置）
             // 使用当前鼠标所在的band索引，以便在跨band拖拽时也能显示横向参考线
             const targetBandIndex = highlightedBandIndex.value !== null ? highlightedBandIndex.value : draggingInfo.value.bandIndex;
-            
-            // 创建临时元素对象用于检测对齐线
-            const tempElement = { ...currentElement, x: newX, y: newY };
-            const snapInfo = detectAlignmentLines(tempElement, targetBandIndex, false);
-            
-            // 只有当存在对齐线时才更新状态
-            if (snapInfo.hasAlignment) {
-              detectAlignmentLines(currentElement, targetBandIndex);
-            } else {
-              // 清除对齐线
-              clearAlignmentLines();
-            }
+            detectAlignmentLines(currentElement, targetBandIndex);
             
             // 更新并显示坐标信息
             // 显示元素的相对坐标值
