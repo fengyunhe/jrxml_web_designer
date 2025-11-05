@@ -1,4 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
+import type { DesignElement } from '@/types'
 
 // Mock DOM methods
 Object.defineProperty(window, 'getComputedStyle', {
@@ -170,9 +171,6 @@ describe('PDFDesigner - Grid Snapping and Alignment Lines', () => {
           // Only check cross-band alignment if the mouse is hovering over the target band
           if (mockVm.highlightedBandIndex.value !== otherBandIndex) return
           
-          // Debug: Write band information to file
-          require('fs').appendFileSync('debug.txt', `Checking cross-band alignment: current band=${bandIndex}, other band=${otherBandIndex}, highlighted=${mockVm.highlightedBandIndex.value}\n`);
-          
           // Calculate band offset for cross-band alignment (including band spacing)
           let bandOffsetY = 0
           for (let i = 0; i < otherBandIndex; i++) {
@@ -191,14 +189,10 @@ describe('PDFDesigner - Grid Snapping and Alignment Lines', () => {
             }
           }
           
-          // Debug: Write offset information to file
-          require('fs').appendFileSync('debug.txt', `Band offsets: bandOffsetY=${bandOffsetY}, sourceBandOffsetY=${sourceBandOffsetY}\n`);
-          
           // For cross-band alignment, we need to consider the band spacing between bands
           // If we're aligning with a band above the current band, we need to add the band spacing
           if (otherBandIndex < bandIndex) {
             sourceBandOffsetY += mockVm.bandSpacing
-            require('fs').appendFileSync('debug.txt', `Added band spacing: new sourceBandOffsetY=${sourceBandOffsetY}\n`);
           }
           
           // Use the elements from the other band
@@ -213,21 +207,15 @@ describe('PDFDesigner - Grid Snapping and Alignment Lines', () => {
             const relativeBottom = relativeY + currentElement.height
             const relativeCenterY = relativeY + currentElement.height / 2
             
-            // Debug: Write element information to file
-            require('fs').appendFileSync('debug.txt', `Checking element: currentElement.y=${currentElement.y}, element.y=${element.y}, sourceBandOffsetY=${sourceBandOffsetY}, bandOffsetY=${bandOffsetY}, relativeY=${relativeY}\n`);
-            
             // Check horizontal alignment (top edges) with relative Y
             if (Math.abs(relativeY - element.y) < 3) {
               const linePosition = element.y + mockVm.reportProperties.value.topMargin + bandOffsetY
-              require('fs').appendFileSync('debug.txt', `Top alignment check: relativeY=${relativeY}, element.y=${element.y}, diff=${Math.abs(relativeY - element.y)}, threshold=3\n`);
-              require('fs').appendFileSync('debug.txt', `Top alignment detected: linePosition=${linePosition}\n`);
               horizontalLines.push(linePosition)
             }
             
             // Check horizontal alignment (bottom edges) with relative Y
             if (Math.abs(relativeBottom - (element.y + element.height)) < 3) {
               const linePosition = element.y + element.height + mockVm.reportProperties.value.topMargin + bandOffsetY
-              require('fs').appendFileSync('debug.txt', `Bottom alignment detected: linePosition=${linePosition}\n`);
               horizontalLines.push(linePosition)
             }
             
@@ -235,21 +223,18 @@ describe('PDFDesigner - Grid Snapping and Alignment Lines', () => {
             const otherCenterY = element.y + element.height / 2
             if (Math.abs(relativeCenterY - otherCenterY) < 3) {
               const linePosition = otherCenterY + mockVm.reportProperties.value.topMargin + bandOffsetY
-              require('fs').appendFileSync('debug.txt', `Center alignment detected: linePosition=${linePosition}\n`);
               horizontalLines.push(linePosition)
             }
             
             // Check top alignment to other element's bottom
             if (Math.abs(relativeY - (element.y + element.height)) < 3) {
               const linePosition = element.y + element.height + mockVm.reportProperties.value.topMargin + bandOffsetY
-              require('fs').appendFileSync('debug.txt', `Top to bottom alignment detected: linePosition=${linePosition}\n`);
               horizontalLines.push(linePosition)
             }
             
             // Check bottom alignment to other element's top
             if (Math.abs(relativeBottom - element.y) < 3) {
               const linePosition = element.y + mockVm.reportProperties.value.topMargin + bandOffsetY
-              require('fs').appendFileSync('debug.txt', `Bottom to top alignment detected: linePosition=${linePosition}\n`);
               horizontalLines.push(linePosition)
             }
           })
@@ -475,7 +460,6 @@ describe('PDFDesigner - Grid Snapping and Alignment Lines', () => {
       it('should detect horizontal alignment with elements in other bands', () => {
         // Create a test element in the second band
         const testElement: DesignElement = {
-          id: 'test-element-1',
           type: 'staticText',
           x: 50,
           y: -40, // Adjusted to align with first band element at y=50
@@ -499,7 +483,6 @@ describe('PDFDesigner - Grid Snapping and Alignment Lines', () => {
       it('should detect bottom edge alignment with elements in other bands', () => {
         // Create a test element in the second band
         const testElement: DesignElement = {
-          id: 'test-element-2',
           type: 'staticText',
           x: 100,
           y: -10, // Adjusted to align bottom edge with first band element at y=50
@@ -523,7 +506,6 @@ describe('PDFDesigner - Grid Snapping and Alignment Lines', () => {
       it('should detect center alignment with elements in other bands', () => {
         // Create a test element in the second band
         const testElement: DesignElement = {
-          id: 'test-element-3',
           type: 'staticText',
           x: 100,
           y: -35, // Adjusted to align center with first band element at y=50

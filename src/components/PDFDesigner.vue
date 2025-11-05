@@ -2353,7 +2353,6 @@ const startDragging = (event: MouseEvent, bandIndex: number, elementIndex: numbe
               
               // 计算元素在页面中的绝对位置（相对于整个页面）
               const elementTopInPage = currentBandTopInPage + newY;
-              const elementBottomInPage = elementTopInPage + currentElement.height;
               
               // 限制元素顶部不能超出第一个band的上边界
               if (elementTopInPage < firstBandTopInPage) {

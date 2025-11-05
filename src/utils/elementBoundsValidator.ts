@@ -57,7 +57,6 @@ export function validateElementBounds(
   // 检查是否超出当前Band
   const exceedsBandTop = element.y < 0;
   const exceedsBandBottom = elementBottom > band.height;
-  const exceedsBand = exceedsBandTop || exceedsBandBottom;
   
   // 检查是否超出页面顶部（仅对第一个band）
   let exceedsTop = false;
