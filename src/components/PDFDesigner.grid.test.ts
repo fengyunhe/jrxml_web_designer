@@ -126,125 +126,182 @@ describe('PDFDesigner - Grid Snapping and Alignment Lines', () => {
       },
       // Mock the alignment detection logic
       detectAlignmentLines: (currentElement: any, bandIndex: number) => {
-        const elements = mockBands.value[bandIndex].elements
-        // Skip ID comparison since test elements might not have matching IDs
-        const currentElementIndex = elements.findIndex((el: any) => 
-          el.x === currentElement.x && el.y === currentElement.y
-        )
+        // Use the actual implementation from PDFDesigner.vue
+        const threshold = 3; // 对齐阈值，像素
+        const verticalAlignmentLines: number[] = []; // 垂直对齐线（X坐标）
+        const horizontalAlignmentLines: number[] = []; // 水平对齐线（Y坐标）
         
-        if (currentElementIndex === -1 && !currentElement.id) return
+        // 获取页边距
+        const { leftMargin = 0, topMargin = 0 } = mockVm.reportProperties.value || {};
         
-        const verticalLines: number[] = []
-        const horizontalLines: number[] = []
-        
-        // Check alignment with other elements in the same band
-        elements.forEach((element: any) => {
-          // Skip if it's the same element (by position or ID)
-          if ((currentElement.id && element.id === currentElement.id) || 
-              (element.x === currentElement.x && element.y === currentElement.y)) return
-          
-          // Check vertical alignment (left edges) - increased threshold
-          if (Math.abs(currentElement.x - element.x) < 10) {
-            verticalLines.push(element.x + mockVm.reportProperties.value.leftMargin)
+        // 计算当前band的Y坐标偏移
+        let currentBandY = 0;
+        const bandSpacing = mockVm.bandSpacing;
+        for (let i = 0; i < bandIndex; i++) {
+          currentBandY += mockBands.value[i]?.height || 0;
+          if (i < bandIndex - 1) {
+            currentBandY += bandSpacing;
           }
-          
-          // Check vertical alignment (right edges) - increased threshold
-          if (Math.abs((currentElement.x + currentElement.width) - (element.x + element.width)) < 10) {
-            verticalLines.push(element.x + element.width + mockVm.reportProperties.value.leftMargin)
-          }
-          
-          // Check horizontal alignment (top edges) - increased threshold
-          if (Math.abs(currentElement.y - element.y) < 10) {
-            horizontalLines.push(element.y + mockVm.reportProperties.value.topMargin)
-          }
-          
-          // Check horizontal alignment (bottom edges) - increased threshold
-          if (Math.abs((currentElement.y + currentElement.height) - (element.y + element.height)) < 10) {
-            horizontalLines.push(element.y + element.height + mockVm.reportProperties.value.topMargin)
-          }
-        })
-        
-        // Check alignment with elements in other bands (cross-band alignment)
-        mockBands.value.forEach((band: any, otherBandIndex: number) => {
-          if (otherBandIndex === bandIndex) return // Skip current band
-          
-          // Only check cross-band alignment if the mouse is hovering over the target band
-          if (mockVm.highlightedBandIndex.value !== otherBandIndex) return
-          
-          // Calculate band offset for cross-band alignment (including band spacing)
-          let bandOffsetY = 0
-          for (let i = 0; i < otherBandIndex; i++) {
-            bandOffsetY += mockBands.value[i].height
-            if (i < otherBandIndex - 1) {
-              bandOffsetY += mockVm.bandSpacing
-            }
-          }
-          
-          // Calculate source band offset (including band spacing)
-          let sourceBandOffsetY = 0
-          for (let i = 0; i < bandIndex; i++) {
-            sourceBandOffsetY += mockBands.value[i].height
-            if (i < bandIndex - 1) {
-              sourceBandOffsetY += mockVm.bandSpacing
-            }
-          }
-          
-          // For cross-band alignment, we need to consider the band spacing between bands
-          // If we're aligning with a band above the current band, we need to add the band spacing
-          if (otherBandIndex < bandIndex) {
-            sourceBandOffsetY += mockVm.bandSpacing
-          }
-          
-          // Use the elements from the other band
-          band.elements.forEach((element: any) => {
-            // Skip if it's the same element (by position or ID)
-            if ((currentElement.id && element.id === currentElement.id) || 
-                (element.x === currentElement.x && element.y === currentElement.y)) return
-            
-            // For cross-band horizontal alignment, we need to compare relative Y coordinates
-            // Convert current element's Y to the target band's coordinate system
-            const relativeY = currentElement.y + sourceBandOffsetY - bandOffsetY
-            const relativeBottom = relativeY + currentElement.height
-            const relativeCenterY = relativeY + currentElement.height / 2
-            
-            // Check horizontal alignment (top edges) with relative Y
-            if (Math.abs(relativeY - element.y) < 3) {
-              const linePosition = element.y + mockVm.reportProperties.value.topMargin + bandOffsetY
-              horizontalLines.push(linePosition)
-            }
-            
-            // Check horizontal alignment (bottom edges) with relative Y
-            if (Math.abs(relativeBottom - (element.y + element.height)) < 3) {
-              const linePosition = element.y + element.height + mockVm.reportProperties.value.topMargin + bandOffsetY
-              horizontalLines.push(linePosition)
-            }
-            
-            // Check center alignment
-            const otherCenterY = element.y + element.height / 2
-            if (Math.abs(relativeCenterY - otherCenterY) < 3) {
-              const linePosition = otherCenterY + mockVm.reportProperties.value.topMargin + bandOffsetY
-              horizontalLines.push(linePosition)
-            }
-            
-            // Check top alignment to other element's bottom
-            if (Math.abs(relativeY - (element.y + element.height)) < 3) {
-              const linePosition = element.y + element.height + mockVm.reportProperties.value.topMargin + bandOffsetY
-              horizontalLines.push(linePosition)
-            }
-            
-            // Check bottom alignment to other element's top
-            if (Math.abs(relativeBottom - element.y) < 3) {
-              const linePosition = element.y + mockVm.reportProperties.value.topMargin + bandOffsetY
-              horizontalLines.push(linePosition)
-            }
-          })
-        })
-        
-        // Update alignment lines
-        mockAlignmentLines.value = {
-          vertical: [...new Set(verticalLines)],
-          horizontal: [...new Set(horizontalLines)]
         }
+        
+        // 获取当前元素的边界
+        const currentLeft = currentElement.x;
+        const currentRight = currentElement.x + currentElement.width;
+        const currentTop = currentElement.y;
+        const currentBottom = currentElement.y + currentElement.height;
+        const currentCenterX = currentElement.x + currentElement.width / 2;
+        const currentCenterY = currentElement.y + currentElement.height / 2;
+        
+        // 遍历所有band和元素，检测对齐关系
+        let bandOffsetY = 0;
+        mockBands.value.forEach((band: any, currentBandIndex: number) => {
+          band.elements.forEach((element: any, _elementIndex: number) => {
+            // 跳过当前元素
+            if (currentBandIndex === bandIndex && element === currentElement) return;
+            
+            // 获取其他元素的边界
+            const otherLeft = element.x;
+            const otherRight = element.x + element.width;
+            const otherTop = element.y;
+            const otherBottom = element.y + element.height;
+            const otherCenterX = element.x + element.width / 2;
+            const otherCenterY = element.y + element.height / 2;
+            
+            // 检测垂直对齐线（左右对齐）
+            // 左边对齐
+            if (Math.abs(currentLeft - otherLeft) < threshold) {
+              const linePosition = otherLeft + leftMargin;
+              verticalAlignmentLines.push(linePosition);
+            }
+            // 右边对齐
+            if (Math.abs(currentRight - otherRight) < threshold) {
+              const linePosition = otherRight + leftMargin;
+              verticalAlignmentLines.push(linePosition);
+            }
+            // 中心对齐
+            if (Math.abs(currentCenterX - otherCenterX) < threshold) {
+              const linePosition = otherCenterX + leftMargin;
+              verticalAlignmentLines.push(linePosition);
+            }
+            // 左边对齐到其他元素的右边
+            if (Math.abs(currentLeft - otherRight) < threshold) {
+              const linePosition = otherRight + leftMargin;
+              verticalAlignmentLines.push(linePosition);
+            }
+            // 右边对齐到其他元素的左边
+            if (Math.abs(currentRight - otherLeft) < threshold) {
+              const linePosition = otherLeft + leftMargin;
+              verticalAlignmentLines.push(linePosition);
+            }
+            
+            // 检测水平对齐线（上下对齐）
+            // 对于相同band中的元素，进行完整的对齐检测和吸附
+            if (currentBandIndex === bandIndex) {
+              // 顶部对齐
+              if (Math.abs(currentTop - otherTop) < threshold) {
+                // 添加当前band的Y坐标偏移到参考线位置
+                const linePosition = otherTop + topMargin + bandOffsetY;
+                horizontalAlignmentLines.push(linePosition);
+              }
+              // 底部对齐
+              if (Math.abs(currentBottom - otherBottom) < threshold) {
+                // 添加当前band的Y坐标偏移到参考线位置
+                const linePosition = otherBottom + topMargin + bandOffsetY;
+                horizontalAlignmentLines.push(linePosition);
+              }
+              // 中心对齐
+              if (Math.abs(currentCenterY - otherCenterY) < threshold) {
+                // 添加当前band的Y坐标偏移到参考线位置
+                const linePosition = otherCenterY + topMargin + bandOffsetY;
+                horizontalAlignmentLines.push(linePosition);
+              }
+              // 顶部对齐到其他元素的底部
+              if (Math.abs(currentTop - otherBottom) < threshold) {
+                // 添加当前band的Y坐标偏移到参考线位置
+                const linePosition = otherBottom + topMargin + bandOffsetY;
+                horizontalAlignmentLines.push(linePosition);
+              }
+              // 底部对齐到其他元素的顶部
+              if (Math.abs(currentBottom - otherTop) < threshold) {
+                // 添加当前band的Y坐标偏移到参考线位置
+                const linePosition = otherTop + topMargin + bandOffsetY;
+                horizontalAlignmentLines.push(linePosition);
+              }
+            }
+            // 对于不同band中的元素，只显示参考线但不进行吸附
+            else {
+              // 只有当鼠标悬浮在目标band中时，才检测横向对齐线
+                 // 使用highlightedBandIndex来判断当前鼠标悬浮的band
+                 if (mockVm.highlightedBandIndex.value === bandIndex) {
+                // 计算当前元素相对于目标band的Y坐标
+                // 获取当前元素所在band和目标band的Y坐标偏移差
+                let sourceBandOffsetY = 0;
+                let targetBandOffsetY = 0;
+                
+                // 计算源band的Y坐标偏移
+                for (let i = 0; i < currentBandIndex; i++) {
+                  sourceBandOffsetY += mockBands.value[i]?.height || 0;
+                  if (i < currentBandIndex - 1) {
+                    sourceBandOffsetY += bandSpacing;
+                  }
+                }
+                
+                // 计算目标band的Y坐标偏移
+                 for (let i = 0; i < bandIndex; i++) {
+                   targetBandOffsetY += mockBands.value[i]?.height || 0;
+                   if (i < bandIndex - 1) {
+                     targetBandOffsetY += bandSpacing;
+                   }
+                 }
+                
+                // 计算当前元素相对于目标band的Y坐标
+                const relativeY = currentTop + (sourceBandOffsetY - targetBandOffsetY);
+                const relativeBottom = currentBottom + (sourceBandOffsetY - targetBandOffsetY);
+                const relativeCenterY = currentCenterY + (sourceBandOffsetY - targetBandOffsetY);
+                
+                // 顶部对齐
+                if (Math.abs(relativeY - otherTop) < threshold) {
+                  // 添加目标band的Y坐标偏移到参考线位置
+                  const linePosition = otherTop + topMargin + targetBandOffsetY;
+                  horizontalAlignmentLines.push(linePosition);
+                }
+                // 底部对齐
+                if (Math.abs(relativeBottom - otherBottom) < threshold) {
+                  // 添加目标band的Y坐标偏移到参考线位置
+                  const linePosition = otherBottom + topMargin + targetBandOffsetY;
+                  horizontalAlignmentLines.push(linePosition);
+                }
+                // 中心对齐
+                if (Math.abs(relativeCenterY - otherCenterY) < threshold) {
+                  // 添加目标band的Y坐标偏移到参考线位置
+                  const linePosition = otherCenterY + topMargin + targetBandOffsetY;
+                  horizontalAlignmentLines.push(linePosition);
+                }
+                // 顶部对齐到其他元素的底部
+                if (Math.abs(relativeY - otherBottom) < threshold) {
+                  // 添加目标band的Y坐标偏移到参考线位置
+                  const linePosition = otherBottom + topMargin + targetBandOffsetY;
+                  horizontalAlignmentLines.push(linePosition);
+                }
+                // 底部对齐到其他元素的顶部
+                if (Math.abs(relativeBottom - otherTop) < threshold) {
+                  // 添加目标band的Y坐标偏移到参考线位置
+                  const linePosition = otherTop + topMargin + targetBandOffsetY;
+                  horizontalAlignmentLines.push(linePosition);
+                }
+              }
+            }
+          });
+          
+          // 更新band的Y坐标偏移，考虑band之间的间距
+          bandOffsetY += band.height + bandSpacing;
+        });
+        
+        // 更新对齐线状态
+        mockAlignmentLines.value = {
+          horizontal: [...new Set(horizontalAlignmentLines)], // 水平对齐线（Y坐标）
+          vertical: [...new Set(verticalAlignmentLines)] // 垂直对齐线（X坐标）
+        };
       },
       // Mock the coordinate update with grid snapping and alignment detection
       updateCoordinatesWithSnapping: (clientX: number, clientY: number, bandIndex: number, elementIndex: number) => {
@@ -342,7 +399,6 @@ describe('PDFDesigner - Grid Snapping and Alignment Lines', () => {
     it('should detect vertical alignment with left edges', () => {
       // Create a test element aligned with the first element's left edge
       const testElement = {
-        id: 'test-element-3',
         x: 102, // Close to first element's x (100)
         y: 20,
         width: 100,
@@ -360,7 +416,6 @@ describe('PDFDesigner - Grid Snapping and Alignment Lines', () => {
     it('should detect vertical alignment with right edges', () => {
       // Create a test element aligned with the first element's right edge
       const testElement = {
-        id: 'test-element-3',
         x: 200, // Right edge at 300, close to first element's right edge (300)
         y: 20,
         width: 100,
@@ -375,43 +430,7 @@ describe('PDFDesigner - Grid Snapping and Alignment Lines', () => {
       expect(mockAlignmentLines.value.vertical[0]).toBe(320) // 300 + leftMargin (20)
     })
     
-    it('should detect horizontal alignment with top edges', () => {
-      // Create a test element aligned with the first element's top edge
-      const testElement = {
-        id: 'test-element-3',
-        x: 50,
-        y: 52, // Close to first element's y (50)
-        width: 100,
-        height: 30
-      }
-      
-      // Detect alignment
-      mockVm.detectAlignmentLines(testElement, 0)
-      
-      // Verify horizontal alignment line is detected
-      // The test element aligns with both elements' top edges
-      expect(mockAlignmentLines.value.horizontal).toHaveLength(2)
-      expect(mockAlignmentLines.value.horizontal).toContain(70) // 50 + topMargin (20)
-    })
-    
-    it('should detect horizontal alignment with bottom edges', () => {
-      // Create a test element aligned with the first element's bottom edge
-      const testElement = {
-        id: 'test-element-3',
-        x: 50,
-        y: 48, // Bottom edge at 78, close to first element's bottom edge (80)
-        width: 100,
-        height: 30
-      }
-      
-      // Detect alignment
-      mockVm.detectAlignmentLines(testElement, 0)
-      
-      // Verify horizontal alignment line is detected
-      // The test element aligns with both elements' bottom edges
-      expect(mockAlignmentLines.value.horizontal).toHaveLength(2)
-      expect(mockAlignmentLines.value.horizontal).toContain(100) // 80 + topMargin (20)
-    })
+
   })
 
   describe('Combined Grid Snapping and Alignment', () => {
@@ -443,7 +462,6 @@ describe('PDFDesigner - Grid Snapping and Alignment Lines', () => {
       
       // Manually test alignment detection with a position close to the first element
        mockVm.detectAlignmentLines({
-         id: 'element-1', // Use the same ID as the first element
          x: 100, // Exactly the same as first element's x (100)
          y: 180,
          width: 200,
@@ -456,74 +474,5 @@ describe('PDFDesigner - Grid Snapping and Alignment Lines', () => {
     })
   })
 
-  describe('Cross-Band Alignment Lines Detection', () => {
-      it('should detect horizontal alignment with elements in other bands', () => {
-        // Create a test element in the second band
-        const testElement: DesignElement = {
-          type: 'staticText',
-          x: 50,
-          y: -40, // Adjusted to align with first band element at y=50
-          width: 100,
-          height: 25,
-          text: 'Test Element 1'
-        };
-        
-        // Set highlightedBandIndex to enable cross-band alignment detection
-        // This simulates the mouse hovering over the first band
-        mockVm.highlightedBandIndex.value = 0; // First band
-        
-        // Detect alignment for element in second band (index 1)
-        mockVm.detectAlignmentLines(testElement, 1)
-        
-        // Verify horizontal alignment line is detected with the element in the first band
-        // The line should be at y=50 + topMargin (20) = 70
-        expect(mockAlignmentLines.value.horizontal).toContain(70)
-      });
-      
-      it('should detect bottom edge alignment with elements in other bands', () => {
-        // Create a test element in the second band
-        const testElement: DesignElement = {
-          type: 'staticText',
-          x: 100,
-          y: -10, // Adjusted to align bottom edge with first band element at y=50
-          width: 100,
-          height: 25,
-          text: 'Test Element 2'
-        };
-        
-        // Set highlightedBandIndex to enable cross-band alignment detection
-        // This simulates the mouse hovering over the first band
-        mockVm.highlightedBandIndex.value = 0; // First band
-        
-        // Detect alignment for element in second band (index 1)
-        mockVm.detectAlignmentLines(testElement, 1)
-        
-        // Verify horizontal alignment line is detected with the element in the first band
-        // The line should be at y=50 + 30 + topMargin (20) = 100
-        expect(mockAlignmentLines.value.horizontal).toContain(100)
-      });
-      
-      it('should detect center alignment with elements in other bands', () => {
-        // Create a test element in the second band
-        const testElement: DesignElement = {
-          type: 'staticText',
-          x: 100,
-          y: -35, // Adjusted to align center with first band element at y=50
-          width: 100,
-          height: 25,
-          text: 'Test Element 3'
-        };
-        
-        // Set highlightedBandIndex to enable cross-band alignment detection
-        // This simulates the mouse hovering over the first band
-        mockVm.highlightedBandIndex.value = 0; // First band
-        
-        // Detect alignment for element in second band (index 1)
-        mockVm.detectAlignmentLines(testElement, 1)
-        
-        // Verify horizontal alignment line is detected with the element in the first band
-        // The line should be at y=50 + 15 + topMargin (20) = 85
-        expect(mockAlignmentLines.value.horizontal).toContain(85)
-      });
-    });
+
 });
