@@ -89,15 +89,22 @@ export function validateElementBounds(
     exceedsBottom = exceedsPageBottom;
   }
   
+  // 对于最后一个band，如果元素没有超出页面底部，则不应该因为超出band底部而被限制
+  let adjustedExceedsBandBottom = exceedsBandBottom;
+  if (bandIndex === bands.length - 1 && !exceedsBottom) {
+    // 如果是最后一个band且元素没有超出页面底部，则允许元素超出band底部
+    adjustedExceedsBandBottom = false;
+  }
+  
   return {
-    isOutOfBounds: exceedsLeft || exceedsRight || exceedsBottom || exceedsBand || exceedsTop,
+    isOutOfBounds: exceedsLeft || exceedsRight || exceedsBottom || exceedsTop || adjustedExceedsBandBottom,
     exceedsLeft,
     exceedsRight,
     exceedsBottom,
     exceedsTop,
     exceedsBandTop,
-    exceedsBandBottom,
-    exceedsBand,
+    exceedsBandBottom: adjustedExceedsBandBottom,
+    exceedsBand: exceedsBandTop || adjustedExceedsBandBottom,
     bandOffsetY
   };
 }

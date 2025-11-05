@@ -19,3 +19,45 @@ Center alignment detected: linePosition=85
 Checking element: currentElement.y=-35, element.y=50, sourceBandOffsetY=90, bandOffsetY=0, relativeY=55
 Bottom alignment detected: linePosition=100
 Center alignment detected: linePosition=85
+Checking cross-band alignment: current band=1, other band=0, highlighted=0
+Band offsets: bandOffsetY=0, sourceBandOffsetY=80
+Added band spacing: new sourceBandOffsetY=90
+Checking element: currentElement.y=-40, element.y=50, sourceBandOffsetY=90, bandOffsetY=0, relativeY=50
+Top alignment check: relativeY=50, element.y=50, diff=0, threshold=3
+Top alignment detected: linePosition=70
+Center alignment detected: linePosition=85
+Checking cross-band alignment: current band=1, other band=0, highlighted=0
+Band offsets: bandOffsetY=0, sourceBandOffsetY=80
+Added band spacing: new sourceBandOffsetY=90
+Checking element: currentElement.y=-10, element.y=50, sourceBandOffsetY=90, bandOffsetY=0, relativeY=80
+Top to bottom alignment detected: linePosition=100
+Checking cross-band alignment: current band=1, other band=0, highlighted=0
+Band offsets: bandOffsetY=0, sourceBandOffsetY=80
+Added band spacing: new sourceBandOffsetY=90
+Checking element: currentElement.y=-35, element.y=50, sourceBandOffsetY=90, bandOffsetY=0, relativeY=55
+Bottom alignment detected: linePosition=100
+Center alignment detected: linePosition=85
+Checking element: currentElement.y=-35, element.y=50, sourceBandOffsetY=90, bandOffsetY=0, relativeY=55
+Bottom alignment detected: linePosition=100
+Center alignment detected: linePosition=85
+Checking cross-band alignment: current band=1, other band=0, highlighted=0
+Band offsets: bandOffsetY=0, sourceBandOffsetY=80
+Added band spacing: new sourceBandOffsetY=90
+Checking element: currentElement.y=-40, element.y=50, sourceBandOffsetY=90, bandOffsetY=0, relativeY=50
+Top alignment check: relativeY=50, element.y=50, diff=0, threshold=3
+Top alignment detected: linePosition=70
+Center alignment detected: linePosition=85
+Checking cross-band alignment: current band=1, other band=0, highlighted=0
+Band offsets: bandOffsetY=0, sourceBandOffsetY=80
+Added band spacing: new sourceBandOffsetY=90
+Checking element: currentElement.y=-10, element.y=50, sourceBandOffsetY=90, bandOffsetY=0, relativeY=80
+Top to bottom alignment detected: linePosition=100
+Checking cross-band alignment: current band=1, other band=0, highlighted=0
+Band offsets: bandOffsetY=0, sourceBandOffsetY=80
+Added band spacing: new sourceBandOffsetY=90
+Checking element: currentElement.y=-35, element.y=50, sourceBandOffsetY=90, bandOffsetY=0, relativeY=55
+Bottom alignment detected: linePosition=100
+Center alignment detected: linePosition=85
+Checking element: currentElement.y=-35, element.y=50, sourceBandOffsetY=90, bandOffsetY=0, relativeY=55
+Bottom alignment detected: linePosition=100
+Center alignment detected: linePosition=85

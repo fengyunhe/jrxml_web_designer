@@ -128,6 +128,37 @@ describe('elementBoundsValidator', () => {
         expect(validateElementBounds(element, band, 1, mockBands, mockReportProperties).isOutOfBounds).toBe(true)
       }
     })
+    
+    it('should allow element in last band to touch page bottom', () => {
+      // 最后一个band的元素接触页面底部但不超出
+      // 第一个band高度80，第二个band高度100，总高度180
+      // 页面高度842，上下边距各20，可用高度802
+      // 第二个band的元素y=672，高度=50，实际位置是80+672=752，底部是752+50=802，正好接触页面底部842-20=822
+      const element = { ...mockStaticTextElement, y: 672, height: 50 }
+      const band = mockBands[1] // 使用第二个band（最后一个）
+      
+      if (band) {
+        expect(validateElementBounds(element, band, 1, mockBands, mockReportProperties).exceedsBottom).toBe(false)
+        expect(validateElementBounds(element, band, 1, mockBands, mockReportProperties).exceedsBandBottom).toBe(false)
+        expect(validateElementBounds(element, band, 1, mockBands, mockReportProperties).isOutOfBounds).toBe(false)
+      }
+    })
+    
+    it('should allow element in last band to exceed band height but not page bottom', () => {
+      // 最后一个band的元素超出band高度但不超出页面底部
+      // 第一个band高度80，第二个band高度100，总高度180
+      // 页面高度842，上下边距各20，可用高度802
+      // 第二个band的元素y=100，高度=602，实际位置是80+100=180，底部是180+602=782，不超出页面底部842-20=822
+      // 但是元素高度602 > band高度100，所以超出band底部
+      const element = { ...mockStaticTextElement, y: 100, height: 602 }
+      const band = mockBands[1] // 使用第二个band（最后一个）
+      
+      if (band) {
+        expect(validateElementBounds(element, band, 1, mockBands, mockReportProperties).exceedsBottom).toBe(false)
+        expect(validateElementBounds(element, band, 1, mockBands, mockReportProperties).exceedsBandBottom).toBe(false) // 修复后应该为false
+        expect(validateElementBounds(element, band, 1, mockBands, mockReportProperties).isOutOfBounds).toBe(false)
+      }
+    })
   })
 
   describe('getOutOfBoundsElements', () => {
