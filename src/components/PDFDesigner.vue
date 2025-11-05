@@ -1919,7 +1919,8 @@ const detectAlignmentLines = (currentElement: DesignElement, currentBandIndex: n
   // 用于存储吸附信息的对象
   const snapInfo = {
     horizontal: null as { position: number; offset: number } | null,
-    vertical: null as { position: number; offset: number } | null
+    vertical: null as { position: number; offset: number } | null,
+    hasAlignment: false // 添加hasAlignment属性，用于判断是否存在对齐线
   };
   
   // 获取页边距
@@ -2148,6 +2149,11 @@ const detectAlignmentLines = (currentElement: DesignElement, currentBandIndex: n
   }
   
   // 返回吸附信息
+  // 添加hasAlignment属性，用于判断是否存在对齐线
+  snapInfo.hasAlignment = snapInfo.horizontal !== null || snapInfo.vertical !== null || 
+                          alignmentLines.value.horizontal.length > 0 || 
+                          alignmentLines.value.vertical.length > 0;
+  
   return snapInfo;
 };
 
@@ -2377,7 +2383,18 @@ const startDragging = (event: MouseEvent, bandIndex: number, elementIndex: numbe
             // 检测对齐线（使用最终位置）
             // 使用当前鼠标所在的band索引，以便在跨band拖拽时也能显示横向参考线
             const targetBandIndex = highlightedBandIndex.value !== null ? highlightedBandIndex.value : draggingInfo.value.bandIndex;
-            detectAlignmentLines(currentElement, targetBandIndex);
+            
+            // 创建临时元素对象用于检测对齐线
+            const tempElement = { ...currentElement, x: newX, y: newY };
+            const snapInfo = detectAlignmentLines(tempElement, targetBandIndex, false);
+            
+            // 只有当存在对齐线时才更新状态
+            if (snapInfo.hasAlignment) {
+              detectAlignmentLines(currentElement, targetBandIndex);
+            } else {
+              // 清除对齐线
+              clearAlignmentLines();
+            }
             
             // 更新并显示坐标信息
             // 显示元素的相对坐标值
