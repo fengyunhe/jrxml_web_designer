@@ -2025,7 +2025,8 @@ const detectAlignmentLines = (currentElement: DesignElement, currentBandIndex: n
         }
       }
       
-      // 检测水平对齐线（上下对齐，只考虑相同band中的元素）
+      // 检测水平对齐线（上下对齐）
+      // 对于相同band中的元素，进行完整的对齐检测和吸附
       if (bandIndex === currentBandIndex) {
         // 顶部对齐
         if (Math.abs(currentTop - otherTop) < threshold) {
@@ -2095,6 +2096,43 @@ const detectAlignmentLines = (currentElement: DesignElement, currentBandIndex: n
               position: linePosition,
               offset: otherTop - currentBottom
             };
+          }
+        }
+      }
+      // 对于不同band中的元素，只显示参考线但不进行吸附
+      else {
+        // 获取当前鼠标在页面中的Y坐标
+        const paperEl = document.querySelector('.paper') as HTMLElement;
+        if (paperEl) {
+          const paperRect = paperEl.getBoundingClientRect();
+          const currentZoom = zoom.value / 100;
+          
+          // 计算当前元素在页面中的实际Y坐标
+          const elementPageY = paperRect.top + topMargin + bandOffsetY + currentTop * currentZoom;
+          
+          // 检查其他元素的Y坐标是否与当前元素对齐
+          // 顶部对齐
+          const otherElementPageY = paperRect.top + topMargin + bandOffsetY + otherTop * currentZoom;
+          if (Math.abs(elementPageY - otherElementPageY) < threshold * currentZoom) {
+            // 添加其他band的Y坐标偏移到参考线位置
+            const linePosition = otherTop + topMargin + bandOffsetY;
+            horizontalAlignmentLines.push(linePosition);
+          }
+          
+          // 底部对齐
+          const otherElementBottomPageY = paperRect.top + topMargin + bandOffsetY + otherBottom * currentZoom;
+          if (Math.abs(elementPageY - otherElementBottomPageY) < threshold * currentZoom) {
+            // 添加其他band的Y坐标偏移到参考线位置
+            const linePosition = otherBottom + topMargin + bandOffsetY;
+            horizontalAlignmentLines.push(linePosition);
+          }
+          
+          // 中心对齐
+          const otherElementCenterPageY = paperRect.top + topMargin + bandOffsetY + otherCenterY * currentZoom;
+          if (Math.abs(elementPageY - otherElementCenterPageY) < threshold * currentZoom) {
+            // 添加其他band的Y坐标偏移到参考线位置
+            const linePosition = otherCenterY + topMargin + bandOffsetY;
+            horizontalAlignmentLines.push(linePosition);
           }
         }
       }
@@ -2340,7 +2378,9 @@ const startDragging = (event: MouseEvent, bandIndex: number, elementIndex: numbe
             currentElement.y = newY;
             
             // 检测对齐线（使用最终位置）
-            detectAlignmentLines(currentElement, draggingInfo.value.bandIndex);
+            // 使用当前鼠标所在的band索引，以便在跨band拖拽时也能显示横向参考线
+            const targetBandIndex = highlightedBandIndex.value !== null ? highlightedBandIndex.value : draggingInfo.value.bandIndex;
+            detectAlignmentLines(currentElement, targetBandIndex);
             
             // 更新并显示坐标信息
             // 显示元素的相对坐标值
