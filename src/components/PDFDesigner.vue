@@ -2105,7 +2105,7 @@ const detectAlignmentLines = (currentElement: DesignElement, currentBandIndex: n
         const paperEl = document.querySelector('.paper') as HTMLElement;
         if (paperEl) {
           const paperRect = paperEl.getBoundingClientRect();
-          const currentZoom = zoom.value / 100;
+          const currentZoom = zoomLevel.value;
           
           // 计算当前元素在页面中的实际Y坐标
           const elementPageY = paperRect.top + topMargin + bandOffsetY + currentTop * currentZoom;
