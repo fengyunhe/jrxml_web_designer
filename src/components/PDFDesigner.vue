@@ -2354,10 +2354,12 @@ const startDragging = (event: MouseEvent, bandIndex: number, elementIndex: numbe
                 newY += adjustment;
               }
               
-              // 限制元素底部不能超出页面底部
+              // 限制元素底部不能超出页面底部（考虑底部边距）
               const pageHeight = reportProperties.value?.pageHeight || 842;
-              if (elementBottomInPage > pageHeight) {
-                const adjustment = elementBottomInPage - pageHeight;
+              const bottomMargin = reportProperties.value?.bottomMargin || 20;
+              const pageBottomBoundary = pageHeight - bottomMargin;
+              if (elementBottomInPage > pageBottomBoundary) {
+                const adjustment = elementBottomInPage - pageBottomBoundary;
                 newY -= adjustment;
               }
             }
