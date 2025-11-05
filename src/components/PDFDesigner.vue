@@ -2331,23 +2331,28 @@ const startDragging = (event: MouseEvent, bandIndex: number, elementIndex: numbe
             let newX = Math.max(0, Math.min(((e.clientX - paperOffsetX) / currentZoom) - draggingInfo.value.startX, availableWidth - currentElement.width));
             let newY = ((e.clientY - paperOffsetY) / currentZoom) - draggingInfo.value.startY; // 移除y坐标的下限限制
             
-            // 计算元素在页面中的绝对位置（相对于整个页面）
-            const elementTopInPage = (e.clientY - paperOffsetY) / currentZoom;
-            const elementBottomInPage = elementTopInPage + currentElement.height;
-            
             // 获取第一个band和最后一个band的位置信息
             const firstBandElement = document.querySelectorAll('.band')[0] as HTMLElement;
             const lastBandElement = document.querySelectorAll('.band')[bands.value.length - 1] as HTMLElement;
             
-            if (firstBandElement && lastBandElement) {
+            // 计算当前band在页面中的位置
+            const currentBandElement = document.querySelectorAll('.band')[draggingInfo.value.bandIndex] as HTMLElement;
+            let currentBandTopInPage = 0;
+            
+            if (firstBandElement && lastBandElement && currentBandElement && paperEl) {
               const firstBandRect = firstBandElement.getBoundingClientRect();
               const lastBandRect = lastBandElement.getBoundingClientRect();
+              const currentBandRect = currentBandElement.getBoundingClientRect();
               const paperRect = paperEl.getBoundingClientRect();
               
               // 计算第一个band和最后一个band相对于页面的位置
               const firstBandTopInPage = (firstBandRect.top - paperRect.top) / currentZoom;
-              const lastBandTopInPage = (lastBandRect.top - paperRect.top) / currentZoom;
               const lastBandBottomInPage = (lastBandRect.bottom - paperRect.top) / currentZoom;
+              currentBandTopInPage = (currentBandRect.top - paperRect.top) / currentZoom;
+              
+              // 计算元素在页面中的绝对位置（相对于整个页面）
+              const elementTopInPage = currentBandTopInPage + newY;
+              const elementBottomInPage = elementTopInPage + currentElement.height;
               
               // 限制元素顶部不能超出第一个band的上边界
               if (elementTopInPage < firstBandTopInPage) {
@@ -2355,34 +2360,11 @@ const startDragging = (event: MouseEvent, bandIndex: number, elementIndex: numbe
                 newY += adjustment;
               }
               
-              // 限制元素底部不能超出页面底部（考虑底部边距）
-              const pageHeight = reportProperties.value?.pageHeight || 842;
-              const bottomMargin = reportProperties.value?.bottomMargin || 20;
-              const pageBottomBoundary = pageHeight - bottomMargin;
-              if (elementBottomInPage > pageBottomBoundary) {
-                const adjustment = elementBottomInPage - pageBottomBoundary;
-                newY -= adjustment;
-              }
-              
-              // 检查元素是否在最后一个band中
-              const currentBandElement = document.querySelectorAll('.band')[draggingInfo.value.bandIndex] as HTMLElement;
-              const currentBandRect = currentBandElement.getBoundingClientRect();
-              const currentBandTopInPage = (currentBandRect.top - paperRect.top) / currentZoom;
-              const currentBandBottomInPage = (currentBandRect.bottom - paperRect.top) / currentZoom;
-              
-              // 如果当前元素在最后一个band中，增加额外的边界限制
+              // 对于最后一个band中的元素，限制其底部不能超出最后一个band的底部边界
               if (draggingInfo.value.bandIndex === bands.value.length - 1) {
-                // 限制元素顶部不能超出最后一个band的顶部
-                if (elementTopInPage < lastBandTopInPage) {
-                  const adjustment = lastBandTopInPage - elementTopInPage;
-                  newY += adjustment;
-                }
-                
-                // 限制元素底部不能超出最后一个band的底部
-                if (elementBottomInPage > lastBandBottomInPage) {
-                  const adjustment = elementBottomInPage - lastBandBottomInPage;
-                  newY -= adjustment;
-                }
+                // 计算元素在最后一个band中的最大Y坐标
+                const maxRelativeY = lastBandBottomInPage - currentBandTopInPage - currentElement.height;
+                newY = Math.min(newY, maxRelativeY);
               }
             }
             
