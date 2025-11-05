@@ -2354,9 +2354,10 @@ const startDragging = (event: MouseEvent, bandIndex: number, elementIndex: numbe
                 newY += adjustment;
               }
               
-              // 限制元素底部不能超出最后一个band的下边界
-              if (elementBottomInPage > lastBandBottomInPage) {
-                const adjustment = elementBottomInPage - lastBandBottomInPage;
+              // 限制元素底部不能超出页面底部
+              const pageHeight = reportProperties.value?.pageHeight || 842;
+              if (elementBottomInPage > pageHeight) {
+                const adjustment = elementBottomInPage - pageHeight;
                 newY -= adjustment;
               }
             }
