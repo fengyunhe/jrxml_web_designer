@@ -2101,33 +2101,33 @@ const detectAlignmentLines = (currentElement: DesignElement, currentBandIndex: n
       }
       // 对于不同band中的元素，只显示参考线但不进行吸附
       else {
-        // 只有当Y值完全相同时才显示横向对齐线
+        // 使用与同band相同的对齐检测逻辑，但不进行吸附
         // 顶部对齐
-        if (Math.round(currentTop) === Math.round(otherTop)) {
+        if (Math.abs(currentTop - otherTop) < threshold) {
           // 添加其他band的Y坐标偏移到参考线位置
           const linePosition = otherTop + topMargin + bandOffsetY;
           horizontalAlignmentLines.push(linePosition);
         }
         // 底部对齐
-        if (Math.round(currentBottom) === Math.round(otherBottom)) {
+        if (Math.abs(currentBottom - otherBottom) < threshold) {
           // 添加其他band的Y坐标偏移到参考线位置
           const linePosition = otherBottom + topMargin + bandOffsetY;
           horizontalAlignmentLines.push(linePosition);
         }
         // 中心对齐
-        if (Math.round(currentCenterY) === Math.round(otherCenterY)) {
+        if (Math.abs(currentCenterY - otherCenterY) < threshold) {
           // 添加其他band的Y坐标偏移到参考线位置
           const linePosition = otherCenterY + topMargin + bandOffsetY;
           horizontalAlignmentLines.push(linePosition);
         }
         // 顶部对齐到其他元素的底部
-        if (Math.round(currentTop) === Math.round(otherBottom)) {
+        if (Math.abs(currentTop - otherBottom) < threshold) {
           // 添加其他band的Y坐标偏移到参考线位置
           const linePosition = otherBottom + topMargin + bandOffsetY;
           horizontalAlignmentLines.push(linePosition);
         }
         // 底部对齐到其他元素的顶部
-        if (Math.round(currentBottom) === Math.round(otherTop)) {
+        if (Math.abs(currentBottom - otherTop) < threshold) {
           // 添加其他band的Y坐标偏移到参考线位置
           const linePosition = otherTop + topMargin + bandOffsetY;
           horizontalAlignmentLines.push(linePosition);
@@ -2375,9 +2375,8 @@ const startDragging = (event: MouseEvent, bandIndex: number, elementIndex: numbe
             currentElement.y = newY;
             
             // 检测对齐线（使用最终位置）
-            // 使用当前鼠标所在的band索引，以便在跨band拖拽时也能显示横向参考线
-            const targetBandIndex = highlightedBandIndex.value !== null ? highlightedBandIndex.value : draggingInfo.value.bandIndex;
-            detectAlignmentLines(currentElement, targetBandIndex);
+            // 使用当前元素所在的band索引，确保对齐线检测的一致性
+            detectAlignmentLines(currentElement, draggingInfo.value.bandIndex);
             
             // 更新并显示坐标信息
             // 显示元素的相对坐标值
