@@ -2101,43 +2101,33 @@ const detectAlignmentLines = (currentElement: DesignElement, currentBandIndex: n
       }
       // 对于不同band中的元素，只显示参考线但不进行吸附
       else {
-        // 计算当前元素在全局坐标系中的Y坐标
-        const currentGlobalTop = currentTop + currentBandY;
-        const currentGlobalBottom = currentBottom + currentBandY;
-        const currentGlobalCenterY = currentCenterY + currentBandY;
-        
-        // 计算其他元素在全局坐标系中的Y坐标
-        const otherGlobalTop = otherTop + bandOffsetY;
-        const otherGlobalBottom = otherBottom + bandOffsetY;
-        const otherGlobalCenterY = otherCenterY + bandOffsetY;
-        
-        // 使用与同band相同的对齐检测逻辑，但不进行吸附
+        // 只有当Y值完全相同时才显示横向对齐线
         // 顶部对齐
-        if (Math.abs(currentGlobalTop - otherGlobalTop) < threshold) {
+        if (Math.round(currentTop) === Math.round(otherTop)) {
           // 添加其他band的Y坐标偏移到参考线位置
           const linePosition = otherTop + topMargin + bandOffsetY;
           horizontalAlignmentLines.push(linePosition);
         }
         // 底部对齐
-        if (Math.abs(currentGlobalBottom - otherGlobalBottom) < threshold) {
+        if (Math.round(currentBottom) === Math.round(otherBottom)) {
           // 添加其他band的Y坐标偏移到参考线位置
           const linePosition = otherBottom + topMargin + bandOffsetY;
           horizontalAlignmentLines.push(linePosition);
         }
         // 中心对齐
-        if (Math.abs(currentGlobalCenterY - otherGlobalCenterY) < threshold) {
+        if (Math.round(currentCenterY) === Math.round(otherCenterY)) {
           // 添加其他band的Y坐标偏移到参考线位置
           const linePosition = otherCenterY + topMargin + bandOffsetY;
           horizontalAlignmentLines.push(linePosition);
         }
         // 顶部对齐到其他元素的底部
-        if (Math.abs(currentGlobalTop - otherGlobalBottom) < threshold) {
+        if (Math.round(currentTop) === Math.round(otherBottom)) {
           // 添加其他band的Y坐标偏移到参考线位置
           const linePosition = otherBottom + topMargin + bandOffsetY;
           horizontalAlignmentLines.push(linePosition);
         }
         // 底部对齐到其他元素的顶部
-        if (Math.abs(currentGlobalBottom - otherGlobalTop) < threshold) {
+        if (Math.round(currentBottom) === Math.round(otherTop)) {
           // 添加其他band的Y坐标偏移到参考线位置
           const linePosition = otherTop + topMargin + bandOffsetY;
           horizontalAlignmentLines.push(linePosition);
