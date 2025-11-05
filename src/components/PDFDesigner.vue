@@ -1773,7 +1773,7 @@ const verticalRulerLabels = computed(() => {
 });
 
 // 拖拽相关
-const draggingInfo = ref<{bandIndex: number, elementIndex: number, startX: number, startY: number} | null>(null);
+const draggingInfo = ref<{bandIndex: number, elementIndex: number, startX: number, startY: number, lastTargetBandIndex?: number} | null>(null);
 const highlightedBandIndex = ref<number | null>(null); // 高亮显示的目标band索引
 // 拖动时显示的坐标信息
 const dragCoordinates = ref<{x: number, y: number, visible: boolean, bandName: string}>({ x: 0, y: 0, visible: false, bandName: '' });
@@ -2294,7 +2294,8 @@ const startDragging = (event: MouseEvent, bandIndex: number, elementIndex: numbe
       bandIndex,
       elementIndex,
       startX: ((event.clientX - paperOffsetX) / currentZoom) - draggedElement.x,
-      startY: ((event.clientY - paperOffsetY) / currentZoom) - draggedElement.y
+      startY: ((event.clientY - paperOffsetY) / currentZoom) - draggedElement.y,
+      lastTargetBandIndex: bandIndex // 初始化为当前band索引
     };
     
     isDraggingOrResizing.value = true;
@@ -2410,6 +2411,30 @@ const startDragging = (event: MouseEvent, bandIndex: number, elementIndex: numbe
             currentElement.x = newX;
             currentElement.y = newY;
             
+            // 如果元素移动到不同的band，需要限制Y坐标不超过band高度
+            if (highlightedBandIndex.value !== null && highlightedBandIndex.value !== draggingInfo.value.bandIndex) {
+              const targetBand = bands.value[highlightedBandIndex.value];
+              if (targetBand) {
+                const maxY = targetBand.height - currentElement.height;
+                // 计算元素相对于目标band的Y坐标
+                const bandElements = document.querySelectorAll('.band');
+                const currentBandElement = bandElements[draggingInfo.value.bandIndex] as HTMLElement;
+                const targetBandElement = bandElements[highlightedBandIndex.value] as HTMLElement;
+                
+                if (currentBandElement && targetBandElement) {
+                  const currentBandRect = currentBandElement.getBoundingClientRect();
+                  const targetBandRect = targetBandElement.getBoundingClientRect();
+                  const relativeY = newY + (currentBandRect.top - targetBandRect.top) / currentZoom;
+                  
+                  // 限制相对Y坐标
+                  if (relativeY > maxY) {
+                    // 调整元素的实际Y坐标
+                    currentElement.y = newY - (relativeY - maxY);
+                  }
+                }
+              }
+            }
+            
             // 检测对齐线（使用最终位置）
             // 使用当前元素所在的band索引，确保对齐线检测的一致性
             detectAlignmentLines(currentElement, draggingInfo.value.bandIndex);
@@ -2447,6 +2472,15 @@ const startDragging = (event: MouseEvent, bandIndex: number, elementIndex: numbe
                 if (relativeY < 0) {
                   relativeY = 0;
                 }
+                
+                // 限制移动元素相对Y值的最大值不能超过targetBand的高度减去元素的高度
+                const targetBand = bands.value[highlightedBandIndex.value];
+                if (targetBand && currentElement) {
+                  const maxY = targetBand.height - currentElement.height;
+                  if (relativeY > maxY) {
+                    relativeY = maxY;
+                  }
+                }
               }
             }
             
@@ -2461,6 +2495,7 @@ const startDragging = (event: MouseEvent, bandIndex: number, elementIndex: numbe
             // 使用已经获取的paperElement变量
             if (paperEl) {
               let targetBandIndex = draggingInfo.value.bandIndex;
+              let isOverBand = false;
               
               // 获取所有band元素
               const bandElements = document.querySelectorAll('.band');
@@ -2471,11 +2506,30 @@ const startDragging = (event: MouseEvent, bandIndex: number, elementIndex: numbe
                 // 检查鼠标位置是否在当前band的范围内
                 if (e.clientY >= bandRect.top && e.clientY <= bandRect.bottom) {
                   targetBandIndex = i;
+                  isOverBand = true;
                   break;
                 }
               }
               
-              highlightedBandIndex.value = targetBandIndex;
+              // 只有当鼠标在某个band上方时，才更新高亮的band
+              if (isOverBand) {
+                highlightedBandIndex.value = targetBandIndex;
+              }
+              
+              // 当拖动中的元素移动到目标band后输出日志
+              if (isOverBand && targetBandIndex !== draggingInfo.value.bandIndex && 
+                  targetBandIndex !== draggingInfo.value.lastTargetBandIndex) {
+                const sourceBand = bands.value[draggingInfo.value.bandIndex];
+                const targetBand = bands.value[targetBandIndex];
+                if (sourceBand && targetBand) {
+                  console.log(`元素从 ${getBandDisplayName(sourceBand.type)} 移动到 ${getBandDisplayName(targetBand.type)}`);
+                  // 更新上一次的目标band索引
+                  draggingInfo.value.lastTargetBandIndex = targetBandIndex;
+
+                  //这里增加移动元素相对Y值的最大值不能超过targetBand的高度减去元素的高度
+                  
+                }
+              }
             }
             
             // 更新坐标显示元素的位置，使其跟随鼠标
@@ -2617,15 +2671,6 @@ const startDragging = (event: MouseEvent, bandIndex: number, elementIndex: numbe
     }, 0);
   }
 };
-
-
-
-// 移除未使用的getBorderStyle函数
-
-// 移除重复的updateBandHeight函数定义，使用下面的新版本
-
-// 添加字段
-// 移除未使用的字段管理函数
 
 // 删除元素
 const deleteElement = () => {
