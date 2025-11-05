@@ -31,6 +31,7 @@ const props = defineProps<{
   bandIndex: number;
   elementIndex: number;
   selectedElement: SelectedElementInfo | null;
+  selectedElements?: {bandIndex: number, elementIndex: number}[]; // 添加多选支持
   isDragging?: boolean;
   reportFontFamily?: string;
   reportFontSize?: number;
@@ -42,13 +43,21 @@ const props = defineProps<{
 
 // Emits
 const emit = defineEmits<{
-  select: [bandIndex: number, elementIndex: number];
+  select: [bandIndex: number, elementIndex: number, isMultiSelect?: boolean];
   dragStart: [event: MouseEvent, bandIndex: number, elementIndex: number];
   resizeStart: [event: MouseEvent, bandIndex: number, elementIndex: number];
 }>();
 
 // 是否选中
 const isSelected = computed(() => {
+  // 检查是否在多选列表中
+  if (props.selectedElements && props.selectedElements.length > 0) {
+    return props.selectedElements.some(
+      el => el.bandIndex === props.bandIndex && el.elementIndex === props.elementIndex
+    );
+  }
+  
+  // 单选逻辑
   return props.selectedElement && 
          props.selectedElement.bandIndex === props.bandIndex && 
          props.selectedElement.elementIndex === props.elementIndex;
@@ -157,8 +166,10 @@ const getBorderStyle = (side: string, box?: any): string | undefined => {
 };
 
 // 处理选择
-const handleSelect = () => {
-  emit('select', props.bandIndex, props.elementIndex);
+const handleSelect = (event: MouseEvent) => {
+  // 检查是否按下了Ctrl或Shift键（多选）
+  const isMultiSelect = event.ctrlKey || event.shiftKey || event.metaKey;
+  emit('select', props.bandIndex, props.elementIndex, isMultiSelect);
 };
 
 // 处理鼠标按下（拖拽）

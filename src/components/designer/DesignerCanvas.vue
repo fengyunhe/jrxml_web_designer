@@ -67,6 +67,7 @@
              @drop="handleDrop"
              @dragover="handleDragOver"
              @dragleave="handleDragLeave"
+             @mousedown="startSelection"
         >
         <!-- 报表边距容器 -->
         <div class="pager"
@@ -97,27 +98,28 @@
           </div>
           <div class="band-content">
             <ElementFactory
-              v-for="(item, index) in band.elements"
-              :key="index"
-              :element="item"
-              :band-index="bandIndex"
-              :element-index="index"
-              :selected-element="selectedElement"
-              :editing-element="editingElement"
-              :is-dragging="isDraggingOrResizing"
-              :report-font-family="reportProperties.defaultFont.name"
-              :report-font-size="reportProperties.defaultFont.size"
-              :report-is-bold="reportProperties.defaultFont.isBold"
-              :report-is-italic="reportProperties.defaultFont.isItalic"
-              :report-is-underline="reportProperties.defaultFont.isUnderline"
-              :is-out-of-bounds="isElementOutOfBounds(bandIndex, index)"
-              @select="selectElement"
-              @drag-start="startDragging"
-              @resize-start="startResizingElement"
-              @start-editing="startEditing"
-              @finish-editing="finishEditing"
-              @cancel-editing="cancelEditing"
-            />
+            v-for="(item, index) in band.elements"
+            :key="index"
+            :element="item"
+            :band-index="bandIndex"
+            :element-index="index"
+            :selected-element="selectedElement"
+            :selected-elements="selectedElements"
+            :editing-element="editingElement"
+            :is-dragging="isDraggingOrResizing"
+            :report-font-family="reportProperties.defaultFont.name"
+            :report-font-size="reportProperties.defaultFont.size"
+            :report-is-bold="reportProperties.defaultFont.isBold"
+            :report-is-italic="reportProperties.defaultFont.isItalic"
+            :report-is-underline="reportProperties.defaultFont.isUnderline"
+            :is-out-of-bounds="isElementOutOfBounds(bandIndex, index)"
+            @select="selectElement"
+            @drag-start="startDragging"
+            @resize-start="startResizingElement"
+            @start-editing="startEditing"
+            @finish-editing="finishEditing"
+            @cancel-editing="cancelEditing"
+          />
           </div>
           <!-- 区域高度调整手柄 -->
           <div class="band-resize-handle" @mousedown.stop="startResizingBand($event, bandIndex)"></div>
@@ -143,13 +145,23 @@
         </div>
         </div>
       </div>
+      
+      <!-- 框选框 -->
+      <SelectionBox
+        :start-x="selectionBox.startX"
+        :start-y="selectionBox.startY"
+        :end-x="selectionBox.endX"
+        :end-y="selectionBox.endY"
+        :visible="selectionBox.visible"
+      />
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { onMounted, onUnmounted } from 'vue';
+import { onMounted, onUnmounted, ref } from 'vue';
 import ElementFactory from '../elements/ElementFactory.vue';
+import SelectionBox from './SelectionBox.vue';
 import { BAND_CONSTANTS } from '@/constants/constants';
 
 // Props
@@ -162,6 +174,7 @@ interface Props {
   selectedBandIndex: number | null;
   highlightedBandIndex: number | null;
   selectedElement: any;
+  selectedElements: {bandIndex: number, elementIndex: number}[]; // 添加多选支持
   editingElement: any;
   isDraggingOrResizing: boolean;
   horizontalRulerTicks: any[];
@@ -183,6 +196,7 @@ const props = withDefaults(defineProps<Props>(), {
   selectedBandIndex: null,
   highlightedBandIndex: null,
   selectedElement: null,
+  selectedElements: () => [], // 添加多选支持的默认值
   editingElement: null,
   isDraggingOrResizing: false,
   horizontalRulerTicks: () => [],
@@ -209,8 +223,21 @@ const emit = defineEmits([
   'finish-editing',
   'cancel-editing',
   'start-resizing-band',
-  'zoom-change'
+  'zoom-change',
+  'select-elements-in-rect', // 添加框选事件
+  'clear-selection' // 添加清空选择事件
 ]);
+
+// 框选状态
+const selectionBox = ref({
+  startX: 0,
+  startY: 0,
+  endX: 0,
+  endY: 0,
+  visible: false
+});
+
+const isSelecting = ref(false);
 
 // Methods
 const setDesignAreaFocused = () => {
@@ -233,8 +260,8 @@ const selectBand = (bandIndex: number) => {
   emit('select-band', bandIndex);
 };
 
-const selectElement = (bandIndex: number, elementIndex: number) => {
-  emit('select-element', bandIndex, elementIndex);
+const selectElement = (bandIndex: number, elementIndex: number, isMultiSelect = false) => {
+  emit('select-element', bandIndex, elementIndex, isMultiSelect);
 };
 
 const startDragging = (event: MouseEvent, bandIndex: number, elementIndex: number) => {
@@ -282,6 +309,112 @@ const handleWheel = (event: WheelEvent) => {
     const delta = event.deltaY > 0 ? -0.1 : 0.1;
     emit('zoom-change', delta);
   }
+};
+
+// 框选功能
+const startSelection = (event: MouseEvent) => {
+  // 只有点击空白区域才开始框选
+  if (event.target === event.currentTarget || (event.target as HTMLElement).classList.contains('pager')) {
+    isSelecting.value = true;
+    
+    // 获取纸张元素的位置信息
+    const paperEl = document.querySelector('.paper') as HTMLElement;
+    const paperContainer = document.querySelector('.paper-container') as HTMLElement;
+    if (paperEl && paperContainer) {
+      const containerRect = paperContainer.getBoundingClientRect();
+      const currentZoom = props.zoomLevel;
+      
+      // 获取滚动位置
+      const scrollLeft = paperContainer.scrollLeft;
+      const scrollTop = paperContainer.scrollTop;
+      
+      // 计算相对于纸张的坐标，考虑缩放比例和滚动位置
+      // 鼠标位置 - 容器位置 + 滚动位置 = 相对于未缩放纸张的位置
+      const paperStartX = (event.clientX - containerRect.left + scrollLeft) / currentZoom;
+      const paperStartY = (event.clientY - containerRect.top + scrollTop) / currentZoom;
+      
+      // 设置框选框的坐标，需要考虑缩放因子，因为SelectionBox现在在paper-container外
+      selectionBox.value.startX = paperStartX * currentZoom;
+      selectionBox.value.startY = paperStartY * currentZoom;
+      selectionBox.value.endX = selectionBox.value.startX;
+      selectionBox.value.endY = selectionBox.value.startY;
+      selectionBox.value.visible = true;
+      
+      // 添加全局鼠标移动和释放事件监听器
+      document.addEventListener('mousemove', updateSelection);
+      document.addEventListener('mouseup', endSelection);
+      
+      // 阻止默认行为和冒泡
+      event.preventDefault();
+      event.stopPropagation();
+    }
+  }
+};
+
+const updateSelection = (event: MouseEvent) => {
+  if (!isSelecting.value) return;
+  
+  // 获取纸张元素的位置信息
+  const paperEl = document.querySelector('.paper') as HTMLElement;
+  const paperContainer = document.querySelector('.paper-container') as HTMLElement;
+  if (paperEl && paperContainer) {
+    const containerRect = paperContainer.getBoundingClientRect();
+    const currentZoom = props.zoomLevel;
+    
+    // 获取滚动位置
+    const scrollLeft = paperContainer.scrollLeft;
+    const scrollTop = paperContainer.scrollTop;
+    
+    // 计算相对于纸张的坐标，考虑缩放比例和滚动位置
+    const paperEndX = (event.clientX - containerRect.left + scrollLeft) / currentZoom;
+    const paperEndY = (event.clientY - containerRect.top + scrollTop) / currentZoom;
+    
+    // 更新框选框的终点坐标，需要考虑缩放因子，因为SelectionBox现在在paper-container外
+    selectionBox.value.endX = paperEndX * currentZoom;
+    selectionBox.value.endY = paperEndY * currentZoom;
+  }
+};
+
+const endSelection = () => {
+  if (!isSelecting.value) return;
+  
+  // 移除全局事件监听器
+  document.removeEventListener('mousemove', updateSelection);
+  document.removeEventListener('mouseup', endSelection);
+  
+  // 计算框选区域（缩放后的坐标）
+  const scaledLeft = Math.min(selectionBox.value.startX, selectionBox.value.endX);
+  const scaledTop = Math.min(selectionBox.value.startY, selectionBox.value.endY);
+  const scaledRight = Math.max(selectionBox.value.startX, selectionBox.value.endX);
+  const scaledBottom = Math.max(selectionBox.value.startY, selectionBox.value.endY);
+  
+  // 如果框选区域太小（小于5像素），则不进行框选，而是清空选择
+  if (Math.abs(scaledRight - scaledLeft) < 5 || Math.abs(scaledBottom - scaledTop) < 5) {
+    selectionBox.value.visible = false;
+    isSelecting.value = false;
+    // 触发清空选择事件
+    emit('clear-selection');
+    return;
+  }
+  
+  // 将缩放后的坐标转换为相对于纸张的坐标
+  const currentZoom = props.zoomLevel;
+  const left = scaledLeft / currentZoom;
+  const top = scaledTop / currentZoom;
+  const right = scaledRight / currentZoom;
+  const bottom = scaledBottom / currentZoom;
+  
+  // 触发框选事件，传递框选区域的坐标（相对于纸张）
+  emit('select-elements-in-rect', {
+    left,
+    top,
+    right,
+    bottom
+  });
+  
+  // 隐藏框选框
+  selectionBox.value.visible = false;
+  isSelecting.value = false;
 };
 
 // 生命周期钩子

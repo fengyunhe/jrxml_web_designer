@@ -240,6 +240,7 @@
         :selected-band-index="selectedBandIndex"
         :highlighted-band-index="highlightedBandIndex"
         :selected-element="selectedElement"
+        :selected-elements="selectedElements"
         :editing-element="editingElement"
         :is-dragging-or-resizing="isDraggingOrResizing"
         :alignment-lines="alignmentLines"
@@ -263,6 +264,8 @@
         @handle-drag-leave="handleDragLeave"
         @start-resizing-band="startResizingBand"
         @zoom-change="handleZoomChange"
+        @select-elements-in-rect="selectElementsInRect"
+        @clear-selection="clearSelection"
       />
       
       <!-- 右侧属性面板 -->
@@ -1609,6 +1612,7 @@ function redo() {
 // 选中状态
 const selectedBandIndex = ref<number | null>(null);
 const selectedElement = ref<{bandIndex: number, elementIndex: number} | null>(null);
+const selectedElements = ref<{bandIndex: number, elementIndex: number}[]>([]); // 多选元素数组
 const editingElement = ref<{bandIndex: number, elementIndex: number} | null>(null);
 const editInput = ref<HTMLInputElement | null>(null);
 
@@ -2233,14 +2237,44 @@ const getDefaultElementProperties = (type: string): Partial<DesignElement> => {
 const selectBand = (index: number) => {
   selectedBandIndex.value = index;
   selectedElement.value = null;
+  selectedElements.value = []; // 清空多选
   // 自动隐藏底部面板
   showBottomPanel.value = false;
 };
 
 // 选择元素
-const selectElement = (bandIndex: number, elementIndex: number) => {
+const selectElement = (bandIndex: number, elementIndex: number, isMultiSelect = false) => {
   // 快速更新选中状态，避免不必要的DOM操作
-  selectedElement.value = { bandIndex, elementIndex };
+  if (isMultiSelect) {
+    // 多选模式
+    const existingIndex = selectedElements.value.findIndex(
+      el => el.bandIndex === bandIndex && el.elementIndex === elementIndex
+    );
+    
+    if (existingIndex !== -1) {
+      // 如果元素已选中，则取消选中
+      selectedElements.value.splice(existingIndex, 1);
+    } else {
+      // 添加到多选列表
+      selectedElements.value.push({ bandIndex, elementIndex });
+    }
+    
+    // 如果没有选中任何元素，则清空selectedElement
+    if (selectedElements.value.length === 0) {
+      selectedElement.value = null;
+    } else {
+      // 将最后一个选中的元素作为当前选中的元素
+      const lastSelected = selectedElements.value[selectedElements.value.length - 1];
+      if (lastSelected) {
+        selectedElement.value = { bandIndex: lastSelected.bandIndex, elementIndex: lastSelected.elementIndex };
+      }
+    }
+  } else {
+    // 单选模式
+    selectedElement.value = { bandIndex, elementIndex };
+    selectedElements.value = [{ bandIndex, elementIndex }]; // 清空多选列表，只保留当前选中的元素
+  }
+  
   selectedBandIndex.value = null;
   
   // 自动隐藏底部面板
@@ -2256,6 +2290,74 @@ const selectElement = (bandIndex: number, elementIndex: number) => {
   }
   
   // 移除了昂贵的DOM查询和动画效果，通过Vue的响应式系统和CSS类来管理选择状态
+};
+
+// 清空所有选择
+const clearSelection = () => {
+  selectedElement.value = null;
+  selectedElements.value = [];
+  selectedBandIndex.value = null;
+};
+
+// 框选元素
+const selectElementsInRect = (rect: { left: number, top: number, right: number, bottom: number }) => {
+  // 清空当前选择
+  selectedElements.value = [];
+  selectedElement.value = null;
+  
+  // 计算band的累积高度，用于将绝对坐标转换为相对于band的坐标
+  // 初始偏移量需要考虑上边距
+  let bandOffsetY = reportProperties.value?.topMargin || 0;
+  
+  // 遍历所有band和元素，检查是否在框选区域内
+  bands.value.forEach((band, bandIndex) => {
+    // 检查当前band是否与框选区域有重叠
+    const bandTop = bandOffsetY;
+    const bandBottom = bandOffsetY + band.height;
+    
+    // 如果band与框选区域没有重叠，跳过
+    if (bandBottom < rect.top || bandTop > rect.bottom) {
+      bandOffsetY += band.height;
+      return;
+    }
+    
+    // 遍历当前band中的所有元素
+    band.elements.forEach((element, elementIndex) => {
+      // 计算元素在画布上的绝对位置
+      // 元素的X坐标需要考虑左边距
+      const elementLeft = (reportProperties.value?.leftMargin || 0) + element.x;
+      const elementTop = bandOffsetY + element.y;
+      const elementRight = elementLeft + element.width;
+      const elementBottom = elementTop + element.height;
+      
+      // 检查元素是否与框选区域有重叠
+      const isOverlapping = !(
+        elementRight < rect.left || 
+        elementLeft > rect.right || 
+        elementBottom < rect.top || 
+        elementTop > rect.bottom
+      );
+      
+      // 如果有重叠，添加到选择列表
+      if (isOverlapping) {
+        selectedElements.value.push({ bandIndex, elementIndex });
+      }
+    });
+    
+    // 更新band的Y坐标偏移
+    bandOffsetY += band.height;
+  });
+  
+  // 如果有选中的元素，将最后一个选中的元素作为当前选中的元素
+  if (selectedElements.value.length > 0) {
+    const lastSelected = selectedElements.value[selectedElements.value.length - 1];
+    if (lastSelected) {
+      selectedElement.value = { bandIndex: lastSelected.bandIndex, elementIndex: lastSelected.elementIndex };
+    }
+  }
+  
+  // 自动隐藏底部面板
+  showBottomPanel.value = false;
 };
 
 // 缓存事件处理函数，避免重复创建
@@ -2568,21 +2670,29 @@ const startDragging = (event: MouseEvent, bandIndex: number, elementIndex: numbe
           const currentElement = currentBand?.elements[draggingInfo.value.elementIndex];
           
           if (currentBand && currentElement) {
-            // 使用鼠标释放时的实际位置来确定目标band
-            const paperEl = document.querySelector('.paper') as HTMLElement;
+            // 优先使用最后一次高亮的band索引，如果存在的话
             let targetBandIndex = draggingInfo.value.bandIndex;
             
-            if (paperEl) {
-              // 获取所有band元素
-              const bandElements = document.querySelectorAll('.band');
-              for (let i = 0; i < bandElements.length; i++) {
-                const bandElement = bandElements[i] as HTMLElement;
-                const bandRect = bandElement.getBoundingClientRect();
-                
-                // 使用鼠标位置来确定目标band，确保元素始终移动到鼠标所在的band
-                if (e.clientY >= bandRect.top && e.clientY <= bandRect.bottom) {
-                  targetBandIndex = i;
-                  break;
+            // 如果有最后一次高亮的band索引，且该索引有效，则使用它
+            if (draggingInfo.value.lastTargetBandIndex !== undefined && 
+                draggingInfo.value.lastTargetBandIndex >= 0 && 
+                draggingInfo.value.lastTargetBandIndex < bands.value.length) {
+              targetBandIndex = draggingInfo.value.lastTargetBandIndex;
+            } else {
+              // 否则，使用鼠标位置来确定目标band
+              const paperEl = document.querySelector('.paper') as HTMLElement;
+              if (paperEl) {
+                // 获取所有band元素
+                const bandElements = document.querySelectorAll('.band');
+                for (let i = 0; i < bandElements.length; i++) {
+                  const bandElement = bandElements[i] as HTMLElement;
+                  const bandRect = bandElement.getBoundingClientRect();
+                  
+                  // 使用鼠标位置来确定目标band，确保元素始终移动到鼠标所在的band
+                  if (e.clientY >= bandRect.top && e.clientY <= bandRect.bottom) {
+                    targetBandIndex = i;
+                    break;
+                  }
                 }
               }
             }
@@ -2673,7 +2783,32 @@ const startDragging = (event: MouseEvent, bandIndex: number, elementIndex: numbe
 
 // 删除元素
 const deleteElement = () => {
-  if (selectedElement.value) {
+  // 检查是否有选中的元素
+  if (selectedElements.value && selectedElements.value.length > 0) {
+    // 删除多个选中的元素
+    saveStateToHistory();
+    
+    // 按照从后往前的顺序删除，避免索引变化问题
+    const sortedElements = [...selectedElements.value].sort((a, b) => {
+      if (a.bandIndex !== b.bandIndex) {
+        return b.bandIndex - a.bandIndex; // 按band索引降序
+      }
+      return b.elementIndex - a.elementIndex; // 按元素索引降序
+    });
+    
+    // 删除元素
+    sortedElements.forEach(({ bandIndex, elementIndex }) => {
+      const band = bands.value[bandIndex];
+      if (band && band.elements) {
+        band.elements.splice(elementIndex, 1);
+      }
+    });
+    
+    // 清空选中列表
+    selectedElements.value = [];
+    selectedElement.value = null;
+  } else if (selectedElement.value) {
+    // 删除单个选中的元素（保持原有逻辑）
     saveStateToHistory();
     const { bandIndex, elementIndex } = selectedElement.value;
     const band = bands.value[bandIndex];
@@ -3050,7 +3185,10 @@ const handleKeyDown = (event: KeyboardEvent) => {
   }
   
   // Del键删除选中的组件（仅在非编辑模式下且没有输入框处于焦点状态时）
-  if ((event.key === 'Delete' || event.key === 'Backspace') && selectedElement.value && !editingElement.value && !isInputFocused) {
+  if ((event.key === 'Delete' || event.key === 'Backspace') && 
+      (selectedElement.value || (selectedElements.value && selectedElements.value.length > 0)) && 
+      !editingElement.value && 
+      !isInputFocused) {
     event.preventDefault();
     deleteElement();
     return;

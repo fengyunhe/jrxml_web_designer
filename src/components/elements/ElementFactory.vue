@@ -24,6 +24,7 @@ const props = defineProps<{
   bandIndex: number;
   elementIndex: number;
   selectedElement: SelectedElementInfo | null;
+  selectedElements: {bandIndex: number, elementIndex: number}[]; // 添加多选支持
   editingElement: EditingElementInfo | null;
   isDragging?: boolean;
   reportFontFamily?: string;
@@ -36,7 +37,7 @@ const props = defineProps<{
 
 // Emits
 const emit = defineEmits<{
-  select: [bandIndex: number, elementIndex: number];
+  select: [bandIndex: number, elementIndex: number, isMultiSelect?: boolean];
   dragStart: [event: MouseEvent, bandIndex: number, elementIndex: number];
   resizeStart: [event: MouseEvent, bandIndex: number, elementIndex: number];
   startEditing: [bandIndex: number, elementIndex: number];
@@ -69,6 +70,7 @@ const commonProps = computed(() => ({
   bandIndex: props.bandIndex,
   elementIndex: props.elementIndex,
   selectedElement: props.selectedElement,
+  selectedElements: props.selectedElements, // 添加多选支持
   editingElement: props.editingElement,
   isDragging: props.isDragging,
   reportFontFamily: props.reportFontFamily,
@@ -81,8 +83,8 @@ const commonProps = computed(() => ({
 
 // 通用事件
 const commonEvents = {
-  select: (bandIndex: number, elementIndex: number) => {
-    emit('select', bandIndex, elementIndex);
+  select: (bandIndex: number, elementIndex: number, isMultiSelect = false) => {
+    emit('select', bandIndex, elementIndex, isMultiSelect);
   },
   dragStart: (event: MouseEvent, bandIndex: number, elementIndex: number) => {
     emit('dragStart', event, bandIndex, elementIndex);

@@ -162,6 +162,14 @@ export interface SelectedElementInfo {
   elementIndex: number;
 }
 
+// 多选元素信息接口
+export interface SelectedElementsInfo {
+  elements: Array<{
+    bandIndex: number;
+    elementIndex: number;
+  }>;
+}
+
 // 编辑元素信息接口
 export interface EditingElementInfo {
   bandIndex: number;
