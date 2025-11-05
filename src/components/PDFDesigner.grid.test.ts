@@ -69,6 +69,21 @@ describe('PDFDesigner - Grid Snapping and Alignment Lines', () => {
               id: 'test-element-2'
             }
           ]
+        },
+        {
+          type: 'detail',
+          height: 100,
+          elements: [
+            {
+              type: 'staticText',
+              x: 150,
+              y: 20,
+              width: 180,
+              height: 25,
+              text: 'Test Element 3',
+              id: 'test-element-3'
+            }
+          ]
         }
       ]
     }
@@ -98,6 +113,8 @@ describe('PDFDesigner - Grid Snapping and Alignment Lines', () => {
       },
       currentZoom: 1,
       gridSize: 3,
+      bandSpacing: 10,
+      highlightedBandIndex: { value: -1 },
       // Mock the grid snapping logic
       applyGridSnapping: (x: number, y: number) => {
         // Apply grid snapping
@@ -144,6 +161,98 @@ describe('PDFDesigner - Grid Snapping and Alignment Lines', () => {
           if (Math.abs((currentElement.y + currentElement.height) - (element.y + element.height)) < 10) {
             horizontalLines.push(element.y + element.height + mockVm.reportProperties.value.topMargin)
           }
+        })
+        
+        // Check alignment with elements in other bands (cross-band alignment)
+        mockBands.value.forEach((band: any, otherBandIndex: number) => {
+          if (otherBandIndex === bandIndex) return // Skip current band
+          
+          // Only check cross-band alignment if the mouse is hovering over the target band
+          if (mockVm.highlightedBandIndex.value !== otherBandIndex) return
+          
+          // Debug: Write band information to file
+          require('fs').appendFileSync('debug.txt', `Checking cross-band alignment: current band=${bandIndex}, other band=${otherBandIndex}, highlighted=${mockVm.highlightedBandIndex.value}\n`);
+          
+          // Calculate band offset for cross-band alignment (including band spacing)
+          let bandOffsetY = 0
+          for (let i = 0; i < otherBandIndex; i++) {
+            bandOffsetY += mockBands.value[i].height
+            if (i < otherBandIndex - 1) {
+              bandOffsetY += mockVm.bandSpacing
+            }
+          }
+          
+          // Calculate source band offset (including band spacing)
+          let sourceBandOffsetY = 0
+          for (let i = 0; i < bandIndex; i++) {
+            sourceBandOffsetY += mockBands.value[i].height
+            if (i < bandIndex - 1) {
+              sourceBandOffsetY += mockVm.bandSpacing
+            }
+          }
+          
+          // Debug: Write offset information to file
+          require('fs').appendFileSync('debug.txt', `Band offsets: bandOffsetY=${bandOffsetY}, sourceBandOffsetY=${sourceBandOffsetY}\n`);
+          
+          // For cross-band alignment, we need to consider the band spacing between bands
+          // If we're aligning with a band above the current band, we need to add the band spacing
+          if (otherBandIndex < bandIndex) {
+            sourceBandOffsetY += mockVm.bandSpacing
+            require('fs').appendFileSync('debug.txt', `Added band spacing: new sourceBandOffsetY=${sourceBandOffsetY}\n`);
+          }
+          
+          // Use the elements from the other band
+          band.elements.forEach((element: any) => {
+            // Skip if it's the same element (by position or ID)
+            if ((currentElement.id && element.id === currentElement.id) || 
+                (element.x === currentElement.x && element.y === currentElement.y)) return
+            
+            // For cross-band horizontal alignment, we need to compare relative Y coordinates
+            // Convert current element's Y to the target band's coordinate system
+            const relativeY = currentElement.y + sourceBandOffsetY - bandOffsetY
+            const relativeBottom = relativeY + currentElement.height
+            const relativeCenterY = relativeY + currentElement.height / 2
+            
+            // Debug: Write element information to file
+            require('fs').appendFileSync('debug.txt', `Checking element: currentElement.y=${currentElement.y}, element.y=${element.y}, sourceBandOffsetY=${sourceBandOffsetY}, bandOffsetY=${bandOffsetY}, relativeY=${relativeY}\n`);
+            
+            // Check horizontal alignment (top edges) with relative Y
+            if (Math.abs(relativeY - element.y) < 3) {
+              const linePosition = element.y + mockVm.reportProperties.value.topMargin + bandOffsetY
+              require('fs').appendFileSync('debug.txt', `Top alignment check: relativeY=${relativeY}, element.y=${element.y}, diff=${Math.abs(relativeY - element.y)}, threshold=3\n`);
+              require('fs').appendFileSync('debug.txt', `Top alignment detected: linePosition=${linePosition}\n`);
+              horizontalLines.push(linePosition)
+            }
+            
+            // Check horizontal alignment (bottom edges) with relative Y
+            if (Math.abs(relativeBottom - (element.y + element.height)) < 3) {
+              const linePosition = element.y + element.height + mockVm.reportProperties.value.topMargin + bandOffsetY
+              require('fs').appendFileSync('debug.txt', `Bottom alignment detected: linePosition=${linePosition}\n`);
+              horizontalLines.push(linePosition)
+            }
+            
+            // Check center alignment
+            const otherCenterY = element.y + element.height / 2
+            if (Math.abs(relativeCenterY - otherCenterY) < 3) {
+              const linePosition = otherCenterY + mockVm.reportProperties.value.topMargin + bandOffsetY
+              require('fs').appendFileSync('debug.txt', `Center alignment detected: linePosition=${linePosition}\n`);
+              horizontalLines.push(linePosition)
+            }
+            
+            // Check top alignment to other element's bottom
+            if (Math.abs(relativeY - (element.y + element.height)) < 3) {
+              const linePosition = element.y + element.height + mockVm.reportProperties.value.topMargin + bandOffsetY
+              require('fs').appendFileSync('debug.txt', `Top to bottom alignment detected: linePosition=${linePosition}\n`);
+              horizontalLines.push(linePosition)
+            }
+            
+            // Check bottom alignment to other element's top
+            if (Math.abs(relativeBottom - element.y) < 3) {
+              const linePosition = element.y + mockVm.reportProperties.value.topMargin + bandOffsetY
+              require('fs').appendFileSync('debug.txt', `Bottom to top alignment detected: linePosition=${linePosition}\n`);
+              horizontalLines.push(linePosition)
+            }
+          })
         })
         
         // Update alignment lines
@@ -361,4 +470,78 @@ describe('PDFDesigner - Grid Snapping and Alignment Lines', () => {
       expect(mockAlignmentLines.value.vertical[0]).toBe(120) // 100 + leftMargin (20)
     })
   })
-})
+
+  describe('Cross-Band Alignment Lines Detection', () => {
+      it('should detect horizontal alignment with elements in other bands', () => {
+        // Create a test element in the second band
+        const testElement: DesignElement = {
+          id: 'test-element-1',
+          type: 'staticText',
+          x: 50,
+          y: -40, // Adjusted to align with first band element at y=50
+          width: 100,
+          height: 25,
+          text: 'Test Element 1'
+        };
+        
+        // Set highlightedBandIndex to enable cross-band alignment detection
+        // This simulates the mouse hovering over the first band
+        mockVm.highlightedBandIndex.value = 0; // First band
+        
+        // Detect alignment for element in second band (index 1)
+        mockVm.detectAlignmentLines(testElement, 1)
+        
+        // Verify horizontal alignment line is detected with the element in the first band
+        // The line should be at y=50 + topMargin (20) = 70
+        expect(mockAlignmentLines.value.horizontal).toContain(70)
+      });
+      
+      it('should detect bottom edge alignment with elements in other bands', () => {
+        // Create a test element in the second band
+        const testElement: DesignElement = {
+          id: 'test-element-2',
+          type: 'staticText',
+          x: 100,
+          y: -10, // Adjusted to align bottom edge with first band element at y=50
+          width: 100,
+          height: 25,
+          text: 'Test Element 2'
+        };
+        
+        // Set highlightedBandIndex to enable cross-band alignment detection
+        // This simulates the mouse hovering over the first band
+        mockVm.highlightedBandIndex.value = 0; // First band
+        
+        // Detect alignment for element in second band (index 1)
+        mockVm.detectAlignmentLines(testElement, 1)
+        
+        // Verify horizontal alignment line is detected with the element in the first band
+        // The line should be at y=50 + 30 + topMargin (20) = 100
+        expect(mockAlignmentLines.value.horizontal).toContain(100)
+      });
+      
+      it('should detect center alignment with elements in other bands', () => {
+        // Create a test element in the second band
+        const testElement: DesignElement = {
+          id: 'test-element-3',
+          type: 'staticText',
+          x: 100,
+          y: -35, // Adjusted to align center with first band element at y=50
+          width: 100,
+          height: 25,
+          text: 'Test Element 3'
+        };
+        
+        // Set highlightedBandIndex to enable cross-band alignment detection
+        // This simulates the mouse hovering over the first band
+        mockVm.highlightedBandIndex.value = 0; // First band
+        
+        // Detect alignment for element in second band (index 1)
+        mockVm.detectAlignmentLines(testElement, 1)
+        
+        // Verify horizontal alignment line is detected with the element in the first band
+        // The line should be at y=50 + 15 + topMargin (20) = 85
+        expect(mockAlignmentLines.value.horizontal).toContain(85)
+      });
+    });
+});

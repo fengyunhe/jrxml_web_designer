@@ -2101,36 +2101,65 @@ const detectAlignmentLines = (currentElement: DesignElement, currentBandIndex: n
       }
       // 对于不同band中的元素，只显示参考线但不进行吸附
       else {
-        // 使用与同band相同的对齐检测逻辑，但不进行吸附
-        // 顶部对齐
-        if (Math.abs(currentTop - otherTop) < threshold) {
-          // 添加其他band的Y坐标偏移到参考线位置
-          const linePosition = otherTop + topMargin + bandOffsetY;
-          horizontalAlignmentLines.push(linePosition);
-        }
-        // 底部对齐
-        if (Math.abs(currentBottom - otherBottom) < threshold) {
-          // 添加其他band的Y坐标偏移到参考线位置
-          const linePosition = otherBottom + topMargin + bandOffsetY;
-          horizontalAlignmentLines.push(linePosition);
-        }
-        // 中心对齐
-        if (Math.abs(currentCenterY - otherCenterY) < threshold) {
-          // 添加其他band的Y坐标偏移到参考线位置
-          const linePosition = otherCenterY + topMargin + bandOffsetY;
-          horizontalAlignmentLines.push(linePosition);
-        }
-        // 顶部对齐到其他元素的底部
-        if (Math.abs(currentTop - otherBottom) < threshold) {
-          // 添加其他band的Y坐标偏移到参考线位置
-          const linePosition = otherBottom + topMargin + bandOffsetY;
-          horizontalAlignmentLines.push(linePosition);
-        }
-        // 底部对齐到其他元素的顶部
-        if (Math.abs(currentBottom - otherTop) < threshold) {
-          // 添加其他band的Y坐标偏移到参考线位置
-          const linePosition = otherTop + topMargin + bandOffsetY;
-          horizontalAlignmentLines.push(linePosition);
+        // 只有当鼠标悬浮在目标band中时，才检测横向对齐线
+        // 使用highlightedBandIndex来判断当前鼠标悬浮的band
+        if (highlightedBandIndex.value === bandIndex) {
+          // 计算当前元素相对于目标band的Y坐标
+          // 获取当前元素所在band和目标band的Y坐标偏移差
+          let sourceBandOffsetY = 0;
+          let targetBandOffsetY = 0;
+          
+          // 计算源band的Y坐标偏移
+          for (let i = 0; i < currentBandIndex; i++) {
+            sourceBandOffsetY += bands.value[i]?.height || 0;
+            if (i < currentBandIndex - 1) {
+              sourceBandOffsetY += bandSpacing;
+            }
+          }
+          
+          // 计算目标band的Y坐标偏移
+          for (let i = 0; i < bandIndex; i++) {
+            targetBandOffsetY += bands.value[i]?.height || 0;
+            if (i < bandIndex - 1) {
+              targetBandOffsetY += bandSpacing;
+            }
+          }
+          
+          // 计算当前元素相对于目标band的Y坐标
+          const relativeY = currentTop + (sourceBandOffsetY - targetBandOffsetY);
+          const relativeBottom = currentBottom + (sourceBandOffsetY - targetBandOffsetY);
+          const relativeCenterY = currentCenterY + (sourceBandOffsetY - targetBandOffsetY);
+          
+          // 顶部对齐
+          if (Math.abs(relativeY - otherTop) < threshold) {
+            // 添加目标band的Y坐标偏移到参考线位置
+            const linePosition = otherTop + topMargin + targetBandOffsetY;
+            horizontalAlignmentLines.push(linePosition);
+          }
+          // 底部对齐
+          if (Math.abs(relativeBottom - otherBottom) < threshold) {
+            // 添加目标band的Y坐标偏移到参考线位置
+            const linePosition = otherBottom + topMargin + targetBandOffsetY;
+            horizontalAlignmentLines.push(linePosition);
+          }
+          // 中心对齐
+          if (Math.abs(relativeCenterY - otherCenterY) < threshold) {
+            // 添加目标band的Y坐标偏移到参考线位置
+            const linePosition = otherCenterY + topMargin + targetBandOffsetY;
+            horizontalAlignmentLines.push(linePosition);
+          }
+          // 顶部对齐到其他元素的底部
+          if (Math.abs(relativeY - otherBottom) < threshold) {
+            // 添加目标band的Y坐标偏移到参考线位置
+            const linePosition = otherBottom + topMargin + targetBandOffsetY;
+            horizontalAlignmentLines.push(linePosition);
+          }
+          // 底部对齐到其他元素的顶部
+          if (Math.abs(relativeBottom - otherTop) < threshold) {
+            // 添加目标band的Y坐标偏移到参考线位置
+            const linePosition = otherTop + topMargin + targetBandOffsetY;
+            horizontalAlignmentLines.push(linePosition);
+          }
         }
       }
     });
