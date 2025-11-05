@@ -2356,16 +2356,22 @@ const startDragging = (event: MouseEvent, bandIndex: number, elementIndex: numbe
                 // 如果有高亮的band（表示鼠标当前所在的band），计算元素相对于这个band的坐标
                 const targetBandElement = bandElements[highlightedBandIndex.value] as HTMLElement;
                 const targetBandRect = targetBandElement.getBoundingClientRect();
-                const paperRect = paperEl.getBoundingClientRect();
                 
-                // 计算元素相对于目标band的Y坐标
-                // 1. 计算元素在页面中的绝对位置（基于鼠标位置）
-                const elementTopInPage = (e.clientY - paperRect.top) / currentZoom;
-                // 2. 计算元素相对于目标band的位置
-                relativeY = Math.round(elementTopInPage - (targetBandRect.top - paperRect.top) / currentZoom);
+                // 修复：使用元素的实际Y坐标（newY）而不是鼠标位置来计算相对Y坐标
+                // 获取当前元素所在band的顶部位置
+                const currentBandElement = bandElements[draggingInfo.value.bandIndex] as HTMLElement;
+                const currentBandRect = currentBandElement.getBoundingClientRect();
+                
+                // 如果元素在不同的band，需要调整计算方式
+                if (highlightedBandIndex.value !== draggingInfo.value.bandIndex) {
+                  // 元素移动到不同的band，计算相对于新band的Y坐标
+                  relativeY = Math.round(newY + (currentBandRect.top - targetBandRect.top) / currentZoom);
+                } else {
+                  // 元素在同一band内，使用元素的Y坐标
+                  relativeY = Math.round(newY);
+                }
                 
                 // 确保Y坐标是相对于目标band的相对值
-                // 如果元素跨越了多个band，需要调整计算方式
                 if (relativeY < 0) {
                   relativeY = 0;
                 }
@@ -2465,43 +2471,8 @@ const startDragging = (event: MouseEvent, bandIndex: number, elementIndex: numbe
                 // 从其他band移动到第一个band，需要确保y坐标不小于0
                 const targetBandElement = document.querySelectorAll('.band')[targetBandIndex] as HTMLElement | undefined;
                 if (targetBandElement) {
-                  const targetBandRect = targetBandElement.getBoundingClientRect();
-                  const currentZoom = zoomLevel.value;
-                
-                  // 将元素绝对坐标转换为相对于目标band的坐标
-                  const elementTopInPage = e.clientY;
-                  let newRelativeY = Math.max(0, (elementTopInPage - targetBandRect.top) / currentZoom);
-                  
-                  // 获取第一个band和最后一个band的位置信息
-                  const firstBandElement = document.querySelectorAll('.band')[0] as HTMLElement;
-                  const lastBandElement = document.querySelectorAll('.band')[bands.value.length - 1] as HTMLElement;
-                  
-                  if (firstBandElement && lastBandElement) {
-                    const firstBandRect = firstBandElement.getBoundingClientRect();
-                    const lastBandRect = lastBandElement.getBoundingClientRect();
-                    
-                    // 计算第一个band和最后一个band相对于页面的位置
-                    const firstBandTopInPage = firstBandRect.top;
-                    const lastBandBottomInPage = lastBandRect.bottom;
-                    
-                    // 计算元素在页面中的绝对位置
-                    const elementTopInPageAbs = elementTopInPage;
-                    const elementBottomInPageAbs = elementTopInPageAbs + currentElement.height * currentZoom;
-                    
-                    // 限制元素顶部不能超出第一个band的上边界
-                    if (elementTopInPageAbs < firstBandTopInPage) {
-                      const adjustment = (firstBandTopInPage - elementTopInPageAbs) / currentZoom;
-                      newRelativeY += adjustment;
-                    }
-                    
-                    // 限制元素底部不能超出最后一个band的下边界
-                    if (elementBottomInPageAbs > lastBandBottomInPage) {
-                      const adjustment = (elementBottomInPageAbs - lastBandBottomInPage) / currentZoom;
-                      newRelativeY -= adjustment;
-                    }
-                  }
-                  
-                  currentElement.y = newRelativeY;
+                  // 使用拖拽过程中显示的Y坐标，而不是鼠标位置
+                  currentElement.y = Math.max(0, dragCoordinates.value.y);
                 }
               }
               
@@ -2513,45 +2484,9 @@ const startDragging = (event: MouseEvent, bandIndex: number, elementIndex: numbe
                 // 计算元素相对于目标band的y坐标
                 const targetBandElement = document.querySelectorAll('.band')[targetBandIndex] as HTMLElement | undefined;
                 if (targetBandElement) {
-                  const targetBandRect = targetBandElement.getBoundingClientRect();
-                  const currentZoom = zoomLevel.value;
-                
-                  // 将元素绝对坐标转换为相对于目标band的坐标
-                  // 1. 计算元素在页面中的绝对位置（基于鼠标位置和当前缩放比例）
-                  const elementTopInPage = e.clientY;
-                  // 2. 计算元素相对于目标band的位置，考虑缩放比例
-                  let newRelativeY = (elementTopInPage - targetBandRect.top) / currentZoom;
-                  
-                  // 获取第一个band和最后一个band的位置信息
-                  const firstBandElement = document.querySelectorAll('.band')[0] as HTMLElement;
-                  const lastBandElement = document.querySelectorAll('.band')[bands.value.length - 1] as HTMLElement;
-                  
-                  if (firstBandElement && lastBandElement) {
-                    const firstBandRect = firstBandElement.getBoundingClientRect();
-                    const lastBandRect = lastBandElement.getBoundingClientRect();
-                    
-                    // 计算第一个band和最后一个band相对于页面的位置
-                    const firstBandTopInPage = firstBandRect.top;
-                    const lastBandBottomInPage = lastBandRect.bottom;
-                    
-                    // 计算元素在页面中的绝对位置
-                    const elementTopInPageAbs = elementTopInPage;
-                    const elementBottomInPageAbs = elementTopInPageAbs + currentElement.height * currentZoom;
-                    
-                    // 限制元素顶部不能超出第一个band的上边界
-                    if (elementTopInPageAbs < firstBandTopInPage) {
-                      const adjustment = (firstBandTopInPage - elementTopInPageAbs) / currentZoom;
-                      newRelativeY += adjustment;
-                    }
-                    
-                    // 限制元素底部不能超出最后一个band的下边界
-                    if (elementBottomInPageAbs > lastBandBottomInPage) {
-                      const adjustment = (elementBottomInPageAbs - lastBandBottomInPage) / currentZoom;
-                      newRelativeY -= adjustment;
-                    }
-                  }
-                  
-                  currentElement.y = newRelativeY;
+                  // 使用拖拽过程中显示的Y坐标，而不是鼠标位置
+                  // 确保Y坐标不小于0
+                  currentElement.y = Math.max(0, dragCoordinates.value.y);
                 
                   // 添加到新band中，使用相对于band的坐标
                   targetBand.elements.push(currentElement);
@@ -2564,7 +2499,12 @@ const startDragging = (event: MouseEvent, bandIndex: number, elementIndex: numbe
                 }
               }
             }
-            // 元素位置保持拖动时的最后位置，不做额外调整
+            // 元素在同一band内移动，使用拖拽过程中显示的坐标值
+            else {
+              // 使用拖拽过程中显示的坐标值，确保元素位置与显示一致
+              currentElement.x = dragCoordinates.value.x;
+              currentElement.y = dragCoordinates.value.y;
+            }
           }
         }
         
