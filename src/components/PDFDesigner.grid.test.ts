@@ -1,5 +1,4 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
-import type { DesignElement } from '@/types'
 
 // Mock DOM methods
 Object.defineProperty(window, 'getComputedStyle', {
