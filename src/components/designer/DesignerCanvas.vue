@@ -487,6 +487,7 @@ onUnmounted(() => {
   overflow: auto;
   background-color: #f0f0f0;
   position: relative;
+  min-height: 0;
 }
 
 .top-ruler-container {
@@ -525,6 +526,7 @@ onUnmounted(() => {
   /* 隐藏滚动条 */
   scrollbar-width: none; /* Firefox */
   -ms-overflow-style: none; /* IE and Edge */
+  flex-shrink: 0;
 }
 
 .horizontal-ruler::-webkit-scrollbar {
@@ -540,6 +542,7 @@ onUnmounted(() => {
 .main-content {
   display: flex;
   flex: 1;
+  min-height: 0;
 }
 
 .vertical-ruler-container {
@@ -562,6 +565,7 @@ onUnmounted(() => {
   /* 隐藏滚动条 */
   scrollbar-width: none; /* Firefox */
   -ms-overflow-style: none; /* IE and Edge */
+  flex-shrink: 0;
 }
 
 .vertical-ruler::-webkit-scrollbar {
@@ -571,9 +575,11 @@ onUnmounted(() => {
 .paper-container {
   flex: 1;
   display: flex;
-  justify-content: left;
+  justify-content: flex-start;
   align-items: flex-start;
   overflow: auto;
+  min-width: 0;
+  min-height: 0;
 }
 
 .paper {
@@ -581,6 +587,7 @@ onUnmounted(() => {
   box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
   position: relative;
   transition: transform 0.2s ease;
+  flex-shrink: 0;
 }
 
 .paper.focused {
