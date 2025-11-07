@@ -87,6 +87,53 @@ const elementStyle = computed(() => {
   const justifyContent = props.element.textAlignment === 'Justified' ? 'space-between' : (props.element.textAlignment?.toLowerCase() || 'flex-start');
   const textAlign = props.element.textAlignment === 'Justified' ? 'justify' : (props.element.textAlignment?.toLowerCase() || 'left');
   
+  // 计算边框样式
+  const calculateBorder = (side: string): string => {
+    // 首先尝试获取各边的边框样式
+    const sideBorderStyle = getBorderStyle(side, props.element.box);
+    if (sideBorderStyle && sideBorderStyle !== 'none') {
+      return sideBorderStyle;
+    }
+    
+    // 检查各边边框是否为空字符串
+    const sideBorderProperty = side === 'top' ? props.element.box?.topBorder : 
+                              side === 'left' ? props.element.box?.leftBorder : 
+                              side === 'bottom' ? props.element.box?.bottomBorder : 
+                              props.element.box?.rightBorder;
+    
+    // 如果各边边框为空字符串，返回none
+    if (sideBorderProperty === '') {
+      return 'none';
+    }
+    
+    // 如果没有各边边框样式，尝试使用全局边框
+    // 只有当border属性存在且不为空字符串时才应用边框
+    if (props.element.box?.border && props.element.box.border !== '') {
+      const borderMap: Record<string, string> = {
+        'Thin': '1px',
+        '1Point': '1px',
+        '2Point': '2px',
+        '4Point': '4px',
+        'Dotted': '1px dotted',
+        'Dashed': '1px dashed',
+        'Double': '3px double'
+      };
+      
+      const borderValue = borderMap[props.element.box.border] || '1px';
+      const borderColor = props.element.box.borderColor || '#000000';
+      
+      // 处理边框样式
+      if (props.element.box.border === 'Dashed' || props.element.box.border === 'Dotted' || props.element.box.border === 'Double') {
+        return borderValue + ' ' + borderColor;
+      } else {
+        return `${borderValue} solid ${borderColor}`;
+      }
+    }
+    
+    // 如果没有任何边框设置，返回none（不显示边框）
+    return 'none';
+  };
+  
   // 使用CSSProperties类型断言整个对象
   return {
     position: 'absolute' as 'absolute',
@@ -99,10 +146,10 @@ const elementStyle = computed(() => {
     paddingLeft: props.element.box?.leftPadding ? `${props.element.box.leftPadding}px` : (props.element.box?.padding ? `${props.element.box.padding}px` : undefined),
     paddingBottom: props.element.box?.bottomPadding ? `${props.element.box.bottomPadding}px` : (props.element.box?.padding ? `${props.element.box.padding}px` : undefined),
     paddingRight: props.element.box?.rightPadding ? `${props.element.box.rightPadding}px` : (props.element.box?.padding ? `${props.element.box.padding}px` : undefined),
-    borderTop: getBorderStyle('top', props.element.box) || (props.element.border || props.element.box ? '1px solid #ccc' : '1px solid transparent'),
-    borderLeft: getBorderStyle('left', props.element.box) || (props.element.border || props.element.box ? '1px solid #ccc' : '1px solid transparent'),
-    borderBottom: getBorderStyle('bottom', props.element.box) || (props.element.border || props.element.box ? '1px solid #ccc' : '1px solid transparent'),
-    borderRight: getBorderStyle('right', props.element.box) || (props.element.border || props.element.box ? '1px solid #ccc' : '1px solid transparent'),
+    borderTop: calculateBorder('top'),
+    borderLeft: calculateBorder('left'),
+    borderBottom: calculateBorder('bottom'),
+    borderRight: calculateBorder('right'),
     fontFamily: props.element.fontFamily || props.reportFontFamily,
     fontSize: props.element.fontSize ? `${props.element.fontSize}px` : (props.reportFontSize ? `${props.reportFontSize}px` : undefined),
     fontWeight: props.element.isBold !== undefined ? (props.element.isBold ? 'bold' : 'normal') : (props.reportIsBold ? 'bold' : 'normal'),
@@ -117,7 +164,7 @@ const elementStyle = computed(() => {
 
 // 获取边框样式
 const getBorderStyle = (side: string, box?: any): string | undefined => {
-  if (!box) return undefined;
+  if (!box) return 'none';
   
   // 优先使用sidePen元素（根据xsd定义，这是推荐的方式）
   const penProperty = side === 'top' ? box.topPen : 
@@ -131,8 +178,19 @@ const getBorderStyle = (side: string, box?: any): string | undefined => {
                      side === 'bottom' ? box.bottomBorder : 
                      box.rightBorder;
   
+  // 如果有sideBorder属性且已经是完整的CSS边框字符串，直接返回
+  if (borderProperty && borderProperty.includes(' ')) {
+    return borderProperty;
+  }
+  
+  // 如果sideBorder是空字符串，返回none
+  if (borderProperty === '') {
+    return 'none';
+  }
+  
   // 如果没有sidePen也没有sideBorder，检查全局pen或border
-  if (!penProperty && !borderProperty && !box.pen && !box.border) return undefined;
+  // 只有当border属性存在且不为空字符串时才应用边框
+  if (!penProperty && !borderProperty && (!box.pen || box.pen === '') && (!box.border || box.border === '')) return 'none';
   
   // 获取边框颜色 - 优先使用sidePen的lineColor，然后是全局pen的lineColor，再然后是已弃用的颜色属性
   const colorProperty = side === 'top' ? box.topBorderColor : 
@@ -160,6 +218,12 @@ const getBorderStyle = (side: string, box?: any): string | undefined => {
     if (penProperty.lineStyle === 'Dashed') style = 'dashed';
     else if (penProperty.lineStyle === 'Dotted') style = 'dotted';
     else if (penProperty.lineStyle === 'Double') style = 'double';
+  } else if (borderProperty === 'Dashed') {
+    style = 'dashed';
+  } else if (borderProperty === 'Dotted') {
+    style = 'dotted';
+  } else if (borderProperty === 'Double') {
+    style = 'double';
   }
   
   return `${width} ${style} ${color}`;

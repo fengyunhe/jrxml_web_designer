@@ -327,19 +327,19 @@
               <h4>基本属性</h4>
               <div class="form-group">
                 <label>X坐标</label>
-                <input v-if="currentElement" v-model.number="currentElement.x" type="number" />
+                <input v-if="currentElement" v-model.number="currentElement.x" type="number" @change="ensureIntegerValue(currentElement, 'x')" />
               </div>
               <div class="form-group">
                 <label>Y坐标 (相对于当前Band)</label>
-                <input v-if="currentElement" v-model.number="currentElement.y" type="number" />
+                <input v-if="currentElement" v-model.number="currentElement.y" type="number" @change="ensureIntegerValue(currentElement, 'y')" />
               </div>
               <div class="form-group">
                 <label>宽度</label>
-                <input v-if="currentElement" v-model.number="currentElement.width" type="number" />
+                <input v-if="currentElement" v-model.number="currentElement.width" type="number" @change="ensureIntegerValue(currentElement, 'width')" />
               </div>
               <div class="form-group">
                 <label>高度</label>
-                <input v-if="currentElement" v-model.number="currentElement.height" type="number" />
+                <input v-if="currentElement" v-model.number="currentElement.height" type="number" @change="ensureIntegerValue(currentElement, 'height')" />
               </div>
               
               <!-- 根据元素类型显示特定属性 -->
@@ -457,6 +457,9 @@
                 <div class="form-group">
                   <label>边框颜色</label>
                   <input v-if="currentElement && currentElement.box" v-model="currentElement.box.borderColor" type="color" />
+                </div>
+                <div class="form-group">
+                  <small class="hint">边框设置会自动应用到所有边</small>
                 </div>
               </div>
               
@@ -723,6 +726,9 @@ import {
 // 确保浏览器环境中DOMParser可用
 // 移除未使用的getDOMParser函数
 import {generateJRXMLContent, parseJRXMLContent} from '../utils/jrxmlGenerator';
+
+// 导入通知管理器
+import notification from '../utils/notification';
 
 // 标签页相关
 const activeTab = ref('pageSettings');
@@ -1133,7 +1139,7 @@ function openLocalFile() {
           });
         } catch (error) {
           console.error('加载文件失败:', error);
-          alert('文件格式不正确，无法加载');
+          notification.error('文件格式不正确，无法加载');
         }
       };
       reader.readAsText(file);
@@ -1186,10 +1192,10 @@ function saveCurrentFileToStorage() {
     
     // 保存更新后的文件列表
     localStorage.setItem('pdfDesignerFiles', JSON.stringify(files));
-    alert('文件保存成功');
+    notification.success('文件保存成功');
   } catch (error) {
     console.error('保存文件失败:', error);
-    alert('保存文件失败');
+    notification.error('保存文件失败');
   }
 }
 
@@ -1256,7 +1262,7 @@ function loadFile(fileData: any) {
     selectedBandIndex.value = null;
   } catch (error) {
     console.error('加载文件失败:', error);
-    alert('文件格式不正确，无法加载');
+    notification.error('文件格式不正确，无法加载');
   }
 }
 
@@ -1654,8 +1660,8 @@ const handleDrop = (event: DragEvent) => {
     // 创建新元素
     const newElement: DesignElement = {
       type: elementData.type,
-      x: Math.max(0, scaledX - 50), // 减去元素宽度的一半以居中
-      y: Math.max(0, scaledY - currentY), // 相对于band的位置
+      x: Math.round(Math.max(0, scaledX - 50)), // 减去元素宽度的一半以居中，并确保为整数
+      y: Math.round(Math.max(0, scaledY - currentY)), // 相对于band的位置，并确保为整数
       width: 100,
       height: 30,
       ...getDefaultElementProperties(elementData.type)
@@ -1669,17 +1675,17 @@ const handleDrop = (event: DragEvent) => {
       
       // 限制元素不超出右边界
       if (newElement.x + newElement.width > availableWidth) {
-        newElement.x = availableWidth - newElement.width;
+        newElement.x = Math.round(availableWidth - newElement.width);
       }
       
       // 确保元素宽度不超过可用空间
       if (newElement.width > availableWidth) {
-        newElement.width = availableWidth;
+        newElement.width = Math.round(availableWidth);
       }
       
       // 确保元素不超出band高度
       if (newElement.y + newElement.height > targetBand.height) {
-        newElement.y = targetBand.height - newElement.height;
+        newElement.y = Math.round(targetBand.height - newElement.height);
       }
       
       targetBand.elements.push(newElement);
@@ -2334,8 +2340,9 @@ const startDragging = (event: MouseEvent, bandIndex: number, elementIndex: numbe
               }
             }
             
-            currentElement.x = newX;
-            currentElement.y = newY;
+            // 确保坐标值为整数
+            currentElement.x = Math.round(newX);
+            currentElement.y = Math.round(newY);
             
             // 如果元素移动到不同的band，需要限制Y坐标不超过band高度
             if (highlightedBandIndex.value !== null && highlightedBandIndex.value !== draggingInfo.value.bandIndex) {
@@ -2928,8 +2935,16 @@ const processPastedElement = (elementData: any) => {
   const newElement = JSON.parse(JSON.stringify(elementData));
   
   // 调整位置，避免与原元素重叠（向右下方移动一点）
-  newElement.x += KEYBOARD_CONSTANTS.ELEMENT_PASTE_OFFSET;
-  newElement.y += KEYBOARD_CONSTANTS.ELEMENT_PASTE_OFFSET;
+  newElement.x = Math.round(newElement.x + KEYBOARD_CONSTANTS.ELEMENT_PASTE_OFFSET);
+  newElement.y = Math.round(newElement.y + KEYBOARD_CONSTANTS.ELEMENT_PASTE_OFFSET);
+  
+  // 确保元素的宽度和高度也为整数
+  if (newElement.width) {
+    newElement.width = Math.round(newElement.width);
+  }
+  if (newElement.height) {
+    newElement.height = Math.round(newElement.height);
+  }
   
   // 确保元素ID唯一
   if (newElement.id) {
@@ -2951,6 +2966,14 @@ const processPastedElement = (elementData: any) => {
   updateJRXML();
   
   console.log('元素已粘贴:', newElement);
+};
+
+// 确保属性值为整数
+const ensureIntegerValue = (element: DesignElement, property: 'x' | 'y' | 'width' | 'height') => {
+  if (element[property] !== undefined) {
+    element[property] = Math.round(element[property]);
+    updateJRXML(); // 更新JRXML
+  }
 };
 
 // 在组件顶层定义handleKeyDown函数
@@ -2999,6 +3022,13 @@ const handleKeyDown = (event: KeyboardEvent) => {
   if (event.ctrlKey && event.key === 'c' && selectedElement.value) {
     event.preventDefault();
     copyElement();
+    return;
+  }
+  
+  // CTRL+C 复制JRXML（当没有选中元素且没有输入框焦点时）
+  if (event.ctrlKey && event.key === 'c' && !selectedElement.value && !isInputFocused && isDesignAreaFocused.value) {
+    event.preventDefault();
+    copyJRXML();
     return;
   }
   
@@ -3250,10 +3280,10 @@ watch(
 const copyJRXML = async (): Promise<void> => {
   try {
     await navigator.clipboard.writeText(jrxmlContent.value);
-    alert('JRXML内容已复制到剪贴板');
+    notification.success('JRXML内容已复制到剪贴板');
   } catch (err: unknown) {
     console.error('复制失败:', err);
-    alert('复制失败，请手动复制');
+    notification.error('复制失败，请手动复制');
   }
 };
 
@@ -3261,7 +3291,7 @@ const copyJRXML = async (): Promise<void> => {
 const regenerateJRXML = (): void => {
   updateJRXML();
   // 显示提示信息
-  alert('JRXML已重新生成');
+  notification.info('JRXML已重新生成');
 };
 
 // 保存编辑后的JRXML内容
@@ -3348,6 +3378,57 @@ const saveJRXML = (): void => {
             return `${width} ${style} ${color}`;
           };
           
+          // 将边框样式字符串转换为UI显示的边框样式名称
+          const convertBorderStyleToName = (borderStyle: string): string => {
+            if (!borderStyle || borderStyle === '') return '';
+            
+            // 如果已经是样式名称，直接返回
+            if (['Thin', 'Medium', 'Thick', 'Dashed', 'Dotted', 'Double', '1Point', '2Point', '4Point'].includes(borderStyle)) {
+              return borderStyle;
+            }
+            
+            // 解析边框样式字符串，如 "1px solid #000000"
+            const parts = borderStyle.split(' ');
+            if (parts.length >= 2) {
+              const width = parts[0];
+              const style = parts[1];
+              
+              // 根据宽度确定样式名称
+              if (width === '1px') {
+                if (style === 'solid') return 'Thin';
+                if (style === 'dashed') return 'Dashed';
+                if (style === 'dotted') return 'Dotted';
+              } else if (width === '2px') {
+                if (style === 'solid') return 'Medium';
+              } else if (width === '3px' && style === 'double') {
+                return 'Double';
+              } else if (width === '4px') {
+                if (style === 'solid') return 'Thick';
+              }
+            }
+            
+            // 默认返回Thin
+            return 'Thin';
+          };
+          
+          // 从边框样式字符串中提取颜色
+          const extractBorderColor = (borderStyle: string): string => {
+            if (!borderStyle || borderStyle === '') return '#000000';
+            
+            // 如果已经是样式名称，返回默认颜色
+            if (['Thin', 'Medium', 'Thick', 'Dashed', 'Dotted', 'Double', '1Point', '2Point', '4Point'].includes(borderStyle)) {
+              return '#000000';
+            }
+            
+            // 解析边框样式字符串，如 "1px solid #000000"
+            const parts = borderStyle.split(' ');
+            if (parts.length >= 3 && parts[2]) {
+              return parts[2];
+            }
+            
+            return '#000000';
+          };
+          
           // 为各边的pen设置边框样式
           // 处理pen属性，但不使用不存在的borderStyle
           if (element.box.topPen) {
@@ -3422,6 +3503,27 @@ const saveJRXML = (): void => {
             if (!element.box.bottomBorder) element.box.bottomBorder = globalBorder;
             if (!element.box.rightBorder) element.box.rightBorder = globalBorder;
           }
+          
+          // 将边框样式字符串转换为UI显示的边框样式名称
+          if (element.box.border && typeof element.box.border === 'string' && element.box.border.includes(' ')) {
+            element.box.border = convertBorderStyleToName(element.box.border);
+          }
+          if (element.box.topBorder && typeof element.box.topBorder === 'string' && element.box.topBorder.includes(' ')) {
+            element.box.topBorderColor = extractBorderColor(element.box.topBorder);
+            element.box.topBorder = convertBorderStyleToName(element.box.topBorder);
+          }
+          if (element.box.leftBorder && typeof element.box.leftBorder === 'string' && element.box.leftBorder.includes(' ')) {
+            element.box.leftBorderColor = extractBorderColor(element.box.leftBorder);
+            element.box.leftBorder = convertBorderStyleToName(element.box.leftBorder);
+          }
+          if (element.box.bottomBorder && typeof element.box.bottomBorder === 'string' && element.box.bottomBorder.includes(' ')) {
+            element.box.bottomBorderColor = extractBorderColor(element.box.bottomBorder);
+            element.box.bottomBorder = convertBorderStyleToName(element.box.bottomBorder);
+          }
+          if (element.box.rightBorder && typeof element.box.rightBorder === 'string' && element.box.rightBorder.includes(' ')) {
+            element.box.rightBorderColor = extractBorderColor(element.box.rightBorder);
+            element.box.rightBorder = convertBorderStyleToName(element.box.rightBorder);
+          }
         }
         
         // 确保元素不超出纸张边界
@@ -3441,12 +3543,220 @@ const saveJRXML = (): void => {
     saveToLocalStorageWrapper();
     
     // 显示成功提示
-    alert('JRXML编辑已保存，界面已更新');
+    notification.success('JRXML编辑已保存，界面已更新');
   } catch (error: unknown) {
     console.error('保存JRXML失败:', error);
-    alert(`保存失败: ${error instanceof Error ? error.message : '未知错误'}`);
+    notification.error(`保存失败: ${error instanceof Error ? error.message : '未知错误'}`);
   }
 };
+
+// 监听边框设置变化，实时更新边框样式
+watch(() => currentElement.value?.box?.border, (newBorderStyle) => {
+  if (!currentElement.value || !currentElement.value.box) return;
+  
+  const box = currentElement.value.box;
+  
+  // 如果边框样式为空字符串，清除所有边框
+  if (!newBorderStyle || newBorderStyle === '') {
+    box.topBorder = '';
+    box.leftBorder = '';
+    box.bottomBorder = '';
+    box.rightBorder = '';
+    // 更新JRXML
+    updateJRXML();
+    return;
+  }
+  
+  const borderColor = box.borderColor || '#000000';
+  
+  // 边框样式映射
+  const borderMap: Record<string, string> = {
+    'Thin': '1px',
+    '1Point': '1px',
+    '2Point': '2px',
+    '4Point': '4px',
+    'Dotted': '1px dotted',
+    'Dashed': '1px dashed',
+    'Double': '3px double'
+  };
+  
+  // 生成边框样式字符串
+  const borderValue = borderMap[newBorderStyle] || '1px';
+  const fullBorderStyle = `${borderValue} solid ${borderColor}`;
+  
+  // 立即应用到所有边
+  box.topBorder = fullBorderStyle;
+  box.leftBorder = fullBorderStyle;
+  box.bottomBorder = fullBorderStyle;
+  box.rightBorder = fullBorderStyle;
+  
+  // 更新JRXML
+  updateJRXML();
+});
+
+// 监听边框颜色变化，实时更新边框样式
+watch(() => currentElement.value?.box?.borderColor, (newBorderColor) => {
+  if (!currentElement.value || !currentElement.value.box) return;
+  
+  const box = currentElement.value.box;
+  
+  // 如果有边框样式，更新各边边框颜色
+  if (box.border && box.border !== '') {
+    const borderMap: Record<string, string> = {
+      'Thin': '1px',
+      '1Point': '1px',
+      '2Point': '2px',
+      '4Point': '4px',
+      'Dotted': '1px dotted',
+      'Dashed': '1px dashed',
+      'Double': '3px double'
+    };
+    
+    const borderValue = borderMap[box.border] || '1px';
+    const fullBorderStyle = `${borderValue} solid ${newBorderColor || '#000000'}`;
+    
+    // 立即应用到所有边
+    box.topBorder = fullBorderStyle;
+    box.leftBorder = fullBorderStyle;
+    box.bottomBorder = fullBorderStyle;
+    box.rightBorder = fullBorderStyle;
+    
+    // 更新JRXML
+    updateJRXML();
+  }
+});
+
+// 监听上边框变化
+watch(() => currentElement.value?.box?.topBorder, (newTopBorder) => {
+  if (!currentElement.value || !currentElement.value.box) return;
+  
+  // 如果边框样式为空字符串，清除上边框
+  if (!newTopBorder || newTopBorder === '') {
+    // 边框已清除，更新JRXML
+    updateJRXML();
+    return;
+  }
+  
+  // 如果边框是样式名称（如"Thin"），转换为完整的边框样式字符串
+  if (['Thin', 'Medium', 'Thick', 'Dashed', 'Dotted', 'Double', '1Point', '2Point', '4Point'].includes(newTopBorder)) {
+    const box = currentElement.value.box;
+    const borderColor = box.topBorderColor || '#000000';
+    
+    const borderMap: Record<string, string> = {
+      'Thin': '1px',
+      '1Point': '1px',
+      '2Point': '2px',
+      '4Point': '4px',
+      'Dotted': '1px dotted',
+      'Dashed': '1px dashed',
+      'Double': '3px double'
+    };
+    
+    const borderValue = borderMap[newTopBorder] || '1px';
+    box.topBorder = `${borderValue} solid ${borderColor}`;
+    // 更新JRXML
+    updateJRXML();
+  }
+});
+
+// 监听左边框变化
+watch(() => currentElement.value?.box?.leftBorder, (newLeftBorder) => {
+  if (!currentElement.value || !currentElement.value.box) return;
+  
+  // 如果边框样式为空字符串，清除左边框
+  if (!newLeftBorder || newLeftBorder === '') {
+    // 边框已清除，更新JRXML
+    updateJRXML();
+    return;
+  }
+  
+  // 如果边框是样式名称（如"Thin"），转换为完整的边框样式字符串
+  if (['Thin', 'Medium', 'Thick', 'Dashed', 'Dotted', 'Double', '1Point', '2Point', '4Point'].includes(newLeftBorder)) {
+    const box = currentElement.value.box;
+    const borderColor = box.leftBorderColor || '#000000';
+    
+    const borderMap: Record<string, string> = {
+      'Thin': '1px',
+      '1Point': '1px',
+      '2Point': '2px',
+      '4Point': '4px',
+      'Dotted': '1px dotted',
+      'Dashed': '1px dashed',
+      'Double': '3px double'
+    };
+    
+    const borderValue = borderMap[newLeftBorder] || '1px';
+    box.leftBorder = `${borderValue} solid ${borderColor}`;
+    // 更新JRXML
+    updateJRXML();
+  }
+});
+
+// 监听下边框变化
+watch(() => currentElement.value?.box?.bottomBorder, (newBottomBorder) => {
+  if (!currentElement.value || !currentElement.value.box) return;
+  
+  // 如果边框样式为空字符串，清除下边框
+  if (!newBottomBorder || newBottomBorder === '') {
+    // 边框已清除，更新JRXML
+    updateJRXML();
+    return;
+  }
+  
+  // 如果边框是样式名称（如"Thin"），转换为完整的边框样式字符串
+  if (['Thin', 'Medium', 'Thick', 'Dashed', 'Dotted', 'Double', '1Point', '2Point', '4Point'].includes(newBottomBorder)) {
+    const box = currentElement.value.box;
+    const borderColor = box.bottomBorderColor || '#000000';
+    
+    const borderMap: Record<string, string> = {
+      'Thin': '1px',
+      '1Point': '1px',
+      '2Point': '2px',
+      '4Point': '4px',
+      'Dotted': '1px dotted',
+      'Dashed': '1px dashed',
+      'Double': '3px double'
+    };
+    
+    const borderValue = borderMap[newBottomBorder] || '1px';
+    box.bottomBorder = `${borderValue} solid ${borderColor}`;
+    // 更新JRXML
+    updateJRXML();
+  }
+});
+
+// 监听右边框变化
+watch(() => currentElement.value?.box?.rightBorder, (newRightBorder) => {
+  if (!currentElement.value || !currentElement.value.box) return;
+  
+  // 如果边框样式为空字符串，清除右边框
+  if (!newRightBorder || newRightBorder === '') {
+    // 边框已清除，更新JRXML
+    updateJRXML();
+    return;
+  }
+  
+  // 如果边框是样式名称（如"Thin"），转换为完整的边框样式字符串
+  if (['Thin', 'Medium', 'Thick', 'Dashed', 'Dotted', 'Double', '1Point', '2Point', '4Point'].includes(newRightBorder)) {
+    const box = currentElement.value.box;
+    const borderColor = box.rightBorderColor || '#000000';
+    
+    const borderMap: Record<string, string> = {
+      'Thin': '1px',
+      '1Point': '1px',
+      '2Point': '2px',
+      '4Point': '4px',
+      'Dotted': '1px dotted',
+      'Dashed': '1px dashed',
+      'Double': '3px double'
+    };
+    
+    const borderValue = borderMap[newRightBorder] || '1px';
+    box.rightBorder = `${borderValue} solid ${borderColor}`;
+    // 更新JRXML
+    updateJRXML();
+  }
+});
 
 
 
@@ -3588,9 +3898,9 @@ const startResizingElement = (event: MouseEvent, bandIndex: number, elementIndex
           newWidth = Math.min(newWidth, maxElementWidth);
           newHeight = Math.min(newHeight, availableHeight);
           
-          // 先应用基本的大小调整
-          element.width = newWidth;
-          element.height = newHeight;
+          // 先应用基本的大小调整，确保尺寸为整数
+          element.width = Math.round(newWidth);
+          element.height = Math.round(newHeight);
           
           // 然后应用对齐线吸附功能（如果启用）
           if (enableSnapToAlignment.value) {
@@ -3607,13 +3917,13 @@ const startResizingElement = (event: MouseEvent, bandIndex: number, elementIndex
               // 判断是左边对齐还是右边对齐
               if (Math.abs(element.x - targetPosition) < 3) {
                 // 左边对齐，保持x不变，调整宽度
-                element.width = element.width + (element.x - targetPosition);
+                element.width = Math.round(element.width + (element.x - targetPosition));
               } else if (Math.abs((element.x + newWidth) - targetPosition) < 3) {
                 // 右边对齐，调整宽度
-                element.width = targetPosition - element.x;
+                element.width = Math.round(targetPosition - element.x);
               } else if (Math.abs((element.x + newWidth/2) - targetPosition) < 3) {
                 // 中心对齐，调整宽度
-                element.width = (targetPosition - element.x) * 2;
+                element.width = Math.round((targetPosition - element.x) * 2);
               }
             }
             
@@ -3627,13 +3937,13 @@ const startResizingElement = (event: MouseEvent, bandIndex: number, elementIndex
               // 判断是顶部对齐还是底部对齐
               if (Math.abs(element.y - targetPosition) < 3) {
                 // 顶部对齐，保持y不变，调整高度
-                element.height = element.height + (element.y - targetPosition);
+                element.height = Math.round(element.height + (element.y - targetPosition));
               } else if (Math.abs((element.y + newHeight) - targetPosition) < 3) {
                 // 底部对齐，调整高度
-                element.height = targetPosition - element.y;
+                element.height = Math.round(targetPosition - element.y);
               } else if (Math.abs((element.y + newHeight/2) - targetPosition) < 3) {
                 // 中心对齐，调整高度
-                element.height = (targetPosition - element.y) * 2;
+                element.height = Math.round((targetPosition - element.y) * 2);
               }
             }
           }
@@ -3976,11 +4286,12 @@ const handleBandSelectionChange = (): void => {
 .paper-container {
   flex: 1;
   position: relative;
-  overflow: auto;
+  overflow: hidden;
   display: flex;
-  justify-content: flex-start; /* 修改为左对齐 */
+  justify-content: center; /* 修改为居中对齐 */
   align-items: flex-start;
-  padding: 0; /* 移除内边距，确保坐标匹配 */
+  padding: 20px; /* 添加内边距，确保纸张周围有空间 */
+  background-color: #f0f0f0; /* 添加背景色，与DesignerCanvas保持一致 */
 }
 
 /* 底部面板调整手柄 */
@@ -4658,6 +4969,14 @@ const handleBandSelectionChange = (): void => {
   border: v-bind('UI_CONSTANTS.BORDER_THIN + "px"') solid #d9d9d9;
   border-radius: v-bind('UI_CONSTANTS.BORDER_RADIUS_SMALL + "px"');
   cursor: pointer;
+}
+
+.hint {
+  display: block;
+  font-size: v-bind('UI_CONSTANTS.FONT_SIZE_MINI + "px"');
+  color: #666;
+  font-style: italic;
+  margin-top: v-bind('UI_CONSTANTS.SMALL_MARGIN + "px"');
 }
 
 .init-box-section {
