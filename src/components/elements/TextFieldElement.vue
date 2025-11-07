@@ -15,7 +15,7 @@
     @drag-start="handleDragStart"
     @resize-start="handleResizeStart"
   >
-    {{ displayText }}
+    <span @dblclick.stop="handleStartEditing">{{ displayText }}</span>
   </BaseElement>
 </template>
 
@@ -44,6 +44,7 @@ const emit = defineEmits<{
   select: [bandIndex: number, elementIndex: number];
   dragStart: [event: MouseEvent, bandIndex: number, elementIndex: number];
   resizeStart: [event: MouseEvent, bandIndex: number, elementIndex: number];
+  updateElement: [];
 }>();
 
 // 显示文本
@@ -69,5 +70,33 @@ const handleDragStart = (event: MouseEvent, bandIndex: number, elementIndex: num
 // 处理调整大小开始
 const handleResizeStart = (event: MouseEvent, bandIndex: number, elementIndex: number) => {
   emit('resizeStart', event, bandIndex, elementIndex);
+};
+
+// 开始编辑表达式
+const handleStartEditing = () => {
+  // 获取当前表达式，优先使用expression，其次使用fieldName
+  const currentExpression = props.element.expression || 
+                           (props.element.fieldName ? `$F{${props.element.fieldName}}` : '');
+  
+  // 使用prompt弹窗输入新表达式，默认值为当前表达式
+  const newExpression = prompt('请输入新的表达式:', currentExpression);
+  
+  // 如果用户点击了确定且表达式有变化，则更新表达式
+  if (newExpression !== null && newExpression !== currentExpression) {
+    // 更新元素表达式
+    if (newExpression.startsWith('$F{') && newExpression.endsWith('}')) {
+      // 如果是字段引用格式，提取字段名
+      const fieldName = newExpression.substring(3, newExpression.length - 1);
+      props.element.fieldName = fieldName;
+      props.element.expression = undefined;
+    } else {
+      // 否则作为完整表达式
+      props.element.expression = newExpression;
+      props.element.fieldName = undefined;
+    }
+    
+    // 触发父组件更新JRXML
+    emit('updateElement');
+  }
 };
 </script>","}}}

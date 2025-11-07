@@ -36,12 +36,15 @@
           <li><strong>Ctrl+V</strong>：粘贴元素</li>
           <li><strong>Delete/Backspace</strong>：删除选中元素（非编辑模式）</li>
           <li><strong>方向键</strong>：选择周围元素</li>
+          <li><strong>Shift+方向键</strong>：微调选中元素的位置（每次移动1像素）</li>
         </ul>
         
         <h4>5. 注意事项</h4>
         <ul>
           <li>元素不能超出纸张边界</li>
           <li>编辑文本时按Enter确认，Esc取消</li>
+          <li>双击静态文本框可以弹出输入框修改文本内容</li>
+          <li>双击动态文本框可以弹出输入框修改表达式内容</li>
           <li>拖动元素时不会实时更新JRXML，释放鼠标后才会更新</li>
           <li>所有修改会自动保存到本地存储</li>
         </ul>
