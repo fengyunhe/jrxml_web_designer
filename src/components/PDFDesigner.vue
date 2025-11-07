@@ -120,8 +120,8 @@
         
         <button @click="clearLocalStorage" class="btn-secondary">清空本地数据</button>
         <button @click="generateJRXML" class="btn-primary">生成JRXML</button>
-        <button @click="showRewardModal" class="btn-secondary">打赏</button>
-        <button @click="showHelpModal" class="btn-secondary">使用说明</button>
+        <button @click="showReward = true" class="btn-secondary">打赏</button>
+        <button @click="showHelp = true" class="btn-secondary">使用说明</button>
       </div>
     </div>
     
@@ -636,204 +636,31 @@
     </div>
     
     <!-- 底部标签页区域 -->
-    <ResizablePanel 
-      v-show="showBottomPanel"
-      position="bottom"
-      :initial-size="bottomPanelHeight"
-      :min-size="150"
-      :max-size="400"
-      :collapsible="true"
+    <BottomPanel
+      :visible="showBottomPanel"
+      :initial-height="bottomPanelHeight"
+      :report-properties="reportProperties"
+      :bands="bands"
+      :all-band-types="allBandTypes"
+      :selected-band-types="selectedBandTypes"
+      :jrxml-content="jrxmlContent"
+      @update:visible="showBottomPanel = $event"
       @size-change="handleBottomPanelSizeChange"
-    >
-      <div class="tab-navigation">
-        <button 
-          v-for="tab in tabs" 
-          :key="tab.id"
-          class="tab-button" 
-          :class="{ 'active': activeTab === tab.id }"
-          @click="activeTab = tab.id"
-        >
-          {{ tab.name }}
-        </button>
-      </div>
-      
-      <!-- 页面设置标签 -->
-      <div class="tab-content page-settings-tab" v-show="activeTab === 'pageSettings'">
-        <div class="settings-grid">
-          <div class="settings-section">
-            <h4>基本信息</h4>
-            <div class="form-group">
-              <label>报表名称</label>
-              <input v-model="reportProperties.name" type="text" />
-            </div>
-            <div class="form-row">
-              <div class="form-group flex-1">
-                <label>页面宽度</label>
-                <input v-model.number="reportProperties.pageWidth" type="number" />
-              </div>
-              <div class="form-group flex-1">
-                <label>页面高度</label>
-                <input v-model.number="reportProperties.pageHeight" type="number" />
-              </div>
-            </div>
-          </div>
-          
-          <div class="settings-section">
-            <h4>页边距设置</h4>
-            <div class="form-group">
-              <label>页边距 (px)</label>
-              <div class="margin-inputs">
-                <input v-model.number="reportProperties.leftMargin" type="number" placeholder="左" />
-                <input v-model.number="reportProperties.rightMargin" type="number" placeholder="右" />
-                <input v-model.number="reportProperties.topMargin" type="number" placeholder="上" />
-                <input v-model.number="reportProperties.bottomMargin" type="number" placeholder="下" />
-              </div>
-            </div>
-          </div>
-
-          <!-- 字体设置 - 紧凑布局 -->
-          <div class="settings-section font-settings-compact">
-            <h4>默认字体设置</h4>
-            <div class="font-settings-row">
-              <div class="font-setting-item">
-                <label>字体名称</label>
-                <select v-model="reportProperties.defaultFont.name">
-                  <option value="SansSerif">SansSerif</option>
-                  <option value="Serif">Serif</option>
-                  <option value="Monospaced">Monospaced</option>
-                  <option value="Arial">Arial</option>
-                  <option value="Times New Roman">Times New Roman</option>
-                  <option value="Noto Serif SC">Noto Serif SC</option>
-                </select>
-              </div>
-              <div class="font-setting-item">
-                <label>字体大小</label>
-                <input v-model.number="reportProperties.defaultFont.size" type="number" />
-              </div>
-            </div>
-            <div class="font-style-options">
-              <label>
-                <input v-model="reportProperties.defaultFont.isBold" type="checkbox" />
-                粗体
-              </label>
-              <label>
-                <input v-model="reportProperties.defaultFont.isItalic" type="checkbox" />
-                斜体
-              </label>
-              <label>
-                <input v-model="reportProperties.defaultFont.isUnderline" type="checkbox" />
-                下划线
-              </label>
-            </div>
-          </div>
-          
-          <!-- Band选择 -->
-          <div class="settings-section band-selection-section">
-            <h4>Band选择</h4>
-            <div class="band-selection-grid">
-              <div v-for="bandType in allBandTypes" :key="bandType.type" class="band-selection-item">
-                <label>
-                  <input 
-                    type="checkbox" 
-                    :value="bandType.type"
-                    v-model="selectedBandTypes"
-                    @change="handleBandSelectionChange"
-                  />
-                  {{ bandType.name }}
-                </label>
-              </div>
-            </div>
-            <div class="band-selection-note">
-              <small>勾选的band将自动添加到报表中，取消勾选的band将从报表中移除</small>
-            </div>
-          </div>
-        </div>
-      </div>
-      
-      <!-- JRXML内容标签 -->
-      <div class="tab-content jrxml-tab" v-show="activeTab === 'jrxml'">
-        <div class="jrxml-container">
-          <div class="jrxml-header">
-            <div class="jrxml-actions">
-              <button @click="copyJRXML" class="btn-secondary btn-small">复制</button>
-              <button @click="saveJRXML" class="btn-primary btn-small">应用</button>
-              <button @click="regenerateJRXML" class="btn-secondary btn-small">重新生成</button>
-            </div>
-          </div>
-          <div class="jrxml-content">
-            <textarea 
-              v-if="jrxmlContent" 
-              v-model="jrxmlContent" 
-              class="jrxml-editor" 
-              spellcheck="false"
-              @keyup.ctrl.s.prevent="saveJRXML"
-            ></textarea>
-            <div v-else class="jrxml-placeholder">点击"生成JRXML"按钮查看内容</div>
-          </div>
-        </div>
-      </div>
-    </ResizablePanel>
+      @update:report-properties="reportProperties = $event"
+      @update:selected-band-types="selectedBandTypes = $event"
+      @update:jrxml-content="jrxmlContent = $event"
+      @copy-jrxml="copyJRXML"
+      @save-jrxml="saveJRXML"
+      @regenerate-jrxml="regenerateJRXML"
+      @generate-jrxml="generateJRXML"
+      @band-selection-change="handleBandSelectionChange"
+    />
     
     <!-- 打赏弹窗 -->
-      <div v-if="showReward" class="reward-modal" @click.self="closeRewardModal">
-        <div class="reward-content">
-          <button class="close-btn" @click="closeRewardModal">×</button>
-          <h3>感谢您的支持！</h3>
-          <img src="/src/assets/FIREGOD_CN.jpg" alt="打赏码" class="reward-image">
-          <p>扫码打赏，感谢支持！</p>
-        </div>
-      </div>
-      
-      <!-- 使用说明弹窗 -->
-      <div v-if="showHelp" class="help-modal" @click.self="closeHelpModal">
-        <div class="help-content">
-          <button class="close-btn" @click="closeHelpModal">×</button>
-          <h3>PDF模板设计器使用说明</h3>
-          <div class="help-content-scroll">
-            <h4>1. 模板设计基础</h4>
-            <p>本工具用于可视化设计JasperReports的PDF报表模板，通过拖拽方式快速创建专业的PDF报表。</p>
-            
-            <h4>2. 操作步骤</h4>
-            <ol>
-              <li><strong>修改现有JRXML</strong>：打开底部面板，将现在的JRXML复制到代码区，然后点击应用</li>
-              <li><strong>添加元素</strong>：从左侧元素库拖拽元素到设计区域</li>
-              <li><strong>调整布局</strong>：拖动元素调整位置，拖拽右下角调整大小</li>
-              <li><strong>设置属性</strong>：选中元素后，在右侧面板设置属性</li>
-              <li><strong>配置数据</strong>：在左侧面板添加报表参数和数据字段</li>
-              <li><strong>生成JRXML</strong>：点击"生成JRXML"按钮导出报表模板</li>
-            </ol>
-            
-            <h4>3. 支持的元素类型</h4>
-            <ul>
-              <li>静态文本：显示固定文本内容</li>
-              <li>文本字段：显示动态数据字段</li>
-              <li>图片：插入图像元素</li>
-              <li>线条：添加分隔线</li>
-              <li>矩形：添加边框或背景块</li>
-            </ul>
-            
-            <h4>4. 快捷键</h4>
-            <ul>
-              <li><strong>Ctrl+S</strong>：保存当前文件</li>
-              <li><strong>Ctrl+B</strong>：切换底部JRXML面板显示</li>
-              <li><strong>Ctrl+Z</strong>：撤销操作</li>
-              <li><strong>Ctrl+Y</strong>：重做操作</li>
-              <li><strong>Ctrl+C</strong>：复制选中元素</li>
-              <li><strong>Ctrl+V</strong>：粘贴元素</li>
-              <li><strong>Delete/Backspace</strong>：删除选中元素（非编辑模式）</li>
-              <li><strong>方向键</strong>：选择周围元素</li>
-            </ul>
-            
-            <h4>5. 注意事项</h4>
-            <ul>
-              <li>元素不能超出纸张边界</li>
-              <li>编辑文本时按Enter确认，Esc取消</li>
-              <li>拖动元素时不会实时更新JRXML，释放鼠标后才会更新</li>
-              <li>所有修改会自动保存到本地存储</li>
-            </ul>
-          </div>
-        </div>
-    </div>
+    <RewardModal v-model:visible="showReward" />
+    
+    <!-- 使用说明弹窗 -->
+    <HelpModal v-model:visible="showHelp" />
   </div>
 </template>
 
@@ -849,6 +676,9 @@ interface DesignerFile {
 
 import ResizablePanel from './ResizablePanel.vue';
 import DesignerCanvas from './designer/DesignerCanvas.vue';
+import RewardModal from './modals/RewardModal.vue';
+import HelpModal from './modals/HelpModal.vue';
+import BottomPanel from './panels/BottomPanel.vue';
 import type {Band, BandType, DesignElement, ReportField, ReportParameter} from '../types';
 import {computed, onMounted, onUnmounted, ref, watch} from 'vue';
 import {
@@ -3483,9 +3313,8 @@ const saveJRXML = (): void => {
           element.box.borderColor = '#000000';
         }
         
-        // 确保所有元素大小合理
+        // 确保元素宽度合理（但不强制最小高度，以保留JRXML原始设置）
         if (element.width < ELEMENT_CONSTANTS.MIN_WIDTH) element.width = ELEMENT_CONSTANTS.MIN_WIDTH; // 确保最小宽度
-        if (element.height < ELEMENT_CONSTANTS.MIN_HEIGHT) element.height = ELEMENT_CONSTANTS.MIN_HEIGHT; // 确保最小高度
         
         // 对于box元素，确保解析的边框属性正确应用
         if (element.box) {
@@ -3608,16 +3437,9 @@ const saveJRXML = (): void => {
         }
       });
       
-      // 重新计算band所需最小高度
-      let requiredHeight = 0;
-      band.elements.forEach(element => {
-        const elementBottom = element.y + element.height;
-        requiredHeight = Math.max(requiredHeight, elementBottom);
-      });
-      
-      // 确保band高度足够
-      const additionalMargin = band.type === BAND_TYPE_CONSTANTS.DETAIL ? BAND_CONSTANTS.DETAIL_ADDITIONAL_MARGIN : BAND_CONSTANTS.DEFAULT_ADDITIONAL_MARGIN;
-      band.height = Math.max(requiredHeight + additionalMargin, band.height, BAND_CONSTANTS.MIN_HEIGHT);
+      // 确保band高度至少为最小高度
+      const minHeight = BAND_CONSTANTS.MIN_HEIGHT;
+      band.height = Math.max(band.height, minHeight);
     });
     
     // 保存到本地存储
@@ -3862,24 +3684,8 @@ onUnmounted(() => {
 // 打赏相关
 const showReward = ref(false);
 
-const showRewardModal = () => {
-  showReward.value = true;
-};
-
-const closeRewardModal = () => {
-  showReward.value = false;
-};
-
 // 使用说明相关
 const showHelp = ref(false);
-
-const showHelpModal = () => {
-  showHelp.value = true;
-};
-
-const closeHelpModal = () => {
-  showHelp.value = false;
-};
 
 // 更新Band高度
 const updateBandHeight = (index: number): void => {
@@ -4026,139 +3832,6 @@ const handleBandSelectionChange = (): void => {
 
 .property-panel {
   overflow: hidden;
-}
-
-/* 当左右面板隐藏时，中间设计区域扩展 */
-/* 打赏弹窗样式 */
-.reward-modal {
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background-color: rgba(0, 0, 0, 0.5);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 1000;
-  }
-  
-  .reward-content {
-    background-color: white;
-    border-radius: 8px;
-    padding: 20px;
-    max-width: 400px;
-    width: 90%;
-    text-align: center;
-    position: relative;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-  }
-  
-  .close-btn {
-    position: absolute;
-    top: 10px;
-    right: 15px;
-    font-size: 24px;
-    background: none;
-    border: none;
-    cursor: pointer;
-    color: #666;
-    width: 30px;
-    height: 30px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: 50%;
-    transition: background-color 0.2s;
-  }
-  
-  .close-btn:hover {
-    background-color: #f0f0f0;
-  }
-  
-  .reward-image {
-    max-width: 100%;
-    height: auto;
-    border-radius: 4px;
-    margin: 20px 0;
-  }
-  
-  .reward-content h3 {
-    margin-top: 10px;
-    color: #333;
-  }
-  
-  .reward-content p {
-    color: #666;
-    margin-top: 10px;
-  }
-
-
-/* 使用说明弹窗样式 */
-.help-modal {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-color: rgba(0, 0, 0, 0.5);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1000;
-}
-
-.help-content {
-  background-color: white;
-  border-radius: 8px;
-  padding: 20px;
-  max-width: 800px;
-  width: 90%;
-  max-height: 80vh;
-  position: relative;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-  display: flex;
-  flex-direction: column;
-}
-
-.help-content-scroll {
-  flex: 1;
-  overflow-y: auto;
-  padding-right: 10px;
-}
-
-.help-content h3 {
-  margin-top: 10px;
-  color: #333;
-  text-align: center;
-}
-
-.help-content h4 {
-  margin-top: 20px;
-  margin-bottom: 10px;
-  color: #444;
-}
-
-.help-content p {
-  color: #666;
-  margin-bottom: 10px;
-  line-height: 1.6;
-}
-
-.help-content ol,
-.help-content ul {
-  color: #666;
-  margin-bottom: 15px;
-  padding-left: 25px;
-}
-
-.help-content li {
-  margin-bottom: 8px;
-  line-height: 1.5;
-}
-
-.help-content strong {
-  color: #333;
 }
 
 /* 底部面板的过渡样式 */
@@ -4839,279 +4512,7 @@ const handleBandSelectionChange = (): void => {
   height: 100%;
 }
 
-.tabs-container {
-  background-color: #f5f5f5;
-  border-top: 1px solid #ddd;
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-  max-height: 70vh; /* 限制最大高度，避免占用过多屏幕空间 */
-}
 
-.tab-navigation {
-  display: flex;
-  background-color: #e9e9e9;
-  border-bottom: 1px solid #ddd;
-  padding: 0 10px;
-  flex-shrink: 0; /* 确保导航栏不会被压缩 */
-  position: sticky;
-  top: 0;
-  z-index: 10;
-}
-
-.tab-button {
-  padding: 10px 20px;
-  border: none;
-  background: none;
-  cursor: pointer;
-  font-size: 14px;
-  border-bottom: 2px solid transparent;
-  transition: all 0.3s ease;
-}
-
-.tab-button.active {
-  border-bottom-color: #4a90e2;
-  color: #4a90e2;
-  font-weight: bold;
-}
-
-.tab-button:hover:not(.active) {
-  background-color: #f0f0f0;
-}
-
-.tab-content {
-  flex: 1;
-  overflow: auto;
-  min-height: 0; /* 确保flex子元素可以收缩 */
-  padding: 15px;
-  box-sizing: border-box;
-}
-
-.jrxml-tab {
-  background-color: white;
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-}
-
-.page-settings-tab {
-    background-color: white;
-    height: 100%;
-    box-sizing: border-box;
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
-  }
-
-  .settings-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: 16px;
-  overflow-y: auto;
-  flex: 1;
-  min-height: 0;
-  padding: 15px;
-}
-
-  .settings-section {
-    background-color: #f9f9f9;
-    border-radius: v-bind('UI_CONSTANTS.BORDER_RADIUS_MEDIUM + "px"');
-    padding: v-bind('UI_CONSTANTS.PANEL_PADDING + "px"');
-    border: v-bind('UI_CONSTANTS.BORDER_THIN + "px"') solid #e8e8e8;
-  }
-
-  .settings-section h4 {
-    margin-top: 0;
-    margin-bottom: v-bind('UI_CONSTANTS.MEDIUM_MARGIN + "px"');
-    color: #333;
-    font-size: v-bind('UI_CONSTANTS.FONT_SIZE_MEDIUM + "px"');
-    font-weight: 600;
-    border-bottom: v-bind('UI_CONSTANTS.BORDER_THIN + "px"') solid #e0e0e0;
-    padding-bottom: v-bind('UI_CONSTANTS.SMALL_MARGIN + "px"');
-  }
-
-  /* 表单行布局 */
-  .form-row {
-    display: flex;
-    gap: v-bind('UI_CONSTANTS.MEDIUM_MARGIN + "px"');
-    margin-bottom: 0.75rem;
-  }
-
-  .flex-1 {
-    flex: 1;
-  }
-
-  /* 紧凑字体设置样式 */
-  .font-settings-compact {
-    grid-column: span 1;
-  }
-
-  .font-settings-row {
-    display: flex;
-    gap: v-bind('UI_CONSTANTS.MEDIUM_MARGIN + "px"');
-    margin-bottom: v-bind('UI_CONSTANTS.MEDIUM_MARGIN + "px"');
-  }
-
-  .font-setting-item {
-    flex: 1;
-  }
-
-  .font-setting-item select,
-  .font-setting-item input {
-    width: 100%;
-    padding: v-bind('UI_CONSTANTS.INPUT_PADDING_SMALL');
-    border: v-bind('UI_CONSTANTS.BORDER_THIN + "px"') solid #ddd;
-    border-radius: v-bind('UI_CONSTANTS.BORDER_RADIUS_SMALL + "px"');
-    font-size: v-bind('UI_CONSTANTS.FONT_SIZE_SMALL + "px"');
-  }
-
-  .font-style-options {
-    display: flex;
-    gap: v-bind('UI_CONSTANTS.MEDIUM_GAP + "px"');
-    flex-wrap: wrap;
-  }
-
-  .font-style-options label {
-    display: flex;
-    align-items: center;
-    gap: v-bind('UI_CONSTANTS.SMALL_GAP + "px"');
-    margin-bottom: 0;
-    font-weight: normal;
-    font-size: v-bind('UI_CONSTANTS.FONT_SIZE_SMALL + "px"');
-  }
-
-  /* 紧凑Band设置样式 */
-  .band-settings-compact {
-    grid-column: span 1;
-  }
-
-  .font-settings-section {
-    grid-column: 1 / -1;
-    padding: v-bind('UI_CONSTANTS.PANEL_PADDING + "px"');
-    background-color: #f9f9f9;
-    border-radius: v-bind('UI_CONSTANTS.BORDER_RADIUS_SMALL + "px"');
-    margin-top: v-bind('UI_CONSTANTS.SMALL_MARGIN + "px"');
-  }
-
-  .font-settings-section h4 {
-    margin-top: 0;
-    margin-bottom: v-bind('UI_CONSTANTS.MEDIUM_MARGIN + "px"');
-    color: #333;
-    font-size: v-bind('UI_CONSTANTS.FONT_SIZE_HEADER + "px"');
-  }
-
-.checkbox-group {
-    display: flex;
-    gap: v-bind('UI_CONSTANTS.MEDIUM_GAP + "px"');
-    flex-wrap: wrap;
-  }
-
-  .checkbox-group label {
-    display: flex;
-    align-items: center;
-    gap: v-bind('UI_CONSTANTS.SMALL_GAP + "px"');
-    margin-bottom: 0;
-    font-weight: normal;
-    font-size: v-bind('UI_CONSTANTS.FONT_SIZE_DEFAULT + "px"');
-  }
-
-.jrxml-tab {
-  background-color: white;
-}
-
-.jrxml-container {
-  background-color: #f5f5f5;
-  border-radius: v-bind('UI_CONSTANTS.BORDER_RADIUS_SMALL + "px"');
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-  flex: 1;
-  min-height: 0;
-}
-
-.jrxml-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: v-bind('UI_CONSTANTS.SMALL_MARGIN + "px"') v-bind('UI_CONSTANTS.MEDIUM_MARGIN + "px"');
-  background-color: #e9e9e9;
-  border-bottom: v-bind('UI_CONSTANTS.BORDER_THIN + "px"') solid #ddd;
-  flex-shrink: 0;
-}
-
-.jrxml-content {
-  flex: 1;
-  overflow: auto;
-  min-height: 0;
-  border-radius: v-bind('UI_CONSTANTS.BORDER_RADIUS_SMALL + "px"');
-  border: v-bind('UI_CONSTANTS.BORDER_THIN + "px"') solid #ddd;
-}
-
-.jrxml-pre {
-  margin: 0;
-  padding: v-bind('UI_CONSTANTS.MEDIUM_MARGIN + "px"');
-  background-color: #1e1e1e;
-  color: #d4d4d4;
-  font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
-  font-size: v-bind('UI_CONSTANTS.FONT_SIZE_DEFAULT + "px"');
-  white-space: pre-wrap;
-  word-wrap: break-word;
-  min-height: 100%;
-  user-select: text;
-  cursor: text;
-  -webkit-user-select: text;
-  -moz-user-select: text;
-  -ms-user-select: text;
-  border: none;
-  outline: none;
-  overflow-wrap: break-word;
-}
-
-.jrxml-editor {
-  width: 100%;
-  height: 100%;
-  padding: v-bind('UI_CONSTANTS.PANEL_PADDING + "px"');
-  background-color: #f8f9fa;
-  font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
-  font-size: v-bind('UI_CONSTANTS.FONT_SIZE_SMALL + "px"');
-  line-height: 1.5;
-  white-space: pre-wrap;
-  word-wrap: break-word;
-  border: none;
-  outline: none;
-  resize: none;
-  tab-size: 2;
-  box-sizing: border-box;
-  /* 优化代码显示效果 */
-  color: #333;
-  text-shadow: 0 1px 0 rgba(255,255,255,.8);
-  /* 增加行号效果的背景 */
-  background-image: linear-gradient(transparent 19px, #eee 19px, #eee 20px, transparent 20px);
-  background-size: 100% v-bind('UI_CONSTANTS.LINE_HEIGHT_PX + "px"');
-  background-position: 0 1em;
-}
-
-.jrxml-editor:focus {
-  border: none;
-  outline: none;
-}
-
-.jrxml-actions {
-  display: flex;
-  gap: v-bind('UI_CONSTANTS.SMALL_GAP + "px"');
-}
-
-.jrxml-placeholder {
-  padding: v-bind('UI_CONSTANTS.LARGE_MARGIN + "px"') v-bind('UI_CONSTANTS.MEDIUM_MARGIN + "px"');
-  text-align: center;
-  color: #999;
-  height: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
 
 /* 元素标签页样式 */
 .element-tabs {

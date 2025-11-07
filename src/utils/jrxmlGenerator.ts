@@ -1,5 +1,20 @@
 // 导入类型定义
 import type { DesignElement, BandType } from '../types';
+// 导入过时标签和属性的映射表
+import {
+  DEPRECATED_ATTRIBUTES_MAP,
+  DEPRECATED_ATTRIBUTE_VALUES_MAP,
+  DEPRECATED_ELEMENTS_MAP,
+  BOX_DEPRECATED_ATTRIBUTES,
+  GRAPHIC_ELEMENT_DEPRECATED_ATTRIBUTES,
+  isAttributeDeprecated,
+  isElementDeprecated,
+  getNewAttributeName,
+  getNewElementName,
+  convertAttributeValue,
+  isBoxAttributeDeprecated,
+  isGraphicElementAttributeDeprecated
+} from './deprecatedJrxmlMappings';
 
 // JRXML生成器
 export interface ReportProperties {
@@ -134,7 +149,19 @@ export function generateJRXMLContent(
       jrxml += `\n  <${band.type}>`;
       
       // 根据XSD规范，height属性应该在band元素上
-      jrxml += `\n    <band height="${band.height}">`;
+      let bandAttributes = `height="${band.height}"`;
+      
+      // 优先使用非过时的splitType属性，只有在没有splitType属性时才使用过时的isSplitAllowed属性作为fallback
+      if (band.splitType) {
+        // 如果已经指定了splitType属性，直接使用
+        bandAttributes += ` splitType="${band.splitType}"`;
+      } else if (band.isSplitAllowed !== undefined) {
+        // 只有在没有splitType属性时才使用过时的isSplitAllowed属性
+        const splitTypeValue = band.isSplitAllowed ? 'Stretch' : 'Prevent';
+        bandAttributes += ` splitType="${splitTypeValue}"`;
+      }
+      
+      jrxml += `\n    <band ${bandAttributes}>`;
       
       // 添加区域内的元素，根据band类型验证元素位置
       const bandTypeHeight = getDefaultBandHeight(band.type);
@@ -198,64 +225,120 @@ function generateBoxXML(box: any): string {
   
   let xml = '      <box';
   
-  // 添加box的属性
+  // 添加非过时的box属性（padding相关）
   if (box.padding !== undefined) xml += ` padding="${box.padding}"`;
-  if (box.border) xml += ` border="${validateBorderValue(box.border)}"`;
-  if (box.borderColor) xml += ` borderColor="${box.borderColor}"`;
   if (box.topPadding !== undefined) xml += ` topPadding="${box.topPadding}"`;
-  if (box.topBorder) xml += ` topBorder="${validateBorderValue(box.topBorder)}"`;
-  if (box.topBorderColor) xml += ` topBorderColor="${box.topBorderColor}"`;
   if (box.leftPadding !== undefined) xml += ` leftPadding="${box.leftPadding}"`;
-  if (box.leftBorder) xml += ` leftBorder="${validateBorderValue(box.leftBorder)}"`;
-  if (box.leftBorderColor) xml += ` leftBorderColor="${box.leftBorderColor}"`;
   if (box.bottomPadding !== undefined) xml += ` bottomPadding="${box.bottomPadding}"`;
-  if (box.bottomBorder) xml += ` bottomBorder="${validateBorderValue(box.bottomBorder)}"`;
-  if (box.bottomBorderColor) xml += ` bottomBorderColor="${box.bottomBorderColor}"`;
   if (box.rightPadding !== undefined) xml += ` rightPadding="${box.rightPadding}"`;
-  if (box.rightBorder) xml += ` rightBorder="${validateBorderValue(box.rightBorder)}"`;
-  if (box.rightBorderColor) xml += ` rightBorderColor="${box.rightBorderColor}"`;
+  
+  // 注意：不再使用过时的border和borderColor属性，而是使用pen子元素
   
   xml += '>\n';
   
-  // 添加全局pen子元素，如果存在的话
+  // 优先使用非过时的pen子元素，只有在没有pen子元素时才使用过时的border属性作为fallback
   if (box.pen) {
     xml += '        <pen';
     if (box.pen.lineWidth !== undefined) xml += ` lineWidth="${box.pen.lineWidth}"`;
     if (box.pen.lineStyle) xml += ` lineStyle="${box.pen.lineStyle}"`;
     if (box.pen.lineColor) xml += ` lineColor="${box.pen.lineColor}"`;
     xml += '/>\n';
+  } else if (box.border || box.borderColor) {
+    // 只有在没有pen子元素时才使用过时的border属性
+    xml += '        <pen';
+    // 对于border属性，如果是数字字符串，直接使用数字值
+    if (box.border) {
+      if (/^\d+$/.test(box.border)) {
+        xml += ` lineWidth="${box.border}"`;
+      } else {
+        xml += ` lineWidth="${validateBorderValue(box.border)}"`;
+      }
+    }
+    if (box.borderColor) xml += ` lineColor="${box.borderColor}"`;
+    xml += '/>\n';
   }
   
-  // 添加各边的pen子元素
+  // 优先使用非过时的topPen子元素，只有在没有topPen子元素时才使用过时的topBorder属性作为fallback
   if (box.topPen) {
     xml += '        <topPen';
     if (box.topPen.lineWidth !== undefined) xml += ` lineWidth="${box.topPen.lineWidth}"`;
     if (box.topPen.lineStyle) xml += ` lineStyle="${box.topPen.lineStyle}"`;
     if (box.topPen.lineColor) xml += ` lineColor="${box.topPen.lineColor}"`;
     xml += '/>\n';
+  } else if (box.topBorder || box.topBorderColor) {
+    // 只有在没有topPen子元素时才使用过时的topBorder属性
+    xml += '        <topPen';
+    if (box.topBorder) {
+      if (/^\d+$/.test(box.topBorder)) {
+        xml += ` lineWidth="${box.topBorder}"`;
+      } else {
+        xml += ` lineWidth="${validateBorderValue(box.topBorder)}"`;
+      }
+    }
+    if (box.topBorderColor) xml += ` lineColor="${box.topBorderColor}"`;
+    xml += '/>\n';
   }
   
+  // 优先使用非过时的leftPen子元素，只有在没有leftPen子元素时才使用过时的leftBorder属性作为fallback
   if (box.leftPen) {
     xml += '        <leftPen';
     if (box.leftPen.lineWidth !== undefined) xml += ` lineWidth="${box.leftPen.lineWidth}"`;
     if (box.leftPen.lineStyle) xml += ` lineStyle="${box.leftPen.lineStyle}"`;
     if (box.leftPen.lineColor) xml += ` lineColor="${box.leftPen.lineColor}"`;
     xml += '/>\n';
+  } else if (box.leftBorder || box.leftBorderColor) {
+    // 只有在没有leftPen子元素时才使用过时的leftBorder属性
+    xml += '        <leftPen';
+    if (box.leftBorder) {
+      if (/^\d+$/.test(box.leftBorder)) {
+        xml += ` lineWidth="${box.leftBorder}"`;
+      } else {
+        xml += ` lineWidth="${validateBorderValue(box.leftBorder)}"`;
+      }
+    }
+    if (box.leftBorderColor) xml += ` lineColor="${box.leftBorderColor}"`;
+    xml += '/>\n';
   }
   
+  // 优先使用非过时的bottomPen子元素，只有在没有bottomPen子元素时才使用过时的bottomBorder属性作为fallback
   if (box.bottomPen) {
     xml += '        <bottomPen';
     if (box.bottomPen.lineWidth !== undefined) xml += ` lineWidth="${box.bottomPen.lineWidth}"`;
     if (box.bottomPen.lineStyle) xml += ` lineStyle="${box.bottomPen.lineStyle}"`;
     if (box.bottomPen.lineColor) xml += ` lineColor="${box.bottomPen.lineColor}"`;
     xml += '/>\n';
+  } else if (box.bottomBorder || box.bottomBorderColor) {
+    // 只有在没有bottomPen子元素时才使用过时的bottomBorder属性
+    xml += '        <bottomPen';
+    if (box.bottomBorder) {
+      if (/^\d+$/.test(box.bottomBorder)) {
+        xml += ` lineWidth="${box.bottomBorder}"`;
+      } else {
+        xml += ` lineWidth="${validateBorderValue(box.bottomBorder)}"`;
+      }
+    }
+    if (box.bottomBorderColor) xml += ` lineColor="${box.bottomBorderColor}"`;
+    xml += '/>\n';
   }
   
+  // 优先使用非过时的rightPen子元素，只有在没有rightPen子元素时才使用过时的rightBorder属性作为fallback
   if (box.rightPen) {
     xml += '        <rightPen';
     if (box.rightPen.lineWidth !== undefined) xml += ` lineWidth="${box.rightPen.lineWidth}"`;
     if (box.rightPen.lineStyle) xml += ` lineStyle="${box.rightPen.lineStyle}"`;
     if (box.rightPen.lineColor) xml += ` lineColor="${box.rightPen.lineColor}"`;
+    xml += '/>\n';
+  } else if (box.rightBorder || box.rightBorderColor) {
+    // 只有在没有rightPen子元素时才使用过时的rightBorder属性
+    xml += '        <rightPen';
+    if (box.rightBorder) {
+      if (/^\d+$/.test(box.rightBorder)) {
+        xml += ` lineWidth="${box.rightBorder}"`;
+      } else {
+        xml += ` lineWidth="${validateBorderValue(box.rightBorder)}"`;
+      }
+    }
+    if (box.rightBorderColor) xml += ` lineColor="${box.rightBorderColor}"`;
     xml += '/>\n';
   }
   
@@ -276,13 +359,14 @@ function validateElementPosition(element: any, bandHeight: number): any {
   validatedElement.width = validatedElement.width || 100;
   validatedElement.height = validatedElement.height || 20;
   
+  // 注释掉调整元素高度的代码，保留原始高度
   // 检查元素是否超出band高度
-  const elementBottom = validatedElement.y + validatedElement.height;
-  if (elementBottom > bandHeight) {
-    // 如果元素超出band高度，调整元素高度以适应band
-    validatedElement.height = Math.max(10, bandHeight - validatedElement.y);
-    console.warn(`元素位置超出band高度范围，已调整元素高度从${element.height}到${validatedElement.height}`);
-  }
+  // const elementBottom = validatedElement.y + validatedElement.height;
+  // if (elementBottom > bandHeight) {
+  //   // 如果元素超出band高度，调整元素高度以适应band
+  //   validatedElement.height = Math.max(10, bandHeight - validatedElement.y);
+  //   console.warn(`元素位置超出band高度范围，已调整元素高度从${element.height}到${validatedElement.height}`);
+  // }
   
   return validatedElement;
 }
@@ -325,12 +409,22 @@ function generateStaticTextXML(element: any): string {
   // 确保始终包含textElement和font元素，符合DTD结构
   let textElementAttrs = '';
   
-  // 添加textAlignment属性，确保符合DTD
+  // 优先使用非过时的markup属性，只有在没有markup属性时才使用过时的isStyledText属性作为fallback
+  if (element.markup) {
+    // 如果已经指定了markup属性，直接使用
+    textElementAttrs += ` markup="${element.markup}"`;
+  } else if (element.isStyledText !== undefined) {
+    // 只有在没有markup属性时才使用过时的isStyledText属性
+    const markupValue = element.isStyledText ? 'styled' : 'none';
+    textElementAttrs += ` markup="${markupValue}"`;
+  }
+  
+  // 只添加非过时的textAlignment属性，确保符合DTD
   if (element.textAlignment && ['Left', 'Center', 'Right', 'Justified'].includes(element.textAlignment)) {
     textElementAttrs += ` textAlignment="${element.textAlignment}"`;
   }
   
-  // 添加verticalAlignment属性，确保符合DTD
+  // 只添加非过时的verticalAlignment属性，确保符合DTD
   if (element.verticalAlignment && ['Top', 'Middle', 'Bottom'].includes(element.verticalAlignment)) {
     textElementAttrs += ` verticalAlignment="${element.verticalAlignment}"`;
   }
@@ -370,8 +464,14 @@ function generateTextFieldXML(element: any): string {
   let xml = `    <textField`;
   
   // 添加textField的特有属性，确保符合XSD规范
-  if (element.isStretchWithOverflow !== undefined) {
-    xml += ` isStretchWithOverflow="${element.isStretchWithOverflow}"`;
+  // 优先使用非过时的textAdjust属性，只有在没有textAdjust属性时才使用过时的isStretchWithOverflow属性作为fallback
+  if (element.textAdjust) {
+    // 如果已经指定了textAdjust属性，直接使用
+    xml += ` textAdjust="${element.textAdjust}"`;
+  } else if (element.isStretchWithOverflow !== undefined) {
+    // 只有在没有textAdjust属性时才使用过时的isStretchWithOverflow属性
+    const textAdjustValue = element.isStretchWithOverflow ? 'StretchHeight' : 'CutText';
+    xml += ` textAdjust="${textAdjustValue}"`;
   }
   
   if (element.evaluationTime && element.evaluationTime !== 'Now') {
@@ -467,10 +567,12 @@ function generateImageXML(element: any): string {
     xml += ` scaleImage="${element.scaleImage}"`;
   }
   
+  // 处理过时的hAlign属性，转换为hAlign属性
   if (element.hAlign && ['Left', 'Center', 'Right'].includes(element.hAlign)) {
     xml += ` hAlign="${element.hAlign}"`;
   }
   
+  // 处理过时的vAlign属性，转换为vAlign属性
   if (element.vAlign && ['Top', 'Middle', 'Bottom'].includes(element.vAlign)) {
     xml += ` vAlign="${element.vAlign}"`;
   }
@@ -485,6 +587,7 @@ function generateImageXML(element: any): string {
 
 // 生成线条XML
 function generateLineXML(element: any): string {
+  // 处理过时的direction属性，转换为direction属性
   const direction = element.lineDirection || element.direction || 'TopDown'; // XSD中默认是TopDown
   let xml = `    <line direction="${direction}">
       <reportElement x="${toInt(element.x)}" y="${toInt(element.y)}" width="${toInt(element.width)}" height="${toInt(element.height)}"/>
@@ -497,6 +600,7 @@ function generateRectangleXML(element: any): string {
   let xml = `    <rectangle>
       <reportElement x="${toInt(element.x)}" y="${toInt(element.y)}" width="${toInt(element.width)}" height="${toInt(element.height)}"`;
   
+  // 处理过时的backcolor属性，转换为backcolor属性
   if (element.backcolor) {
     xml += ` backcolor="${element.backcolor}"`;
   }
@@ -569,11 +673,23 @@ export function parseJRXMLContent(jrxmlContent: string): { properties: ReportPro
         const height = parseInt(bandElem.getAttribute('height') || '0');
         const elements = parseBandElements(bandElem);
         
-        bands.push({
+        const band: any = {
           type: type as BandType,
           height,
           elements
-        });
+        };
+        
+        // 优先使用非过时的splitType属性，只有在没有splitType属性时才使用过时的isSplitAllowed属性作为fallback
+        if (bandElem.hasAttribute('splitType')) {
+          // 如果已经指定了splitType属性，直接使用
+          band.splitType = bandElem.getAttribute('splitType');
+        } else if (bandElem.hasAttribute('isSplitAllowed')) {
+          // 只有在没有splitType属性时才使用过时的isSplitAllowed属性
+          const isSplitAllowed = bandElem.getAttribute('isSplitAllowed') === 'true';
+          band.splitType = isSplitAllowed ? 'Stretch' : 'Prevent';
+        }
+        
+        bands.push(band);
       }
     }
   });
@@ -657,27 +773,84 @@ function parseElement(element: Element, type: string): any {
 function parseBoxElement(boxElement: Element): any {
   const box = {} as any;
   
-  // 解析box属性
-  if (boxElement.hasAttribute('border')) box.border = boxElement.getAttribute('border');
-  if (boxElement.hasAttribute('borderColor')) box.borderColor = boxElement.getAttribute('borderColor');
-  if (boxElement.hasAttribute('padding')) box.padding = parseInt(boxElement.getAttribute('padding') || '0');
+  // 解析padding属性
+  if (boxElement.hasAttribute('padding')) {
+    box.padding = parseInt(boxElement.getAttribute('padding') || '0');
+  }
   
-  // 解析各边的边框属性
-  if (boxElement.hasAttribute('topBorder')) box.topBorder = boxElement.getAttribute('topBorder');
-  if (boxElement.hasAttribute('topBorderColor')) box.topBorderColor = boxElement.getAttribute('topBorderColor');
-  if (boxElement.hasAttribute('topPadding')) box.topPadding = parseInt(boxElement.getAttribute('topPadding') || '0');
+  // 解析各方向的padding属性
+  if (boxElement.hasAttribute('topPadding')) {
+    box.topPadding = parseInt(boxElement.getAttribute('topPadding') || '0');
+  }
+  if (boxElement.hasAttribute('leftPadding')) {
+    box.leftPadding = parseInt(boxElement.getAttribute('leftPadding') || '0');
+  }
+  if (boxElement.hasAttribute('bottomPadding')) {
+    box.bottomPadding = parseInt(boxElement.getAttribute('bottomPadding') || '0');
+  }
+  if (boxElement.hasAttribute('rightPadding')) {
+    box.rightPadding = parseInt(boxElement.getAttribute('rightPadding') || '0');
+  }
   
-  if (boxElement.hasAttribute('leftBorder')) box.leftBorder = boxElement.getAttribute('leftBorder');
-  if (boxElement.hasAttribute('leftBorderColor')) box.leftBorderColor = boxElement.getAttribute('leftBorderColor');
-  if (boxElement.hasAttribute('leftPadding')) box.leftPadding = parseInt(boxElement.getAttribute('leftPadding') || '0');
+  // 解析过时的border属性，转换为pen子元素
+  if (boxElement.hasAttribute('border')) {
+    if (!box.pen) box.pen = {};
+    box.pen.lineWidth = parseInt(boxElement.getAttribute('border') || '0');
+  }
   
-  if (boxElement.hasAttribute('bottomBorder')) box.bottomBorder = boxElement.getAttribute('bottomBorder');
-  if (boxElement.hasAttribute('bottomBorderColor')) box.bottomBorderColor = boxElement.getAttribute('bottomBorderColor');
-  if (boxElement.hasAttribute('bottomPadding')) box.bottomPadding = parseInt(boxElement.getAttribute('bottomPadding') || '0');
+  // 解析过时的borderColor属性，转换为pen子元素
+  if (boxElement.hasAttribute('borderColor')) {
+    if (!box.pen) box.pen = {};
+    box.pen.lineColor = boxElement.getAttribute('borderColor');
+  }
   
-  if (boxElement.hasAttribute('rightBorder')) box.rightBorder = boxElement.getAttribute('rightBorder');
-  if (boxElement.hasAttribute('rightBorderColor')) box.rightBorderColor = boxElement.getAttribute('rightBorderColor');
-  if (boxElement.hasAttribute('rightPadding')) box.rightPadding = parseInt(boxElement.getAttribute('rightPadding') || '0');
+  // 解析过时的topBorder属性，转换为topPen子元素
+  if (boxElement.hasAttribute('topBorder')) {
+    if (!box.topPen) box.topPen = {};
+    box.topPen.lineWidth = parseInt(boxElement.getAttribute('topBorder') || '0');
+  }
+  
+  // 解析过时的topBorderColor属性，转换为topPen子元素
+  if (boxElement.hasAttribute('topBorderColor')) {
+    if (!box.topPen) box.topPen = {};
+    box.topPen.lineColor = boxElement.getAttribute('topBorderColor');
+  }
+  
+  // 解析过时的leftBorder属性，转换为leftPen子元素
+  if (boxElement.hasAttribute('leftBorder')) {
+    if (!box.leftPen) box.leftPen = {};
+    box.leftPen.lineWidth = parseInt(boxElement.getAttribute('leftBorder') || '0');
+  }
+  
+  // 解析过时的leftBorderColor属性，转换为leftPen子元素
+  if (boxElement.hasAttribute('leftBorderColor')) {
+    if (!box.leftPen) box.leftPen = {};
+    box.leftPen.lineColor = boxElement.getAttribute('leftBorderColor');
+  }
+  
+  // 解析过时的bottomBorder属性，转换为bottomPen子元素
+  if (boxElement.hasAttribute('bottomBorder')) {
+    if (!box.bottomPen) box.bottomPen = {};
+    box.bottomPen.lineWidth = parseInt(boxElement.getAttribute('bottomBorder') || '0');
+  }
+  
+  // 解析过时的bottomBorderColor属性，转换为bottomPen子元素
+  if (boxElement.hasAttribute('bottomBorderColor')) {
+    if (!box.bottomPen) box.bottomPen = {};
+    box.bottomPen.lineColor = boxElement.getAttribute('bottomBorderColor');
+  }
+  
+  // 解析过时的rightBorder属性，转换为rightPen子元素
+  if (boxElement.hasAttribute('rightBorder')) {
+    if (!box.rightPen) box.rightPen = {};
+    box.rightPen.lineWidth = parseInt(boxElement.getAttribute('rightBorder') || '0');
+  }
+  
+  // 解析过时的rightBorderColor属性，转换为rightPen子元素
+  if (boxElement.hasAttribute('rightBorderColor')) {
+    if (!box.rightPen) box.rightPen = {};
+    box.rightPen.lineColor = boxElement.getAttribute('rightBorderColor');
+  }
   
   // 解析pen子元素
   const topPen = boxElement.querySelector('topPen');
@@ -717,6 +890,21 @@ function parseStaticTextElement(element: Element, result: any): void {
       result.textAlignment = textElement.getAttribute('textAlignment');
     }
     
+    if (textElement.hasAttribute('verticalAlignment')) {
+      result.verticalAlignment = textElement.getAttribute('verticalAlignment');
+    }
+    
+    // 处理过时的isStyledText属性，转换为markup属性
+    if (textElement.hasAttribute('isStyledText')) {
+      const isStyledText = textElement.getAttribute('isStyledText') === 'true';
+      result.markup = isStyledText ? 'styled' : 'none';
+    }
+    
+    // 如果已经指定了markup属性，直接使用
+    if (textElement.hasAttribute('markup')) {
+      result.markup = textElement.getAttribute('markup');
+    }
+    
     const fontElement = textElement.querySelector('font');
     if (fontElement) {
       if (fontElement.hasAttribute('size')) result.fontSize = parseInt(fontElement.getAttribute('size') || '12');
@@ -735,8 +923,16 @@ function parseStaticTextElement(element: Element, result: any): void {
 
 // 解析动态文本元素
 function parseTextFieldElement(element: Element, result: any): void {
-  // 解析textField特有属性
-  result.isStretchWithOverflow = element.getAttribute('isStretchWithOverflow') === 'true';
+  // 处理过时的isStretchWithOverflow属性，转换为textAdjust属性
+  if (element.hasAttribute('isStretchWithOverflow')) {
+    const isStretchWithOverflow = element.getAttribute('isStretchWithOverflow') === 'true';
+    result.textAdjust = isStretchWithOverflow ? 'StretchHeight' : 'CutText';
+  }
+  
+  // 如果已经指定了textAdjust属性，直接使用
+  if (element.hasAttribute('textAdjust')) {
+    result.textAdjust = element.getAttribute('textAdjust');
+  }
   
   if (element.hasAttribute('evaluationTime')) {
     result.evaluationTime = element.getAttribute('evaluationTime');
@@ -787,6 +983,12 @@ function parseImageElement(element: Element, result: any): void {
   if (element.hasAttribute('hAlign')) result.hAlign = element.getAttribute('hAlign');
   if (element.hasAttribute('vAlign')) result.vAlign = element.getAttribute('vAlign');
   
+  // 解析graphicElement
+  const graphicElement = parseGraphicElement(element);
+  if (Object.keys(graphicElement).length > 0) {
+    Object.assign(result, graphicElement);
+  }
+  
   const imageExpression = element.querySelector('imageExpression');
   if (imageExpression) {
     result.imagePath = imageExpression.textContent || '';
@@ -799,13 +1001,52 @@ function parseLineElement(element: Element, result: any): void {
     // 将XML中的direction属性映射到lineDirection
     result.lineDirection = element.getAttribute('direction');
   }
+  
+  // 解析graphicElement
+  const graphicElement = parseGraphicElement(element);
+  if (Object.keys(graphicElement).length > 0) {
+    Object.assign(result, graphicElement);
+  }
+}
+
+// 解析graphicElement
+function parseGraphicElement(element: Element): any {
+  const graphicElement: any = {};
+  
+  // 解析graphicElement属性
+  const graphicEl = element.querySelector('graphicElement');
+  if (graphicEl) {
+    // 处理过时的stretchType属性，转换为reportElement的同名属性
+    if (graphicEl.hasAttribute('stretchType')) {
+      graphicElement.stretchType = graphicEl.getAttribute('stretchType');
+    }
+    
+    // 处理过时的pen属性，转换为pen子元素
+    const penElement = graphicEl.querySelector('pen');
+    if (penElement) {
+      const pen: any = {};
+      if (penElement.hasAttribute('lineWidth')) {
+        pen.lineWidth = parseInt(penElement.getAttribute('lineWidth') || '0');
+      }
+      if (penElement.hasAttribute('lineStyle')) {
+        pen.lineStyle = penElement.getAttribute('lineStyle');
+      }
+      if (penElement.hasAttribute('lineColor')) {
+        pen.lineColor = penElement.getAttribute('lineColor');
+      }
+      graphicElement.pen = pen;
+    }
+  }
+  
+  return graphicElement;
 }
 
 // 解析矩形元素
 function parseRectangleElement(element: Element, result: any): void {
-  const graphicElement = element.querySelector('graphicElement');
-  if (graphicElement) {
-    if (graphicElement.hasAttribute('fill')) result.fill = graphicElement.getAttribute('fill');
+  // 解析graphicElement
+  const graphicElement = parseGraphicElement(element);
+  if (Object.keys(graphicElement).length > 0) {
+    Object.assign(result, graphicElement);
   }
 }
 
