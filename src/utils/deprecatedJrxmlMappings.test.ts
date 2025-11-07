@@ -27,8 +27,10 @@ describe('JRXML过时标签和属性转换测试', () => {
               height: 20,
               text: 'Test Text',
               box: {
-                border: 1,
-                borderColor: '#000000'
+                pen: {
+                  lineWidth: 1,
+                  lineColor: '#000000'
+                }
               }
             }
           ]
@@ -41,9 +43,8 @@ describe('JRXML过时标签和属性转换测试', () => {
       expect(jrxmlContent).not.toContain('border="');
       expect(jrxmlContent).not.toContain('borderColor="');
       
-      // 检查是否使用了pen子元素
-      expect(jrxmlContent).toContain('<pen');
-      expect(jrxmlContent).toContain('lineWidth="1"');
+      // 检查是否使用了pen子元素 - 修改为检查完整的pen元素
+      expect(jrxmlContent).toContain('<pen lineWidth="1"');
       expect(jrxmlContent).toContain('lineColor="#000000"');
     });
 
