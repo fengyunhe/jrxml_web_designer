@@ -199,8 +199,8 @@ function validateBorderValue(borderValue: string): string {
 }
 
 // 从CSS边框样式中提取边框宽度和样式
-function extractBorderFromCSS(cssBorder: string): { width: string, style: string, color?: string } {
-  if (!cssBorder) return { width: '', style: '' };
+function extractBorderFromCSS(cssBorder: string): { width: number, style: string, color?: string } {
+  if (!cssBorder) return { width: 0, style: '' };
   
   // 解析CSS边框样式，例如 "1px solid #000000"
   const parts = cssBorder.trim().split(/\s+/);
@@ -210,17 +210,17 @@ function extractBorderFromCSS(cssBorder: string): { width: string, style: string
     const style = parts[1];
     const color = parts.length > 2 ? parts[2] : undefined;
     
-    // 将CSS宽度转换为JRXML宽度
-    let jrxmlWidth = '1Point';
-    if (width === '1px') jrxmlWidth = '1Point';
-    else if (width === '2px') jrxmlWidth = '2Point';
-    else if (width === '3px') jrxmlWidth = '2Point'; // 3px接近2Point
-    else if (width === '4px') jrxmlWidth = '4Point';
+    // 将CSS宽度转换为JRXML宽度数值
+    let jrxmlWidth = 1; // 默认宽度
+    if (width === '1px') jrxmlWidth = 1;
+    else if (width === '2px') jrxmlWidth = 2;
+    else if (width === '3px') jrxmlWidth = 2; // 3px接近2Point
+    else if (width === '4px') jrxmlWidth = 4;
     else if (width && /^\d+px$/.test(width)) {
       const pxValue = parseInt(width.replace('px', ''));
-      if (pxValue <= 1) jrxmlWidth = '1Point';
-      else if (pxValue <= 2) jrxmlWidth = '2Point';
-      else jrxmlWidth = '4Point';
+      if (pxValue <= 1) jrxmlWidth = 1;
+      else if (pxValue <= 2) jrxmlWidth = 2;
+      else jrxmlWidth = 4;
     }
     
     // 将CSS样式转换为JRXML样式
@@ -233,7 +233,13 @@ function extractBorderFromCSS(cssBorder: string): { width: string, style: string
   }
   
   // 如果解析失败，尝试将整个字符串作为枚举值处理
-  return { width: validateBorderValue(cssBorder), style: 'Solid' };
+  const borderValue = validateBorderValue(cssBorder);
+  let widthValue = 0;
+  if (borderValue === '1Point') widthValue = 1;
+  else if (borderValue === '2Point') widthValue = 2;
+  else if (borderValue === '4Point') widthValue = 4;
+  
+  return { width: widthValue, style: 'Solid' };
 }
 
 // 生成box元素XML
@@ -256,7 +262,17 @@ function generateBoxXML(box: any): string {
   // 优先使用非过时的pen子元素，只有在没有pen子元素时才使用过时的border属性作为fallback
   if (box.pen) {
     xml += '        <pen';
-    if (box.pen.lineWidth !== undefined) xml += ` lineWidth="${box.pen.lineWidth}"`;
+    if (box.pen.lineWidth !== undefined) {
+      // 如果lineWidth是字符串，尝试转换为数值
+      let lineWidth = box.pen.lineWidth;
+      if (typeof lineWidth === 'string') {
+        if (lineWidth === '1Point') lineWidth = 1;
+        else if (lineWidth === '2Point') lineWidth = 2;
+        else if (lineWidth === '4Point') lineWidth = 4;
+        else if (/^\d+$/.test(lineWidth)) lineWidth = parseInt(lineWidth);
+      }
+      xml += ` lineWidth="${lineWidth}"`;
+    }
     if (box.pen.lineStyle) xml += ` lineStyle="${box.pen.lineStyle}"`;
     if (box.pen.lineColor) xml += ` lineColor="${box.pen.lineColor}"`;
     xml += '/>\n';
@@ -285,7 +301,7 @@ function generateBoxXML(box: any): string {
   } else if (box.topBorder || box.topBorderColor) {
     // 只有在没有topPen子元素时才使用过时的topBorder属性
     const borderInfo = extractBorderFromCSS(box.topBorder);
-    if (borderInfo.width) {
+    if (borderInfo.width > 0) {
       xml += '        <topPen';
       xml += ` lineWidth="${borderInfo.width}"`;
       xml += ` lineStyle="${borderInfo.style}"`;
@@ -304,7 +320,7 @@ function generateBoxXML(box: any): string {
   } else if (box.leftBorder || box.leftBorderColor) {
     // 只有在没有leftPen子元素时才使用过时的leftBorder属性
     const borderInfo = extractBorderFromCSS(box.leftBorder);
-    if (borderInfo.width) {
+    if (borderInfo.width > 0) {
       xml += '        <leftPen';
       xml += ` lineWidth="${borderInfo.width}"`;
       xml += ` lineStyle="${borderInfo.style}"`;
@@ -323,7 +339,7 @@ function generateBoxXML(box: any): string {
   } else if (box.bottomBorder || box.bottomBorderColor) {
     // 只有在没有bottomPen子元素时才使用过时的bottomBorder属性
     const borderInfo = extractBorderFromCSS(box.bottomBorder);
-    if (borderInfo.width) {
+    if (borderInfo.width > 0) {
       xml += '        <bottomPen';
       xml += ` lineWidth="${borderInfo.width}"`;
       xml += ` lineStyle="${borderInfo.style}"`;
@@ -342,7 +358,7 @@ function generateBoxXML(box: any): string {
   } else if (box.rightBorder || box.rightBorderColor) {
     // 只有在没有rightPen子元素时才使用过时的rightBorder属性
     const borderInfo = extractBorderFromCSS(box.rightBorder);
-    if (borderInfo.width) {
+    if (borderInfo.width > 0) {
       xml += '        <rightPen';
       xml += ` lineWidth="${borderInfo.width}"`;
       xml += ` lineStyle="${borderInfo.style}"`;
