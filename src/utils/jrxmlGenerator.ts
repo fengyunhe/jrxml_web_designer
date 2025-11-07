@@ -198,6 +198,44 @@ function validateBorderValue(borderValue: string): string {
   return 'None';
 }
 
+// 从CSS边框样式中提取边框宽度和样式
+function extractBorderFromCSS(cssBorder: string): { width: string, style: string, color?: string } {
+  if (!cssBorder) return { width: '', style: '' };
+  
+  // 解析CSS边框样式，例如 "1px solid #000000"
+  const parts = cssBorder.trim().split(/\s+/);
+  
+  if (parts.length >= 2) {
+    const width = parts[0];
+    const style = parts[1];
+    const color = parts.length > 2 ? parts[2] : undefined;
+    
+    // 将CSS宽度转换为JRXML宽度
+    let jrxmlWidth = '1Point';
+    if (width === '1px') jrxmlWidth = '1Point';
+    else if (width === '2px') jrxmlWidth = '2Point';
+    else if (width === '3px') jrxmlWidth = '2Point'; // 3px接近2Point
+    else if (width === '4px') jrxmlWidth = '4Point';
+    else if (width && /^\d+px$/.test(width)) {
+      const pxValue = parseInt(width.replace('px', ''));
+      if (pxValue <= 1) jrxmlWidth = '1Point';
+      else if (pxValue <= 2) jrxmlWidth = '2Point';
+      else jrxmlWidth = '4Point';
+    }
+    
+    // 将CSS样式转换为JRXML样式
+    let jrxmlStyle = 'Solid';
+    if (style === 'dashed') jrxmlStyle = 'Dashed';
+    else if (style === 'dotted') jrxmlStyle = 'Dotted';
+    else if (style === 'double') jrxmlStyle = 'Double'; // 注意：Double可能不在XSD中，需要处理
+    
+    return { width: jrxmlWidth, style: jrxmlStyle, color };
+  }
+  
+  // 如果解析失败，尝试将整个字符串作为枚举值处理
+  return { width: validateBorderValue(cssBorder), style: 'Solid' };
+}
+
 // 生成box元素XML
 function generateBoxXML(box: any): string {
   if (!box) return '';
@@ -246,16 +284,14 @@ function generateBoxXML(box: any): string {
     xml += '/>\n';
   } else if (box.topBorder || box.topBorderColor) {
     // 只有在没有topPen子元素时才使用过时的topBorder属性
-    xml += '        <topPen';
-    if (box.topBorder) {
-      if (/^\d+$/.test(box.topBorder)) {
-        xml += ` lineWidth="${box.topBorder}"`;
-      } else {
-        xml += ` lineWidth="${validateBorderValue(box.topBorder)}"`;
-      }
+    const borderInfo = extractBorderFromCSS(box.topBorder);
+    if (borderInfo.width) {
+      xml += '        <topPen';
+      xml += ` lineWidth="${borderInfo.width}"`;
+      xml += ` lineStyle="${borderInfo.style}"`;
+      if (box.topBorderColor || borderInfo.color) xml += ` lineColor="${box.topBorderColor || borderInfo.color}"`;
+      xml += '/>\n';
     }
-    if (box.topBorderColor) xml += ` lineColor="${box.topBorderColor}"`;
-    xml += '/>\n';
   }
   
   // 优先使用非过时的leftPen子元素，只有在没有leftPen子元素时才使用过时的leftBorder属性作为fallback
@@ -267,16 +303,14 @@ function generateBoxXML(box: any): string {
     xml += '/>\n';
   } else if (box.leftBorder || box.leftBorderColor) {
     // 只有在没有leftPen子元素时才使用过时的leftBorder属性
-    xml += '        <leftPen';
-    if (box.leftBorder) {
-      if (/^\d+$/.test(box.leftBorder)) {
-        xml += ` lineWidth="${box.leftBorder}"`;
-      } else {
-        xml += ` lineWidth="${validateBorderValue(box.leftBorder)}"`;
-      }
+    const borderInfo = extractBorderFromCSS(box.leftBorder);
+    if (borderInfo.width) {
+      xml += '        <leftPen';
+      xml += ` lineWidth="${borderInfo.width}"`;
+      xml += ` lineStyle="${borderInfo.style}"`;
+      if (box.leftBorderColor || borderInfo.color) xml += ` lineColor="${box.leftBorderColor || borderInfo.color}"`;
+      xml += '/>\n';
     }
-    if (box.leftBorderColor) xml += ` lineColor="${box.leftBorderColor}"`;
-    xml += '/>\n';
   }
   
   // 优先使用非过时的bottomPen子元素，只有在没有bottomPen子元素时才使用过时的bottomBorder属性作为fallback
@@ -288,16 +322,14 @@ function generateBoxXML(box: any): string {
     xml += '/>\n';
   } else if (box.bottomBorder || box.bottomBorderColor) {
     // 只有在没有bottomPen子元素时才使用过时的bottomBorder属性
-    xml += '        <bottomPen';
-    if (box.bottomBorder) {
-      if (/^\d+$/.test(box.bottomBorder)) {
-        xml += ` lineWidth="${box.bottomBorder}"`;
-      } else {
-        xml += ` lineWidth="${validateBorderValue(box.bottomBorder)}"`;
-      }
+    const borderInfo = extractBorderFromCSS(box.bottomBorder);
+    if (borderInfo.width) {
+      xml += '        <bottomPen';
+      xml += ` lineWidth="${borderInfo.width}"`;
+      xml += ` lineStyle="${borderInfo.style}"`;
+      if (box.bottomBorderColor || borderInfo.color) xml += ` lineColor="${box.bottomBorderColor || borderInfo.color}"`;
+      xml += '/>\n';
     }
-    if (box.bottomBorderColor) xml += ` lineColor="${box.bottomBorderColor}"`;
-    xml += '/>\n';
   }
   
   // 优先使用非过时的rightPen子元素，只有在没有rightPen子元素时才使用过时的rightBorder属性作为fallback
@@ -309,16 +341,14 @@ function generateBoxXML(box: any): string {
     xml += '/>\n';
   } else if (box.rightBorder || box.rightBorderColor) {
     // 只有在没有rightPen子元素时才使用过时的rightBorder属性
-    xml += '        <rightPen';
-    if (box.rightBorder) {
-      if (/^\d+$/.test(box.rightBorder)) {
-        xml += ` lineWidth="${box.rightBorder}"`;
-      } else {
-        xml += ` lineWidth="${validateBorderValue(box.rightBorder)}"`;
-      }
+    const borderInfo = extractBorderFromCSS(box.rightBorder);
+    if (borderInfo.width) {
+      xml += '        <rightPen';
+      xml += ` lineWidth="${borderInfo.width}"`;
+      xml += ` lineStyle="${borderInfo.style}"`;
+      if (box.rightBorderColor || borderInfo.color) xml += ` lineColor="${box.rightBorderColor || borderInfo.color}"`;
+      xml += '/>\n';
     }
-    if (box.rightBorderColor) xml += ` lineColor="${box.rightBorderColor}"`;
-    xml += '/>\n';
   }
   
   xml += '      </box>\n';
