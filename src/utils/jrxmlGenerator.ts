@@ -1,20 +1,5 @@
 // 导入类型定义
-import type { DesignElement, BandType } from '../types';
-// 导入过时标签和属性的映射表
-import {
-  DEPRECATED_ATTRIBUTES_MAP,
-  DEPRECATED_ATTRIBUTE_VALUES_MAP,
-  DEPRECATED_ELEMENTS_MAP,
-  BOX_DEPRECATED_ATTRIBUTES,
-  GRAPHIC_ELEMENT_DEPRECATED_ATTRIBUTES,
-  isAttributeDeprecated,
-  isElementDeprecated,
-  getNewAttributeName,
-  getNewElementName,
-  convertAttributeValue,
-  isBoxAttributeDeprecated,
-  isGraphicElementAttributeDeprecated
-} from './deprecatedJrxmlMappings';
+import type { DesignElement, BandType, Band } from '../types';
 
 // JRXML生成器
 export interface ReportProperties {
@@ -25,12 +10,6 @@ export interface ReportProperties {
   rightMargin: number;
   topMargin: number;
   bottomMargin: number;
-}
-
-export interface Band {
-  type: BandType;
-  height: number;
-  elements: DesignElement[];
 }
 
 export interface Field {
@@ -347,7 +326,7 @@ function generateBoxXML(box: any): string {
 }
 
 // 验证并调整元素位置，确保在band范围内
-function validateElementPosition(element: any, bandHeight: number): any {
+function validateElementPosition(element: any, _bandHeight: number): any {
   if (!element) return element;
   
   // 创建元素的副本以避免修改原始对象

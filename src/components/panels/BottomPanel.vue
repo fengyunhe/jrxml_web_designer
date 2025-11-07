@@ -1,14 +1,7 @@
 <script setup lang="ts">
-import { ref, computed, watch } from 'vue';
+import { ref, computed } from 'vue';
 import ResizablePanel from '../ResizablePanel.vue';
 import {
-  BAND_CONSTANTS,
-  BAND_HEIGHT_CONSTANTS,
-  BAND_TYPE_CONSTANTS,
-  BORDER_CONSTANTS,
-  ELEMENT_CONSTANTS,
-  FONT_CONSTANTS,
-  REPORT_CONSTANTS,
   UI_CONSTANTS,
   PANEL_CONSTANTS
 } from '../../constants/constants';

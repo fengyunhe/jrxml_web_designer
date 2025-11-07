@@ -103,6 +103,10 @@ export interface DesignElementBase {
   isUnderline?: boolean;
   textAlignment?: 'Left' | 'Center' | 'Right' | 'Justified';
   verticalAlignment?: 'Top' | 'Middle' | 'Bottom';
+  markup?: string; // 添加markup属性
+  textAdjust?: string; // 添加textAdjust属性
+  isStyledText?: boolean; // 添加过时的isStyledText属性以保持兼容性
+  isStretchWithOverflow?: boolean; // 添加过时的isStretchWithOverflow属性以保持兼容性
 }
 
 // 静态文本元素接口
@@ -154,6 +158,7 @@ export interface Band {
   height: number;
   elements: DesignElement[];
   splitType?: 'Stretch' | 'Prevent' | 'Immediate';
+  isSplitAllowed?: boolean; // 添加过时的isSplitAllowed属性以保持兼容性
 }
 
 // 选中元素信息接口

@@ -12,5 +12,13 @@ export default defineConfig({
     alias: {
       '@': resolve(process.cwd(), 'src')
     }
+  },
+  build: {
+    rollupOptions: {
+      external: (id) => {
+        // 排除测试文件
+        return id.endsWith('.test.ts') || id.endsWith('.spec.ts');
+      }
+    }
   }
 })

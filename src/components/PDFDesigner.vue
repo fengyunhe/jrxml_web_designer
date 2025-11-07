@@ -726,11 +726,6 @@ import {generateJRXMLContent, parseJRXMLContent} from '../utils/jrxmlGenerator';
 
 // 标签页相关
 const activeTab = ref('pageSettings');
-const tabs = ref([
-  { id: 'pageSettings', name: '页面设置' },
-  { id: 'jrxml', name: 'JRXML内容' }
-]);
-
 // 元素属性标签页相关
 const activeElementTab = ref('basic');
 const elementTabs = ref([
@@ -1321,7 +1316,7 @@ const allBandTypes = [
 ];
 
 // 当前选中的band类型
-const selectedBandTypes = ref<string[]>(bands.value.map(band => band.type));
+const selectedBandTypes = ref<BandType[]>(bands.value.map(band => band.type));
 
 // 数据字段
 const reportFields = ref<ReportField[]>([
