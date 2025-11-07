@@ -180,22 +180,22 @@ function generateElementXML(element: any): string {
 function validateBorderValue(borderValue: string): string {
   if (!borderValue) return '';
   
-  // XSD中允许的border枚举值
-  const validBorderValues = ['None', 'Thin', '1Point', '2Point', '4Point', 'Dotted'];
+  // XSD中lineWidth应该是数值，而不是字符串枚举值
+  // 将字符串值转换为对应的数值
+  if (borderValue === '0' || borderValue === 'false' || borderValue === 'None') return '0';
+  if (borderValue === 'Thin' || borderValue === '1') return '1';
+  if (borderValue === '1Point') return '1';
+  if (borderValue === '2Point') return '2';
+  if (borderValue === '4Point') return '4';
+  if (borderValue === 'Dotted') return '1'; // Dotted是样式，不是宽度，默认为1
   
-  // 如果值已经是有效的，直接返回
-  if (validBorderValues.includes(borderValue)) {
+  // 如果是纯数字，直接返回
+  if (/^\d+$/.test(borderValue)) {
     return borderValue;
   }
   
-  // 尝试将数字值转换为对应的枚举值
-  if (borderValue === '0' || borderValue === 'false') return 'None';
-  if (borderValue === '1') return '1Point';
-  if (borderValue === '2') return '2Point';
-  if (borderValue === '4') return '4Point';
-  
-  // 默认返回None，确保符合XSD
-  return 'None';
+  // 默认返回0，表示无边框
+  return '0';
 }
 
 // 从CSS边框样式中提取边框宽度和样式
@@ -246,125 +246,242 @@ function extractBorderFromCSS(cssBorder: string): { width: number, style: string
 function generateBoxXML(box: any): string {
   if (!box) return '';
   
+  // 检查是否有任何边距设置
+  const hasPadding = box.padding !== undefined && box.padding !== '' && box.padding !== 0;
+  const hasTopPadding = box.topPadding !== undefined && box.topPadding !== '' && box.topPadding !== 0;
+  const hasLeftPadding = box.leftPadding !== undefined && box.leftPadding !== '' && box.leftPadding !== 0;
+  const hasBottomPadding = box.bottomPadding !== undefined && box.bottomPadding !== '' && box.bottomPadding !== 0;
+  const hasRightPadding = box.rightPadding !== undefined && box.rightPadding !== '' && box.rightPadding !== 0;
+  
+  // 检查是否有旧的pen子元素
+  const hasOldPenModel = box.pen || box.topPen || box.leftPen || box.bottomPen || box.rightPen;
+  
+  // 检查全局边框宽度是否为0
+  const hasGlobalBorderWidth = box.borderWidth !== undefined && box.borderWidth > 0;
+  const hasGlobalBorderStyle = box.borderStyle !== undefined && box.borderStyle !== '';
+  
+  // 检查各边边框宽度是否大于0
+  const hasTopBorderWidth = box.topBorderWidth !== undefined && box.topBorderWidth > 0;
+  const hasLeftBorderWidth = box.leftBorderWidth !== undefined && box.leftBorderWidth > 0;
+  const hasBottomBorderWidth = box.bottomBorderWidth !== undefined && box.bottomBorderWidth > 0;
+  const hasRightBorderWidth = box.rightBorderWidth !== undefined && box.rightBorderWidth > 0;
+  
+  // 检查旧模型中各边边框宽度是否大于0
+  const hasOldTopPenWidth = box.topPen && box.topPen.lineWidth !== undefined && box.topPen.lineWidth > 0;
+  const hasOldLeftPenWidth = box.leftPen && box.leftPen.lineWidth !== undefined && box.leftPen.lineWidth > 0;
+  const hasOldBottomPenWidth = box.bottomPen && box.bottomPen.lineWidth !== undefined && box.bottomPen.lineWidth > 0;
+  const hasOldRightPenWidth = box.rightPen && box.rightPen.lineWidth !== undefined && box.rightPen.lineWidth > 0;
+  const hasOldPenWidth = box.pen && box.pen.lineWidth !== undefined && box.pen.lineWidth > 0;
+  
+  // 如果全局边框宽度为0且没有任何边距设置，则不生成box标签
+  if (!hasGlobalBorderWidth && !hasGlobalBorderStyle && !hasTopBorderWidth && !hasLeftBorderWidth && !hasBottomBorderWidth && !hasRightBorderWidth &&
+      !hasOldPenWidth && !hasOldTopPenWidth && !hasOldLeftPenWidth && !hasOldBottomPenWidth && !hasOldRightPenWidth &&
+      !hasPadding && !hasTopPadding && !hasLeftPadding && !hasBottomPadding && !hasRightPadding) {
+    return '';
+  }
+  
   let xml = '      <box';
   
   // 添加非过时的box属性（padding相关）
-  if (box.padding !== undefined) xml += ` padding="${box.padding}"`;
-  if (box.topPadding !== undefined) xml += ` topPadding="${box.topPadding}"`;
-  if (box.leftPadding !== undefined) xml += ` leftPadding="${box.leftPadding}"`;
-  if (box.bottomPadding !== undefined) xml += ` bottomPadding="${box.bottomPadding}"`;
-  if (box.rightPadding !== undefined) xml += ` rightPadding="${box.rightPadding}"`;
-  
-  // 注意：不再使用过时的border和borderColor属性，而是使用pen子元素
+  if (box.padding !== undefined && box.padding !== '') {
+    // 如果padding是空字符串，使用默认值0
+    const paddingValue = box.padding === '' ? 0 : box.padding;
+    xml += ` padding="${paddingValue}"`;
+  }
+  if (box.topPadding !== undefined && box.topPadding !== '') {
+    // 如果topPadding是空字符串，使用默认值0
+    const topPaddingValue = box.topPadding === '' ? 0 : box.topPadding;
+    xml += ` topPadding="${topPaddingValue}"`;
+  }
+  if (box.leftPadding !== undefined && box.leftPadding !== '') {
+    // 如果leftPadding是空字符串，使用默认值0
+    const leftPaddingValue = box.leftPadding === '' ? 0 : box.leftPadding;
+    xml += ` leftPadding="${leftPaddingValue}"`;
+  }
+  if (box.bottomPadding !== undefined && box.bottomPadding !== '') {
+    // 如果bottomPadding是空字符串，使用默认值0
+    const bottomPaddingValue = box.bottomPadding === '' ? 0 : box.bottomPadding;
+    xml += ` bottomPadding="${bottomPaddingValue}"`;
+  }
+  if (box.rightPadding !== undefined && box.rightPadding !== '') {
+    // 如果rightPadding是空字符串，使用默认值0
+    const rightPaddingValue = box.rightPadding === '' ? 0 : box.rightPadding;
+    xml += ` rightPadding="${rightPaddingValue}"`;
+  }
   
   xml += '>\n';
   
-  // 优先使用非过时的pen子元素，只有在没有pen子元素时才使用过时的border属性作为fallback
-  if (box.pen) {
+  // 优先使用新的边框数据模型（borderWidth和borderStyle）
+  // 1. 处理全局边框，只有当宽度大于0时才生成
+  if (hasGlobalBorderWidth || hasGlobalBorderStyle) {
     xml += '        <pen';
-    if (box.pen.lineWidth !== undefined) {
+    if (box.borderWidth !== undefined && box.borderWidth !== null && box.borderWidth > 0) {
+      xml += ` lineWidth="${box.borderWidth}"`;
+    }
+    if (box.borderStyle !== undefined && box.borderStyle !== null && box.borderStyle !== '') {
+      xml += ` lineStyle="${box.borderStyle}"`;
+    }
+    if (box.borderColor !== undefined && box.borderColor !== null) {
+      xml += ` lineColor="${box.borderColor}"`;
+    }
+    xml += '/>\n';
+  }
+  
+  // 2. 处理各边边框，只有当宽度大于0时才生成
+  // 上边框 - 只有当宽度大于0时才生成
+  if (hasTopBorderWidth) {
+    xml += '        <topPen';
+    if (box.topBorderWidth !== undefined && box.topBorderWidth !== null && box.topBorderWidth > 0) {
+      xml += ` lineWidth="${box.topBorderWidth}"`;
+    }
+    if (box.topBorderStyle !== undefined && box.topBorderStyle !== null && box.topBorderStyle !== '') {
+      xml += ` lineStyle="${box.topBorderStyle}"`;
+    }
+    if (box.topBorderColor !== undefined && box.topBorderColor !== null) {
+      xml += ` lineColor="${box.topBorderColor}"`;
+    }
+    xml += '/>\n';
+  }
+  
+  // 左边框 - 只有当宽度大于0时才生成
+  if (hasLeftBorderWidth) {
+    xml += '        <leftPen';
+    if (box.leftBorderWidth !== undefined && box.leftBorderWidth !== null && box.leftBorderWidth > 0) {
+      xml += ` lineWidth="${box.leftBorderWidth}"`;
+    }
+    if (box.leftBorderStyle !== undefined && box.leftBorderStyle !== null && box.leftBorderStyle !== '') {
+      xml += ` lineStyle="${box.leftBorderStyle}"`;
+    }
+    if (box.leftBorderColor !== undefined && box.leftBorderColor !== null) {
+      xml += ` lineColor="${box.leftBorderColor}"`;
+    }
+    xml += '/>\n';
+  }
+  
+  // 下边框 - 只有当宽度大于0时才生成
+  if (hasBottomBorderWidth) {
+    xml += '        <bottomPen';
+    if (box.bottomBorderWidth !== undefined && box.bottomBorderWidth !== null && box.bottomBorderWidth > 0) {
+      xml += ` lineWidth="${box.bottomBorderWidth}"`;
+    }
+    if (box.bottomBorderStyle !== undefined && box.bottomBorderStyle !== null && box.bottomBorderStyle !== '') {
+      xml += ` lineStyle="${box.bottomBorderStyle}"`;
+    }
+    if (box.bottomBorderColor !== undefined && box.bottomBorderColor !== null) {
+      xml += ` lineColor="${box.bottomBorderColor}"`;
+    }
+    xml += '/>\n';
+  }
+  
+  // 右边框 - 只有当宽度大于0时才生成
+  if (hasRightBorderWidth) {
+    xml += '        <rightPen';
+    if (box.rightBorderWidth !== undefined && box.rightBorderWidth !== null && box.rightBorderWidth > 0) {
+      xml += ` lineWidth="${box.rightBorderWidth}"`;
+    }
+    if (box.rightBorderStyle !== undefined && box.rightBorderStyle !== null && box.rightBorderStyle !== '') {
+      xml += ` lineStyle="${box.rightBorderStyle}"`;
+    }
+    if (box.rightBorderColor !== undefined && box.rightBorderColor !== null) {
+      xml += ` lineColor="${box.rightBorderColor}"`;
+    }
+    xml += '/>\n';
+  }
+  
+  // 回退到旧的边框数据模型（pen子元素）
+  // 只有当宽度大于0时才生成pen子元素
+  if (box.pen && box.borderWidth === undefined && box.borderStyle === undefined && hasOldPenWidth) {
+    xml += '        <pen';
+    if (box.pen.lineWidth !== undefined && box.pen.lineWidth !== null) {
       // 如果lineWidth是字符串，尝试转换为数值
       let lineWidth = box.pen.lineWidth;
       if (typeof lineWidth === 'string') {
-        if (lineWidth === '1Point') lineWidth = 1;
+        if (lineWidth === '1Point' || lineWidth === 'Thin') lineWidth = 1;
         else if (lineWidth === '2Point') lineWidth = 2;
         else if (lineWidth === '4Point') lineWidth = 4;
         else if (/^\d+$/.test(lineWidth)) lineWidth = parseInt(lineWidth);
       }
       xml += ` lineWidth="${lineWidth}"`;
     }
-    if (box.pen.lineStyle) xml += ` lineStyle="${box.pen.lineStyle}"`;
-    if (box.pen.lineColor) xml += ` lineColor="${box.pen.lineColor}"`;
-    xml += '/>\n';
-  } else if (box.border || box.borderColor) {
-    // 只有在没有pen子元素时才使用过时的border属性
-    xml += '        <pen';
-    // 对于border属性，如果是数字字符串，直接使用数字值
-    if (box.border) {
-      if (/^\d+$/.test(box.border)) {
-        xml += ` lineWidth="${box.border}"`;
-      } else {
-        xml += ` lineWidth="${validateBorderValue(box.border)}"`;
-      }
-    }
-    if (box.borderColor) xml += ` lineColor="${box.borderColor}"`;
+    if (box.pen.lineStyle && box.pen.lineStyle !== null && box.pen.lineStyle !== '') xml += ` lineStyle="${box.pen.lineStyle}"`;
+    if (box.pen.lineColor && box.pen.lineColor !== null) xml += ` lineColor="${box.pen.lineColor}"`;
     xml += '/>\n';
   }
   
-  // 优先使用非过时的topPen子元素，只有在没有topPen子元素时才使用过时的topBorder属性作为fallback
-  if (box.topPen) {
+  // 只有当宽度大于0时才生成topPen子元素
+  if (box.topPen && box.topBorderWidth === undefined && box.topBorderStyle === undefined && hasOldTopPenWidth) {
     xml += '        <topPen';
-    if (box.topPen.lineWidth !== undefined) xml += ` lineWidth="${box.topPen.lineWidth}"`;
-    if (box.topPen.lineStyle) xml += ` lineStyle="${box.topPen.lineStyle}"`;
-    if (box.topPen.lineColor) xml += ` lineColor="${box.topPen.lineColor}"`;
-    xml += '/>\n';
-  } else if (box.topBorder || box.topBorderColor) {
-    // 只有在没有topPen子元素时才使用过时的topBorder属性
-    const borderInfo = extractBorderFromCSS(box.topBorder);
-    if (borderInfo.width > 0) {
-      xml += '        <topPen';
-      xml += ` lineWidth="${borderInfo.width}"`;
-      xml += ` lineStyle="${borderInfo.style}"`;
-      if (box.topBorderColor || borderInfo.color) xml += ` lineColor="${box.topBorderColor || borderInfo.color}"`;
-      xml += '/>\n';
+    if (box.topPen.lineWidth !== undefined && box.topPen.lineWidth !== null) {
+      // 如果lineWidth是字符串，尝试转换为数值
+      let lineWidth = box.topPen.lineWidth;
+      if (typeof lineWidth === 'string') {
+        if (lineWidth === '1Point' || lineWidth === 'Thin') lineWidth = 1;
+        else if (lineWidth === '2Point') lineWidth = 2;
+        else if (lineWidth === '4Point') lineWidth = 4;
+        else if (/^\d+$/.test(lineWidth)) lineWidth = parseInt(lineWidth);
+      }
+      xml += ` lineWidth="${lineWidth}"`;
     }
+    if (box.topPen.lineStyle && box.topPen.lineStyle !== null && box.topPen.lineStyle !== '') xml += ` lineStyle="${box.topPen.lineStyle}"`;
+    if (box.topPen.lineColor && box.topPen.lineColor !== null) xml += ` lineColor="${box.topPen.lineColor}"`;
+    xml += '/>\n';
   }
   
-  // 优先使用非过时的leftPen子元素，只有在没有leftPen子元素时才使用过时的leftBorder属性作为fallback
-  if (box.leftPen) {
+  // 只有当宽度大于0时才生成leftPen子元素
+  if (box.leftPen && box.leftBorderWidth === undefined && box.leftBorderStyle === undefined && hasOldLeftPenWidth) {
     xml += '        <leftPen';
-    if (box.leftPen.lineWidth !== undefined) xml += ` lineWidth="${box.leftPen.lineWidth}"`;
-    if (box.leftPen.lineStyle) xml += ` lineStyle="${box.leftPen.lineStyle}"`;
-    if (box.leftPen.lineColor) xml += ` lineColor="${box.leftPen.lineColor}"`;
-    xml += '/>\n';
-  } else if (box.leftBorder || box.leftBorderColor) {
-    // 只有在没有leftPen子元素时才使用过时的leftBorder属性
-    const borderInfo = extractBorderFromCSS(box.leftBorder);
-    if (borderInfo.width > 0) {
-      xml += '        <leftPen';
-      xml += ` lineWidth="${borderInfo.width}"`;
-      xml += ` lineStyle="${borderInfo.style}"`;
-      if (box.leftBorderColor || borderInfo.color) xml += ` lineColor="${box.leftBorderColor || borderInfo.color}"`;
-      xml += '/>\n';
+    if (box.leftPen.lineWidth !== undefined && box.leftPen.lineWidth !== null) {
+      // 如果lineWidth是字符串，尝试转换为数值
+      let lineWidth = box.leftPen.lineWidth;
+      if (typeof lineWidth === 'string') {
+        if (lineWidth === '1Point' || lineWidth === 'Thin') lineWidth = 1;
+        else if (lineWidth === '2Point') lineWidth = 2;
+        else if (lineWidth === '4Point') lineWidth = 4;
+        else if (/^\d+$/.test(lineWidth)) lineWidth = parseInt(lineWidth);
+      }
+      xml += ` lineWidth="${lineWidth}"`;
     }
+    if (box.leftPen.lineStyle && box.leftPen.lineStyle !== null && box.leftPen.lineStyle !== '') xml += ` lineStyle="${box.leftPen.lineStyle}"`;
+    if (box.leftPen.lineColor && box.leftPen.lineColor !== null) xml += ` lineColor="${box.leftPen.lineColor}"`;
+    xml += '/>\n';
   }
   
-  // 优先使用非过时的bottomPen子元素，只有在没有bottomPen子元素时才使用过时的bottomBorder属性作为fallback
-  if (box.bottomPen) {
+  // 只有当宽度大于0时才生成bottomPen子元素
+  if (box.bottomPen && box.bottomBorderWidth === undefined && box.bottomBorderStyle === undefined && hasOldBottomPenWidth) {
     xml += '        <bottomPen';
-    if (box.bottomPen.lineWidth !== undefined) xml += ` lineWidth="${box.bottomPen.lineWidth}"`;
-    if (box.bottomPen.lineStyle) xml += ` lineStyle="${box.bottomPen.lineStyle}"`;
-    if (box.bottomPen.lineColor) xml += ` lineColor="${box.bottomPen.lineColor}"`;
-    xml += '/>\n';
-  } else if (box.bottomBorder || box.bottomBorderColor) {
-    // 只有在没有bottomPen子元素时才使用过时的bottomBorder属性
-    const borderInfo = extractBorderFromCSS(box.bottomBorder);
-    if (borderInfo.width > 0) {
-      xml += '        <bottomPen';
-      xml += ` lineWidth="${borderInfo.width}"`;
-      xml += ` lineStyle="${borderInfo.style}"`;
-      if (box.bottomBorderColor || borderInfo.color) xml += ` lineColor="${box.bottomBorderColor || borderInfo.color}"`;
-      xml += '/>\n';
+    if (box.bottomPen.lineWidth !== undefined && box.bottomPen.lineWidth !== null) {
+      // 如果lineWidth是字符串，尝试转换为数值
+      let lineWidth = box.bottomPen.lineWidth;
+      if (typeof lineWidth === 'string') {
+        if (lineWidth === '1Point' || lineWidth === 'Thin') lineWidth = 1;
+        else if (lineWidth === '2Point') lineWidth = 2;
+        else if (lineWidth === '4Point') lineWidth = 4;
+        else if (/^\d+$/.test(lineWidth)) lineWidth = parseInt(lineWidth);
+      }
+      xml += ` lineWidth="${lineWidth}"`;
     }
+    if (box.bottomPen.lineStyle && box.bottomPen.lineStyle !== null && box.bottomPen.lineStyle !== '') xml += ` lineStyle="${box.bottomPen.lineStyle}"`;
+    if (box.bottomPen.lineColor && box.bottomPen.lineColor !== null) xml += ` lineColor="${box.bottomPen.lineColor}"`;
+    xml += '/>\n';
   }
   
-  // 优先使用非过时的rightPen子元素，只有在没有rightPen子元素时才使用过时的rightBorder属性作为fallback
-  if (box.rightPen) {
+  // 只有当宽度大于0时才生成rightPen子元素
+  if (box.rightPen && box.rightBorderWidth === undefined && box.rightBorderStyle === undefined && hasOldRightPenWidth) {
     xml += '        <rightPen';
-    if (box.rightPen.lineWidth !== undefined) xml += ` lineWidth="${box.rightPen.lineWidth}"`;
-    if (box.rightPen.lineStyle) xml += ` lineStyle="${box.rightPen.lineStyle}"`;
-    if (box.rightPen.lineColor) xml += ` lineColor="${box.rightPen.lineColor}"`;
-    xml += '/>\n';
-  } else if (box.rightBorder || box.rightBorderColor) {
-    // 只有在没有rightPen子元素时才使用过时的rightBorder属性
-    const borderInfo = extractBorderFromCSS(box.rightBorder);
-    if (borderInfo.width > 0) {
-      xml += '        <rightPen';
-      xml += ` lineWidth="${borderInfo.width}"`;
-      xml += ` lineStyle="${borderInfo.style}"`;
-      if (box.rightBorderColor || borderInfo.color) xml += ` lineColor="${box.rightBorderColor || borderInfo.color}"`;
-      xml += '/>\n';
+    if (box.rightPen.lineWidth !== undefined && box.rightPen.lineWidth !== null) {
+      // 如果lineWidth是字符串，尝试转换为数值
+      let lineWidth = box.rightPen.lineWidth;
+      if (typeof lineWidth === 'string') {
+        if (lineWidth === '1Point' || lineWidth === 'Thin') lineWidth = 1;
+        else if (lineWidth === '2Point') lineWidth = 2;
+        else if (lineWidth === '4Point') lineWidth = 4;
+        else if (/^\d+$/.test(lineWidth)) lineWidth = parseInt(lineWidth);
+      }
+      xml += ` lineWidth="${lineWidth}"`;
     }
+    if (box.rightPen.lineStyle && box.rightPen.lineStyle !== null && box.rightPen.lineStyle !== '') xml += ` lineStyle="${box.rightPen.lineStyle}"`;
+    if (box.rightPen.lineColor && box.rightPen.lineColor !== null) xml += ` lineColor="${box.rightPen.lineColor}"`;
+    xml += '/>\n';
   }
   
   xml += '      </box>\n';
@@ -820,6 +937,7 @@ function parseBoxElement(boxElement: Element): any {
   // 解析过时的border属性，转换为pen子元素
   if (boxElement.hasAttribute('border')) {
     if (!box.pen) box.pen = {};
+    // 确保边框宽度为0时也被记录，而不是被忽略
     box.pen.lineWidth = parseInt(boxElement.getAttribute('border') || '0');
   }
   
@@ -832,6 +950,7 @@ function parseBoxElement(boxElement: Element): any {
   // 解析过时的topBorder属性，转换为topPen子元素
   if (boxElement.hasAttribute('topBorder')) {
     if (!box.topPen) box.topPen = {};
+    // 确保边框宽度为0时也被记录，而不是被忽略
     box.topPen.lineWidth = parseInt(boxElement.getAttribute('topBorder') || '0');
   }
   
@@ -844,6 +963,7 @@ function parseBoxElement(boxElement: Element): any {
   // 解析过时的leftBorder属性，转换为leftPen子元素
   if (boxElement.hasAttribute('leftBorder')) {
     if (!box.leftPen) box.leftPen = {};
+    // 确保边框宽度为0时也被记录，而不是被忽略
     box.leftPen.lineWidth = parseInt(boxElement.getAttribute('leftBorder') || '0');
   }
   
@@ -856,6 +976,7 @@ function parseBoxElement(boxElement: Element): any {
   // 解析过时的bottomBorder属性，转换为bottomPen子元素
   if (boxElement.hasAttribute('bottomBorder')) {
     if (!box.bottomPen) box.bottomPen = {};
+    // 确保边框宽度为0时也被记录，而不是被忽略
     box.bottomPen.lineWidth = parseInt(boxElement.getAttribute('bottomBorder') || '0');
   }
   
@@ -868,6 +989,7 @@ function parseBoxElement(boxElement: Element): any {
   // 解析过时的rightBorder属性，转换为rightPen子元素
   if (boxElement.hasAttribute('rightBorder')) {
     if (!box.rightPen) box.rightPen = {};
+    // 确保边框宽度为0时也被记录，而不是被忽略
     box.rightPen.lineWidth = parseInt(boxElement.getAttribute('rightBorder') || '0');
   }
   
@@ -900,7 +1022,10 @@ function parseBoxElement(boxElement: Element): any {
 function parsePenElement(penElement: Element): any {
   const pen = {} as any;
   
-  if (penElement.hasAttribute('lineWidth')) pen.lineWidth = parseFloat(penElement.getAttribute('lineWidth') || '0');
+  if (penElement.hasAttribute('lineWidth')) {
+    // 确保lineWidth为0时也被记录，而不是被忽略
+    pen.lineWidth = parseFloat(penElement.getAttribute('lineWidth') || '0');
+  }
   if (penElement.hasAttribute('lineStyle')) pen.lineStyle = penElement.getAttribute('lineStyle');
   if (penElement.hasAttribute('lineColor')) pen.lineColor = penElement.getAttribute('lineColor');
   
@@ -967,7 +1092,7 @@ function parseTextFieldElement(element: Element, result: any): void {
   }
   
   if (element.hasAttribute('pattern')) result.pattern = element.getAttribute('pattern');
-  result.isBlankWhenNull = element.getAttribute('isBlankWhenNull') === 'true';
+  result.isBlankWhenNull = element.hasAttribute('isBlankWhenNull') ? element.getAttribute('isBlankWhenNull') === 'true' : true;
   
   // 解析textElement和font
   const textElement = element.querySelector('textElement');

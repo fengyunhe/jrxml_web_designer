@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="test" pageWidth="595" pageHeight="842" whenNoDataType="AllSectionsNoDetail">
+  <detail>
+    <band height="50">
+      <staticText>
+        <reportElement x="0" y="0" width="800" height="50"/>
+        <box topPadding="0" leftPadding="0" bottomPadding="0" rightPadding="0">
+          <topPen lineWidth="0" lineStyle="Solid" lineColor="#000000"/>
+          <leftPen lineWidth="0" lineStyle="Solid" lineColor="#000000"/>
+          <bottomPen lineWidth="0" lineStyle="Solid" lineColor="#000000"/>
+          <rightPen lineWidth="0" lineStyle="Solid" lineColor="#000000"/>
+        </box>
+        <textElement textAlignment="Center" verticalAlignment="Middle">
+          <font fontName="Noto Serif SC" size="19"/>
+        </textElement>
+        <text><![CDATA[客运中心核销凭证]]></text>
+      </staticText>
+    </band>
+  </detail>
+</jasperReport>

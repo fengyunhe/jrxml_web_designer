@@ -14,18 +14,31 @@ export interface Pen {
 // 边框样式接口
 export interface Box {
   // 全局边框
-  border?: string;
-  borderColor?: string;
+  border?: string; // 保持向后兼容
+  borderColor?: string; // 保持向后兼容
+  borderWidth?: number; // 全局边框宽度
+  borderStyle?: string; // 全局边框样式
   
   // 各边边框
-  topBorder?: string;
-  topBorderColor?: string;
-  leftBorder?: string;
-  leftBorderColor?: string;
-  bottomBorder?: string;
-  bottomBorderColor?: string;
-  rightBorder?: string;
-  rightBorderColor?: string;
+  topBorder?: string; // 保持向后兼容
+  topBorderColor?: string; // 保持向后兼容
+  topBorderWidth?: number; // 上边框宽度
+  topBorderStyle?: string; // 上边框样式
+  
+  leftBorder?: string; // 保持向后兼容
+  leftBorderColor?: string; // 保持向后兼容
+  leftBorderWidth?: number; // 左边框宽度
+  leftBorderStyle?: string; // 左边框样式
+  
+  bottomBorder?: string; // 保持向后兼容
+  bottomBorderColor?: string; // 保持向后兼容
+  bottomBorderWidth?: number; // 下边框宽度
+  bottomBorderStyle?: string; // 下边框样式
+  
+  rightBorder?: string; // 保持向后兼容
+  rightBorderColor?: string; // 保持向后兼容
+  rightBorderWidth?: number; // 右边框宽度
+  rightBorderStyle?: string; // 右边框样式
   
   // 笔样式
   topPen?: Pen;

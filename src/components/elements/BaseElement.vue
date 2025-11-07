@@ -89,48 +89,13 @@ const elementStyle = computed(() => {
   
   // 计算边框样式
   const calculateBorder = (side: string): string => {
-    // 首先尝试获取各边的边框样式
-    const sideBorderStyle = getBorderStyle(side, props.element.box);
-    if (sideBorderStyle && sideBorderStyle !== 'none') {
-      return sideBorderStyle;
+    // 优先使用getBorderStyle函数，它已经包含了完整的边框处理逻辑
+    const borderStyle = getBorderStyle(side, props.element.box);
+    if (borderStyle && borderStyle !== 'none') {
+      return borderStyle;
     }
     
-    // 检查各边边框是否为空字符串
-    const sideBorderProperty = side === 'top' ? props.element.box?.topBorder : 
-                              side === 'left' ? props.element.box?.leftBorder : 
-                              side === 'bottom' ? props.element.box?.bottomBorder : 
-                              props.element.box?.rightBorder;
-    
-    // 如果各边边框为空字符串，返回none
-    if (sideBorderProperty === '') {
-      return 'none';
-    }
-    
-    // 如果没有各边边框样式，尝试使用全局边框
-    // 只有当border属性存在且不为空字符串时才应用边框
-    if (props.element.box?.border && props.element.box.border !== '') {
-      const borderMap: Record<string, string> = {
-        'Thin': '1px',
-        '1Point': '1px',
-        '2Point': '2px',
-        '4Point': '4px',
-        'Dotted': '1px dotted',
-        'Dashed': '1px dashed',
-        'Double': '3px double'
-      };
-      
-      const borderValue = borderMap[props.element.box.border] || '1px';
-      const borderColor = props.element.box.borderColor || '#000000';
-      
-      // 处理边框样式
-      if (props.element.box.border === 'Dashed' || props.element.box.border === 'Dotted' || props.element.box.border === 'Double') {
-        return borderValue + ' ' + borderColor;
-      } else {
-        return `${borderValue} solid ${borderColor}`;
-      }
-    }
-    
-    // 如果没有任何边框设置，返回none（不显示边框）
+    // 如果getBorderStyle返回none，则返回none
     return 'none';
   };
   
@@ -172,6 +137,17 @@ const getBorderStyle = (side: string, box?: any): string | undefined => {
                     side === 'bottom' ? box.bottomPen : 
                     box.rightPen;
   
+  // 获取各边边框样式和宽度
+  const sideBorderStyle = side === 'top' ? box.topBorderStyle : 
+                         side === 'left' ? box.leftBorderStyle : 
+                         side === 'bottom' ? box.bottomBorderStyle : 
+                         box.rightBorderStyle;
+  
+  const sideBorderWidth = side === 'top' ? box.topBorderWidth : 
+                         side === 'left' ? box.leftBorderWidth : 
+                         side === 'bottom' ? box.bottomBorderWidth : 
+                         box.rightBorderWidth;
+  
   // 其次考虑已弃用的sideBorder属性
   const borderProperty = side === 'top' ? box.topBorder : 
                      side === 'left' ? box.leftBorder : 
@@ -183,50 +159,101 @@ const getBorderStyle = (side: string, box?: any): string | undefined => {
     return borderProperty;
   }
   
-  // 如果sideBorder是空字符串，返回none
-  if (borderProperty === '') {
-    return 'none';
-  }
-  
   // 如果没有sidePen也没有sideBorder，检查全局pen或border
-  // 只有当border属性存在且不为空字符串时才应用边框
-  if (!penProperty && !borderProperty && (!box.pen || box.pen === '') && (!box.border || box.border === '')) return 'none';
+  // 检查是否有全局边框设置
+  const hasGlobalBorder = (box.pen && box.pen.lineWidth && box.pen.lineWidth > 0) || 
+                          (box.borderWidth && box.borderWidth > 0) ||
+                          (box.border && box.border !== '');
+  
+  // 如果没有任何边框设置，返回none
+  if (!penProperty && !borderProperty && !hasGlobalBorder) return 'none';
   
   // 获取边框颜色 - 优先使用sidePen的lineColor，然后是全局pen的lineColor，再然后是已弃用的颜色属性
   const colorProperty = side === 'top' ? box.topBorderColor : 
                      side === 'left' ? box.leftBorderColor : 
                      side === 'bottom' ? box.bottomBorderColor : 
                      box.rightBorderColor;
-  const color = penProperty?.lineColor || box.pen?.lineColor || colorProperty || box.borderColor || '#000000';
-
-  // 获取线宽
+  const color = penProperty?.lineColor || box.pen?.lineColor || colorProperty || box.borderColor;
+  
+  // 获取线宽 - 优先使用新的边框宽度属性
+  let hasWidth = false;
   let width = '1px'; // 默认宽度
 
+  // 优先使用sidePen的lineWidth属性
   if (penProperty?.lineWidth !== undefined) {
     width = `${penProperty.lineWidth}px`;
+    // 只有当线宽大于0时才标记为有宽度
+    hasWidth = penProperty.lineWidth > 0;
+  } else if (sideBorderWidth !== undefined) {
+    width = `${sideBorderWidth}px`;
+    // 只有当线宽大于0时才标记为有宽度
+    hasWidth = sideBorderWidth > 0;
+  } else if (box.borderWidth !== undefined) {
+    width = `${box.borderWidth}px`;
+    // 只有当线宽大于0时才标记为有宽度
+    hasWidth = box.borderWidth > 0;
+  } else if (box.pen?.lineWidth !== undefined) {
+    // 如果没有sidePen但有全局pen，使用全局pen的lineWidth
+    width = `${box.pen.lineWidth}px`;
+    hasWidth = box.pen.lineWidth > 0;
   } else if (borderProperty === 'Thin' || borderProperty === '1Point') {
     width = '1px';
+    hasWidth = true;
   } else if (borderProperty === '2Point' || borderProperty === 'Medium') {
     width = '2px';
+    hasWidth = true;
   } else if (borderProperty === '4Point' || borderProperty === 'Thick') {
     width = '4px';
+    hasWidth = true;
   }
   
-  // 获取线型
+  // 获取线型 - 优先使用新的边框样式属性
+  let hasStyle = false;
   let style = 'solid'; // 默认实线
+  
   if (penProperty?.lineStyle) {
     if (penProperty.lineStyle === 'Dashed') style = 'dashed';
     else if (penProperty.lineStyle === 'Dotted') style = 'dotted';
     else if (penProperty.lineStyle === 'Double') style = 'double';
+    hasStyle = true;
+  } else if (sideBorderStyle) {
+    if (sideBorderStyle === 'Dashed') style = 'dashed';
+    else if (sideBorderStyle === 'Dotted') style = 'dotted';
+    else if (sideBorderStyle === 'Double') style = 'double';
+    hasStyle = true;
+  } else if (box.borderStyle) {
+    if (box.borderStyle === 'Dashed') style = 'dashed';
+    else if (box.borderStyle === 'Dotted') style = 'dotted';
+    else if (box.borderStyle === 'Double') style = 'double';
+    hasStyle = true;
+  } else if (box.pen?.lineStyle) {
+    // 如果没有sidePen但有全局pen，使用全局pen的lineStyle
+    if (box.pen.lineStyle === 'Dashed') style = 'dashed';
+    else if (box.pen.lineStyle === 'Dotted') style = 'dotted';
+    else if (box.pen.lineStyle === 'Double') style = 'double';
+    hasStyle = true;
   } else if (borderProperty === 'Dashed') {
     style = 'dashed';
+    hasStyle = true;
   } else if (borderProperty === 'Dotted') {
     style = 'dotted';
+    hasStyle = true;
   } else if (borderProperty === 'Double') {
     style = 'double';
+    hasStyle = true;
   }
   
-  return `${width} ${style} ${color}`;
+  // 只有当设置了颜色、宽度或样式中的至少一个时，才显示边框
+  // 特别地，如果没有设置宽度（线宽为0或未设置），则不显示边框
+  if (!color && !hasWidth && !hasStyle) return 'none';
+  
+  // 如果没有设置宽度（线宽为0），则不显示边框，即使有颜色或样式
+  if (!hasWidth) return 'none';
+  
+  // 如果没有设置颜色，使用透明色
+  const finalColor = color || 'transparent';
+  
+  return `${width} ${style} ${finalColor}`;
 };
 
 // 处理选择

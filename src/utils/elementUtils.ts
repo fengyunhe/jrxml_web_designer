@@ -127,7 +127,7 @@ export function createNewElement(type: string, x: number, y: number): DesignElem
     case ELEMENT_TYPE_CONSTANTS.STATIC_TEXT:
       return { ...baseElement, type: 'staticText' as any, text: '静态文本' };
     case ELEMENT_TYPE_CONSTANTS.TEXT_FIELD:
-      return { ...baseElement, type: 'textField' as any, fieldName: 'field' };
+      return { ...baseElement, type: 'textField' as any, fieldName: 'field', isBlankWhenNull: true };
     case ELEMENT_TYPE_CONSTANTS.IMAGE:
       return { ...baseElement, type: 'image' as any, imagePath: '' };
     case ELEMENT_TYPE_CONSTANTS.LINE:
@@ -141,11 +141,34 @@ export function createNewElement(type: string, x: number, y: number): DesignElem
 
 // 复制元素
 export function duplicateElement(element: DesignElement, offsetX: number = 10, offsetY: number = 10): DesignElement {
-  return {
-    ...element,
-    x: element.x + offsetX,
-    y: element.y + offsetY,
-  };
+  // 深拷贝元素
+  const duplicatedElement = JSON.parse(JSON.stringify(element));
+  
+  // 处理边框属性，只保留宽度大于0的边框
+  if (duplicatedElement.box) {
+    // 处理新边框模型
+    if (duplicatedElement.box.pen && duplicatedElement.box.pen.lineWidth <= 0) {
+      delete duplicatedElement.box.pen;
+    }
+    
+    // 处理各边边框
+    ['topPen', 'leftPen', 'bottomPen', 'rightPen'].forEach(penType => {
+      if (duplicatedElement.box[penType] && duplicatedElement.box[penType].lineWidth <= 0) {
+        delete duplicatedElement.box[penType];
+      }
+    });
+    
+    // 如果box对象为空，则删除整个box属性
+    if (Object.keys(duplicatedElement.box).length === 0) {
+      delete duplicatedElement.box;
+    }
+  }
+  
+  // 调整位置
+  duplicatedElement.x = element.x + offsetX;
+  duplicatedElement.y = element.y + offsetY;
+  
+  return duplicatedElement;
 }
 
 // 检查点是否在元素内

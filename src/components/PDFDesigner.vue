@@ -444,15 +444,18 @@
                 <h5>全局边框</h5>
                 <div class="form-group">
                   <label>边框样式</label>
-                  <select v-if="currentElement && currentElement.box" v-model="currentElement.box.border">
+                  <select v-if="currentElement && currentElement.box" v-model="currentElement.box.borderStyle">
                     <option value="">无</option>
-                    <option value="Thin">细线 ({{ BORDER_CONSTANTS.THIN_WIDTH }}px)</option>
-                    <option value="Medium">中等 ({{ BORDER_CONSTANTS.MEDIUM_WIDTH }}px)</option>
-                    <option value="Thick">粗线 ({{ BORDER_CONSTANTS.THICK_WIDTH }}px)</option>
+                    <option value="Solid">实线</option>
                     <option value="Dashed">虚线</option>
                     <option value="Dotted">点线</option>
                     <option value="Double">双线</option>
                   </select>
+                </div>
+                <div class="form-group">
+                  <label>边框粗细</label>
+                  <input v-if="currentElement && currentElement.box" v-model.number="currentElement.box.borderWidth" type="number" min="0" max="10" step="0.5" />
+                  <small>边框宽度，单位为点(Point)</small>
                 </div>
                 <div class="form-group">
                   <label>边框颜色</label>
@@ -470,60 +473,56 @@
                 <!-- 上边 -->
                 <div class="border-side-group">
                   <label class="side-label">上边</label>
-                  <select v-if="currentElement && currentElement.box" v-model="currentElement.box.topBorder" class="side-control">
+                  <select v-if="currentElement && currentElement.box" v-model="currentElement.box.topBorderStyle" class="side-control">
                     <option value="">使用全局</option>
-                    <option value="Thin">细线 ({{ BORDER_CONSTANTS.THIN_WIDTH }}px)</option>
-                    <option value="Medium">中等 ({{ BORDER_CONSTANTS.MEDIUM_WIDTH }}px)</option>
-                    <option value="Thick">粗线 ({{ BORDER_CONSTANTS.THICK_WIDTH }}px)</option>
+                    <option value="Solid">实线</option>
                     <option value="Dashed">虚线</option>
                     <option value="Dotted">点线</option>
                     <option value="Double">双线</option>
                   </select>
+                  <input v-if="currentElement && currentElement.box" v-model.number="currentElement.box.topBorderWidth" type="number" min="0" max="10" step="0.5" class="width-control" placeholder="宽度" />
                   <input v-if="currentElement && currentElement.box" v-model="currentElement.box.topBorderColor" type="color" class="color-control" />
                 </div>
                 
                 <!-- 左边 -->
                 <div class="border-side-group">
                   <label class="side-label">左边</label>
-                  <select v-if="currentElement && currentElement.box" v-model="currentElement.box.leftBorder" class="side-control">
+                  <select v-if="currentElement && currentElement.box" v-model="currentElement.box.leftBorderStyle" class="side-control">
                     <option value="">使用全局</option>
-                    <option value="Thin">细线 ({{ BORDER_CONSTANTS.THIN_WIDTH }}px)</option>
-                    <option value="Medium">中等 ({{ BORDER_CONSTANTS.MEDIUM_WIDTH }}px)</option>
-                    <option value="Thick">粗线 ({{ BORDER_CONSTANTS.THICK_WIDTH }}px)</option>
+                    <option value="Solid">实线</option>
                     <option value="Dashed">虚线</option>
                     <option value="Dotted">点线</option>
                     <option value="Double">双线</option>
                   </select>
+                  <input v-if="currentElement && currentElement.box" v-model.number="currentElement.box.leftBorderWidth" type="number" min="0" max="10" step="0.5" class="width-control" placeholder="宽度" />
                   <input v-if="currentElement && currentElement.box" v-model="currentElement.box.leftBorderColor" type="color" class="color-control" />
                 </div>
                 
                 <!-- 下边 -->
                 <div class="border-side-group">
                   <label class="side-label">下边</label>
-                  <select v-if="currentElement && currentElement.box" v-model="currentElement.box.bottomBorder" class="side-control">
+                  <select v-if="currentElement && currentElement.box" v-model="currentElement.box.bottomBorderStyle" class="side-control">
                     <option value="">使用全局</option>
-                    <option value="Thin">细线 ({{ BORDER_CONSTANTS.THIN_WIDTH }}px)</option>
-                    <option value="Medium">中等 ({{ BORDER_CONSTANTS.MEDIUM_WIDTH }}px)</option>
-                    <option value="Thick">粗线 ({{ BORDER_CONSTANTS.THICK_WIDTH }}px)</option>
+                    <option value="Solid">实线</option>
                     <option value="Dashed">虚线</option>
                     <option value="Dotted">点线</option>
                     <option value="Double">双线</option>
                   </select>
+                  <input v-if="currentElement && currentElement.box" v-model.number="currentElement.box.bottomBorderWidth" type="number" min="0" max="10" step="0.5" class="width-control" placeholder="宽度" />
                   <input v-if="currentElement && currentElement.box" v-model="currentElement.box.bottomBorderColor" type="color" class="color-control" />
                 </div>
                 
                 <!-- 右边 -->
                 <div class="border-side-group">
                   <label class="side-label">右边</label>
-                  <select v-if="currentElement && currentElement.box" v-model="currentElement.box.rightBorder" class="side-control">
+                  <select v-if="currentElement && currentElement.box" v-model="currentElement.box.rightBorderStyle" class="side-control">
                     <option value="">使用全局</option>
-                    <option value="Thin">细线 ({{ BORDER_CONSTANTS.THIN_WIDTH }}px)</option>
-                    <option value="Medium">中等 ({{ BORDER_CONSTANTS.MEDIUM_WIDTH }}px)</option>
-                    <option value="Thick">粗线 ({{ BORDER_CONSTANTS.THICK_WIDTH }}px)</option>
+                    <option value="Solid">实线</option>
                     <option value="Dashed">虚线</option>
                     <option value="Dotted">点线</option>
                     <option value="Double">双线</option>
                   </select>
+                  <input v-if="currentElement && currentElement.box" v-model.number="currentElement.box.rightBorderWidth" type="number" min="0" max="10" step="0.5" class="width-control" placeholder="宽度" />
                   <input v-if="currentElement && currentElement.box" v-model="currentElement.box.rightBorderColor" type="color" class="color-control" />
                 </div>
               </div>
@@ -1267,12 +1266,41 @@ function loadFile(fileData: any) {
 }
 
 function saveCurrentFile() {
+  // 创建bands的深拷贝，以便处理边框属性
+  const processedBands = JSON.parse(JSON.stringify(bands.value));
+  
+  // 处理每个band中的元素，过滤掉宽度为0的边框属性
+  processedBands.forEach((band: any) => {
+    if (band.elements && Array.isArray(band.elements)) {
+      band.elements.forEach((element: any) => {
+        if (element.box) {
+          // 处理新边框模型
+          if (element.box.pen && element.box.pen.lineWidth <= 0) {
+            delete element.box.pen;
+          }
+          
+          // 处理各边边框
+          ['topPen', 'leftPen', 'bottomPen', 'rightPen'].forEach(penType => {
+            if (element.box[penType] && element.box[penType].lineWidth <= 0) {
+              delete element.box[penType];
+            }
+          });
+          
+          // 如果box对象为空，则删除整个box属性
+          if (Object.keys(element.box).length === 0) {
+            delete element.box;
+          }
+        }
+      });
+    }
+  });
+  
   // 准备要保存的数据
   const fileData = {
     id: currentFileId.value,
     name: currentFileName.value,
     reportProperties: reportProperties.value,
-    bands: bands.value,
+    bands: processedBands,
     reportFields: reportFields.value,
     reportParameters: reportParameters.value,
     jrxmlContent: jrxmlContent.value,
@@ -2725,16 +2753,26 @@ const initBox = () => {
       // 全局边框
       border: '',
       borderColor: '#000000',
+      borderWidth: 0,
+      borderStyle: '',
       
-      // 各边边框
+      // 各边边框 - 样式默认为空字符串，表示"使用全局"
       topBorder: '',
       topBorderColor: '#000000',
+      topBorderWidth: 0,
+      topBorderStyle: '', // 默认为空字符串，表示"使用全局"
       leftBorder: '',
       leftBorderColor: '#000000',
+      leftBorderWidth: 0,
+      leftBorderStyle: '', // 默认为空字符串，表示"使用全局"
       bottomBorder: '',
       bottomBorderColor: '#000000',
+      bottomBorderWidth: 0,
+      bottomBorderStyle: '', // 默认为空字符串，表示"使用全局"
       rightBorder: '',
       rightBorderColor: '#000000',
+      rightBorderWidth: 0,
+      rightBorderStyle: '', // 默认为空字符串，表示"使用全局"
       
       // 边距
       padding: 0,
@@ -2856,7 +2894,28 @@ const copyElement = async () => {
     if (band && band.elements && band.elements[elementIndex]) {
       try {
         // 深拷贝元素数据
-        const elementData = JSON.parse(JSON.stringify(band.elements[elementIndex]));
+        let elementData = JSON.parse(JSON.stringify(band.elements[elementIndex]));
+        
+        // 处理边框属性，只保留宽度大于0的边框
+        if (elementData.box) {
+          // 处理新边框模型
+          if (elementData.box.pen && elementData.box.pen.lineWidth <= 0) {
+            delete elementData.box.pen;
+          }
+          
+          // 处理各边边框
+          ['topPen', 'leftPen', 'bottomPen', 'rightPen'].forEach(penType => {
+            if (elementData.box[penType] && elementData.box[penType].lineWidth <= 0) {
+              delete elementData.box[penType];
+            }
+          });
+          
+          // 如果box对象为空，则删除整个box属性
+          if (Object.keys(elementData.box).length === 0) {
+            delete elementData.box;
+          }
+        }
+        
         // 创建要复制的数据对象，包含元数据标记以便识别这是PDF设计器的元素
         const clipboardData = {
           type: 'PDF_DESIGNER_ELEMENT',
@@ -2870,7 +2929,28 @@ const copyElement = async () => {
       } catch (err) {
         console.error('复制到剪贴板失败:', err);
         // 降级方案：使用旧的内存存储方式作为备用
-        const elementData = JSON.parse(JSON.stringify(band.elements[elementIndex]));
+        let elementData = JSON.parse(JSON.stringify(band.elements[elementIndex]));
+        
+        // 处理边框属性，只保留宽度大于0的边框
+        if (elementData.box) {
+          // 处理新边框模型
+          if (elementData.box.pen && elementData.box.pen.lineWidth <= 0) {
+            delete elementData.box.pen;
+          }
+          
+          // 处理各边边框
+          ['topPen', 'leftPen', 'bottomPen', 'rightPen'].forEach(penType => {
+            if (elementData.box[penType] && elementData.box[penType].lineWidth <= 0) {
+              delete elementData.box[penType];
+            }
+          });
+          
+          // 如果box对象为空，则删除整个box属性
+          if (Object.keys(elementData.box).length === 0) {
+            delete elementData.box;
+          }
+        }
+        
         sessionStorage.setItem('pdfDesignerCopiedElement', JSON.stringify({
           type: 'PDF_DESIGNER_ELEMENT',
           version: '1.0',
@@ -2983,6 +3063,10 @@ const handleKeyDown = (event: KeyboardEvent) => {
   const isInputFocused = activeEl && (activeEl.tagName === 'INPUT' || activeEl.tagName === 'TEXTAREA' || activeEl.tagName === 'SELECT');
   const isTextareaFocused = activeEl && activeEl.tagName === 'TEXTAREA';
   
+  // 检测是否有文本被选中
+  const selection = window.getSelection();
+  const isTextSelected = selection && selection.toString().trim().length > 0;
+  
   // CTRL+0 重置缩放比例
   if (event.ctrlKey && event.key === '0') {
     event.preventDefault();
@@ -3018,18 +3102,27 @@ const handleKeyDown = (event: KeyboardEvent) => {
     return;
   }
   
-  // CTRL+C 复制元素（只有在选中元素时才执行复制功能）
-  if (event.ctrlKey && event.key === 'c' && selectedElement.value) {
-    event.preventDefault();
-    copyElement();
-    return;
-  }
-  
-  // CTRL+C 复制JRXML（当没有选中元素且没有输入框焦点时）
-  if (event.ctrlKey && event.key === 'c' && !selectedElement.value && !isInputFocused && isDesignAreaFocused.value) {
-    event.preventDefault();
-    copyJRXML();
-    return;
+  // CTRL+C 处理：优先检查是否有文本被选中，如果有则执行浏览器默认复制行为
+  if (event.ctrlKey && event.key === 'c') {
+    // 如果有文本被选中，执行浏览器默认复制行为
+    if (isTextSelected) {
+      // 不阻止默认行为，让浏览器执行默认的文本复制
+      return;
+    }
+    
+    // 如果没有文本被选中，但有元素被选中，则复制元素
+    if (selectedElement.value) {
+      event.preventDefault();
+      copyElement();
+      return;
+    }
+    
+    // 如果没有文本被选中，也没有元素被选中，但设计区域有焦点，则复制JRXML
+    if (!isInputFocused && isDesignAreaFocused.value) {
+      event.preventDefault();
+      copyJRXML();
+      return;
+    }
   }
   
   // CTRL+V 粘贴元素（只要设计区域有焦点且不在textarea中时才执行自定义粘贴功能）
@@ -3049,10 +3142,17 @@ const handleKeyDown = (event: KeyboardEvent) => {
     return;
   }
   
-  // 方向键选择周围组件
+  // 方向键处理：Shift+方向键微调元素位置，单独方向键选择周围组件
   if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(event.key)) {
     event.preventDefault();
-    navigateElements(event.key);
+    
+    // 如果按住Shift键且有选中元素，则微调元素位置
+    if (event.shiftKey && selectedElement.value) {
+      moveElementByKeyboard(event.key);
+    } else {
+      // 否则执行原来的导航功能
+      navigateElements(event.key);
+    }
     return;
   }
 };
@@ -3134,6 +3234,50 @@ const navigateElements = (direction: string) => {
     const element = nearestElement as { bandIndex: number; elementIndex: number };
     selectElement(element.bandIndex, element.elementIndex);
   }
+};
+
+// 使用键盘微调元素位置
+const moveElementByKeyboard = (direction: string) => {
+  if (!selectedElement.value) return;
+  
+  const { bandIndex: currentBandIndex, elementIndex: currentElementIndex } = selectedElement.value;
+  const currentBand = bands.value[currentBandIndex];
+  const currentElement = currentBand?.elements[currentElementIndex];
+  
+  if (!currentBand || !currentElement) return;
+  
+  // 定义微调的步长（像素）
+  const MOVE_STEP = 1;
+  
+  // 计算新位置
+  let newX = currentElement.x;
+  let newY = currentElement.y;
+  
+  switch (direction) {
+    case 'ArrowUp':
+      newY = Math.max(0, currentElement.y - MOVE_STEP);
+      break;
+    case 'ArrowDown':
+      newY = Math.min(currentBand.height - currentElement.height, currentElement.y + MOVE_STEP);
+      break;
+    case 'ArrowLeft':
+      newX = Math.max(0, currentElement.x - MOVE_STEP);
+      break;
+    case 'ArrowRight':
+      newX = Math.min(reportProperties.value.pageWidth - currentElement.width, currentElement.x + MOVE_STEP);
+      break;
+  }
+  
+  // 更新元素位置
+  currentElement.x = newX;
+  currentElement.y = newY;
+  
+  // 触发更新
+  updateJRXML();
+  saveToLocalStorageWrapper();
+  
+  // 检查是否超出边界
+  updateOutOfBoundsElements();
 };
 
 // 处理报表区域的点击事件，取消选中状态
@@ -3347,13 +3491,14 @@ const saveJRXML = (): void => {
           const processPen = (pen: any): string => {
             if (!pen) return '';
             
-            let width = '1px';
+            // 如果lineWidth为0或undefined，返回空字符串表示无边框
+            if (pen.lineWidth === 0 || pen.lineWidth === undefined) {
+              return '';
+            }
+            
+            let width = `${pen.lineWidth}px`;
             let style = 'solid';
             let color = '#000000';
-            
-            if (pen.lineWidth) {
-              width = `${pen.lineWidth}px`;
-            }
             
             if (pen.lineStyle) {
               switch (pen.lineStyle) {
@@ -3393,6 +3538,11 @@ const saveJRXML = (): void => {
               const width = parts[0];
               const style = parts[1];
               
+              // 如果宽度为0，返回空字符串表示无边框
+              if (width === '0px') {
+                return '';
+              }
+              
               // 根据宽度确定样式名称
               if (width === '1px') {
                 if (style === 'solid') return 'Thin';
@@ -3407,8 +3557,8 @@ const saveJRXML = (): void => {
               }
             }
             
-            // 默认返回Thin
-            return 'Thin';
+            // 默认返回空字符串而不是Thin，避免意外显示边框
+            return '';
           };
           
           // 从边框样式字符串中提取颜色
@@ -3589,6 +3739,84 @@ watch(() => currentElement.value?.box?.border, (newBorderStyle) => {
   box.leftBorder = fullBorderStyle;
   box.bottomBorder = fullBorderStyle;
   box.rightBorder = fullBorderStyle;
+  
+  // 更新JRXML
+  updateJRXML();
+});
+
+// 监听边框宽度变化，确保pen对象中包含lineWidth属性
+watch(() => currentElement.value?.box?.borderWidth, (newBorderWidth) => {
+  if (!currentElement.value || !currentElement.value.box) return;
+  
+  const box = currentElement.value.box;
+  
+  // 如果边框宽度为0，自动将边框样式设置为"无"
+  if (newBorderWidth === 0 || newBorderWidth === undefined || newBorderWidth === null) {
+    box.borderStyle = '';
+    
+    // 删除pen对象
+    delete box.pen;
+  } else {
+    // 确保pen对象存在
+    if (!box.pen) {
+      box.pen = {};
+    }
+    
+    // 更新pen对象的lineWidth属性
+    box.pen.lineWidth = newBorderWidth;
+    
+    // 如果没有设置边框样式，使用默认样式
+    if (!box.pen.lineStyle) {
+      box.pen.lineStyle = box.borderStyle || 'Solid';
+    }
+    
+    // 如果没有设置边框颜色，使用默认颜色
+    if (!box.pen.lineColor) {
+      box.pen.lineColor = box.borderColor || '#000000';
+    }
+  }
+  
+  // 更新JRXML
+  updateJRXML();
+});
+
+// 监听边框样式变化，确保pen对象中包含lineStyle属性
+watch(() => currentElement.value?.box?.borderStyle, (newBorderStyle, oldBorderStyle) => {
+  if (!currentElement.value || !currentElement.value.box) return;
+  
+  const box = currentElement.value.box;
+  
+  // 如果边框样式设置为"无"（空字符串），自动将边框粗细改为0
+  if (newBorderStyle === undefined || newBorderStyle === null || newBorderStyle === '') {
+    box.borderWidth = 0;
+    
+    // 删除pen对象
+    delete box.pen;
+  } else {
+    // 当边框样式从"无"切换到其他选项时，如果边框粗细为0则自动设置为1
+    if ((oldBorderStyle === '' || oldBorderStyle === undefined || oldBorderStyle === null) && 
+        box.borderWidth === 0) {
+      box.borderWidth = 1;
+    }
+    
+    // 确保pen对象存在
+    if (!box.pen) {
+      box.pen = {};
+    }
+    
+    // 更新pen对象的lineStyle属性
+    box.pen.lineStyle = newBorderStyle;
+    
+    // 如果没有设置边框宽度，使用默认宽度
+    if (!box.pen.lineWidth) {
+      box.pen.lineWidth = box.borderWidth || 1;
+    }
+    
+    // 如果没有设置边框颜色，使用默认颜色
+    if (!box.pen.lineColor) {
+      box.pen.lineColor = box.borderColor || '#000000';
+    }
+  }
   
   // 更新JRXML
   updateJRXML();
@@ -4960,6 +5188,14 @@ const handleBandSelectionChange = (): void => {
 .side-control {
   flex: 1;
   max-width: 200px;
+}
+
+.width-control {
+  width: 60px;
+  font-size: v-bind('UI_CONSTANTS.FONT_SIZE_DEFAULT + "px"');
+  padding: v-bind('UI_CONSTANTS.SMALL_GAP + "px"');
+  border: v-bind('UI_CONSTANTS.BORDER_THIN + "px"') solid #d9d9d9;
+  border-radius: v-bind('UI_CONSTANTS.BORDER_RADIUS_SMALL + "px"');
 }
 
 .color-control {

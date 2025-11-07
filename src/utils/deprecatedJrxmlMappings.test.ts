@@ -151,6 +151,173 @@ describe('JRXML过时标签和属性转换测试', () => {
       // 检查是否使用了markup属性
       expect(jrxmlContent).toContain('markup="styled"');
     });
+
+    it('当全局边框样式为空且没有设置边框宽度时，不应该生成box标签', () => {
+      const properties = {
+        name: 'Test Report',
+        pageWidth: 595,
+        pageHeight: 842,
+        leftMargin: 20,
+        rightMargin: 20,
+        topMargin: 30,
+        bottomMargin: 30
+      };
+      
+      const bands = [
+        {
+          type: 'detail',
+          height: 50,
+          elements: [
+            {
+              type: 'staticText',
+              x: 10,
+              y: 10,
+              width: 100,
+              height: 20,
+              text: 'Test Text',
+              box: {
+                borderStyle: '', // 边框样式为空（无）
+                borderWidth: 0   // 边框宽度为0
+                // 不设置borderColor，避免触发hasOldBorderColor检查
+              }
+            }
+          ]
+        }
+      ];
+
+      const jrxmlContent = generateJRXMLContent(properties, bands, []);
+      
+      // 检查是否没有生成box标签
+      expect(jrxmlContent).not.toContain('<box');
+      expect(jrxmlContent).not.toContain('</box>');
+    });
+
+    it('当全局边框样式不为空时，应该生成box标签', () => {
+      const properties = {
+        name: 'Test Report',
+        pageWidth: 595,
+        pageHeight: 842,
+        leftMargin: 20,
+        rightMargin: 20,
+        topMargin: 30,
+        bottomMargin: 30
+      };
+      
+      const bands = [
+        {
+          type: 'detail',
+          height: 50,
+          elements: [
+            {
+              type: 'staticText',
+              x: 10,
+              y: 10,
+              width: 100,
+              height: 20,
+              text: 'Test Text',
+              box: {
+                borderStyle: 'Solid', // 边框样式不为空
+                borderWidth: 1,      // 边框宽度不为0
+                borderColor: '#000000'
+              }
+            }
+          ]
+        }
+      ];
+
+      const jrxmlContent = generateJRXMLContent(properties, bands, []);
+      
+      // 检查是否生成了box标签
+      expect(jrxmlContent).toContain('<box');
+      expect(jrxmlContent).toContain('</box>');
+      // 检查是否包含边框设置
+      expect(jrxmlContent).toContain('<pen');
+      expect(jrxmlContent).toContain('lineWidth="1"');
+      expect(jrxmlContent).toContain('lineStyle="Solid"');
+      expect(jrxmlContent).toContain('lineColor="#000000"');
+    });
+
+    it('当没有设置边框样式但有边框宽度时，应该生成box标签', () => {
+      const properties = {
+        name: 'Test Report',
+        pageWidth: 595,
+        pageHeight: 842,
+        leftMargin: 20,
+        rightMargin: 20,
+        topMargin: 30,
+        bottomMargin: 30
+      };
+      
+      const bands = [
+        {
+          type: 'detail',
+          height: 50,
+          elements: [
+            {
+              type: 'staticText',
+              x: 10,
+              y: 10,
+              width: 100,
+              height: 20,
+              text: 'Test Text',
+              box: {
+                borderWidth: 1,      // 边框宽度不为0，即使没有边框样式
+                borderColor: '#000000'
+              }
+            }
+          ]
+        }
+      ];
+
+      const jrxmlContent = generateJRXMLContent(properties, bands, []);
+      
+      // 检查是否生成了box标签
+      expect(jrxmlContent).toContain('<box');
+      expect(jrxmlContent).toContain('</box>');
+      // 检查是否包含边框设置
+      expect(jrxmlContent).toContain('<pen');
+      expect(jrxmlContent).toContain('lineWidth="1"');
+    });
+
+    it('当只设置边距时，应该生成box标签', () => {
+      const properties = {
+        name: 'Test Report',
+        pageWidth: 595,
+        pageHeight: 842,
+        leftMargin: 20,
+        rightMargin: 20,
+        topMargin: 30,
+        bottomMargin: 30
+      };
+      
+      const bands = [
+        {
+          type: 'detail',
+          height: 50,
+          elements: [
+            {
+              type: 'staticText',
+              x: 10,
+              y: 10,
+              width: 100,
+              height: 20,
+              text: 'Test Text',
+              box: {
+                padding: 5  // 只设置边距
+              }
+            }
+          ]
+        }
+      ];
+
+      const jrxmlContent = generateJRXMLContent(properties, bands, []);
+      
+      // 检查是否生成了box标签
+      expect(jrxmlContent).toContain('<box');
+      expect(jrxmlContent).toContain('</box>');
+      // 检查是否包含边距设置
+      expect(jrxmlContent).toContain('padding="5"');
+    });
   });
 
   describe('解析JRXML内容时的过时属性转换', () => {
