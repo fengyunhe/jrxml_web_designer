@@ -176,72 +176,6 @@ function generateElementXML(element: any): string {
   }
 }
 
-// 验证border值是否符合XSD要求
-function validateBorderValue(borderValue: string): string {
-  if (!borderValue) return '';
-  
-  // XSD中lineWidth应该是数值，而不是字符串枚举值
-  // 将字符串值转换为对应的数值
-  if (borderValue === '0' || borderValue === 'false' || borderValue === 'None') return '0';
-  if (borderValue === 'Thin' || borderValue === '1') return '1';
-  if (borderValue === '1Point') return '1';
-  if (borderValue === '2Point') return '2';
-  if (borderValue === '4Point') return '4';
-  if (borderValue === 'Dotted') return '1'; // Dotted是样式，不是宽度，默认为1
-  
-  // 如果是纯数字，直接返回
-  if (/^\d+$/.test(borderValue)) {
-    return borderValue;
-  }
-  
-  // 默认返回0，表示无边框
-  return '0';
-}
-
-// 从CSS边框样式中提取边框宽度和样式
-function extractBorderFromCSS(cssBorder: string): { width: number, style: string, color?: string } {
-  if (!cssBorder) return { width: 0, style: '' };
-  
-  // 解析CSS边框样式，例如 "1px solid #000000"
-  const parts = cssBorder.trim().split(/\s+/);
-  
-  if (parts.length >= 2) {
-    const width = parts[0];
-    const style = parts[1];
-    const color = parts.length > 2 ? parts[2] : undefined;
-    
-    // 将CSS宽度转换为JRXML宽度数值
-    let jrxmlWidth = 1; // 默认宽度
-    if (width === '1px') jrxmlWidth = 1;
-    else if (width === '2px') jrxmlWidth = 2;
-    else if (width === '3px') jrxmlWidth = 2; // 3px接近2Point
-    else if (width === '4px') jrxmlWidth = 4;
-    else if (width && /^\d+px$/.test(width)) {
-      const pxValue = parseInt(width.replace('px', ''));
-      if (pxValue <= 1) jrxmlWidth = 1;
-      else if (pxValue <= 2) jrxmlWidth = 2;
-      else jrxmlWidth = 4;
-    }
-    
-    // 将CSS样式转换为JRXML样式
-    let jrxmlStyle = 'Solid';
-    if (style === 'dashed') jrxmlStyle = 'Dashed';
-    else if (style === 'dotted') jrxmlStyle = 'Dotted';
-    else if (style === 'double') jrxmlStyle = 'Double'; // 注意：Double可能不在XSD中，需要处理
-    
-    return { width: jrxmlWidth, style: jrxmlStyle, color };
-  }
-  
-  // 如果解析失败，尝试将整个字符串作为枚举值处理
-  const borderValue = validateBorderValue(cssBorder);
-  let widthValue = 0;
-  if (borderValue === '1Point') widthValue = 1;
-  else if (borderValue === '2Point') widthValue = 2;
-  else if (borderValue === '4Point') widthValue = 4;
-  
-  return { width: widthValue, style: 'Solid' };
-}
-
 // 生成box元素XML
 function generateBoxXML(box: any): string {
   if (!box) return '';
@@ -252,9 +186,6 @@ function generateBoxXML(box: any): string {
   const hasLeftPadding = box.leftPadding !== undefined && box.leftPadding !== '' && box.leftPadding !== 0;
   const hasBottomPadding = box.bottomPadding !== undefined && box.bottomPadding !== '' && box.bottomPadding !== 0;
   const hasRightPadding = box.rightPadding !== undefined && box.rightPadding !== '' && box.rightPadding !== 0;
-  
-  // 检查是否有旧的pen子元素
-  const hasOldPenModel = box.pen || box.topPen || box.leftPen || box.bottomPen || box.rightPen;
   
   // 检查全局边框宽度是否为0
   const hasGlobalBorderWidth = box.borderWidth !== undefined && box.borderWidth > 0;
