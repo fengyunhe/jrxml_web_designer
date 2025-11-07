@@ -152,6 +152,7 @@
               :key="element.type"
               class="element-item"
               @dragstart="handleDragStart($event, element)"
+              @dblclick="handleElementDoubleClick(element)"
               draggable="true"
             >
               <span class="element-icon">{{ getElementIcon(element.type) }}</span>
@@ -1642,11 +1643,57 @@ const dragCoordinates = ref<{x: number, y: number, visible: boolean, bandName: s
 // 调整大小相关
 const resizingInfo = ref<{bandIndex: number, elementIndex: number, startX: number, startY: number, startWidth: number, startHeight: number} | null>(null);
 
+// 跟踪最后点击的band
+const lastClickedBandIndex = ref<number>(3); // 默认为DETAIL区域（索引3）
+
 // 处理拖放
 const handleDragStart = (event: DragEvent, element: any) => {
   if (event.dataTransfer) {
     event.dataTransfer.setData('application/json', JSON.stringify(element));
   }
+};
+
+// 处理元素双击事件
+const handleElementDoubleClick = (element: any) => {
+  // 确保有最后点击的band
+  if (lastClickedBandIndex.value === null || lastClickedBandIndex.value === undefined) {
+    console.warn('没有选中的band，将使用默认band');
+    lastClickedBandIndex.value = 3; // 默认使用DETAIL区域
+  }
+  
+  // 获取目标band
+  const targetBand = bands.value[lastClickedBandIndex.value];
+  if (!targetBand) {
+    console.error('目标band不存在');
+    return;
+  }
+  
+  // 创建新元素
+  const newElement: DesignElement = {
+    type: element.type,
+    x: 50, // 默认位置
+    y: 20, // 默认位置
+    width: 100,
+    height: 30,
+    ...getDefaultElementProperties(element.type)
+  };
+  
+  // 确保band有elements数组
+  if (!targetBand.elements) {
+    targetBand.elements = [];
+  }
+  
+  // 添加元素到目标band
+  targetBand.elements.push(newElement);
+  
+  // 选中新添加的元素
+  const newElementIndex = targetBand.elements.length - 1;
+  selectElement(lastClickedBandIndex.value, newElementIndex);
+  
+  // 更新JRXML
+  updateJRXML();
+  
+  console.log('元素已添加到band:', newElement);
 };
 
 const handleDrop = (event: DragEvent) => {
@@ -2096,6 +2143,8 @@ const selectBand = (index: number) => {
   selectedBandIndex.value = index;
   selectedElement.value = null;
   selectedElements.value = []; // 清空多选
+  // 更新最后点击的band索引
+  lastClickedBandIndex.value = index;
   // 自动隐藏底部面板
   showBottomPanel.value = false;
 };
