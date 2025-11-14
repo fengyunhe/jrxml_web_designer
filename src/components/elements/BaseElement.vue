@@ -326,6 +326,8 @@ const handleResize = (event: MouseEvent) => {
   /* 添加小的点击区域扩展，提高选择准确性 */
   transform-origin: center;
   transition: outline 0.1s ease;
+  /* 添加文字换行样式 */
+  word-break: break-all;
 }
 
 .design-element.selected {
