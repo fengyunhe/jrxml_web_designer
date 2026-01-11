@@ -153,6 +153,9 @@
           @drag-start="handleDragStart"
           @element-double-click="handleElementDoubleClick"
           @select-element="selectElement"
+          @add-field="handleAddField"
+          @edit-field="handleEditField"
+          @delete-field="handleDeleteField"
         />
       </ResizablePanel>
       
@@ -193,6 +196,7 @@
         @zoom-change="handleZoomChange"
         @select-elements-in-rect="selectElementsInRect"
         @clear-selection="clearSelection"
+        @check-fields="handleCheckFields"
       />
       
       <!-- 右侧属性面板 -->
@@ -590,6 +594,13 @@
     
     <!-- 使用说明弹窗 -->
     <HelpModal v-model:visible="showHelp" />
+    
+    <!-- 字段管理弹窗 -->
+    <FieldManagementModal 
+      v-model:visible="showFieldModal" 
+      :field="editingField" 
+      @save="handleFieldSave" 
+    />
   </div>
 </template>
 
@@ -607,6 +618,7 @@ import ResizablePanel from './panels/ResizablePanel.vue';
 import DesignerCanvas from './designer/DesignerCanvas.vue';
 import RewardModal from './modals/RewardModal.vue';
 import HelpModal from './modals/HelpModal.vue';
+import FieldManagementModal from './modals/FieldManagementModal.vue';
 import BottomPanel from './panels/BottomPanel.vue';
 import ElementLibrary from './ElementLibrary.vue';
 import type {Band, BandType, DesignElement, ReportField, ReportParameter} from '../types';
@@ -3119,6 +3131,11 @@ const handleKeyDown = (event: KeyboardEvent) => {
   
   // 方向键处理：Shift+方向键微调元素位置，单独方向键选择周围组件
   if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(event.key)) {
+    // 如果输入框处于焦点状态，使用默认行为（移动光标）
+    if (isInputFocused) {
+      return;
+    }
+    
     event.preventDefault();
     
     // 如果按住Shift键且有选中元素，则微调元素位置
@@ -4195,6 +4212,10 @@ const showReward = ref(false);
 // 使用说明相关
 const showHelp = ref(false);
 
+// 字段管理相关
+const showFieldModal = ref(false);
+const editingField = ref<ReportField | undefined>(undefined);
+
 // 更新Band高度
 const updateBandHeight = (index: number): void => {
   if (bands.value[index]) {
@@ -4214,6 +4235,78 @@ const updateBandHeight = (index: number): void => {
     // 保存状态到历史记录
     saveStateToHistory();
     
+    // 更新JRXML
+    updateJRXML();
+  }
+};
+
+// 处理添加字段
+const handleAddField = (): void => {
+  editingField.value = undefined;
+  showFieldModal.value = true;
+};
+
+// 处理编辑字段
+const handleEditField = (field: ReportField): void => {
+  editingField.value = { ...field };
+  showFieldModal.value = true;
+};
+
+// 处理删除字段
+const handleDeleteField = (fieldName: string): void => {
+  if (confirm(`确定要删除字段 "${fieldName}" 吗？`)) {
+    const fieldIndex = reportFields.value.findIndex(field => field.name === fieldName);
+    if (fieldIndex !== -1) {
+      reportFields.value.splice(fieldIndex, 1);
+      saveStateToHistory();
+      updateJRXML();
+    }
+  }
+};
+
+// 处理字段保存
+const handleFieldSave = (field: ReportField): void => {
+  const existingFieldIndex = reportFields.value.findIndex(f => f.name === field.name);
+  
+  if (existingFieldIndex !== -1 && editingField.value?.name !== field.name) {
+    // 如果是编辑且字段名已存在，显示错误
+    alert('字段名称已存在，请使用其他名称');
+    return;
+  }
+  
+  if (existingFieldIndex !== -1) {
+    // 更新现有字段
+    reportFields.value[existingFieldIndex] = field;
+  } else {
+    // 添加新字段
+    reportFields.value.push(field);
+  }
+  
+  saveStateToHistory();
+  updateJRXML();
+};
+
+// 处理字段检查
+const handleCheckFields = (fields: string[]): void => {
+  let fieldsAdded = false;
+  
+  fields.forEach(fieldName => {
+    // 检查字段是否已存在
+    const existingFieldIndex = reportFields.value.findIndex(f => f.name === fieldName);
+    
+    if (existingFieldIndex === -1) {
+      // 字段不存在，自动添加
+      reportFields.value.push({
+        name: fieldName,
+        class: 'java.lang.String'
+      });
+      fieldsAdded = true;
+    }
+  });
+  
+  if (fieldsAdded) {
+    // 保存状态到历史记录
+    saveStateToHistory();
     // 更新JRXML
     updateJRXML();
   }

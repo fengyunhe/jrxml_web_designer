@@ -45,6 +45,7 @@ const emit = defineEmits<{
   dragStart: [event: MouseEvent, bandIndex: number, elementIndex: number];
   resizeStart: [event: MouseEvent, bandIndex: number, elementIndex: number];
   updateElement: [];
+  checkFields: [fields: string[]];
 }>();
 
 // 显示文本
@@ -83,6 +84,19 @@ const handleStartEditing = () => {
   
   // 如果用户点击了确定且表达式有变化，则更新表达式
   if (newExpression !== null && newExpression !== currentExpression) {
+    // 提取表达式中的所有字段引用 $F{fieldName}
+    const fieldReferences: string[] = [];
+    const fieldRegex = /\$F\{([^}]+)\}/g;
+    let match;
+    while ((match = fieldRegex.exec(newExpression)) !== null) {
+      fieldReferences.push(match[1]);
+    }
+    
+    // 发送字段引用给父组件检查
+    if (fieldReferences.length > 0) {
+      emit('checkFields', fieldReferences);
+    }
+    
     // 更新元素表达式
     if (newExpression.startsWith('$F{') && newExpression.endsWith('}')) {
       // 如果是字段引用格式，提取字段名

@@ -72,16 +72,28 @@
     
     <!-- 数据字段区域 -->
     <div class="data-fields-section">
-      <h4>数据字段</h4>
+      <div class="section-header">
+        <h4>数据字段</h4>
+        <button class="add-button" @click="handleAddField" title="添加数据字段">+</button>
+      </div>
       <div class="fields-mini-view">
         <div 
           v-for="(field, index) in reportFields" 
-          :key="index" 
+          :key="field.name" 
           class="field-mini-item"
-          @click="selectElementsByFieldWrapper(field.name)"
         >
-          <span class="field-name">$F{ {{ field.name }} }</span>
-          <span class="field-type">({{ field.class }})</span>
+          <div class="field-info" @click="selectElementsByFieldWrapper(field.name)">
+            <span class="field-name">$F{ {{ field.name }} }</span>
+            <span class="field-type">({{ field.class }})</span>
+          </div>
+          <div class="field-actions">
+            <button class="action-button edit-button" @click.stop="handleEditField(field)" title="编辑字段">✏️</button>
+            <button class="action-button delete-button" @click.stop="handleDeleteField(field.name)" title="删除字段">🗑️</button>
+          </div>
+        </div>
+        <div v-if="reportFields.length === 0" class="empty-state">
+          <p>暂无数据字段</p>
+          <p class="empty-hint">点击上方「+」按钮添加字段</p>
         </div>
       </div>
     </div>
@@ -115,6 +127,9 @@ interface Emits {
   (e: 'drag-start', event: DragEvent, element: any): void;
   (e: 'element-double-click', element: any): void;
   (e: 'select-element', bandIndex: number, elementIndex: number): void;
+  (e: 'add-field'): void;
+  (e: 'edit-field', field: ReportField): void;
+  (e: 'delete-field', fieldName: string): void;
 }
 
 // 使用默认值
@@ -204,6 +219,21 @@ function selectElementsByParameterWrapper(paramName: string): void {
 function selectElementsByFieldWrapper(fieldName: string): void {
   selectElementsByField( props.bands,fieldName, selectElement);
 }
+
+// 处理添加字段
+function handleAddField(): void {
+  emit('add-field');
+}
+
+// 处理编辑字段
+function handleEditField(field: ReportField): void {
+  emit('edit-field', field);
+}
+
+// 处理删除字段
+function handleDeleteField(fieldName: string): void {
+  emit('delete-field', fieldName);
+}
 </script>
 
 <style scoped>
@@ -221,10 +251,38 @@ function selectElementsByFieldWrapper(fieldName: string): void {
 .data-parameters-section h4,
 .data-fields-section h4 {
   margin-top: 0;
-  margin-bottom: 12px;
+  margin-bottom: 0;
   color: #333;
   font-size: 14px;
   font-weight: 600;
+}
+
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.add-button {
+  width: 20px;
+  height: 20px;
+  border: none;
+  background-color: #4a90e2;
+  color: white;
+  border-radius: 50%;
+  font-size: 14px;
+  font-weight: bold;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+
+.add-button:hover {
+  background-color: #3a80d2;
+  transform: scale(1.1);
 }
 
 .element-list {
@@ -383,7 +441,6 @@ function selectElementsByFieldWrapper(fieldName: string): void {
   background-color: #f0f0f0;
   border: 1px solid #e0e0e0;
   border-radius: 4px;
-  cursor: pointer;
   font-size: 12px;
   transition: all 0.2s ease;
 }
@@ -392,13 +449,76 @@ function selectElementsByFieldWrapper(fieldName: string): void {
   background-color: #e0e0e0;
 }
 
+.field-info {
+  flex: 1;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  cursor: pointer;
+}
+
 .field-name {
   font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-right: 8px;
 }
 
 .field-type {
   font-size: 10px;
   color: #666;
+  white-space: nowrap;
+}
+
+.field-actions {
+  display: flex;
+  gap: 4px;
+  margin-left: 8px;
+}
+
+.action-button {
+  width: 20px;
+  height: 20px;
+  border: none;
+  border-radius: 3px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  transition: all 0.2s;
+}
+
+.edit-button {
+  background-color: #f0f0f0;
+  color: #333;
+}
+
+.edit-button:hover {
+  background-color: #e0e0e0;
+}
+
+.delete-button {
+  background-color: #f0f0f0;
+  color: #e74c3c;
+}
+
+.delete-button:hover {
+  background-color: #ffe6e6;
+}
+
+.empty-state {
+  padding: 20px 10px;
+  text-align: center;
+  color: #999;
+  font-size: 12px;
+}
+
+.empty-hint {
+  font-size: 10px;
+  margin-top: 4px;
+  color: #ccc;
 }
 
 /* 滚动条样式 */

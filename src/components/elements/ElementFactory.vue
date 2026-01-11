@@ -43,6 +43,7 @@ const emit = defineEmits<{
   startEditing: [bandIndex: number, elementIndex: number];
   finishEditing: [];
   cancelEditing: [];
+  checkFields: [fields: string[]];
 }>();
 
 // 根据元素类型获取对应的组件
@@ -100,6 +101,9 @@ const commonEvents = {
   },
   cancelEditing: () => {
     emit('cancelEditing');
+  },
+  checkFields: (fields: string[]) => {
+    emit('checkFields', fields);
   }
 };
 </script>

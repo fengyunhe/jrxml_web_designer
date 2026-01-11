@@ -119,6 +119,7 @@
             @start-editing="startEditing"
             @finish-editing="finishEditing"
             @cancel-editing="cancelEditing"
+            @check-fields="checkFields"
           />
           </div>
           <!-- 区域高度调整手柄 -->
@@ -225,7 +226,8 @@ const emit = defineEmits([
   'start-resizing-band',
   'zoom-change',
   'select-elements-in-rect', // 添加框选事件
-  'clear-selection' // 添加清空选择事件
+  'clear-selection', // 添加清空选择事件
+  'check-fields' // 添加字段检查事件
 ]);
 
 // 框选状态
@@ -288,6 +290,10 @@ const cancelEditing = () => {
   if (props.editingElement) {
     emit('cancel-editing');
   }
+};
+
+const checkFields = (fields: string[]) => {
+  emit('check-fields', fields);
 };
 
 const startResizingBand = (event: MouseEvent, bandIndex: number) => {
