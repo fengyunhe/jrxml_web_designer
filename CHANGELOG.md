@@ -8,8 +8,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
-- 初始项目结构搭建
-- PDF模板设计器基础功能
+- 实现自动数据字段创建：当动态文本元素表达式引用不存在的字段时自动添加
+- 添加报表元素列表的删除功能
+- 支持macOS上的Command键作为Ctrl键的替代
 
 ### Changed
 
@@ -18,6 +19,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Removed
 
 ### Fixed
+- 修复表达式在属性设置中不显示的问题
+- 避免删除元素时的重复确认对话框
+- 修复TypeScript语法错误
+- 修复输入框中复制粘贴快捷键的默认行为
 
 ### Security
 
