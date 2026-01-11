@@ -2,18 +2,19 @@
   <div 
     class="design-element"
     :class="{ 
-      'selected': isSelected && !isDragging,
+      'selected': isSelected,
       'out-of-bounds': isOutOfBounds
     }"
     @click.stop="handleSelect"
     :style="elementStyle"
     @mousedown.stop="handleMouseDown"
+    @contextmenu.stop="handleContextMenu"
   >
-    <!-- 右下角调整大小手柄 -->
+    <!-- 调整大小手柄 -->
     <div 
       v-if="isSelected"
-      class="resize-handle"
-      @mousedown.stop="handleResize"
+      class="resize-handle resize-handle-se"
+      @mousedown.stop="(event) => handleResize('se', event)"
     ></div>
     
     <!-- 子组件将覆盖此内容 -->
@@ -46,6 +47,7 @@ const emit = defineEmits<{
   select: [bandIndex: number, elementIndex: number, isMultiSelect?: boolean];
   dragStart: [event: MouseEvent, bandIndex: number, elementIndex: number];
   resizeStart: [event: MouseEvent, bandIndex: number, elementIndex: number];
+  contextmenu: [event: MouseEvent, bandIndex: number, elementIndex: number];
 }>();
 
 // 是否选中
@@ -311,8 +313,17 @@ const handleMouseDown = (event: MouseEvent) => {
 };
 
 // 处理调整大小
-const handleResize = (event: MouseEvent) => {
-  emit('resizeStart', event, props.bandIndex, props.elementIndex);
+const handleResize = (_direction: string, event?: MouseEvent) => {
+  // 获取当前事件对象
+  const resizeEvent = event || window.event as MouseEvent;
+  if (resizeEvent) {
+    emit('resizeStart', resizeEvent, props.bandIndex, props.elementIndex);
+  }
+};
+
+// 处理上下文菜单
+const handleContextMenu = (event: MouseEvent) => {
+  emit('contextmenu', event, props.bandIndex, props.elementIndex);
 };
 </script>
 

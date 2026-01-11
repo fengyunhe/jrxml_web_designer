@@ -116,6 +116,7 @@
             @select="selectElement"
             @drag-start="startDragging"
             @resize-start="startResizingElement"
+            @contextmenu="handleElementContextMenu"
             @start-editing="startEditing"
             @finish-editing="finishEditing"
             @cancel-editing="cancelEditing"
@@ -225,9 +226,11 @@ const emit = defineEmits([
   'cancel-editing',
   'start-resizing-band',
   'zoom-change',
+  'reset-zoom', // 添加重置缩放事件
   'select-elements-in-rect', // 添加框选事件
   'clear-selection', // 添加清空选择事件
-  'check-fields' // 添加字段检查事件
+  'check-fields', // 添加字段检查事件
+  'contextmenu' // 添加上下文菜单事件
 ]);
 
 // 框选状态
@@ -296,6 +299,11 @@ const checkFields = (fields: string[]) => {
   emit('check-fields', fields);
 };
 
+// 处理元素上下文菜单
+const handleElementContextMenu = (event: MouseEvent, bandIndex: number, elementIndex: number) => {
+  emit('contextmenu', event, bandIndex, elementIndex);
+};
+
 const startResizingBand = (event: MouseEvent, bandIndex: number) => {
   emit('start-resizing-band', event, bandIndex);
 };
@@ -305,6 +313,15 @@ const isElementOutOfBounds = (bandIndex: number, elementIndex: number) => {
   return props.outOfBoundsElements.some(
     item => item.bandIndex === bandIndex && item.elementIndex === elementIndex
   );
+};
+
+// 键盘事件处理
+const handleKeyDown = (event: KeyboardEvent) => {
+  // CTRL+0 重置缩放
+  if (event.ctrlKey && event.key === '0') {
+    event.preventDefault();
+    emit('reset-zoom');
+  }
 };
 
 // 滚动事件处理
@@ -430,6 +447,10 @@ onMounted(() => {
   if (designerCanvas) {
     designerCanvas.addEventListener('wheel', handleWheel as EventListener, { passive: false });
     (window as any).designerCanvasWheelListener = handleWheel;
+    
+    // 添加键盘事件监听器
+    document.addEventListener('keydown', handleKeyDown as EventListener);
+    (window as any).designerCanvasKeyDownListener = handleKeyDown;
   }
   
   // 添加滚动事件监听器
@@ -467,6 +488,12 @@ onUnmounted(() => {
   const designerCanvas = document.querySelector('.designer-canvas');
   if (wheelListener && designerCanvas) {
     designerCanvas.removeEventListener('wheel', wheelListener as EventListener);
+  }
+  
+  // 移除键盘事件监听器
+  const keyDownListener = (window as any).designerCanvasKeyDownListener;
+  if (keyDownListener) {
+    document.removeEventListener('keydown', keyDownListener as EventListener);
   }
   
   // 移除滚动事件监听器

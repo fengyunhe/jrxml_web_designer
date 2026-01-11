@@ -3,86 +3,15 @@
     <div class="designer-header">
       <h1>PDF模板设计器</h1>
       <div class="header-actions">
-        <!-- 文件管理菜单 -->
-        <div class="file-menu-container" ref="fileMenuContainer">
-          <button @click="toggleFileMenu" class="file-menu-button">文件管理</button>
-          <div v-if="showFileMenu" class="file-menu-dropdown">
-            <div class="menu-item" @click="createNewFile">
-              <span class="menu-icon">📄</span>
-              <span>新建文件</span>
-            </div>
-            <div class="menu-item" @click="openLocalFile">
-              <span class="menu-icon">📂</span>
-              <span>打开本地文件</span>
-            </div>
-            <div class="menu-item" @click="saveCurrentFileToStorage" :disabled="!currentFileName || currentFileName === '未命名报表'">
-              <span class="menu-icon">💾</span>
-              <span>保存</span>
-            </div>
-            <div class="menu-item" @click="saveAsLocalFile">
-              <span class="menu-icon">💾</span>
-              <span>另存为</span>
-            </div>
-            <div class="menu-divider"></div>
-            <div class="menu-item file-submenu-container" @click="toggleFileSubmenu">
-              <span class="menu-icon">📋</span>
-              <span>文件列表</span>
-              <span class="submenu-arrow">▶</span>
-              <div v-if="showFileSubmenu" class="file-submenu" @click.stop>
-                <div class="submenu-header">
-                  <h4>文件列表</h4>
-                  <div class="file-filter">
-                    <input 
-                      v-model="fileFilterText" 
-                      type="text" 
-                      placeholder="搜索文件..." 
-                      class="filter-input"
-                      @click.stop
-                    />
-                    <button 
-                      v-if="fileFilterText" 
-                      @click.stop="fileFilterText = ''" 
-                      class="clear-filter-btn"
-                      title="清除搜索"
-                    >
-                      ✕
-                    </button>
-                  </div>
-                </div>
-                <div class="submenu-file-list">
-                  <div 
-                    v-for="file in filteredFiles" 
-                    :key="file.id"
-                    class="submenu-file-item"
-                    :class="{ 'active': currentFileName === file.name }"
-                    @click.stop="selectFileFromSubmenu(file)"
-                  >
-                    <div class="file-info">
-                      <span class="file-name">{{ file.name }}</span>
-                      <span class="file-date">{{ formatDate(file.lastModified) }}</span>
-                    </div>
-                    <div class="file-item-actions">
-                      <button @click.stop="renameFileFromSubmenu(file)" class="btn-icon" title="重命名">
-                        ✏️
-                      </button>
-                      <button @click.stop="deleteFileFromSubmenu(file)" class="btn-icon btn-danger" title="删除">
-                        🗑️
-                      </button>
-                    </div>
-                  </div>
-                  <div v-if="filteredFiles.length === 0" class="empty-state">
-                    <p>没有找到文件</p>
-                    <button @click.stop="createNewFile" class="btn-primary">创建新文件</button>
-                  </div>
-                </div>
-                <div class="submenu-footer">
-                  <button @click.stop="createNewFile" class="btn-small btn-primary">新建文件</button>
-                  <button @click.stop="openLocalFile" class="btn-small btn-secondary">打开本地文件</button>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
+        <!-- 文件管理组件 -->
+        <FileManager
+          :current-file-name="currentFileName"
+          :current-file-id="currentFileId"
+          @create-new-file="createNewFile"
+          @load-file="loadFile"
+          @update:currentFileName="currentFileName = $event"
+          @update:currentFileId="currentFileId = $event"
+        />
         <span class="current-file-name">{{ currentFileName }}</span>
         
         <button @click="toggleLeftPanel" class="btn-secondary">
@@ -107,16 +36,12 @@
           </label>
         </div>
         
-        <!-- 缩放控制 -->
-        <div class="zoom-controls">
-          <button @click="zoomOut" class="btn-zoom" title="缩小">-</button>
-          <select v-model="zoomLevel" @change="applyZoom" class="zoom-select">
-            <option v-for="level in ZOOM_CONSTANTS.ZOOM_LEVELS" :key="level" :value="level">{{ level * 100 }}%</option>
-          </select>
-          <button @click="zoomIn" class="btn-zoom" title="放大">+</button>
-          <button @click="resetZoom" class="btn-zoom" title="重置缩放">{{ ZOOM_CONSTANTS.DEFAULT_ZOOM * 100 }}%</button>
-          <button @click="calculateOptimalZoom" class="btn-zoom" title="适应窗口">⊡</button>
-        </div>
+        <!-- 缩放控制组件 -->
+        <ZoomControls
+          :zoom-level="zoomLevel"
+          :paper-width="paperWidth"
+          @update:zoomLevel="zoomLevel = $event"
+        />
         
         <button @click="clearLocalStorage" class="btn-secondary">清空本地数据</button>
         <button @click="generateJRXML" class="btn-primary">生成JRXML</button>
@@ -198,6 +123,8 @@
         @select-elements-in-rect="selectElementsInRect"
         @clear-selection="clearSelection"
         @check-fields="handleCheckFields"
+        @contextmenu="handleElementContextMenu"
+        @reset-zoom="resetZoom"
       />
       
       <!-- 右侧属性面板 -->
@@ -212,360 +139,16 @@
       >
         <h3>属性设置</h3>
         
-        <!-- 报表属性 -->
-        <div v-if="!selectedBandIndex && !selectedElement" class="property-section">
-          <h4>报表属性</h4>
-          
-          <!-- Band高度设置 -->
-          <div class="form-group">
-            <h4>Band高度设置</h4>
-            <div class="band-heights-grid">
-              <div v-for="(band, index) in bands" :key="index" class="band-height-item">
-                <label>{{ getBandDisplayName(band.type) }}</label>
-                <div class="band-height-control">
-                  <input 
-                    v-model.number="band.height" 
-                    type="number" 
-                    min="0"
-                    class="band-height-input"
-                    @change="updateBandHeight(index)"
-                    @blur="updateBandHeight(index)"
-                  />
-                  <span class="band-height-unit">px</span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-        
-        <!-- 元素属性 -->
-        <div v-else-if="selectedElement && currentElement" class="property-section">
-          <!-- 元素属性标签页 -->
-          <div class="element-tabs">
-            <div class="element-tab-navigation">
-              <button 
-                v-for="tab in elementTabs" 
-                :key="tab.id"
-                class="element-tab-button" 
-                :class="{ 'active': activeElementTab === tab.id }"
-                @click="activeElementTab = tab.id"
-              >
-                {{ tab.name }}
-              </button>
-            </div>
-            
-            <!-- 基本属性标签页 -->
-            <div class="element-tab-content" v-show="activeElementTab === 'basic'">
-              <h4>基本属性</h4>
-              <div class="form-group">
-                <label>X坐标</label>
-                <input v-if="currentElement" v-model.number="currentElement.x" type="number" @change="ensureIntegerValue(currentElement, 'x')" />
-              </div>
-              <div class="form-group">
-                <label>Y坐标 (相对于当前Band)</label>
-                <input v-if="currentElement" v-model.number="currentElement.y" type="number" @change="ensureIntegerValue(currentElement, 'y')" />
-              </div>
-              <div class="form-group">
-                <label>宽度</label>
-                <input v-if="currentElement" v-model.number="currentElement.width" type="number" @change="ensureIntegerValue(currentElement, 'width')" />
-              </div>
-              <div class="form-group">
-                <label>高度</label>
-                <input v-if="currentElement" v-model.number="currentElement.height" type="number" @change="ensureIntegerValue(currentElement, 'height')" />
-              </div>
-              
-              <!-- 根据元素类型显示特定属性 -->
-              <template v-if="currentElement && currentElement.type === 'staticText'">
-                <div class="form-group">
-                  <label>文本内容</label>
-                  <textarea v-if="currentElement" v-model="currentElement.text"></textarea>
-                </div>
-                <div class="form-group">
-                  <label>字体大小</label>
-                  <input v-if="currentElement" v-model.number="currentElement.fontSize" type="number" />
-                </div>
-                <div class="form-group">
-                  <label>是否粗体</label>
-                  <input v-if="currentElement" v-model="currentElement.isBold" type="checkbox" />
-                </div>
-              </template>
-              
-              <template v-else-if="currentElement && currentElement.type === 'textField'">
-                <div class="form-group">
-                  <label>字段名称</label>
-                  <input v-if="currentElement" v-model="currentElement.fieldName" type="text" @input="updateExpressionFromFieldName" />
-                </div>
-                <div class="form-group" v-if="currentElement && currentElement.type === 'textField'">
-                  <label>表达式</label>
-                  <input v-if="currentElement" :value="getTextFieldExpression(currentElement)" @input="updateTextFieldExpression" type="text" />
-                  <small>例如: $F{字段名} 或 $F{字段名}.toString()</small>
-                </div>
-                <div class="form-group">
-                  <label>格式模式</label>
-                  <input v-if="currentElement" v-model="currentElement.pattern" type="text" />
-                  <small>例如: 日期格式 "yyyy-MM-dd"，数字格式 "#,##0.00"</small>
-                </div>
-                <div class="form-group">
-                  <label>文本对齐</label>
-                  <select v-if="currentElement" v-model="currentElement.textAlignment">
-                    <option value="Left">左对齐</option>
-                    <option value="Center">居中</option>
-                    <option value="Right">右对齐</option>
-                    <option value="Justified">两端对齐</option>
-                  </select>
-                </div>
-                <div class="form-group">
-                  <label>垂直对齐</label>
-                  <select v-if="currentElement" v-model="currentElement.verticalAlignment">
-                    <option value="Top">顶部</option>
-                    <option value="Middle">中间</option>
-                    <option value="Bottom">底部</option>
-                  </select>
-                </div>
-                <div class="form-group">
-                  <label>字体大小</label>
-                  <input v-if="currentElement" v-model.number="currentElement.fontSize" type="number" />
-                </div>
-                <div class="checkbox-group">
-                  <label>
-                    <input v-if="currentElement" v-model="currentElement.isBold" type="checkbox" />
-                    粗体
-                  </label>
-                  <label>
-                    <input v-if="currentElement" v-model="currentElement.isItalic" type="checkbox" />
-                    斜体
-                  </label>
-                  <label>
-                    <input v-if="currentElement" v-model="currentElement.isUnderline" type="checkbox" />
-                    下划线
-                  </label>
-                </div>
-                <div class="form-group">
-                  <label>
-                    <input v-if="currentElement" v-model="currentElement.isStretchWithOverflow" type="checkbox" />
-                    内容超出时自动拉伸
-                  </label>
-                </div>
-                <div class="form-group">
-                  <label>
-                    <input v-if="currentElement" v-model="currentElement.isBlankWhenNull" type="checkbox" />
-                    值为null时显示空白
-                  </label>
-                </div>
-                <div class="form-group">
-                  <label>表达式计算时机</label>
-                  <select v-if="currentElement" v-model="currentElement.evaluationTime">
-                    <option value="Now">当前</option>
-                    <option value="Report">报表结束时</option>
-                    <option value="Page">页结束时</option>
-                    <option value="Column">列结束时</option>
-                    <option value="Group">组结束时</option>
-                    <option value="Band">区域渲染时</option>
-                    <option value="Auto">自动</option>
-                  </select>
-                </div>
-              </template>
-            </div>
-            
-            <!-- 边框设置标签页 -->
-            <div class="element-tab-content" v-show="activeElementTab === 'box'">
-              <h4>边框设置</h4>
-              
-              <!-- 全局边框设置 -->
-              <div class="box-section">
-                <h5>全局边框</h5>
-                <div class="form-group">
-                  <label>边框样式</label>
-                  <select v-if="currentElement && currentElement.box" v-model="currentElement.box.borderStyle">
-                    <option value="">无</option>
-                    <option value="Solid">实线</option>
-                    <option value="Dashed">虚线</option>
-                    <option value="Dotted">点线</option>
-                    <option value="Double">双线</option>
-                  </select>
-                </div>
-                <div class="form-group">
-                  <label>边框粗细</label>
-                  <input v-if="currentElement && currentElement.box" v-model.number="currentElement.box.borderWidth" type="number" min="0" max="10" step="0.5" />
-                  <small>边框宽度，单位为点(Point)</small>
-                </div>
-                <div class="form-group">
-                  <label>边框颜色</label>
-                  <input v-if="currentElement && currentElement.box" v-model="currentElement.box.borderColor" type="color" />
-                </div>
-                <div class="form-group">
-                  <small class="hint">边框设置会自动应用到所有边</small>
-                </div>
-              </div>
-              
-              <!-- 各边边框设置 -->
-              <div class="box-section">
-                <h5>各边边框（覆盖全局设置）</h5>
-                
-                <!-- 上边 -->
-                <div class="border-side-group">
-                  <label class="side-label">上边</label>
-                  <select v-if="currentElement && currentElement.box" v-model="currentElement.box.topBorderStyle" class="side-control">
-                    <option value="">使用全局</option>
-                    <option value="Solid">实线</option>
-                    <option value="Dashed">虚线</option>
-                    <option value="Dotted">点线</option>
-                    <option value="Double">双线</option>
-                  </select>
-                  <input v-if="currentElement && currentElement.box" v-model.number="currentElement.box.topBorderWidth" type="number" min="0" max="10" step="0.5" class="width-control" placeholder="宽度" />
-                  <input v-if="currentElement && currentElement.box" v-model="currentElement.box.topBorderColor" type="color" class="color-control" />
-                </div>
-                
-                <!-- 左边 -->
-                <div class="border-side-group">
-                  <label class="side-label">左边</label>
-                  <select v-if="currentElement && currentElement.box" v-model="currentElement.box.leftBorderStyle" class="side-control">
-                    <option value="">使用全局</option>
-                    <option value="Solid">实线</option>
-                    <option value="Dashed">虚线</option>
-                    <option value="Dotted">点线</option>
-                    <option value="Double">双线</option>
-                  </select>
-                  <input v-if="currentElement && currentElement.box" v-model.number="currentElement.box.leftBorderWidth" type="number" min="0" max="10" step="0.5" class="width-control" placeholder="宽度" />
-                  <input v-if="currentElement && currentElement.box" v-model="currentElement.box.leftBorderColor" type="color" class="color-control" />
-                </div>
-                
-                <!-- 下边 -->
-                <div class="border-side-group">
-                  <label class="side-label">下边</label>
-                  <select v-if="currentElement && currentElement.box" v-model="currentElement.box.bottomBorderStyle" class="side-control">
-                    <option value="">使用全局</option>
-                    <option value="Solid">实线</option>
-                    <option value="Dashed">虚线</option>
-                    <option value="Dotted">点线</option>
-                    <option value="Double">双线</option>
-                  </select>
-                  <input v-if="currentElement && currentElement.box" v-model.number="currentElement.box.bottomBorderWidth" type="number" min="0" max="10" step="0.5" class="width-control" placeholder="宽度" />
-                  <input v-if="currentElement && currentElement.box" v-model="currentElement.box.bottomBorderColor" type="color" class="color-control" />
-                </div>
-                
-                <!-- 右边 -->
-                <div class="border-side-group">
-                  <label class="side-label">右边</label>
-                  <select v-if="currentElement && currentElement.box" v-model="currentElement.box.rightBorderStyle" class="side-control">
-                    <option value="">使用全局</option>
-                    <option value="Solid">实线</option>
-                    <option value="Dashed">虚线</option>
-                    <option value="Dotted">点线</option>
-                    <option value="Double">双线</option>
-                  </select>
-                  <input v-if="currentElement && currentElement.box" v-model.number="currentElement.box.rightBorderWidth" type="number" min="0" max="10" step="0.5" class="width-control" placeholder="宽度" />
-                  <input v-if="currentElement && currentElement.box" v-model="currentElement.box.rightBorderColor" type="color" class="color-control" />
-                </div>
-              </div>
-              
-              <!-- 边距设置 -->
-              <div class="box-section">
-                <h5>边距设置</h5>
-                <div class="form-group">
-                  <label>全局边距（像素）</label>
-                  <input v-if="currentElement && currentElement.box" v-model.number="currentElement.box.padding" type="number" placeholder="全部边距" />
-                  <small>设置后会覆盖各边独立设置</small>
-                </div>
-                
-                <div class="padding-grid">
-                  <div class="form-group">
-                    <label>上边距</label>
-                    <input v-if="currentElement && currentElement.box" v-model.number="currentElement.box.topPadding" type="number" />
-                  </div>
-                  <div class="form-group">
-                    <label>左边距</label>
-                    <input v-if="currentElement && currentElement.box" v-model.number="currentElement.box.leftPadding" type="number" />
-                  </div>
-                  <div class="form-group">
-                    <label>下边距</label>
-                    <input v-if="currentElement && currentElement.box" v-model.number="currentElement.box.bottomPadding" type="number" />
-                  </div>
-                  <div class="form-group">
-                    <label>右边距</label>
-                    <input v-if="currentElement && currentElement.box" v-model.number="currentElement.box.rightPadding" type="number" />
-                  </div>
-                </div>
-              </div>
-            </div>
-            
-            <!-- 样式设置标签页 -->
-            <div class="element-tab-content" v-show="activeElementTab === 'style'">
-              <h4>样式设置</h4>
-              <div class="form-group">
-                <label>背景颜色</label>
-                <input v-if="currentElement" v-model="currentElement.backcolor" type="color" />
-              </div>
-              
-              <template v-if="currentElement && currentElement.type !== 'line' && currentElement.type !== 'image'">
-                <div class="form-group">
-                  <label>字体名称</label>
-                  <select v-if="currentElement" v-model="currentElement.fontFamily" style="appearance: none; -webkit-appearance: none;">
-                    <option value="">使用默认字体</option>
-                    <option value="SansSerif">SansSerif</option>
-                    <option value="Serif">Serif</option>
-                    <option value="Monospaced">Monospaced</option>
-                    <option value="Arial">Arial</option>
-                    <option value="Times New Roman">Times New Roman</option>
-                    <option value="Noto Serif SC">Noto Serif SC</option>
-                  </select>
-                  <small class="font-hint">提示：可以直接在下拉框中输入字体名称</small>
-                </div>
-                
-                <div class="form-group">
-                  <label>文本对齐</label>
-                  <div class="alignment-controls">
-                    <button 
-                      v-for="align in ['Left', 'Center', 'Right']" 
-                      :key="align"
-                      @click="setHorizontalAlignment(align as 'Left' | 'Center' | 'Right')"
-                      :class="{ active: currentElement && currentElement.textAlignment === align }"
-                      class="align-button"
-                      title="水平对齐: {{ align }}"
-                    >
-                      {{ align === 'Left' ? '左对齐' : align === 'Center' ? '居中对齐' : '右对齐' }}
-                    </button>
-                  </div>
-                </div>
-                
-                <div class="form-group">
-                  <label>垂直对齐</label>
-                  <div class="alignment-controls">
-                    <button 
-                      v-for="align in ['Top', 'Middle', 'Bottom']" 
-                      :key="align"
-                      @click="setVerticalAlignment(align as 'Top' | 'Middle' | 'Bottom')"
-                      :class="{ active: currentElement && currentElement.verticalAlignment === align }"
-                      class="align-button"
-                      title="垂直对齐: {{ align }}"
-                    >
-                      {{ align === 'Top' ? '顶部对齐' : align === 'Middle' ? '垂直居中' : '底部对齐' }}
-                    </button>
-                  </div>
-                </div>
-                
-                <div class="checkbox-group">
-                  <label>
-                    <input v-if="currentElement" v-model="currentElement.isBold" type="checkbox" />
-                    粗体
-                  </label>
-                  <label>
-                    <input v-if="currentElement" v-model="currentElement.isItalic" type="checkbox" />
-                    斜体
-                  </label>
-                  <label>
-                    <input v-if="currentElement" v-model="currentElement.isUnderline" type="checkbox" />
-                    下划线
-                  </label>
-                </div>
-              </template>
-            </div>
-          </div>
-          
-          <div class="element-actions">
-            <button @click="deleteElement" class="btn-danger">删除元素</button>
-          </div>
-        </div>
+        <!-- 元素属性组件 -->
+        <ElementProperties
+          :selected-band-index="selectedBandIndex"
+          :selected-element="selectedElement"
+          :bands="bands"
+          :report-properties="reportProperties"
+          @update:bands="bands = $event"
+          @delete-element="deleteElement"
+          @update-jrxml="updateJRXML"
+        />
       </ResizablePanel>
     </div>
     
@@ -622,13 +205,15 @@ import HelpModal from './modals/HelpModal.vue';
 import FieldManagementModal from './modals/FieldManagementModal.vue';
 import BottomPanel from './panels/BottomPanel.vue';
 import ElementLibrary from './ElementLibrary.vue';
+import FileManager from './designer/controls/FileManager.vue';
+import ZoomControls from './designer/controls/ZoomControls.vue';
+import ElementProperties from './designer/properties/ElementProperties.vue';
 import type {Band, BandType, DesignElement, ReportField, ReportParameter} from '../types';
 import {computed, onMounted, onUnmounted, ref, watch} from 'vue';
 import {
   BAND_CONSTANTS,
   BAND_HEIGHT_CONSTANTS,
   BAND_TYPE_CONSTANTS,
-  DOM_CONSTANTS,
   ELEMENT_CONSTANTS,
   ELEMENT_TYPE_CONSTANTS,
   FONT_CONSTANTS,
@@ -662,13 +247,6 @@ import notification from '../utils/notification';
 
 // 标签页相关
 const activeTab = ref('pageSettings');
-// 元素属性标签页相关
-const activeElementTab = ref('basic');
-const elementTabs = ref([
-  { id: 'basic', name: '基本属性' },
-  { id: 'box', name: 'Box设置' },
-  { id: 'style', name: '样式设置' }
-]);
 
 // 面板显示状态
 const showLeftPanel = ref(true);
@@ -697,68 +275,9 @@ const zoomLevel = ref(ZOOM_CONSTANTS.DEFAULT_ZOOM); // 默认缩放级别为100%
 // DesignerCanvas组件引用
 const designerCanvasRef = ref<any>(null);
 
-// 缩放控制方法
-function zoomIn() {
-  // 预设的缩放级别
-  const zoomLevels = ZOOM_CONSTANTS.ZOOM_LEVELS;
-  
-  // 找到当前缩放级别在预设级别中的索引
-  const currentIndex = zoomLevels.findIndex(level => level === zoomLevel.value);
-  
-  // 如果当前缩放级别是预设值，则使用下一个预设值
-  if (currentIndex !== -1 && currentIndex < zoomLevels.length - 1) {
-    const nextLevel = zoomLevels[currentIndex + 1];
-    if (nextLevel !== undefined) {
-      zoomLevel.value = nextLevel;
-    }
-  } 
-  // 如果当前缩放级别不是预设值，找到最接近的下一个预设值
-  else {
-    const nextLevel = zoomLevels.find(level => level > zoomLevel.value);
-    if (nextLevel) {
-      zoomLevel.value = nextLevel;
-    }
-  }
-  
-  applyZoom();
-}
-
-function zoomOut() {
-  // 预设的缩放级别
-  const zoomLevels = ZOOM_CONSTANTS.ZOOM_LEVELS;
-  
-  // 找到当前缩放级别在预设级别中的索引
-  const currentIndex = zoomLevels.findIndex(level => level === zoomLevel.value);
-  
-  // 如果当前缩放级别是预设值，则使用上一个预设值
-  if (currentIndex !== -1 && currentIndex > 0) {
-    const prevLevel = zoomLevels[currentIndex - 1];
-    if (prevLevel !== undefined) {
-      zoomLevel.value = prevLevel;
-    }
-  } 
-  // 如果当前缩放级别不是预设值，找到最接近的上一个预设值
-  else {
-    // 找到所有小于当前缩放级别的预设值
-    const lowerLevels = zoomLevels.filter(level => level < zoomLevel.value);
-    if (lowerLevels.length > 0) {
-      const lastLevel = lowerLevels[lowerLevels.length - 1];
-      if (lastLevel !== undefined) {
-        zoomLevel.value = lastLevel;
-      }
-    }
-  }
-  
-  applyZoom();
-}
-
+// 重置缩放
 function resetZoom() {
   zoomLevel.value = ZOOM_CONSTANTS.DEFAULT_ZOOM;
-  applyZoom();
-}
-
-function applyZoom() {
-  // 这里不需要额外操作，因为zoomLevel是响应式的，会自动更新视图
 }
 
 // 处理来自DesignerCanvas的缩放变化
@@ -786,99 +305,6 @@ function handleZoomChange(delta: number) {
   zoomLevel.value = closestZoom;
 }
 
-// 根据报表大小自动计算最佳缩放比例
-function calculateOptimalZoom() {
-  // 获取设计区域的可用大小 - 使用ref引用
-  const designerContainer = designerCanvasRef.value?.$el;
-  if (!designerContainer) return;
-  
-  // 获取设计区域的实际可用宽度
-  const availableWidth = designerContainer.clientWidth - DOM_CONSTANTS.SCROLL_BAR_WIDTH; // 减去垂直标尺的宽度
-  
-  // 计算宽度的缩放比例
-  const widthRatio = availableWidth / paperWidth.value;
-  
-  // 使用宽度缩放比例，确保报表宽度适应设计区域
-  const optimalZoom = widthRatio * ZOOM_CONSTANTS.OPTIMAL_ZOOM_MARGIN; // 乘以0.9留出一些边距
-  
-  // 从预设的缩放级别中选择最接近的
-  const zoomLevels = ZOOM_CONSTANTS.ZOOM_LEVELS;
-  
-  // 找到最接近optimalZoom的预设缩放级别
-  let closestZoom = zoomLevels[0] || ZOOM_CONSTANTS.DEFAULT_ZOOM;
-  let minDiff = Math.abs((zoomLevels[0] || ZOOM_CONSTANTS.DEFAULT_ZOOM) - optimalZoom);
-  
-  for (let i = 1; i < zoomLevels.length; i++) {
-    const level = zoomLevels[i];
-    if (level !== undefined) {
-      const diff = Math.abs(level - optimalZoom);
-      if (diff < minDiff) {
-        minDiff = diff;
-        closestZoom = level;
-      }
-    }
-  }
-  
-  // 设置计算出的最佳缩放比例
-  zoomLevel.value = closestZoom;
-}
-
-// 设置水平对齐方式
-function setHorizontalAlignment(alignment: 'Left' | 'Center' | 'Right') {
-  if (currentElement.value) {
-    currentElement.value.textAlignment = alignment;
-  }
-}
-
-// 设置垂直对齐方式
-function setVerticalAlignment(alignment: 'Top' | 'Middle' | 'Bottom') {
-  if (currentElement.value) {
-    currentElement.value.verticalAlignment = alignment;
-  }
-}
-
-// 当字段名称变化时，如果表达式为空则自动生成表达式
-function updateExpressionFromFieldName() {
-  if (currentElement.value && currentElement.value.type === 'textField') {
-    const fieldName = currentElement.value.fieldName;
-    // 只有当字段名称不为空且表达式为空时才自动生成
-    if (fieldName && !currentElement.value.expression) {
-      currentElement.value.expression = `$F{${fieldName}}`;
-    }
-  }
-}
-
-// 获取文本字段的表达式，当expression为undefined但fieldName存在时，返回$F{fieldName}格式
-function getTextFieldExpression(element: any) {
-  if (element.expression) {
-    return element.expression;
-  } else if (element.fieldName) {
-    return `$F{${element.fieldName}}`;
-  }
-  return '';
-}
-
-// 更新文本字段的表达式
-function updateTextFieldExpression(event: Event) {
-  if (!currentElement.value || currentElement.value.type !== 'textField') return;
-  
-  const newExpression = (event.target as HTMLInputElement).value;
-  
-  // 如果是字段引用格式，提取字段名
-  if (newExpression.startsWith('$F{') && newExpression.endsWith('}')) {
-    const fieldName = newExpression.substring(3, newExpression.length - 1);
-    currentElement.value.fieldName = fieldName;
-    currentElement.value.expression = undefined;
-  } else {
-    // 否则作为完整表达式
-    currentElement.value.expression = newExpression;
-    currentElement.value.fieldName = undefined;
-  }
-  
-  // 保存状态到历史记录并更新JRXML
-  saveStateToHistory();
-  updateJRXML();
-}
 // 底部面板高度
 const bottomPanelHeight = ref(PANEL_CONSTANTS.DEFAULT_BOTTOM_PANEL_HEIGHT); // 默认高度400px
 
@@ -915,22 +341,6 @@ const fileMenuContainer = ref<HTMLElement | null>(null);
 const files = ref<DesignerFile[]>([]);
 const fileFilterText = ref('');
 
-// 文件操作方法
-function toggleFileMenu() {
-  showFileMenu.value = !showFileMenu.value;
-  // 关闭文件列表子菜单
-  showFileSubmenu.value = false;
-}
-
-// 切换文件列表子菜单
-function toggleFileSubmenu() {
-  showFileSubmenu.value = !showFileSubmenu.value;
-  // 加载文件列表
-  if (showFileSubmenu.value) {
-    loadFilesFromStorage();
-  }
-}
-
 // 从localStorage加载文件列表
 function loadFilesFromStorage() {
   try {
@@ -954,65 +364,6 @@ function saveFilesToStorage() {
     localStorage.setItem('pdfDesignerFiles', JSON.stringify(files.value));
   } catch (error) {
     console.error('保存文件列表失败:', error);
-  }
-}
-
-// 格式化日期
-function formatDate(date: Date | string | undefined) {
-  if (!date) return '';
-  const d = new Date(date);
-  return `${d.getFullYear()}-${(d.getMonth() + 1).toString().padStart(2, '0')}-${d.getDate().toString().padStart(2, '0')} ${d.getHours().toString().padStart(2, '0')}:${d.getMinutes().toString().padStart(2, '0')}`;
-}
-
-// 计算属性：过滤后的文件列表
-const filteredFiles = computed(() => {
-  if (!fileFilterText.value) {
-    return files.value;
-  }
-  return files.value.filter((file: DesignerFile) => 
-    file.name.toLowerCase().includes(fileFilterText.value.toLowerCase())
-  );
-});
-
-// 从子菜单选择文件
-function selectFileFromSubmenu(file: DesignerFile) {
-  showFileSubmenu.value = false;
-  showFileMenu.value = false;
-  loadFile(file);
-}
-
-// 从子菜单重命名文件
-function renameFileFromSubmenu(file: DesignerFile) {
-  const newName = prompt('请输入新的文件名:', file.name);
-  if (newName && newName !== file.name) {
-    const fileIndex = files.value.findIndex((f: DesignerFile) => f.id === file.id);
-    if (fileIndex !== -1 && files.value[fileIndex]) {
-      files.value[fileIndex].name = newName;
-      files.value[fileIndex].lastModified = new Date();
-      saveFilesToStorage();
-      
-      // 如果重命名的是当前文件，更新当前文件名
-      if (currentFileId.value === file.id) {
-        currentFileName.value = newName;
-      }
-    }
-  }
-}
-
-// 从子菜单删除文件
-function deleteFileFromSubmenu(file: DesignerFile) {
-  if (confirm(`确定要删除文件 "${file.name}" 吗？此操作不可撤销。`)) {
-    const fileIndex = files.value.findIndex((f: DesignerFile) => f.id === file.id);
-    if (fileIndex !== -1) {
-      files.value.splice(fileIndex, 1);
-      saveFilesToStorage();
-      
-      // 如果删除的是当前文件，重置当前文件
-      if (currentFileId.value === file.id) {
-        currentFileName.value = '未命名报表';
-        currentFileId.value = null;
-      }
-    }
   }
 }
 
@@ -1080,36 +431,6 @@ function createNewFile() {
   selectedBandIndex.value = null;
 }
 
-function openLocalFile() {
-  showFileMenu.value = false;
-  // 打开本地文件的逻辑
-  const input = document.createElement('input');
-  input.type = 'file';
-  input.accept = '.json';
-  input.onchange = (e) => {
-    const file = (e.target as HTMLInputElement).files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        try {
-          const content = e.target?.result as string;
-          JSON.parse(content); // 验证JSON格式
-          loadFile({
-            id: null,
-            name: file.name,
-            content: content
-          });
-        } catch (error) {
-          console.error('加载文件失败:', error);
-          notification.error('文件格式不正确，无法加载');
-        }
-      };
-      reader.readAsText(file);
-    }
-  };
-  input.click();
-}
-
 function saveCurrentFileToStorage() {
   showFileMenu.value = false;
   // 保存当前文件到本地存储
@@ -1159,22 +480,6 @@ function saveCurrentFileToStorage() {
     console.error('保存文件失败:', error);
     notification.error('保存文件失败');
   }
-}
-
-function saveAsLocalFile() {
-  showFileMenu.value = false;
-  // 另存为文件的逻辑
-  const fileData = saveCurrentFile();
-  const content = JSON.stringify(fileData, null, 2);
-  const blob = new Blob([content], { type: 'application/json' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = `${currentFileName.value}.json`;
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  URL.revokeObjectURL(url);
 }
 
 function loadFile(fileData: any) {
@@ -3010,14 +2315,6 @@ const processPastedElement = (elementData: any) => {
   console.log('元素已粘贴:', newElement);
 };
 
-// 确保属性值为整数
-const ensureIntegerValue = (element: DesignElement, property: 'x' | 'y' | 'width' | 'height') => {
-  if (element[property] !== undefined) {
-    element[property] = Math.round(element[property]);
-    updateJRXML(); // 更新JRXML
-  }
-};
-
 // 在组件顶层定义handleKeyDown函数
 const handleKeyDown = (event: KeyboardEvent) => {
   // 获取当前活动元素，用于判断焦点状态
@@ -3306,11 +2603,9 @@ onMounted(() => {
     updateJRXML();
   }, 100);
   
-  // 根据报表大小自动计算最佳缩放比例
-  // 使用setTimeout确保DOM已经渲染完成
-  setTimeout(() => {
-    calculateOptimalZoom();
-  }, UI_CONSTANTS.DOM_RENDER_DELAY);
+  // 初始缩放设置
+  // 使用默认缩放级别，ZoomControls组件会处理后续的缩放操作
+  zoomLevel.value = ZOOM_CONSTANTS.DEFAULT_ZOOM;
   
   // 添加键盘事件监听
   document.addEventListener('keydown', handleKeyDown);
@@ -3324,13 +2619,8 @@ onMounted(() => {
       wheelEvent.preventDefault();
       
       // 根据滚轮方向执行缩放
-      if (wheelEvent.deltaY < 0) {
-        // 向上滚动，放大
-        zoomIn();
-      } else {
-        // 向下滚动，缩小
-        zoomOut();
-      }
+      const delta = wheelEvent.deltaY < 0 ? 0.1 : -0.1;
+      handleZoomChange(delta);
     }
   };
   
@@ -4209,30 +3499,6 @@ const showHelp = ref(false);
 const showFieldModal = ref(false);
 const editingField = ref<ReportField | undefined>(undefined);
 
-// 更新Band高度
-const updateBandHeight = (index: number): void => {
-  if (bands.value[index]) {
-    // 确保高度不小于0
-    bands.value[index].height = Math.max(0, bands.value[index].height);
-    
-    // 调整该区域内元素的位置，确保元素不会超出区域边界
-    const band = bands.value[index];
-    if (band && band.elements) {
-      band.elements.forEach(element => {
-        if (element.y + element.height > band.height) {
-          element.y = Math.max(0, band.height - element.height);
-        }
-      });
-    }
-    
-    // 保存状态到历史记录
-    saveStateToHistory();
-    
-    // 更新JRXML
-    updateJRXML();
-  }
-};
-
 // 处理添加字段
 const handleAddField = (): void => {
   editingField.value = undefined;
@@ -4318,6 +3584,19 @@ const handleCheckFields = (fields: string[]): void => {
     // 更新JRXML
     updateJRXML();
   }
+};
+
+// 处理元素上下文菜单
+const handleElementContextMenu = (event: MouseEvent, bandIndex: number, elementIndex: number): void => {
+  // 可以在这里添加上下文菜单的处理逻辑
+  // 例如：显示右键菜单，提供元素操作选项
+  console.log('Context menu requested for element:', bandIndex, elementIndex);
+  
+  // 阻止默认上下文菜单
+  event.preventDefault();
+  
+  // 选中元素
+  selectElement(bandIndex, elementIndex);
 };
 
 // 处理Band选择变化
