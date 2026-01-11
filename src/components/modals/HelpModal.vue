@@ -28,18 +28,25 @@
         
         <h4>4. 快捷键</h4>
         <ul>
-          <li><strong>Ctrl+S</strong>：保存当前文件</li>
-          <li><strong>Ctrl+B</strong>：切换底部JRXML面板显示</li>
-          <li><strong>Ctrl+Z</strong>：撤销操作</li>
-          <li><strong>Ctrl+Y</strong>：重做操作</li>
-          <li><strong>Ctrl+C</strong>：复制选中元素</li>
-          <li><strong>Ctrl+V</strong>：粘贴元素</li>
+          <li><strong>Ctrl+S (Mac: Cmd+S)</strong>：保存当前文件</li>
+          <li><strong>Ctrl+B (Mac: Cmd+B)</strong>：切换底部JRXML面板显示</li>
+          <li><strong>Ctrl+Z (Mac: Cmd+Z)</strong>：撤销操作</li>
+          <li><strong>Ctrl+Y (Mac: Cmd+Y)</strong>：重做操作</li>
+          <li><strong>Ctrl+C (Mac: Cmd+C)</strong>：复制选中元素或文本</li>
+          <li><strong>Ctrl+V (Mac: Cmd+V)</strong>：粘贴元素或文本</li>
           <li><strong>Delete/Backspace</strong>：删除选中元素（非编辑模式）</li>
           <li><strong>方向键</strong>：选择周围元素</li>
           <li><strong>Shift+方向键</strong>：微调选中元素的位置（每次移动1像素）</li>
         </ul>
         
-        <h4>5. 注意事项</h4>
+        <h4>5. 高级功能</h4>
+        <ul>
+          <li><strong>自动数据字段创建</strong>：在动态文本元素表达式中引用不存在的字段（如$F{abc}）时，系统会自动创建该数据字段</li>
+          <li><strong>报表元素删除</strong>：在左侧报表元素列表中，每个元素右侧都有删除按钮，点击即可删除对应元素</li>
+          <li><strong>跨平台快捷键</strong>：支持在macOS上使用Command键替代Windows上的Ctrl键作为快捷键</li>
+        </ul>
+        
+        <h4>6. 注意事项</h4>
         <ul>
           <li>元素不能超出纸张边界</li>
           <li>编辑文本时按Enter确认，Esc取消</li>
