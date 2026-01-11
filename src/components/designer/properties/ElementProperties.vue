@@ -155,6 +155,14 @@
               </select>
             </div>
           </template>
+          
+          <template v-else-if="currentElement && currentElement.type === 'image'">
+            <div class="form-group">
+              <label>图片表达式</label>
+              <input v-if="currentElement" v-model="currentElement.imageExpression" type="text" />
+              <small>例如: "logo.png" 或 $P{imagePath}</small>
+            </div>
+          </template>
         </div>
         
         <!-- 边框设置标签页 -->
