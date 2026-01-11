@@ -80,10 +80,10 @@
       </div>
       <div class="fields-mini-view">
         <div 
-          v-for="(field, index) in reportFields" 
-          :key="field.name" 
-          class="field-mini-item"
-        >
+            v-for="field in reportFields" 
+            :key="field.name" 
+            class="field-mini-item"
+          >
           <div class="field-info" @click="selectElementsByFieldWrapper(field.name)">
             <span class="field-name">$F{ {{ field.name }} }</span>
             <span class="field-type">({{ field.class }})</span>

@@ -642,16 +642,7 @@ import {
 } from '../constants/constants';
 
 // 导入新创建的工具函数和常量
-import {
-  getElementDisplayInfoWithoutBand,
-  getElementIcon,
-  getElementKey,
-  getElementTypeName,
-  isElementSelected,
-  selectElementFromList,
-  selectElementsByField,
-  selectElementsByParameter
-} from '../utils/elementUtils';
+
 
 import {getBandDisplayName} from '../utils/bandUtils';
 
@@ -1447,8 +1438,7 @@ const selectedElements = ref<{bandIndex: number, elementIndex: number}[]>([]); /
 const editingElement = ref<{bandIndex: number, elementIndex: number} | null>(null);
 const editInput = ref<HTMLInputElement | null>(null);
 
-// 报表元素过滤文本
-const elementFilterText = ref('');
+
 
 // 报表设计区域焦点状态
 const isDesignAreaFocused = ref(true); // 默认聚焦设计区域
@@ -1477,53 +1467,12 @@ const currentElement = computed(() => {
 });
 
 // 获取所有报表元素
-const getAllReportElements = computed(() => {
-  const allElements: { element: DesignElement, bandIndex: number, elementIndex: number }[] = [];
-  
-  if (bands.value && Array.isArray(bands.value)) {
-    bands.value.forEach((band, bandIndex) => {
-      if (band && band.elements && Array.isArray(band.elements)) {
-        band.elements.forEach((element, elementIndex) => {
-          allElements.push({
-            element,
-            bandIndex,
-            elementIndex
-          });
-        });
-      }
-    });
-  }
-  
-  return allElements;
-});
 
-// 过滤后的报表元素
-const filteredReportElements = computed(() => {
-  if (!elementFilterText.value) {
-    return getAllReportElements.value;
-  }
-  
-  const filterText = elementFilterText.value.toLowerCase();
-  return getAllReportElements.value.filter(item => {
-    const element = item.element;
-    
-    // 对静态文本通过内容过滤
-    if (element.type === 'staticText' && element.text) {
-      return element.text.toLowerCase().includes(filterText);
-    }
-    
-    // 对动态文本通过变量名过滤
-    if (element.type === 'textField' && element.fieldName) {
-      return element.fieldName.toLowerCase().includes(filterText);
-    }
-    
-    // 对其他类型，通过类型名称过滤
-    const typeName = getElementTypeName(element.type).toLowerCase();
-    return typeName.includes(filterText);
-  });
-});
 
-// 按band分组的报表元素
+
+
+// 按band分组的报表元素 - 暂时注释掉，因为未使用
+/*
 const groupedReportElements = computed(() => {
   const groups: Record<string, Array<{ element: DesignElement, bandIndex: number, elementIndex: number }>> = {};
   
@@ -1547,6 +1496,7 @@ const groupedReportElements = computed(() => {
   
   return groups;
 });
+*/
 
 // 标尺相关计算属性
 const horizontalRulerTicks = computed(() => {
@@ -2840,15 +2790,7 @@ const toggleBottomPanel = () => {
   showBottomPanel.value = !showBottomPanel.value;
 };
 
-// 根据参数选择元素
-const selectElementsByParameterWrapper = (paramName: string) => {
-  selectElementsByParameter(bands.value, paramName, selectElement);
-};
 
-// 根据字段选择元素
-const selectElementsByFieldWrapper = (fieldName: string) => {
-  selectElementsByField(bands.value, fieldName, selectElement);
-};
 // 处理左侧面板大小变化
 const handleLeftPanelSizeChange = (newSize: number) => {
   leftPanelWidth.value = newSize;

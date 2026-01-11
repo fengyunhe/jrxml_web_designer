@@ -89,7 +89,9 @@ const handleStartEditing = () => {
     const fieldRegex = /\$F\{([^}]+)\}/g;
     let match;
     while ((match = fieldRegex.exec(newExpression)) !== null) {
-      fieldReferences.push(match[1]);
+      if (match[1]) {
+        fieldReferences.push(match[1]);
+      }
     }
     
     // 发送字段引用给父组件检查
