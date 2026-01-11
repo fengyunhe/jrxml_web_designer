@@ -3067,8 +3067,14 @@ const handleKeyDown = (event: KeyboardEvent) => {
     return;
   }
   
-  // CTRL/CMD+C 处理：优先检查是否有文本被选中，如果有则执行浏览器默认复制行为
+  // CTRL/CMD+C 处理：优先检查是否有输入框处于焦点状态，如果有则执行浏览器默认复制行为
   if (isCtrlOrMetaPressed && event.key === 'c') {
+    // 如果输入框处于焦点状态，执行浏览器默认复制行为
+    if (isInputFocused) {
+      // 不阻止默认行为，让浏览器执行默认的文本复制
+      return;
+    }
+    
     // 如果有文本被选中，执行浏览器默认复制行为
     if (isTextSelected) {
       // 不阻止默认行为，让浏览器执行默认的文本复制
@@ -3083,18 +3089,27 @@ const handleKeyDown = (event: KeyboardEvent) => {
     }
     
     // 如果没有文本被选中，也没有元素被选中，但设计区域有焦点，则复制JRXML
-    if (!isInputFocused && isDesignAreaFocused.value) {
+    if (isDesignAreaFocused.value) {
       event.preventDefault();
       copyJRXML();
       return;
     }
   }
   
-  // CTRL/CMD+V 粘贴元素（只要设计区域有焦点且不在textarea中时才执行自定义粘贴功能）
-  if (isCtrlOrMetaPressed && event.key === 'v' && isDesignAreaFocused.value && !isTextareaFocused) {
-    event.preventDefault();
-    pasteElement();
-    return;
+  // CTRL/CMD+V 处理：优先检查是否有输入框处于焦点状态，如果有则执行浏览器默认粘贴行为
+  if (isCtrlOrMetaPressed && event.key === 'v') {
+    // 如果输入框处于焦点状态，执行浏览器默认粘贴行为
+    if (isInputFocused) {
+      // 不阻止默认行为，让浏览器执行默认的文本粘贴
+      return;
+    }
+    
+    // 粘贴元素（只要设计区域有焦点且不在textarea中时才执行自定义粘贴功能）
+    if (isDesignAreaFocused.value && !isTextareaFocused) {
+      event.preventDefault();
+      pasteElement();
+      return;
+    }
   }
   
   // Del键删除选中的组件（仅在非编辑模式下且没有输入框处于焦点状态时）
