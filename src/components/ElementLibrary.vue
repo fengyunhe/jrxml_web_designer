@@ -45,10 +45,12 @@
             :key="getElementKey(element)"
             class="report-element-item"
             :class="{ 'selected': isElementSelected(element, selectedElement) }"
-            @click="selectElementFromList(element, selectElement)"
           >
-            <span class="element-icon">{{ getElementIcon(element.element.type) }}</span>
-            <span class="element-info">{{ getElementDisplayInfoWithoutBand(element.element) }}</span>
+            <div class="element-info-container" @click="selectElementFromList(element, selectElement)">
+              <span class="element-icon">{{ getElementIcon(element.element.type) }}</span>
+              <span class="element-info">{{ getElementDisplayInfoWithoutBand(element.element) }}</span>
+            </div>
+            <button class="action-button delete-button" @click.stop="handleDeleteElement(element)" title="删除元素">🗑️</button>
           </div>
         </div>
       </div>
@@ -130,6 +132,7 @@ interface Emits {
   (e: 'add-field'): void;
   (e: 'edit-field', field: ReportField): void;
   (e: 'delete-field', fieldName: string): void;
+  (e: 'delete-element', bandIndex: number, elementIndex: number): void;
 }
 
 // 使用默认值
@@ -233,6 +236,13 @@ function handleEditField(field: ReportField): void {
 // 处理删除字段
 function handleDeleteField(fieldName: string): void {
   emit('delete-field', fieldName);
+}
+
+// 处理删除元素
+function handleDeleteElement(element: any): void {
+  if (confirm('确定要删除该元素吗？')) {
+    emit('delete-element', element.bandIndex, element.elementIndex);
+  }
 }
 </script>
 
@@ -399,7 +409,6 @@ function handleDeleteField(fieldName: string): void {
   background-color: #f0f0f0;
   border: 1px solid #e0e0e0;
   border-radius: 4px;
-  cursor: pointer;
   font-size: 12px;
   transition: all 0.2s ease;
 }
@@ -413,6 +422,13 @@ function handleDeleteField(fieldName: string): void {
   border-color: #4a90e2;
 }
 
+.element-info-container {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+}
+
 .report-element-item .element-icon {
   font-size: 16px;
   margin-right: 8px;
@@ -424,6 +440,29 @@ function handleDeleteField(fieldName: string): void {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+.report-element-item .action-button {
+  width: 20px;
+  height: 20px;
+  border: none;
+  border-radius: 3px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  transition: all 0.2s;
+  margin-left: 4px;
+}
+
+.report-element-item .delete-button {
+  background-color: #f0f0f0;
+  color: #e74c3c;
+}
+
+.report-element-item .delete-button:hover {
+  background-color: #ffe6e6;
 }
 
 .parameters-mini-view,

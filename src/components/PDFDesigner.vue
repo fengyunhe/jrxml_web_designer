@@ -156,6 +156,7 @@
           @add-field="handleAddField"
           @edit-field="handleEditField"
           @delete-field="handleDeleteField"
+          @delete-element="handleDeleteElement"
         />
       </ResizablePanel>
       
@@ -296,7 +297,7 @@
                 </div>
                 <div class="form-group" v-if="currentElement && currentElement.type === 'textField'">
                   <label>表达式</label>
-                  <input v-if="currentElement" v-model="(currentElement as any).expression" type="text" />
+                  <input v-if="currentElement" :value="getTextFieldExpression(currentElement)" @input="updateTextFieldExpression" type="text" />
                   <small>例如: $F{字段名} 或 $F{字段名}.toString()</small>
                 </div>
                 <div class="form-group">
@@ -854,6 +855,38 @@ function updateExpressionFromFieldName() {
       currentElement.value.expression = `$F{${fieldName}}`;
     }
   }
+}
+
+// 获取文本字段的表达式，当expression为undefined但fieldName存在时，返回$F{fieldName}格式
+function getTextFieldExpression(element: any) {
+  if (element.expression) {
+    return element.expression;
+  } else if (element.fieldName) {
+    return `$F{${element.fieldName}}`;
+  }
+  return '';
+}
+
+// 更新文本字段的表达式
+function updateTextFieldExpression(event: Event) {
+  if (!currentElement.value || currentElement.value.type !== 'textField') return;
+  
+  const newExpression = (event.target as HTMLInputElement).value;
+  
+  // 如果是字段引用格式，提取字段名
+  if (newExpression.startsWith('$F{') && newExpression.endsWith('}')) {
+    const fieldName = newExpression.substring(3, newExpression.length - 1);
+    currentElement.value.fieldName = fieldName;
+    currentElement.value.expression = undefined;
+  } else {
+    // 否则作为完整表达式
+    currentElement.value.expression = newExpression;
+    currentElement.value.fieldName = undefined;
+  }
+  
+  // 保存状态到历史记录并更新JRXML
+  saveStateToHistory();
+  updateJRXML();
 }
 // 底部面板高度
 const bottomPanelHeight = ref(PANEL_CONSTANTS.DEFAULT_BOTTOM_PANEL_HEIGHT); // 默认高度400px
@@ -4260,6 +4293,21 @@ const handleDeleteField = (fieldName: string): void => {
       reportFields.value.splice(fieldIndex, 1);
       saveStateToHistory();
       updateJRXML();
+    }
+  }
+};
+
+// 处理删除元素
+const handleDeleteElement = (bandIndex: number, elementIndex: number): void => {
+  const band = bands.value[bandIndex];
+  if (band && band.elements) {
+    band.elements.splice(elementIndex, 1);
+    saveStateToHistory();
+    updateJRXML();
+    // 清除选中状态
+    if (selectedElement.value && selectedElement.value.bandIndex === bandIndex && selectedElement.value.elementIndex === elementIndex) {
+      selectedElement.value = null;
+      selectedElements.value = [];
     }
   }
 };
