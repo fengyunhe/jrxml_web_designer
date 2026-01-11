@@ -3087,43 +3087,46 @@ const handleKeyDown = (event: KeyboardEvent) => {
   const selection = window.getSelection();
   const isTextSelected = selection && selection.toString().trim().length > 0;
   
-  // CTRL+0 重置缩放比例
-  if (event.ctrlKey && event.key === '0') {
+  // 检测是否按下了ctrl键（windows）或meta键（mac）
+  const isCtrlOrMetaPressed = event.ctrlKey || event.metaKey;
+  
+  // CTRL/CMD+0 重置缩放比例
+  if (isCtrlOrMetaPressed && event.key === '0') {
     event.preventDefault();
     resetZoom();
     return;
   }
   
-  // CTRL+S 保存当前文件
-  if (event.ctrlKey && event.key === 's') {
+  // CTRL/CMD+S 保存当前文件
+  if (isCtrlOrMetaPressed && event.key === 's') {
     event.preventDefault();
     saveCurrentFileToStorage();
     return;
   }
   
-  // CTRL+B 快捷键切换底部面板显示状态
-  if (event.ctrlKey && event.key === 'b') {
+  // CTRL/CMD+B 快捷键切换底部面板显示状态
+  if (isCtrlOrMetaPressed && event.key === 'b') {
     event.preventDefault();
     toggleBottomPanel();
     return;
   }
   
-  // CTRL+Z 撤销操作
-  if (event.ctrlKey && event.key === 'z') {
+  // CTRL/CMD+Z 撤销操作
+  if (isCtrlOrMetaPressed && event.key === 'z') {
     event.preventDefault();
     undo();
     return;
   }
   
-  // CTRL+Y 重做操作
-  if (event.ctrlKey && event.key === 'y') {
+  // CTRL/CMD+Y 重做操作
+  if (isCtrlOrMetaPressed && event.key === 'y') {
     event.preventDefault();
     redo();
     return;
   }
   
-  // CTRL+C 处理：优先检查是否有文本被选中，如果有则执行浏览器默认复制行为
-  if (event.ctrlKey && event.key === 'c') {
+  // CTRL/CMD+C 处理：优先检查是否有文本被选中，如果有则执行浏览器默认复制行为
+  if (isCtrlOrMetaPressed && event.key === 'c') {
     // 如果有文本被选中，执行浏览器默认复制行为
     if (isTextSelected) {
       // 不阻止默认行为，让浏览器执行默认的文本复制
@@ -3145,8 +3148,8 @@ const handleKeyDown = (event: KeyboardEvent) => {
     }
   }
   
-  // CTRL+V 粘贴元素（只要设计区域有焦点且不在textarea中时才执行自定义粘贴功能）
-  if (event.ctrlKey && event.key === 'v' && isDesignAreaFocused.value && !isTextareaFocused) {
+  // CTRL/CMD+V 粘贴元素（只要设计区域有焦点且不在textarea中时才执行自定义粘贴功能）
+  if (isCtrlOrMetaPressed && event.key === 'v' && isDesignAreaFocused.value && !isTextareaFocused) {
     event.preventDefault();
     pasteElement();
     return;
