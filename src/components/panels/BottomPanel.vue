@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue';
-import ResizablePanel from '../ResizablePanel.vue';
+import ResizablePanel from './ResizablePanel.vue';
 import {
   UI_CONSTANTS,
   PANEL_CONSTANTS

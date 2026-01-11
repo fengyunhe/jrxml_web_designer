@@ -144,90 +144,16 @@
         :collapsible="false"
         @size-change="handleLeftPanelSizeChange"
       >
-        <div class="left-panel-content">
-          <h3>元素库</h3>
-          <div class="element-list">
-            <div 
-              v-for="element in elements" 
-              :key="element.type"
-              class="element-item"
-              @dragstart="handleDragStart($event, element)"
-              @dblclick="handleElementDoubleClick(element)"
-              draggable="true"
-            >
-              <span class="element-icon">{{ getElementIcon(element.type) }}</span>
-              <span class="element-name">{{ element.name }}</span>
-            </div>
-          </div>
-          
-          <!-- 报表元素区域 -->
-          <div class="report-elements-section">
-            <h4>报表元素</h4>
-            <div class="filter-input-container">
-              <input 
-                v-model="elementFilterText" 
-                type="text" 
-                placeholder="过滤元素..." 
-                class="filter-input"
-              />
-              <button 
-                v-if="elementFilterText" 
-                @click="elementFilterText = ''" 
-                class="clear-filter-btn"
-                title="清除过滤"
-              >
-                ✕
-              </button>
-            </div>
-            <div class="report-elements-list">
-              <div v-for="(elements, bandName) in groupedReportElements" :key="bandName" class="band-group">
-                <div class="band-group-header">{{ bandName }}</div>
-                <div 
-                  v-for="element in elements" 
-                  :key="getElementKey(element)"
-                  class="report-element-item"
-                  :class="{ 'selected': isElementSelected(element,selectedElement) }"
-                  @click="selectElementFromList(element, selectElement)"
-                >
-                  <span class="element-icon">{{ getElementIcon(element.element.type) }}</span>
-                  <span class="element-info">{{ getElementDisplayInfoWithoutBand(element.element) }}</span>
-                </div>
-              </div>
-            </div>
-          </div>
-          
-          <!-- 报表参数区域 -->
-          <div class="data-parameters-section">
-            <h4>报表参数</h4>
-            <div class="parameters-mini-view">
-              <div 
-                v-for="(param, index) in reportParameters" 
-                :key="index" 
-                class="field-mini-item"
-                @click="selectElementsByParameterWrapper(param.name)"
-              >
-                <span class="field-name">$P{ {{ param.name }} }</span>
-                <span class="field-type">({{ param.class }})</span>
-              </div>
-            </div>
-          </div>
-          
-          <!-- 数据字段区域 -->
-          <div class="data-fields-section">
-            <h4>数据字段</h4>
-            <div class="fields-mini-view">
-              <div 
-                v-for="(field, index) in reportFields" 
-                :key="index" 
-                class="field-mini-item"
-                @click="selectElementsByFieldWrapper(field.name)"
-              >
-                <span class="field-name">$F{ {{ field.name }} }</span>
-                <span class="field-type">({{ field.class }})</span>
-              </div>
-            </div>
-          </div>
-        </div>
+        <ElementLibrary
+          :elements="elements"
+          :report-fields="reportFields"
+          :report-parameters="reportParameters"
+          :bands="bands"
+          :selected-element="selectedElement"
+          @drag-start="handleDragStart"
+          @element-double-click="handleElementDoubleClick"
+          @select-element="selectElement"
+        />
       </ResizablePanel>
       
       <!-- 中间设计区域 -->
@@ -677,11 +603,12 @@ interface DesignerFile {
   createdAt?: Date | string;
 }
 
-import ResizablePanel from './ResizablePanel.vue';
+import ResizablePanel from './panels/ResizablePanel.vue';
 import DesignerCanvas from './designer/DesignerCanvas.vue';
 import RewardModal from './modals/RewardModal.vue';
 import HelpModal from './modals/HelpModal.vue';
 import BottomPanel from './panels/BottomPanel.vue';
+import ElementLibrary from './ElementLibrary.vue';
 import type {Band, BandType, DesignElement, ReportField, ReportParameter} from '../types';
 import {computed, onMounted, onUnmounted, ref, watch} from 'vue';
 import {
