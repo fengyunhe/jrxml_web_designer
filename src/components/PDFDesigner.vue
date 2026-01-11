@@ -280,6 +280,43 @@ function resetZoom() {
   zoomLevel.value = ZOOM_CONSTANTS.DEFAULT_ZOOM;
 }
 
+// 计算适应窗口的最佳缩放比例
+function calculateOptimalZoom(): number {
+  // 获取设计区域的可用大小
+  const designerContainer = document.querySelector('.designer-canvas') || document.querySelector('.pdf-designer');
+  if (!designerContainer) {
+    return ZOOM_CONSTANTS.DEFAULT_ZOOM;
+  }
+
+  // 获取设计区域的实际可用宽度
+  const availableWidth = designerContainer.clientWidth - 40; // 减去边距
+
+  // 计算宽度的缩放比例
+  const widthRatio = availableWidth / paperWidth.value;
+
+  // 使用宽度缩放比例，确保报表宽度适应设计区域
+  const optimalZoom = widthRatio * ZOOM_CONSTANTS.OPTIMAL_ZOOM_MARGIN;
+
+  // 从预设的缩放级别中选择最接近的
+  const zoomLevels = ZOOM_CONSTANTS.ZOOM_LEVELS;
+  let closestZoom = zoomLevels[0] || ZOOM_CONSTANTS.DEFAULT_ZOOM;
+  let minDiff = Math.abs((zoomLevels[0] || ZOOM_CONSTANTS.DEFAULT_ZOOM) - optimalZoom);
+
+  for (let i = 1; i < zoomLevels.length; i++) {
+    const level = zoomLevels[i];
+    if (level !== undefined) {
+      const diff = Math.abs(level - optimalZoom);
+      if (diff < minDiff) {
+        minDiff = diff;
+        closestZoom = level;
+      }
+    }
+  }
+
+  // 确保缩放比例在有效范围内
+  return Math.max(ZOOM_CONSTANTS.MIN_ZOOM, Math.min(ZOOM_CONSTANTS.MAX_ZOOM, closestZoom));
+}
+
 // 处理来自DesignerCanvas的缩放变化
 function handleZoomChange(delta: number) {
   // 计算新的缩放级别
@@ -2603,9 +2640,11 @@ onMounted(() => {
     updateJRXML();
   }, 100);
   
-  // 初始缩放设置
-  // 使用默认缩放级别，ZoomControls组件会处理后续的缩放操作
-  zoomLevel.value = ZOOM_CONSTANTS.DEFAULT_ZOOM;
+  // 初始缩放设置 - 自动适应窗口
+  // 使用setTimeout确保DOM已完全渲染后再计算缩放比例
+  setTimeout(() => {
+    zoomLevel.value = calculateOptimalZoom();
+  }, 200);
   
   // 添加键盘事件监听
   document.addEventListener('keydown', handleKeyDown);
