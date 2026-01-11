@@ -160,7 +160,7 @@
             <div class="form-group">
               <label>图片表达式</label>
               <input v-if="currentElement" v-model="currentElement.imageExpression" type="text" />
-              <small>例如: "logo.png" 或 $P{imagePath}</small>
+              <small>例如: "logo.png" 或 $F{imageFieldName}</small>
             </div>
           </template>
         </div>
