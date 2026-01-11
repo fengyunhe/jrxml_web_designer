@@ -653,8 +653,9 @@ function generateImageXML(element: any): string {
   xml += `>
       <reportElement x="${toInt(element.x)}" y="${toInt(element.y)}" width="${toInt(element.width)}" height="${toInt(element.height)}"/>
 `;
-  
-  xml += `      <imageExpression><![CDATA[${element.imagePath || '""'}]]></imageExpression>\n    </image>\n`;
+
+  const imageExpressionValue = element.imageExpression || '""';
+  xml += `      <imageExpression><![CDATA[${imageExpressionValue}]]></imageExpression>\n    </image>\n`;
   return xml;
 }
 
@@ -1072,7 +1073,7 @@ function parseImageElement(element: Element, result: any): void {
   
   const imageExpression = element.querySelector('imageExpression');
   if (imageExpression) {
-    result.imagePath = imageExpression.textContent || '';
+    result.imageExpression = imageExpression.textContent || '';
   }
 }
 

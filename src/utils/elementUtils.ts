@@ -133,7 +133,7 @@ export function createNewElement(type: string, x: number, y: number): DesignElem
     case ELEMENT_TYPE_CONSTANTS.TEXT_FIELD:
       return { ...baseElement, type: 'textField' as any, fieldName: 'field', isBlankWhenNull: true };
     case ELEMENT_TYPE_CONSTANTS.IMAGE:
-      return { ...baseElement, type: 'image' as any, imagePath: '' };
+      return { ...baseElement, type: 'image' as any, imageExpression: '' };
     case ELEMENT_TYPE_CONSTANTS.LINE:
       return { ...baseElement, type: 'line' as any, lineDirection: 'TopDown' as any };
     case ELEMENT_TYPE_CONSTANTS.RECTANGLE:

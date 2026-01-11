@@ -142,7 +142,7 @@ export interface TextFieldElement extends DesignElementBase {
 // 图片元素接口
 export interface ImageElement extends DesignElementBase {
   type: 'image';
-  imagePath?: string;
+  imageExpression?: string;
 }
 
 // 线条元素接口

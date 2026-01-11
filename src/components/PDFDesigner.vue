@@ -1389,7 +1389,7 @@ const getDefaultElementProperties = (type: string): Partial<DesignElement> => {
         verticalAlignment: 'Top'
       };
     case 'image':
-      return { imagePath: '' };
+      return { imageExpression: '' };
     case 'line':
       return { lineDirection: 'TopDown', lineWidth: 1 };
     case 'rectangle':

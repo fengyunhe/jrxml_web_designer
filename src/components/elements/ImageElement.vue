@@ -17,7 +17,7 @@
   >
     <div class="image-placeholder">
       <div class="image-icon">🖼️</div>
-      <div class="image-path">{{ imagePath || '图片' }}</div>
+      <div class="image-path">{{ imageExpression || '图片' }}</div>
     </div>
   </BaseElement>
 </template>
@@ -50,9 +50,9 @@ const emit = defineEmits<{
 }>();
 
 // 图片路径（仅显示文件名部分）
-const imagePath = computed(() => {
-  if (!props.element.imagePath) return '';
-  return props.element.imagePath.split('/').pop()?.split('\\').pop() || '';
+const imageExpression = computed(() => {
+  if (!props.element.imageExpression) return '';
+  return props.element.imageExpression.split('/').pop()?.split('\\').pop() || '';
 });
 
 // 处理选择
