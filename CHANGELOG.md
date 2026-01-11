@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - 实现自动数据字段创建：当动态文本元素表达式引用不存在的字段时自动添加
 - 添加报表元素列表的删除功能
 - 支持macOS上的Command键作为Ctrl键的替代
+- image元素支持imageExpression属性，可在属性面板中设置图片表达式
 
 ### Changed
 
