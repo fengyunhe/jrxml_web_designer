@@ -81,10 +81,6 @@
           </template>
           
           <template v-else-if="currentElement && currentElement.type === 'textField'">
-            <div class="form-group">
-              <label>字段名称</label>
-              <input v-if="currentElement" v-model="currentElement.fieldName" type="text" @input="updateExpressionFromFieldName" />
-            </div>
             <div class="form-group" v-if="currentElement && currentElement.type === 'textField'">
               <label>表达式</label>
               <input v-if="currentElement" :value="getTextFieldExpression(currentElement)" @input="updateTextFieldExpression" type="text" />
@@ -435,17 +431,6 @@ function setVerticalAlignment(alignment: 'Top' | 'Middle' | 'Bottom') {
   }
 }
 
-// 当字段名称变化时，如果表达式为空则自动生成表达式
-function updateExpressionFromFieldName() {
-  if (currentElement.value && currentElement.value.type === 'textField') {
-    const fieldName = currentElement.value.fieldName;
-    if (fieldName && !currentElement.value.expression) {
-      currentElement.value.expression = `$F{${fieldName}}`;
-      emit('update-jrxml');
-    }
-  }
-}
-
 // 获取文本字段的表达式
 function getTextFieldExpression(element: any) {
   if (element.expression) {
@@ -462,14 +447,7 @@ function updateTextFieldExpression(event: Event) {
   
   const newExpression = (event.target as HTMLInputElement).value;
   
-  if (newExpression.startsWith('$F{') && newExpression.endsWith('}')) {
-    const fieldName = newExpression.substring(3, newExpression.length - 1);
-    currentElement.value.fieldName = fieldName;
-    currentElement.value.expression = undefined;
-  } else {
-    currentElement.value.expression = newExpression;
-    currentElement.value.fieldName = undefined;
-  }
+  currentElement.value.expression = newExpression;
   
   emit('update-jrxml');
 }

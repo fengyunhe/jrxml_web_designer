@@ -164,8 +164,7 @@ const groupedReportElements = computed(() => {
         if (!elementFilterText.value || 
             element.type.toLowerCase().includes(elementFilterText.value.toLowerCase()) ||
             (element.type === 'staticText' && (element as StaticTextElement).text && ((element as StaticTextElement).text || '').toLowerCase().includes(elementFilterText.value.toLowerCase())) ||
-            (element.type === 'textField' && ((element as TextFieldElement).fieldName && ((element as TextFieldElement).fieldName || '').toLowerCase().includes(elementFilterText.value.toLowerCase()) || 
-             (element as TextFieldElement).expression && ((element as TextFieldElement).expression || '').toLowerCase().includes(elementFilterText.value.toLowerCase())))
+            (element.type === 'textField' && ((element as TextFieldElement).expression || '').toLowerCase().includes(elementFilterText.value.toLowerCase()))
         ) {
           grouped[bandName]?.push({
             element,

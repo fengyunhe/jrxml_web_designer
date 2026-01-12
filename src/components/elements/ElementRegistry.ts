@@ -61,7 +61,6 @@ export class ElementRegistry {
         y: 0,
         width: 100,
         height: 30,
-        fieldName: '',
         expression: '',
         isStretchWithOverflow: false,
         evaluationTime: 'Now',

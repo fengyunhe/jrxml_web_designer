@@ -57,9 +57,6 @@ export function generateJRXMLContent(
   const usedFieldNames = new Set<string>();
   bands.forEach(band => {
     band.elements.forEach(element => {
-      if (element.type === 'textField' && element.fieldName) {
-        usedFieldNames.add(element.fieldName);
-      }
       // 也检查表达式中是否包含字段引用
       if (element.type === 'textField' && element.expression) {
         const fieldMatches = element.expression.match(/\$F\{([^}]+)\}/g);

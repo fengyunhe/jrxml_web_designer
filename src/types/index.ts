@@ -131,7 +131,6 @@ export interface StaticTextElement extends DesignElementBase {
 // 文本字段元素接口
 export interface TextFieldElement extends DesignElementBase {
   type: 'textField';
-  fieldName?: string;
   expression?: string;
   isStretchWithOverflow?: boolean;
   evaluationTime?: string;

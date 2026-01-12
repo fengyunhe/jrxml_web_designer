@@ -99,8 +99,7 @@ export function selectElementsByField(bands: any[], fieldName: string, selectEle
     if (band.elements) {
       band.elements.forEach((element: DesignElement, elementIndex: number) => {
         // 检查元素的字段名或表达式是否包含该字段
-        if ((element.type === 'textField' && (element as any).fieldName === fieldName) || 
-            (element.type === 'textField' && (element as any).expression && (element as any).expression.includes(`$F{${fieldName}}`))) {
+        if (element.type === 'textField' && (element as any).expression && (element as any).expression.includes(`$F{${fieldName}}`)) {
           selectElement(bandIndex, elementIndex);
           foundElement = true;
           return;
@@ -131,7 +130,7 @@ export function createNewElement(type: string, x: number, y: number): DesignElem
     case ELEMENT_TYPE_CONSTANTS.STATIC_TEXT:
       return { ...baseElement, type: 'staticText' as any, text: '静态文本' };
     case ELEMENT_TYPE_CONSTANTS.TEXT_FIELD:
-      return { ...baseElement, type: 'textField' as any, fieldName: 'field', isBlankWhenNull: true };
+      return { ...baseElement, type: 'textField' as any, isBlankWhenNull: true };
     case ELEMENT_TYPE_CONSTANTS.IMAGE:
       return { ...baseElement, type: 'image' as any, imageExpression: '' };
     case ELEMENT_TYPE_CONSTANTS.LINE:

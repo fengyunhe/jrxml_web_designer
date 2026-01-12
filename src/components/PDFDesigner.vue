@@ -1378,7 +1378,6 @@ const getDefaultElementProperties = (type: string): Partial<DesignElement> => {
       };
     case 'textField':
       return {
-        fieldName: '', 
         expression: '',
         isStretchWithOverflow: false,
         evaluationTime: 'Now',
