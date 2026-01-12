@@ -169,91 +169,73 @@
         <div class="element-tab-content" v-show="activeElementTab === 'box'">
           <h4>边框设置</h4>
           
-          <!-- 全局边框设置 -->
+          <!-- 快捷边框设置 -->
           <div class="box-section">
-            <h5>全局边框</h5>
-            <div class="form-group">
-              <label>边框样式</label>
-              <select v-if="currentElement && currentElement.box" v-model="currentElement.box.borderStyle">
+            <h5>快捷设置</h5>
+            <div class="border-quick-actions">
+              <button @click="removeAllBorders" class="btn-remove-border">四面无边框</button>
+              <button @click="addSolidBorder" class="btn-add-border">四面实线边框(1px)</button>
+            </div>
+          </div>
+          
+          <!-- 各边边框设置 -->
+          <div class="box-section">
+            <h5>各边边框设置</h5>
+            
+            <!-- 上边 -->
+            <div class="border-side-group">
+              <label class="side-label">上边</label>
+              <select v-if="currentElement && currentElement.box" :value="getSideBorderStyle('top')" @change="setSideBorderStyle('top', ($event.target as HTMLSelectElement).value)" class="side-control">
                 <option value="">无</option>
                 <option value="Solid">实线</option>
                 <option value="Dashed">虚线</option>
                 <option value="Dotted">点线</option>
                 <option value="Double">双线</option>
               </select>
-            </div>
-            <div class="form-group">
-              <label>边框粗细</label>
-              <input v-if="currentElement && currentElement.box" v-model.number="currentElement.box.borderWidth" type="number" min="0" max="10" step="0.5" />
-              <small>边框宽度，单位为点(Point)</small>
-            </div>
-            <div class="form-group">
-              <label>边框颜色</label>
-              <input v-if="currentElement && currentElement.box" v-model="currentElement.box.borderColor" type="color" />
-            </div>
-            <div class="form-group">
-              <small class="hint">边框设置会自动应用到所有边</small>
-            </div>
-          </div>
-          
-          <!-- 各边边框设置 -->
-          <div class="box-section">
-            <h5>各边边框（覆盖全局设置）</h5>
-            
-            <!-- 上边 -->
-            <div class="border-side-group">
-              <label class="side-label">上边</label>
-              <select v-if="currentElement && currentElement.box" v-model="currentElement.box.topBorderStyle" class="side-control">
-                <option value="">使用全局</option>
-                <option value="Solid">实线</option>
-                <option value="Dashed">虚线</option>
-                <option value="Dotted">点线</option>
-                <option value="Double">双线</option>
-              </select>
-              <input v-if="currentElement && currentElement.box" v-model.number="currentElement.box.topBorderWidth" type="number" min="0" max="10" step="0.5" class="width-control" placeholder="宽度" />
-              <input v-if="currentElement && currentElement.box" v-model="currentElement.box.topBorderColor" type="color" class="color-control" />
+              <input v-if="currentElement && currentElement.box" :value="getSideBorderWidth('top')" @input="setSideBorderWidth('top', ($event.target as HTMLInputElement).value)" type="number" min="0" max="10" step="0.5" class="width-control" placeholder="宽度" />
+              <input v-if="currentElement && currentElement.box" :value="getSideBorderColor('top')" @input="setSideBorderColor('top', ($event.target as HTMLInputElement).value)" type="color" class="color-control" />
             </div>
             
             <!-- 左边 -->
             <div class="border-side-group">
               <label class="side-label">左边</label>
-              <select v-if="currentElement && currentElement.box" v-model="currentElement.box.leftBorderStyle" class="side-control">
-                <option value="">使用全局</option>
+              <select v-if="currentElement && currentElement.box" :value="getSideBorderStyle('left')" @change="setSideBorderStyle('left', ($event.target as HTMLSelectElement).value)" class="side-control">
+                <option value="">无</option>
                 <option value="Solid">实线</option>
                 <option value="Dashed">虚线</option>
                 <option value="Dotted">点线</option>
                 <option value="Double">双线</option>
               </select>
-              <input v-if="currentElement && currentElement.box" v-model.number="currentElement.box.leftBorderWidth" type="number" min="0" max="10" step="0.5" class="width-control" placeholder="宽度" />
-              <input v-if="currentElement && currentElement.box" v-model="currentElement.box.leftBorderColor" type="color" class="color-control" />
+              <input v-if="currentElement && currentElement.box" :value="getSideBorderWidth('left')" @input="setSideBorderWidth('left', ($event.target as HTMLInputElement).value)" type="number" min="0" max="10" step="0.5" class="width-control" placeholder="宽度" />
+              <input v-if="currentElement && currentElement.box" :value="getSideBorderColor('left')" @input="setSideBorderColor('left', ($event.target as HTMLInputElement).value)" type="color" class="color-control" />
             </div>
             
             <!-- 下边 -->
             <div class="border-side-group">
               <label class="side-label">下边</label>
-              <select v-if="currentElement && currentElement.box" v-model="currentElement.box.bottomBorderStyle" class="side-control">
-                <option value="">使用全局</option>
+              <select v-if="currentElement && currentElement.box" :value="getSideBorderStyle('bottom')" @change="setSideBorderStyle('bottom', ($event.target as HTMLSelectElement).value)" class="side-control">
+                <option value="">无</option>
                 <option value="Solid">实线</option>
                 <option value="Dashed">虚线</option>
                 <option value="Dotted">点线</option>
                 <option value="Double">双线</option>
               </select>
-              <input v-if="currentElement && currentElement.box" v-model.number="currentElement.box.bottomBorderWidth" type="number" min="0" max="10" step="0.5" class="width-control" placeholder="宽度" />
-              <input v-if="currentElement && currentElement.box" v-model="currentElement.box.bottomBorderColor" type="color" class="color-control" />
+              <input v-if="currentElement && currentElement.box" :value="getSideBorderWidth('bottom')" @input="setSideBorderWidth('bottom', ($event.target as HTMLInputElement).value)" type="number" min="0" max="10" step="0.5" class="width-control" placeholder="宽度" />
+              <input v-if="currentElement && currentElement.box" :value="getSideBorderColor('bottom')" @input="setSideBorderColor('bottom', ($event.target as HTMLInputElement).value)" type="color" class="color-control" />
             </div>
             
             <!-- 右边 -->
             <div class="border-side-group">
               <label class="side-label">右边</label>
-              <select v-if="currentElement && currentElement.box" v-model="currentElement.box.rightBorderStyle" class="side-control">
-                <option value="">使用全局</option>
+              <select v-if="currentElement && currentElement.box" :value="getSideBorderStyle('right')" @change="setSideBorderStyle('right', ($event.target as HTMLSelectElement).value)" class="side-control">
+                <option value="">无</option>
                 <option value="Solid">实线</option>
                 <option value="Dashed">虚线</option>
                 <option value="Dotted">点线</option>
                 <option value="Double">双线</option>
               </select>
-              <input v-if="currentElement && currentElement.box" v-model.number="currentElement.box.rightBorderWidth" type="number" min="0" max="10" step="0.5" class="width-control" placeholder="宽度" />
-              <input v-if="currentElement && currentElement.box" v-model="currentElement.box.rightBorderColor" type="color" class="color-control" />
+              <input v-if="currentElement && currentElement.box" :value="getSideBorderWidth('right')" @input="setSideBorderWidth('right', ($event.target as HTMLInputElement).value)" type="number" min="0" max="10" step="0.5" class="width-control" placeholder="宽度" />
+              <input v-if="currentElement && currentElement.box" :value="getSideBorderColor('right')" @input="setSideBorderColor('right', ($event.target as HTMLInputElement).value)" type="color" class="color-control" />
             </div>
           </div>
           
@@ -492,6 +474,113 @@ function updateTextFieldExpression(event: Event) {
   emit('update-jrxml');
 }
 
+// 各边边框属性访问函数
+function getSideBorderWidth(side: string): number {
+  if (!currentElement.value?.box) return 0;
+  const box = currentElement.value.box;
+  const penKey = `${side}Pen`;
+  const widthKey = `${side}BorderWidth`;
+  if (box[widthKey] !== undefined) return box[widthKey];
+  if (box[penKey]?.lineWidth !== undefined) return box[penKey].lineWidth;
+  return 0;
+}
+
+function setSideBorderWidth(side: string, value: string) {
+  if (!currentElement.value?.box) return;
+  const numValue = parseFloat(value) || 0;
+  const widthKey = `${side}BorderWidth`;
+  const penKey = `${side}Pen`;
+  currentElement.value.box[widthKey] = numValue;
+  if (!currentElement.value.box[penKey]) {
+    currentElement.value.box[penKey] = {};
+  }
+  currentElement.value.box[penKey].lineWidth = numValue;
+  emit('update-jrxml');
+}
+
+function getSideBorderStyle(side: string): string {
+  if (!currentElement.value?.box) return '';
+  const box = currentElement.value.box;
+  const penKey = `${side}Pen`;
+  const styleKey = `${side}BorderStyle`;
+  if (box[styleKey] !== undefined) return box[styleKey];
+  if (box[penKey]?.lineStyle !== undefined) return box[penKey].lineStyle;
+  return '';
+}
+
+function setSideBorderStyle(side: string, value: string) {
+  if (!currentElement.value?.box) return;
+  const box = currentElement.value.box;
+  const styleKey = `${side}BorderStyle`;
+  const penKey = `${side}Pen`;
+  box[styleKey] = value;
+  if (!box[penKey]) {
+    box[penKey] = {};
+  }
+  box[penKey].lineStyle = value;
+  emit('update-jrxml');
+}
+
+function getSideBorderColor(side: string): string {
+  if (!currentElement.value?.box) return '#000000';
+  const box = currentElement.value.box;
+  const penKey = `${side}Pen`;
+  const colorKey = `${side}BorderColor`;
+  if (box[colorKey] !== undefined) return box[colorKey];
+  if (box[penKey]?.lineColor !== undefined) return box[penKey].lineColor;
+  return '#000000';
+}
+
+function setSideBorderColor(side: string, value: string) {
+  if (!currentElement.value?.box) return;
+  const box = currentElement.value.box;
+  const colorKey = `${side}BorderColor`;
+  const penKey = `${side}Pen`;
+  box[colorKey] = value;
+  if (!box[penKey]) {
+    box[penKey] = {};
+  }
+  box[penKey].lineColor = value;
+  emit('update-jrxml');
+}
+
+function removeAllBorders() {
+  if (!currentElement.value?.box) return;
+  const box = currentElement.value.box;
+  ['top', 'left', 'bottom', 'right'].forEach(side => {
+    const widthKey = `${side}BorderWidth`;
+    const styleKey = `${side}BorderStyle`;
+    const colorKey = `${side}BorderColor`;
+    const penKey = `${side}Pen`;
+    box[widthKey] = 0;
+    box[styleKey] = '';
+    box[colorKey] = '';
+    box[penKey] = { lineWidth: 0, lineStyle: '', lineColor: '' };
+  });
+  emit('update-jrxml');
+}
+
+function addSolidBorder() {
+  if (!currentElement.value?.box) return;
+  const box = currentElement.value.box;
+  ['top', 'left', 'bottom', 'right'].forEach(side => {
+    const widthKey = `${side}BorderWidth`;
+    const styleKey = `${side}BorderStyle`;
+    const colorKey = `${side}BorderColor`;
+    const penKey = `${side}Pen`;
+    box[widthKey] = 1;
+    box[styleKey] = 'Solid';
+    box[colorKey] = '#000000';
+    if (!box[penKey]) {
+      box[penKey] = {};
+    }
+    box[penKey].lineWidth = 1;
+    box[penKey].lineStyle = 'Solid';
+    box[penKey].lineColor = '#000000';
+  });
+  emit('update-jrxml');
+}
+
 // 删除元素
 function deleteElement() {
   emit('delete-element');
@@ -644,6 +733,39 @@ function deleteElement() {
   padding: 12px;
   background-color: #f9f9f9;
   border-radius: 4px;
+}
+
+.border-quick-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.btn-remove-border,
+.btn-add-border {
+  padding: 8px 12px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 12px;
+  transition: all 0.2s ease;
+}
+
+.btn-remove-border {
+  background-color: #ff4d4f;
+  color: white;
+}
+
+.btn-remove-border:hover {
+  background-color: #ff7875;
+}
+
+.btn-add-border {
+  background-color: #52c41a;
+  color: white;
+}
+
+.btn-add-border:hover {
+  background-color: #73d13d;
 }
 
 .border-side-group {
