@@ -45,6 +45,7 @@
         
         <button @click="clearLocalStorage" class="btn-secondary">清空本地数据</button>
         <button @click="generateJRXML" class="btn-primary">生成JRXML</button>
+        <button @click="openPdfPreview" class="btn-primary">预览PDF</button>
         <button @click="showReward = true" class="btn-secondary">打赏</button>
         <button @click="showHelp = true" class="btn-secondary">使用说明</button>
       </div>
@@ -182,6 +183,13 @@
       v-model:visible="showFieldModal" 
       :field="editingField" 
       @save="handleFieldSave" 
+    />
+    
+    <!-- PDF预览弹窗 -->
+    <PdfPreviewModal
+      :visible="showPdfPreview"
+      :jrxml-content="jrxmlContent"
+      @update:visible="showPdfPreview = $event"
     />
   </div>
 </template>
@@ -2749,6 +2757,14 @@ const regenerateJRXML = (): void => {
   notification.info('JRXML已重新生成');
 };
 
+// 打开PDF预览
+const openPdfPreview = (): void => {
+  if (!jrxmlContent.value) {
+    generateJRXML();
+  }
+  showPdfPreview.value = true;
+};
+
 // 保存编辑后的JRXML内容
 const saveJRXML = (): void => {
   try {
@@ -3522,6 +3538,9 @@ const showReward = ref(false);
 
 // 使用说明相关
 const showHelp = ref(false);
+
+// PDF预览相关
+const showPdfPreview = ref(false);
 
 // 字段管理相关
 const showFieldModal = ref(false);

@@ -19,6 +19,7 @@
 
 <script setup lang="ts">
 import { computed, ref } from 'vue';
+import { PDF_PREVIEW_API } from '../../config/apiConfig';
 
 interface Props {
   visible: boolean;
@@ -31,8 +32,6 @@ interface Emits {
 
 const props = defineProps<Props>();
 const emit = defineEmits<Emits>();
-
-const PDF_PREVIEW_API = 'http://43.133.226.50/api/pdf/generateForm';
 
 // 计算预览URL
 const previewUrl = computed(() => {
