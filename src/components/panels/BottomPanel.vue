@@ -54,9 +54,46 @@ const bottomPanelHeight = ref(props.initialHeight);
 // 可用字体列表
 const availableFonts = ref<string[]>([]);
 
+// PDF预览Modal显示状态
+const showPdfPreview = ref(false);
+
 onMounted(async () => {
   availableFonts.value = await getAvailableFonts();
 });
+
+// 打开PDF预览（新标签页）
+const openPdfPreview = (): void => {
+  if (!localJrxmlContent.value) {
+    alert('请先生成 JRXML 内容');
+    return;
+  }
+
+  const PDF_PREVIEW_API = 'http://43.133.226.50/api/pdf/generateForm';
+  
+  // 创建动态表单
+  const form = document.createElement('form');
+  form.action = PDF_PREVIEW_API;
+  form.method = 'POST';
+  form.target = '_blank';
+  form.style.display = 'none';
+  
+  // 添加JRXML内容字段
+  const input = document.createElement('input');
+  input.type = 'hidden';
+  input.name = 'jrxml';
+  input.value = localJrxmlContent.value;
+  
+  form.appendChild(input);
+  document.body.appendChild(form);
+  
+  // 提交表单
+  form.submit();
+  
+  // 清理
+  setTimeout(() => {
+    document.body.removeChild(form);
+  }, 100);
+};
 
 // 计算属性：本地绑定的reportProperties
 const localReportProperties = computed({
@@ -231,6 +268,7 @@ const saveJRXML = (): void => {
             <button @click="saveJRXML" class="btn-primary btn-small">应用</button>
             <button @click="regenerateJRXML" class="btn-secondary btn-small">重新生成</button>
             <button @click="generateJRXML" class="btn-primary btn-small">生成JRXML</button>
+            <button @click="openPdfPreview" class="btn-preview btn-small">预览PDF</button>
           </div>
         </div>
         <div class="jrxml-content">
@@ -558,5 +596,18 @@ const saveJRXML = (): void => {
 
 .btn-primary:hover {
   background-color: #3a80d2;
+}
+
+.btn-preview {
+  background-color: #9b59b6;
+  border: 1px solid #9b59b6;
+  color: white;
+  border-radius: v-bind('UI_CONSTANTS.BORDER_RADIUS_SMALL + "px"');
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-preview:hover {
+  background-color: #8e44ad;
 }
 </style>
