@@ -280,12 +280,7 @@
               <label>字体名称</label>
               <select v-if="currentElement" v-model="currentElement.fontFamily" style="appearance: none; -webkit-appearance: none;">
                 <option value="">使用默认字体</option>
-                <option value="SansSerif">SansSerif</option>
-                <option value="Serif">Serif</option>
-                <option value="Monospaced">Monospaced</option>
-                <option value="Arial">Arial</option>
-                <option value="Times New Roman">Times New Roman</option>
-                <option value="Noto Serif SC">Noto Serif SC</option>
+                <option v-for="font in availableFonts" :key="font" :value="font">{{ font }}</option>
               </select>
               <small class="font-hint">提示：可以直接在下拉框中输入字体名称</small>
             </div>
@@ -348,8 +343,9 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue';
+import { computed, ref, onMounted } from 'vue';
 import type { Band, SelectedElementInfo } from '../../../types';
+import { getAvailableFonts } from '../../../utils/fontUtils';
 
 interface Props {
   selectedBandIndex: number | null;
@@ -374,6 +370,13 @@ const elementTabs = ref([
   { id: 'box', name: 'Box设置' },
   { id: 'style', name: '样式设置' }
 ]);
+
+// 可用字体列表
+const availableFonts = ref<string[]>([]);
+
+onMounted(async () => {
+  availableFonts.value = await getAvailableFonts();
+});
 
 // 计算属性
 const currentElement = computed(() => {

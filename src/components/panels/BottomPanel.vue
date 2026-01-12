@@ -1,10 +1,11 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue';
+import { ref, computed, onMounted } from 'vue';
 import ResizablePanel from './ResizablePanel.vue';
 import {
   UI_CONSTANTS,
   PANEL_CONSTANTS
 } from '../../constants/constants';
+import { getAvailableFonts } from '../../utils/fontUtils';
 import type { Band, BandType } from '../../types';
 
 // 定义组件属性
@@ -49,6 +50,13 @@ const tabs = ref([
 
 // 底部面板高度
 const bottomPanelHeight = ref(props.initialHeight);
+
+// 可用字体列表
+const availableFonts = ref<string[]>([]);
+
+onMounted(async () => {
+  availableFonts.value = await getAvailableFonts();
+});
 
 // 计算属性：本地绑定的reportProperties
 const localReportProperties = computed({
@@ -167,12 +175,7 @@ const saveJRXML = (): void => {
             <div class="font-setting-item">
               <label>字体名称</label>
               <select v-model="localReportProperties.defaultFont.name">
-                <option value="SansSerif">SansSerif</option>
-                <option value="Serif">Serif</option>
-                <option value="Monospaced">Monospaced</option>
-                <option value="Arial">Arial</option>
-                <option value="Times New Roman">Times New Roman</option>
-                <option value="Noto Serif SC">Noto Serif SC</option>
+                <option v-for="font in availableFonts" :key="font" :value="font">{{ font }}</option>
               </select>
             </div>
             <div class="font-setting-item">
