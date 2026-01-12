@@ -137,8 +137,6 @@
         :collapsible="false"
         @size-change="handlePropertyPanelSizeChange"
       >
-        <h3>属性设置</h3>
-        
         <!-- 元素属性组件 -->
         <ElementProperties
           :selected-band-index="selectedBandIndex"

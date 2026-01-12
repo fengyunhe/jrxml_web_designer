@@ -47,21 +47,23 @@
         <!-- 基本属性标签页 -->
         <div class="element-tab-content" v-show="activeElementTab === 'basic'">
           <h4>基本属性</h4>
-          <div class="form-group">
-            <label>X坐标</label>
-            <input v-if="currentElement" v-model.number="currentElement.x" type="number" @change="ensureIntegerValue(currentElement, 'x')" />
-          </div>
-          <div class="form-group">
-            <label>Y坐标 (相对于当前Band)</label>
-            <input v-if="currentElement" v-model.number="currentElement.y" type="number" @change="ensureIntegerValue(currentElement, 'y')" />
-          </div>
-          <div class="form-group">
-            <label>宽度</label>
-            <input v-if="currentElement" v-model.number="currentElement.width" type="number" @change="ensureIntegerValue(currentElement, 'width')" />
-          </div>
-          <div class="form-group">
-            <label>高度</label>
-            <input v-if="currentElement" v-model.number="currentElement.height" type="number" @change="ensureIntegerValue(currentElement, 'height')" />
+          <div class="basic-properties-grid">
+            <div class="form-group">
+              <label>X坐标</label>
+              <input v-if="currentElement" v-model.number="currentElement.x" type="number" @change="ensureIntegerValue(currentElement, 'x')" />
+            </div>
+            <div class="form-group">
+              <label>Y坐标</label>
+              <input v-if="currentElement" v-model.number="currentElement.y" type="number" @change="ensureIntegerValue(currentElement, 'y')" />
+            </div>
+            <div class="form-group">
+              <label>宽度</label>
+              <input v-if="currentElement" v-model.number="currentElement.width" type="number" @change="ensureIntegerValue(currentElement, 'width')" />
+            </div>
+            <div class="form-group">
+              <label>高度</label>
+              <input v-if="currentElement" v-model.number="currentElement.height" type="number" @change="ensureIntegerValue(currentElement, 'height')" />
+            </div>
           </div>
           
           <!-- 根据元素类型显示特定属性 -->
@@ -126,13 +128,13 @@
                 下划线
               </label>
             </div>
-            <div class="form-group">
+            <div class="checkbox-group">
               <label>
                 <input v-if="currentElement" v-model="currentElement.isStretchWithOverflow" type="checkbox" />
                 内容超出时自动拉伸
               </label>
             </div>
-            <div class="form-group">
+            <div class="checkbox-group">
               <label>
                 <input v-if="currentElement" v-model="currentElement.isBlankWhenNull" type="checkbox" />
                 值为null时显示空白
@@ -600,6 +602,17 @@ function deleteElement() {
 
 .form-group {
   margin-bottom: 16px;
+}
+
+.basic-properties-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.basic-properties-grid .form-group {
+  margin-bottom: 0;
 }
 
 .form-group label {
