@@ -365,7 +365,7 @@ const reportProperties = ref({
   topMargin: REPORT_CONSTANTS.DEFAULT_MARGIN,
   bottomMargin: REPORT_CONSTANTS.DEFAULT_MARGIN,
   defaultFont: {
-    name: FONT_CONSTANTS.SANS_SERIF,
+    name: FONT_CONSTANTS.NOTO_SERIF_SC,
     size: REPORT_CONSTANTS.DEFAULT_FONT_SIZE,
     isBold: false,
     isItalic: false,
@@ -445,7 +445,7 @@ function createNewFile() {
     topMargin: 20,
     bottomMargin: 20,
     defaultFont: {
-      name: 'SansSerif',
+      name: FONT_CONSTANTS.NOTO_SERIF_SC,
       size: 12,
       isBold: false,
       isItalic: false,
