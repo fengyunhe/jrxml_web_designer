@@ -18,23 +18,31 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue';
-import { PDF_PREVIEW_API } from '../../config/apiConfig';
+import { computed, ref, watch } from 'vue';
 
-interface Props {
-  visible: boolean;
-  jrxmlContent: string;
-}
+const props = defineProps({
+  visible: {
+    type: Boolean,
+    default: false
+  },
+  jrxmlContent: {
+    type: String,
+    default: ''
+  }
+});
 
-interface Emits {
-  (e: 'update:visible', value: boolean): void;
-}
+const emit = defineEmits(['update:visible']);
 
-const props = defineProps<Props>();
-const emit = defineEmits<Emits>();
+// 监听visible变化
+watch(() => props.visible, (newVisible) => {
+  console.log('PdfPreviewModal visible变化:', newVisible);
+});
+
+const PDF_PREVIEW_API = 'http://43.133.226.50/api/pdf/generateForm';
 
 // 计算预览URL
 const previewUrl = computed(() => {
+  console.log('生成预览URL，jrxml长度:', props.jrxmlContent.length);
   // 创建一个包含表单的HTML
   const formHtml = `
     <html>
@@ -50,10 +58,11 @@ const previewUrl = computed(() => {
 
 const closeModal = () => {
   emit('update:visible', false);
+  console.log('关闭PDF预览');
 };
 
 const handleIframeLoad = () => {
-  // 可以在这里添加加载完成的处理
+  console.log('PDF预览iframe加载完成');
 };
 </script>
 
@@ -68,7 +77,8 @@ const handleIframeLoad = () => {
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 2000;
+  z-index: 9999;
+  pointer-events: auto;
 }
 
 .pdf-preview-content {
@@ -80,6 +90,7 @@ const handleIframeLoad = () => {
   display: flex;
   flex-direction: column;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+  z-index: 10000;
 }
 
 .pdf-preview-header {

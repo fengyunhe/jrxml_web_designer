@@ -209,6 +209,7 @@ import DesignerCanvas from './designer/DesignerCanvas.vue';
 import RewardModal from './modals/RewardModal.vue';
 import HelpModal from './modals/HelpModal.vue';
 import FieldManagementModal from './modals/FieldManagementModal.vue';
+import PdfPreviewModal from './modals/PdfPreviewModal.vue';
 import BottomPanel from './panels/BottomPanel.vue';
 import ElementLibrary from './ElementLibrary.vue';
 import FileManager from './designer/controls/FileManager.vue';
@@ -2759,10 +2760,18 @@ const regenerateJRXML = (): void => {
 
 // 打开PDF预览
 const openPdfPreview = (): void => {
-  if (!jrxmlContent.value) {
-    generateJRXML();
+  try {
+    if (!jrxmlContent.value) {
+      // 直接生成JRXML内容，不下载
+      const content = generateJRXMLContent(reportProperties.value, bands.value, reportFields.value, reportParameters.value);
+      jrxmlContent.value = content;
+    }
+    showPdfPreview.value = true;
+    console.log('打开PDF预览:', { showPdfPreview: showPdfPreview.value, jrxmlContentLength: jrxmlContent.value.length });
+  } catch (error) {
+    console.error('预览PDF失败:', error);
+    alert('预览PDF失败，请检查控制台错误信息');
   }
-  showPdfPreview.value = true;
 };
 
 // 保存编辑后的JRXML内容
