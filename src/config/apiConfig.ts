@@ -1,7 +1,7 @@
 // API 配置
 export const API_CONFIG = {
   // PDF 预览接口
-  PDF_PREVIEW_API: 'http://43.133.226.50/api/pdf/generateForm',
+  PDF_PREVIEW_API: 'https://jrxml-pdf-preview.firegod.cn/api/pdf/generateForm',
   
   // 其他 API 配置可以在此添加
 };

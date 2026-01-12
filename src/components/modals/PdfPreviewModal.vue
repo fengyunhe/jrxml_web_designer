@@ -19,6 +19,7 @@
 
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue';
+import { PDF_PREVIEW_API } from '../../config/apiConfig';
 
 const props = defineProps({
   visible: {
@@ -37,8 +38,6 @@ const emit = defineEmits(['update:visible']);
 watch(() => props.visible, (newVisible) => {
   console.log('PdfPreviewModal visible变化:', newVisible);
 });
-
-const PDF_PREVIEW_API = 'http://43.133.226.50/api/pdf/generateForm';
 
 // 计算预览URL
 const previewUrl = computed(() => {
