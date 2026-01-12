@@ -82,17 +82,4 @@ const handleResizeStart = (event: MouseEvent, bandIndex: number, elementIndex: n
   text-align: center;
   color: #666;
 }
-
-.image-icon {
-  font-size: 24px;
-  margin-bottom: 4px;
-}
-
-.image-path {
-  font-size: 12px;
-  max-width: 100%;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
 </style>
