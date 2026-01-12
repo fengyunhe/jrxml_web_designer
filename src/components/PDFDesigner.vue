@@ -2788,14 +2788,6 @@ const saveJRXML = (): void => {
     // 为矩形元素添加默认边框，确保显示效果
     bands.value.forEach(band => {
       band.elements.forEach(element => {
-        if (element.type === 'rectangle' && !element.border && (!element.box?.border && !element.box?.topBorder)) {
-          if (!element.box) {
-            element.box = {};
-          }
-          element.box.border = 'Thin';
-          element.box.borderColor = '#000000';
-        }
-        
         // 确保元素宽度合理（但不强制最小高度，以保留JRXML原始设置）
         if (element.width < ELEMENT_CONSTANTS.MIN_WIDTH) element.width = ELEMENT_CONSTANTS.MIN_WIDTH; // 确保最小宽度
         

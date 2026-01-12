@@ -187,26 +187,20 @@ function generateBoxXML(box: any): string {
   const hasBottomPadding = box.bottomPadding !== undefined && box.bottomPadding !== '' && box.bottomPadding !== 0;
   const hasRightPadding = box.rightPadding !== undefined && box.rightPadding !== '' && box.rightPadding !== 0;
   
-  // 检查全局边框宽度是否为0
+  // 检查pen格式的边框数据（不过时）
+  const hasTopPen = box.topPen && box.topPen.lineWidth !== undefined && box.topPen.lineWidth > 0;
+  const hasLeftPen = box.leftPen && box.leftPen.lineWidth !== undefined && box.leftPen.lineWidth > 0;
+  const hasBottomPen = box.bottomPen && box.bottomPen.lineWidth !== undefined && box.bottomPen.lineWidth > 0;
+  const hasRightPen = box.rightPen && box.rightPen.lineWidth !== undefined && box.rightPen.lineWidth > 0;
+  const hasPen = box.pen && box.pen.lineWidth !== undefined && box.pen.lineWidth > 0;
+  
+  // 检查直接格式的边框数据（过时，但向后兼容）
   const hasGlobalBorderWidth = box.borderWidth !== undefined && box.borderWidth > 0;
   const hasGlobalBorderStyle = box.borderStyle !== undefined && box.borderStyle !== '';
   
-  // 检查各边边框宽度是否大于0
-  const hasTopBorderWidth = box.topBorderWidth !== undefined && box.topBorderWidth > 0;
-  const hasLeftBorderWidth = box.leftBorderWidth !== undefined && box.leftBorderWidth > 0;
-  const hasBottomBorderWidth = box.bottomBorderWidth !== undefined && box.bottomBorderWidth > 0;
-  const hasRightBorderWidth = box.rightBorderWidth !== undefined && box.rightBorderWidth > 0;
-  
-  // 检查旧模型中各边边框宽度是否大于0
-  const hasOldTopPenWidth = box.topPen && box.topPen.lineWidth !== undefined && box.topPen.lineWidth > 0;
-  const hasOldLeftPenWidth = box.leftPen && box.leftPen.lineWidth !== undefined && box.leftPen.lineWidth > 0;
-  const hasOldBottomPenWidth = box.bottomPen && box.bottomPen.lineWidth !== undefined && box.bottomPen.lineWidth > 0;
-  const hasOldRightPenWidth = box.rightPen && box.rightPen.lineWidth !== undefined && box.rightPen.lineWidth > 0;
-  const hasOldPenWidth = box.pen && box.pen.lineWidth !== undefined && box.pen.lineWidth > 0;
-  
-  // 如果全局边框宽度为0且没有任何边距设置，则不生成box标签
-  if (!hasGlobalBorderWidth && !hasGlobalBorderStyle && !hasTopBorderWidth && !hasLeftBorderWidth && !hasBottomBorderWidth && !hasRightBorderWidth &&
-      !hasOldPenWidth && !hasOldTopPenWidth && !hasOldLeftPenWidth && !hasOldBottomPenWidth && !hasOldRightPenWidth &&
+  // 如果没有任何边框和边距设置，则不生成box标签
+  if (!hasPen && !hasTopPen && !hasLeftPen && !hasBottomPen && !hasRightPen &&
+      !hasGlobalBorderWidth && !hasGlobalBorderStyle &&
       !hasPadding && !hasTopPadding && !hasLeftPadding && !hasBottomPadding && !hasRightPadding) {
     return '';
   }
@@ -215,36 +209,47 @@ function generateBoxXML(box: any): string {
   
   // 添加非过时的box属性（padding相关）
   if (box.padding !== undefined && box.padding !== '') {
-    // 如果padding是空字符串，使用默认值0
     const paddingValue = box.padding === '' ? 0 : box.padding;
     xml += ` padding="${paddingValue}"`;
   }
   if (box.topPadding !== undefined && box.topPadding !== '') {
-    // 如果topPadding是空字符串，使用默认值0
     const topPaddingValue = box.topPadding === '' ? 0 : box.topPadding;
     xml += ` topPadding="${topPaddingValue}"`;
   }
   if (box.leftPadding !== undefined && box.leftPadding !== '') {
-    // 如果leftPadding是空字符串，使用默认值0
     const leftPaddingValue = box.leftPadding === '' ? 0 : box.leftPadding;
     xml += ` leftPadding="${leftPaddingValue}"`;
   }
   if (box.bottomPadding !== undefined && box.bottomPadding !== '') {
-    // 如果bottomPadding是空字符串，使用默认值0
     const bottomPaddingValue = box.bottomPadding === '' ? 0 : box.bottomPadding;
     xml += ` bottomPadding="${bottomPaddingValue}"`;
   }
   if (box.rightPadding !== undefined && box.rightPadding !== '') {
-    // 如果rightPadding是空字符串，使用默认值0
     const rightPaddingValue = box.rightPadding === '' ? 0 : box.rightPadding;
     xml += ` rightPadding="${rightPaddingValue}"`;
   }
   
   xml += '>\n';
   
-  // 优先使用新的边框数据模型（borderWidth和borderStyle）
-  // 1. 处理全局边框，只有当宽度大于0时才生成
-  if (hasGlobalBorderWidth || hasGlobalBorderStyle) {
+  // 优先使用pen格式（不过时），否则使用直接格式（过时，向后兼容）
+  // 1. 处理全局边框
+  if (hasPen) {
+    xml += '        <pen';
+    if (box.pen.lineWidth !== undefined && box.pen.lineWidth !== null) {
+      let lineWidth = box.pen.lineWidth;
+      if (typeof lineWidth === 'string') {
+        if (lineWidth === '1Point' || lineWidth === 'Thin') lineWidth = 1;
+        else if (lineWidth === '2Point') lineWidth = 2;
+        else if (lineWidth === '4Point') lineWidth = 4;
+        else if (/^\d+$/.test(lineWidth)) lineWidth = parseInt(lineWidth);
+      }
+      xml += ` lineWidth="${lineWidth}"`;
+    }
+    if (box.pen.lineStyle && box.pen.lineStyle !== null && box.pen.lineStyle !== '') xml += ` lineStyle="${box.pen.lineStyle}"`;
+    if (box.pen.lineColor && box.pen.lineColor !== null) xml += ` lineColor="${box.pen.lineColor}"`;
+    xml += '/>\n';
+  } else if (hasGlobalBorderWidth || hasGlobalBorderStyle) {
+    // 回退到直接格式（过时）
     xml += '        <pen';
     if (box.borderWidth !== undefined && box.borderWidth !== null && box.borderWidth > 0) {
       xml += ` lineWidth="${box.borderWidth}"`;
@@ -258,158 +263,66 @@ function generateBoxXML(box: any): string {
     xml += '/>\n';
   }
   
-  // 2. 处理各边边框，只有当宽度大于0时才生成
-  // 上边框 - 只有当宽度大于0时才生成
-  if (hasTopBorderWidth) {
+  // 2. 处理各边pen（不过时）
+  // 上边框
+  if (hasTopPen) {
     xml += '        <topPen';
-    if (box.topBorderWidth !== undefined && box.topBorderWidth !== null && box.topBorderWidth > 0) {
-      xml += ` lineWidth="${box.topBorderWidth}"`;
+    let lineWidth = box.topPen.lineWidth;
+    if (typeof lineWidth === 'string') {
+      if (lineWidth === '1Point' || lineWidth === 'Thin') lineWidth = 1;
+      else if (lineWidth === '2Point') lineWidth = 2;
+      else if (lineWidth === '4Point') lineWidth = 4;
+      else if (/^\d+$/.test(lineWidth)) lineWidth = parseInt(lineWidth);
     }
-    if (box.topBorderStyle !== undefined && box.topBorderStyle !== null && box.topBorderStyle !== '') {
-      xml += ` lineStyle="${box.topBorderStyle}"`;
-    }
-    if (box.topBorderColor !== undefined && box.topBorderColor !== null) {
-      xml += ` lineColor="${box.topBorderColor}"`;
-    }
-    xml += '/>\n';
-  }
-  
-  // 左边框 - 只有当宽度大于0时才生成
-  if (hasLeftBorderWidth) {
-    xml += '        <leftPen';
-    if (box.leftBorderWidth !== undefined && box.leftBorderWidth !== null && box.leftBorderWidth > 0) {
-      xml += ` lineWidth="${box.leftBorderWidth}"`;
-    }
-    if (box.leftBorderStyle !== undefined && box.leftBorderStyle !== null && box.leftBorderStyle !== '') {
-      xml += ` lineStyle="${box.leftBorderStyle}"`;
-    }
-    if (box.leftBorderColor !== undefined && box.leftBorderColor !== null) {
-      xml += ` lineColor="${box.leftBorderColor}"`;
-    }
-    xml += '/>\n';
-  }
-  
-  // 下边框 - 只有当宽度大于0时才生成
-  if (hasBottomBorderWidth) {
-    xml += '        <bottomPen';
-    if (box.bottomBorderWidth !== undefined && box.bottomBorderWidth !== null && box.bottomBorderWidth > 0) {
-      xml += ` lineWidth="${box.bottomBorderWidth}"`;
-    }
-    if (box.bottomBorderStyle !== undefined && box.bottomBorderStyle !== null && box.bottomBorderStyle !== '') {
-      xml += ` lineStyle="${box.bottomBorderStyle}"`;
-    }
-    if (box.bottomBorderColor !== undefined && box.bottomBorderColor !== null) {
-      xml += ` lineColor="${box.bottomBorderColor}"`;
-    }
-    xml += '/>\n';
-  }
-  
-  // 右边框 - 只有当宽度大于0时才生成
-  if (hasRightBorderWidth) {
-    xml += '        <rightPen';
-    if (box.rightBorderWidth !== undefined && box.rightBorderWidth !== null && box.rightBorderWidth > 0) {
-      xml += ` lineWidth="${box.rightBorderWidth}"`;
-    }
-    if (box.rightBorderStyle !== undefined && box.rightBorderStyle !== null && box.rightBorderStyle !== '') {
-      xml += ` lineStyle="${box.rightBorderStyle}"`;
-    }
-    if (box.rightBorderColor !== undefined && box.rightBorderColor !== null) {
-      xml += ` lineColor="${box.rightBorderColor}"`;
-    }
-    xml += '/>\n';
-  }
-  
-  // 回退到旧的边框数据模型（pen子元素）
-  // 只有当宽度大于0时才生成pen子元素
-  if (box.pen && box.borderWidth === undefined && box.borderStyle === undefined && hasOldPenWidth) {
-    xml += '        <pen';
-    if (box.pen.lineWidth !== undefined && box.pen.lineWidth !== null) {
-      // 如果lineWidth是字符串，尝试转换为数值
-      let lineWidth = box.pen.lineWidth;
-      if (typeof lineWidth === 'string') {
-        if (lineWidth === '1Point' || lineWidth === 'Thin') lineWidth = 1;
-        else if (lineWidth === '2Point') lineWidth = 2;
-        else if (lineWidth === '4Point') lineWidth = 4;
-        else if (/^\d+$/.test(lineWidth)) lineWidth = parseInt(lineWidth);
-      }
-      xml += ` lineWidth="${lineWidth}"`;
-    }
-    if (box.pen.lineStyle && box.pen.lineStyle !== null && box.pen.lineStyle !== '') xml += ` lineStyle="${box.pen.lineStyle}"`;
-    if (box.pen.lineColor && box.pen.lineColor !== null) xml += ` lineColor="${box.pen.lineColor}"`;
-    xml += '/>\n';
-  }
-  
-  // 只有当宽度大于0时才生成topPen子元素
-  if (box.topPen && box.topBorderWidth === undefined && box.topBorderStyle === undefined && hasOldTopPenWidth) {
-    xml += '        <topPen';
-    if (box.topPen.lineWidth !== undefined && box.topPen.lineWidth !== null) {
-      // 如果lineWidth是字符串，尝试转换为数值
-      let lineWidth = box.topPen.lineWidth;
-      if (typeof lineWidth === 'string') {
-        if (lineWidth === '1Point' || lineWidth === 'Thin') lineWidth = 1;
-        else if (lineWidth === '2Point') lineWidth = 2;
-        else if (lineWidth === '4Point') lineWidth = 4;
-        else if (/^\d+$/.test(lineWidth)) lineWidth = parseInt(lineWidth);
-      }
-      xml += ` lineWidth="${lineWidth}"`;
-    }
+    xml += ` lineWidth="${lineWidth}"`;
     if (box.topPen.lineStyle && box.topPen.lineStyle !== null && box.topPen.lineStyle !== '') xml += ` lineStyle="${box.topPen.lineStyle}"`;
     if (box.topPen.lineColor && box.topPen.lineColor !== null) xml += ` lineColor="${box.topPen.lineColor}"`;
     xml += '/>\n';
   }
   
-  // 只有当宽度大于0时才生成leftPen子元素
-  if (box.leftPen && box.leftBorderWidth === undefined && box.leftBorderStyle === undefined && hasOldLeftPenWidth) {
+  // 左边框
+  if (hasLeftPen) {
     xml += '        <leftPen';
-    if (box.leftPen.lineWidth !== undefined && box.leftPen.lineWidth !== null) {
-      // 如果lineWidth是字符串，尝试转换为数值
-      let lineWidth = box.leftPen.lineWidth;
-      if (typeof lineWidth === 'string') {
-        if (lineWidth === '1Point' || lineWidth === 'Thin') lineWidth = 1;
-        else if (lineWidth === '2Point') lineWidth = 2;
-        else if (lineWidth === '4Point') lineWidth = 4;
-        else if (/^\d+$/.test(lineWidth)) lineWidth = parseInt(lineWidth);
-      }
-      xml += ` lineWidth="${lineWidth}"`;
+    let lineWidth = box.leftPen.lineWidth;
+    if (typeof lineWidth === 'string') {
+      if (lineWidth === '1Point' || lineWidth === 'Thin') lineWidth = 1;
+      else if (lineWidth === '2Point') lineWidth = 2;
+      else if (lineWidth === '4Point') lineWidth = 4;
+      else if (/^\d+$/.test(lineWidth)) lineWidth = parseInt(lineWidth);
     }
+    xml += ` lineWidth="${lineWidth}"`;
     if (box.leftPen.lineStyle && box.leftPen.lineStyle !== null && box.leftPen.lineStyle !== '') xml += ` lineStyle="${box.leftPen.lineStyle}"`;
     if (box.leftPen.lineColor && box.leftPen.lineColor !== null) xml += ` lineColor="${box.leftPen.lineColor}"`;
     xml += '/>\n';
   }
   
-  // 只有当宽度大于0时才生成bottomPen子元素
-  if (box.bottomPen && box.bottomBorderWidth === undefined && box.bottomBorderStyle === undefined && hasOldBottomPenWidth) {
+  // 下边框
+  if (hasBottomPen) {
     xml += '        <bottomPen';
-    if (box.bottomPen.lineWidth !== undefined && box.bottomPen.lineWidth !== null) {
-      // 如果lineWidth是字符串，尝试转换为数值
-      let lineWidth = box.bottomPen.lineWidth;
-      if (typeof lineWidth === 'string') {
-        if (lineWidth === '1Point' || lineWidth === 'Thin') lineWidth = 1;
-        else if (lineWidth === '2Point') lineWidth = 2;
-        else if (lineWidth === '4Point') lineWidth = 4;
-        else if (/^\d+$/.test(lineWidth)) lineWidth = parseInt(lineWidth);
-      }
-      xml += ` lineWidth="${lineWidth}"`;
+    let lineWidth = box.bottomPen.lineWidth;
+    if (typeof lineWidth === 'string') {
+      if (lineWidth === '1Point' || lineWidth === 'Thin') lineWidth = 1;
+      else if (lineWidth === '2Point') lineWidth = 2;
+      else if (lineWidth === '4Point') lineWidth = 4;
+      else if (/^\d+$/.test(lineWidth)) lineWidth = parseInt(lineWidth);
     }
+    xml += ` lineWidth="${lineWidth}"`;
     if (box.bottomPen.lineStyle && box.bottomPen.lineStyle !== null && box.bottomPen.lineStyle !== '') xml += ` lineStyle="${box.bottomPen.lineStyle}"`;
     if (box.bottomPen.lineColor && box.bottomPen.lineColor !== null) xml += ` lineColor="${box.bottomPen.lineColor}"`;
     xml += '/>\n';
   }
   
-  // 只有当宽度大于0时才生成rightPen子元素
-  if (box.rightPen && box.rightBorderWidth === undefined && box.rightBorderStyle === undefined && hasOldRightPenWidth) {
+  // 右边框
+  if (hasRightPen) {
     xml += '        <rightPen';
-    if (box.rightPen.lineWidth !== undefined && box.rightPen.lineWidth !== null) {
-      // 如果lineWidth是字符串，尝试转换为数值
-      let lineWidth = box.rightPen.lineWidth;
-      if (typeof lineWidth === 'string') {
-        if (lineWidth === '1Point' || lineWidth === 'Thin') lineWidth = 1;
-        else if (lineWidth === '2Point') lineWidth = 2;
-        else if (lineWidth === '4Point') lineWidth = 4;
-        else if (/^\d+$/.test(lineWidth)) lineWidth = parseInt(lineWidth);
-      }
-      xml += ` lineWidth="${lineWidth}"`;
+    let lineWidth = box.rightPen.lineWidth;
+    if (typeof lineWidth === 'string') {
+      if (lineWidth === '1Point' || lineWidth === 'Thin') lineWidth = 1;
+      else if (lineWidth === '2Point') lineWidth = 2;
+      else if (lineWidth === '4Point') lineWidth = 4;
+      else if (/^\d+$/.test(lineWidth)) lineWidth = parseInt(lineWidth);
     }
+    xml += ` lineWidth="${lineWidth}"`;
     if (box.rightPen.lineStyle && box.rightPen.lineStyle !== null && box.rightPen.lineStyle !== '') xml += ` lineStyle="${box.rightPen.lineStyle}"`;
     if (box.rightPen.lineColor && box.rightPen.lineColor !== null) xml += ` lineColor="${box.rightPen.lineColor}"`;
     xml += '/>\n';
