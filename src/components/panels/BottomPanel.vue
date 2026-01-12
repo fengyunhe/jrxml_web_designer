@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue';
 import ResizablePanel from './ResizablePanel.vue';
+import PdfPreviewModal from '../modals/PdfPreviewModal.vue';
 import {
   UI_CONSTANTS,
   PANEL_CONSTANTS
@@ -61,38 +62,13 @@ onMounted(async () => {
   availableFonts.value = await getAvailableFonts();
 });
 
-// 打开PDF预览（新标签页）
+// 打开PDF预览
 const openPdfPreview = (): void => {
   if (!localJrxmlContent.value) {
     alert('请先生成 JRXML 内容');
     return;
   }
-
-  const PDF_PREVIEW_API = 'http://43.133.226.50/api/pdf/generateForm';
-  
-  // 创建动态表单
-  const form = document.createElement('form');
-  form.action = PDF_PREVIEW_API;
-  form.method = 'POST';
-  form.target = '_blank';
-  form.style.display = 'none';
-  
-  // 添加JRXML内容字段
-  const input = document.createElement('input');
-  input.type = 'hidden';
-  input.name = 'jrxml';
-  input.value = localJrxmlContent.value;
-  
-  form.appendChild(input);
-  document.body.appendChild(form);
-  
-  // 提交表单
-  form.submit();
-  
-  // 清理
-  setTimeout(() => {
-    document.body.removeChild(form);
-  }, 100);
+  showPdfPreview.value = true;
 };
 
 // 计算属性：本地绑定的reportProperties
@@ -284,6 +260,12 @@ const saveJRXML = (): void => {
       </div>
     </div>
   </ResizablePanel>
+
+  <PdfPreviewModal
+    :visible="showPdfPreview"
+    :jrxml-content="localJrxmlContent"
+    @update:visible="showPdfPreview = $event"
+  />
 </template>
 
 <style scoped>
