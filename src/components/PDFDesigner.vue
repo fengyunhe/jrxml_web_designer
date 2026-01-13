@@ -365,7 +365,7 @@ const reportProperties = ref({
   topMargin: REPORT_CONSTANTS.DEFAULT_MARGIN,
   bottomMargin: REPORT_CONSTANTS.DEFAULT_MARGIN,
   defaultFont: {
-    name: FONT_CONSTANTS.NOTO_SERIF_SC,
+    name: FONT_CONSTANTS.DEFAULT_FONT_FAMILY,
     size: REPORT_CONSTANTS.DEFAULT_FONT_SIZE,
     isBold: false,
     isItalic: false,
@@ -445,7 +445,7 @@ function createNewFile() {
     topMargin: 20,
     bottomMargin: 20,
     defaultFont: {
-      name: FONT_CONSTANTS.NOTO_SERIF_SC,
+      name: FONT_CONSTANTS.DEFAULT_FONT_FAMILY,
       size: 12,
       isBold: false,
       isItalic: false,
@@ -1370,7 +1370,7 @@ const clearAlignmentLines = () => {
 const getDefaultElementProperties = (type: string): Partial<DesignElement> => {
   // 使用报表的默认字体设置
   const defaultFontProps = {
-    fontFamily: reportProperties.value?.defaultFont?.name || FONT_CONSTANTS.SANS_SERIF,
+    fontFamily: reportProperties.value?.defaultFont?.name || FONT_CONSTANTS.DEFAULT_FONT_FAMILY,
     fontSize: reportProperties.value?.defaultFont?.size || REPORT_CONSTANTS.DEFAULT_FONT_SIZE,
     isBold: reportProperties.value?.defaultFont?.isBold || false,
     isItalic: reportProperties.value?.defaultFont?.isItalic || false,
@@ -2784,7 +2784,7 @@ const saveJRXML = (): void => {
     reportProperties.value = {
       ...parsedData.properties,
       defaultFont: reportProperties.value?.defaultFont || {
-        name: FONT_CONSTANTS.SANS_SERIF,
+        name: FONT_CONSTANTS.DEFAULT_FONT_FAMILY,
         size: REPORT_CONSTANTS.DEFAULT_FONT_SIZE,
         isBold: false,
         isItalic: false,

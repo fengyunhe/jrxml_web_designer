@@ -78,8 +78,7 @@ export const VERTICAL_ALIGN_CONSTANTS = {
 
 // 字体常量
 export const FONT_CONSTANTS = {
-  SANS_SERIF: 'SansSerif',
-  NOTO_SERIF_SC: 'Noto Serif SC',
+  DEFAULT_FONT_FAMILY: 'Noto Serif SC',
   // 字体大小常量
   DEFAULT_SIZE: 12,
   MIN_SIZE: 8,
