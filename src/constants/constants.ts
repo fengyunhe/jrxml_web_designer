@@ -79,10 +79,6 @@ export const VERTICAL_ALIGN_CONSTANTS = {
 // 字体常量
 export const FONT_CONSTANTS = {
   SANS_SERIF: 'SansSerif',
-  SERIF: 'Serif',
-  MONOSPACED: 'Monospaced',
-  ARIAL: 'Arial',
-  TIMES_NEW_ROMAN: 'Times New Roman',
   NOTO_SERIF_SC: 'Noto Serif SC',
   // 字体大小常量
   DEFAULT_SIZE: 12,
