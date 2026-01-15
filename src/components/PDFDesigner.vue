@@ -1,7 +1,13 @@
 <template>
   <div class="pdf-designer">
     <div class="designer-header">
-      <h1>PDF模板设计器</h1>
+      <div class="header-left">
+        <h1>PDF模板设计器</h1>
+        <div class="header-undo-redo">
+          <button @click="undo" class="btn-secondary">撤销</button>
+          <button @click="redo" class="btn-secondary">重做</button>
+        </div>
+      </div>
       <div class="header-actions">
         <!-- 文件管理组件 -->
         <FileManager
@@ -3759,6 +3765,18 @@ const handleBandSelectionChange = (): void => {
   margin: 0;
   font-size: 16px;
   font-weight: 600;
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.header-undo-redo {
+  display: flex;
+  gap: 6px;
+  align-items: center;
 }
 
 .header-actions {
