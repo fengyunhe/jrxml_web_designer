@@ -147,6 +147,7 @@
           @update:bands="bands = $event"
           @delete-element="deleteElement"
           @update-jrxml="updateJRXML"
+          @save-state="saveStateToHistory"
         />
       </ResizablePanel>
     </div>
@@ -939,6 +940,9 @@ const handleElementDoubleClick = (element: any) => {
     return;
   }
   
+  // 保存状态到历史记录
+  saveStateToHistory();
+  
   // 创建新元素
   const newElement: DesignElement = {
     type: element.type,
@@ -1014,6 +1018,9 @@ const handleDrop = (event: DragEvent) => {
     
     const targetBand = bands.value[bandIndex];
     if (targetBand && targetBand.elements) {
+      // 保存状态到历史记录
+      saveStateToHistory();
+      
       // 确保元素不会超出边距限制
       // 注意：由于现在使用padding，元素坐标是相对于内容区域的
       const availableWidth = paperWidth.value - (reportProperties.value?.leftMargin || 0) - (reportProperties.value?.rightMargin || 0);

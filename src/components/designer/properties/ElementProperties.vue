@@ -358,6 +358,7 @@ interface Emits {
   (e: 'update:bands', bands: Band[]): void;
   (e: 'delete-element'): void;
   (e: 'update-jrxml'): void;
+  (e: 'save-state'): void;
 }
 
 const props = defineProps<Props>();
@@ -409,6 +410,7 @@ function getBandDisplayName(bandType: string): string {
 // 更新Band高度
 function updateBandHeight(_index: number) {
   const updatedBands = [...props.bands];
+  emit('save-state');
   emit('update:bands', updatedBands);
   emit('update-jrxml');
 }
@@ -423,6 +425,7 @@ function ensureIntegerValue(element: any, property: string) {
 // 设置水平对齐方式
 function setHorizontalAlignment(alignment: 'Left' | 'Center' | 'Right') {
   if (currentElement.value) {
+    emit('save-state');
     currentElement.value.textAlignment = alignment;
     emit('update-jrxml');
   }
@@ -431,6 +434,7 @@ function setHorizontalAlignment(alignment: 'Left' | 'Center' | 'Right') {
 // 设置垂直对齐方式
 function setVerticalAlignment(alignment: 'Top' | 'Middle' | 'Bottom') {
   if (currentElement.value) {
+    emit('save-state');
     currentElement.value.verticalAlignment = alignment;
     emit('update-jrxml');
   }
@@ -452,6 +456,7 @@ function updateTextFieldExpression(event: Event) {
   
   const newExpression = (event.target as HTMLInputElement).value;
   
+  emit('save-state');
   currentElement.value.expression = newExpression;
   
   emit('update-jrxml');
@@ -473,6 +478,7 @@ function setSideBorderWidth(side: string, value: string) {
   const numValue = parseFloat(value) || 0;
   const widthKey = `${side}BorderWidth`;
   const penKey = `${side}Pen`;
+  emit('save-state');
   currentElement.value.box[widthKey] = numValue;
   if (!currentElement.value.box[penKey]) {
     currentElement.value.box[penKey] = {};
@@ -496,6 +502,7 @@ function setSideBorderStyle(side: string, value: string) {
   const box = currentElement.value.box;
   const styleKey = `${side}BorderStyle`;
   const penKey = `${side}Pen`;
+  emit('save-state');
   box[styleKey] = value;
   if (!box[penKey]) {
     box[penKey] = {};
@@ -519,6 +526,7 @@ function setSideBorderColor(side: string, value: string) {
   const box = currentElement.value.box;
   const colorKey = `${side}BorderColor`;
   const penKey = `${side}Pen`;
+  emit('save-state');
   box[colorKey] = value;
   if (!box[penKey]) {
     box[penKey] = {};
@@ -530,6 +538,7 @@ function setSideBorderColor(side: string, value: string) {
 function removeAllBorders() {
   if (!currentElement.value?.box) return;
   const box = currentElement.value.box;
+  emit('save-state');
   ['top', 'left', 'bottom', 'right'].forEach(side => {
     const widthKey = `${side}BorderWidth`;
     const styleKey = `${side}BorderStyle`;
@@ -546,6 +555,7 @@ function removeAllBorders() {
 function addSolidBorder() {
   if (!currentElement.value?.box) return;
   const box = currentElement.value.box;
+  emit('save-state');
   ['top', 'left', 'bottom', 'right'].forEach(side => {
     const widthKey = `${side}BorderWidth`;
     const styleKey = `${side}BorderStyle`;
