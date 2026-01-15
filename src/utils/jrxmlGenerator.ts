@@ -140,10 +140,9 @@ export function generateJRXMLContent(
       jrxml += `\n    <band ${bandAttributes}>`;
       
       // 添加区域内的元素，根据band类型验证元素位置
-      const bandTypeHeight = getDefaultBandHeight(band.type);
       band.elements.forEach(element => {
         // 为每个元素验证位置，使用当前band类型的高度限制
-        const validatedElement = validateElementPosition(element, bandTypeHeight);
+        const validatedElement = validateElementPosition(element);
         jrxml += generateElementXML(validatedElement);
       });
       
@@ -330,7 +329,7 @@ function generateBoxXML(box: any): string {
 }
 
 // 验证并调整元素位置，确保在band范围内
-function validateElementPosition(element: any, _bandHeight: number): any {
+function validateElementPosition(element: any): any {
   if (!element) return element;
   
   // 创建元素的副本以避免修改原始对象
@@ -341,16 +340,6 @@ function validateElementPosition(element: any, _bandHeight: number): any {
   validatedElement.y = validatedElement.y || 0;
   validatedElement.width = validatedElement.width || 100;
   validatedElement.height = validatedElement.height || 20;
-  
-  // 注释掉调整元素高度的代码，保留原始高度
-  // 检查元素是否超出band高度
-  // const elementBottom = validatedElement.y + validatedElement.height;
-  // if (elementBottom > bandHeight) {
-  //   // 如果元素超出band高度，调整元素高度以适应band
-  //   validatedElement.height = Math.max(10, bandHeight - validatedElement.y);
-  //   console.warn(`元素位置超出band高度范围，已调整元素高度从${element.height}到${validatedElement.height}`);
-  // }
-  
   return validatedElement;
 }
 
