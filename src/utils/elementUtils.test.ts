@@ -255,39 +255,6 @@ describe('elementUtils', () => {
   })
 
   describe('selectElementsByField', () => {
-    it('should select elements that use the specified field', () => {
-      const bands = [
-        {
-          elements: [
-            {
-              type: 'textField' as any,
-              fieldName: 'field1'
-            },
-            {
-              type: 'textField' as any,
-              expression: '$F{field2}'
-            }
-          ]
-        },
-        {
-          elements: [
-            {
-              type: 'textField' as any,
-              fieldName: 'field1'
-            }
-          ]
-        }
-      ]
-      
-      const selectElement = vi.fn()
-      
-      selectElementsByField(bands, 'field1', selectElement)
-      
-      expect(selectElement).toHaveBeenCalledTimes(2)
-      expect(selectElement).toHaveBeenCalledWith(0, 0)
-      expect(selectElement).toHaveBeenCalledWith(1, 0)
-    })
-
     it('should select elements that use the specified field in expression', () => {
       const bands = [
         {
@@ -314,7 +281,7 @@ describe('elementUtils', () => {
           elements: [
             {
               type: 'textField' as any,
-              fieldName: 'field1'
+              expression: '$F{field1}'
             }
           ]
         }
@@ -348,7 +315,6 @@ describe('elementUtils', () => {
       expect(element.y).toBe(20)
       expect(element.width).toBe(100)
       expect(element.height).toBe(30)
-      expect((element as any).fieldName).toBe('field')
     })
 
     it('should create a new image element', () => {

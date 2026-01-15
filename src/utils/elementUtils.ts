@@ -98,11 +98,10 @@ export function selectElementsByField(bands: any[], fieldName: string, selectEle
   bands.forEach((band, bandIndex) => {
     if (band.elements) {
       band.elements.forEach((element: DesignElement, elementIndex: number) => {
-        // 检查元素的字段名或表达式是否包含该字段
+        // 检查元素的表达式是否包含该字段
         if (element.type === 'textField' && (element as any).expression && (element as any).expression.includes(`$F{${fieldName}}`)) {
           selectElement(bandIndex, elementIndex);
           foundElement = true;
-          return;
         }
       });
     }
