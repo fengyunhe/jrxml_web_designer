@@ -465,6 +465,22 @@ function parseFrameElement(element: Element, result: any): void {
   if (elements.length > 0) {
     result.elements = elements;
   }
+
+  // 解析property中的layout信息
+  const properties = element.querySelectorAll('property');
+  properties.forEach(prop => {
+    const name = prop.getAttribute('name');
+    const value = prop.getAttribute('value');
+    if (name === 'com.jaspersoft.studio.layout' && value) {
+      if (value.includes('HorizontalLayout')) {
+        result.layout = 'HorizontalLayout';
+      } else if (value.includes('VerticalLayout')) {
+        result.layout = 'VerticalLayout';
+      } else if (value.includes('FreeLayout')) {
+        result.layout = 'FreeLayout';
+      }
+    }
+  });
 }
 
 if (typeof window === 'undefined' && typeof DOMParser === 'undefined') {

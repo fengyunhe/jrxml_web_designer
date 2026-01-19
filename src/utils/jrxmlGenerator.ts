@@ -356,6 +356,12 @@ function generateStaticTextXML(element: any): string {
   }
   
   xml += '/>\n';
+
+  // 生成layout属性
+  if (element.layout) {
+    // 写入property标签来保存布局信息
+    xml += `      <property name="com.jaspersoft.studio.layout" value="com.jaspersoft.studio.editor.layout.${element.layout}"/>\n`;
+  }
   
   // 生成box元素
   xml += generateBoxXML(element.box);

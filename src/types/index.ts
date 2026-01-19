@@ -177,6 +177,7 @@ export interface BreakElement extends DesignElementBase {
 export interface FrameElement extends DesignElementBase {
   type: 'frame';
   elements?: DesignElement[]; // 容器内的子元素
+  layout?: 'FreeLayout' | 'HorizontalLayout' | 'VerticalLayout'; // 布局属性
 }
 
 // 设计元素联合类型

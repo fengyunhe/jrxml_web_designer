@@ -18,8 +18,31 @@
   >
     <!-- Frame 元素内容 -->
     <div class="frame-content" :class="{ 'frame-empty': !element.elements || element.elements.length === 0 }">
+      <!-- 渲染子元素 -->
+      <template v-if="element.elements && element.elements.length > 0">
+        <!-- 动态加载 ElementFactory 以避免循环引用 -->
+        <component 
+          :is="ElementFactory"
+          v-for="(childElement, childIndex) in element.elements"
+          :key="childIndex"
+          :element="childElement"
+          :band-index="bandIndex"
+          :element-index="childIndex"
+          :selected-element="null" 
+          :selected-elements="[]"
+          :editing-element="null"
+          :is-dragging="false" 
+          :report-font-family="reportFontFamily"
+          :report-font-size="reportFontSize"
+          :report-is-bold="reportIsBold"
+          :report-is-italic="reportIsItalic"
+          :report-is-underline="reportIsUnderline"
+          :is-out-of-bounds="false"
+        />
+      </template>
+      
       <!-- 暂时为空，未来可以支持嵌套元素 -->
-      <div v-if="!element.elements || element.elements.length === 0" class="frame-placeholder">
+      <div v-else class="frame-placeholder">
         <span class="frame-label">Frame</span>
       </div>
     </div>
@@ -27,8 +50,12 @@
 </template>
 
 <script setup lang="ts">
+import { defineAsyncComponent } from 'vue';
 import BaseElement from './BaseElement.vue';
 import type { FrameElement, SelectedElementInfo } from '../../types';
+
+// 异步导入 ElementFactory 以避免循环依赖
+const ElementFactory = defineAsyncComponent(() => import('./ElementFactory.vue'));
 
 // Props
 defineProps<{

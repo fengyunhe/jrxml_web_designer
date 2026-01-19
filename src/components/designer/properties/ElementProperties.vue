@@ -177,6 +177,16 @@
               </select>
             </div>
           </template>
+          <template v-else-if="currentElement && currentElement.type === 'frame'">
+            <div class="form-group">
+              <label>布局模式</label>
+              <select v-if="currentElement" v-model="currentElement.layout" @change="emit('update-jrxml')">
+                <option :value="undefined">自由布局 (Free Layout)</option>
+                <option value="HorizontalLayout">水平布局 (Horizontal Layout)</option>
+                <option value="VerticalLayout">垂直布局 (Vertical Layout)</option>
+              </select>
+            </div>
+          </template>
         </div>
         
         <!-- 边框设置标签页 -->
