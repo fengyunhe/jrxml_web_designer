@@ -167,149 +167,171 @@
               <input v-if="currentElement" v-model.number="currentElement.radius" type="number" min="0" @change="ensureIntegerValue(currentElement, 'radius')" />
             </div>
           </template>
+          <template v-else-if="currentElement && currentElement.type === 'break'">
+            <div class="form-group">
+              <label>分页符类型</label>
+              <select v-if="currentElement" v-model="currentElement.breakType" @change="emit('update-jrxml')">
+                <option value="Page">分页 (Page Break)</option>
+                <option value="Column">分栏 (Column Break)</option>
+              </select>
+            </div>
+          </template>
         </div>
         
         <!-- 边框设置标签页 -->
         <div class="element-tab-content" v-show="activeElementTab === 'box'">
-          <h4>边框设置</h4>
-          
-          <!-- 矩形元素的边框设置 (统一设置) -->
-          <template v-if="currentElement && currentElement.type === 'rectangle'">
+          <template v-if="currentElement && currentElement.type === 'break'">
             <div class="box-section">
-              <h5>统一边框设置</h5>
-              <p style="font-size: 12px; color: #666; margin-bottom: 12px;">矩形元素只支持统一设置四边边框</p>
-              
-              <div class="border-side-group">
-                <label class="side-label">样式</label>
-                <select :value="getRectangleBorderStyle()" @change="setRectangleBorderStyle(($event.target as HTMLSelectElement).value)" class="side-control">
-                  <option value="">无</option>
-                  <option value="Solid">实线</option>
-                  <option value="Dashed">虚线</option>
-                  <option value="Dotted">点线</option>
-                  <option value="Double">双线</option>
-                </select>
-              </div>
-              
-              <div class="border-side-group">
-                <label class="side-label">宽度</label>
-                <input :value="getRectangleBorderWidth()" @input="setRectangleBorderWidth(($event.target as HTMLInputElement).value)" type="number" min="0" max="10" step="0.5" class="side-control" placeholder="宽度" />
-              </div>
-              
-              <div class="border-side-group">
-                <label class="side-label">颜色</label>
-                <input :value="getRectangleBorderColor()" @input="setRectangleBorderColor(($event.target as HTMLInputElement).value)" type="color" class="color-control" style="flex: 1;" />
-              </div>
+              <p style="font-size: 12px; color: #666;">分页符元素不支持边框设置。</p>
             </div>
           </template>
-          
-          <!-- 其他元素的边框设置 (支持各边独立设置) -->
           <template v-else>
-            <!-- 快捷边框设置 -->
-            <div class="box-section">
-              <h5>快捷设置</h5>
-              <div class="border-quick-actions">
-                <button @click="removeAllBorders" class="btn-remove-border">四面无边框</button>
-                <button @click="addSolidBorder" class="btn-add-border">四面实线边框(1px)</button>
-              </div>
-            </div>
+            <h4>边框设置</h4>
             
-            <!-- 各边边框设置 -->
-            <div class="box-section">
-              <h5>各边边框设置</h5>
-              
-              <!-- 上边 -->
-              <div class="border-side-group">
-                <label class="side-label">上边</label>
-                <select v-if="currentElement && currentElement.box" :value="getSideBorderStyle('top')" @change="setSideBorderStyle('top', ($event.target as HTMLSelectElement).value)" class="side-control">
-                  <option value="">无</option>
-                  <option value="Solid">实线</option>
-                  <option value="Dashed">虚线</option>
-                  <option value="Dotted">点线</option>
-                  <option value="Double">双线</option>
-                </select>
-                <input v-if="currentElement && currentElement.box" :value="getSideBorderWidth('top')" @input="setSideBorderWidth('top', ($event.target as HTMLInputElement).value)" type="number" min="0" max="10" step="0.5" class="width-control" placeholder="宽度" />
-                <input v-if="currentElement && currentElement.box" :value="getSideBorderColor('top')" @input="setSideBorderColor('top', ($event.target as HTMLInputElement).value)" type="color" class="color-control" />
+            <!-- 矩形/椭圆元素的边框设置 (统一设置) -->
+            <template v-if="currentElement && (currentElement.type === 'rectangle' || currentElement.type === 'ellipse')">
+              <div class="box-section">
+                <h5>统一边框设置</h5>
+                <p style="font-size: 12px; color: #666; margin-bottom: 12px;">该元素只支持统一设置边框</p>
+                
+                <div class="border-side-group">
+                  <label class="side-label">样式</label>
+                  <select :value="getRectangleBorderStyle()" @change="setRectangleBorderStyle(($event.target as HTMLSelectElement).value)" class="side-control">
+                    <option value="">无</option>
+                    <option value="Solid">实线</option>
+                    <option value="Dashed">虚线</option>
+                    <option value="Dotted">点线</option>
+                    <option value="Double">双线</option>
+                  </select>
+                </div>
+                
+                <div class="border-side-group">
+                  <label class="side-label">宽度</label>
+                  <input :value="getRectangleBorderWidth()" @input="setRectangleBorderWidth(($event.target as HTMLInputElement).value)" type="number" min="0" max="10" step="0.5" class="side-control" placeholder="宽度" />
+                </div>
+                
+                <div class="border-side-group">
+                  <label class="side-label">颜色</label>
+                  <input :value="getRectangleBorderColor()" @input="setRectangleBorderColor(($event.target as HTMLInputElement).value)" type="color" class="color-control" style="flex: 1;" />
+                </div>
               </div>
-              
-              <!-- 左边 -->
-              <div class="border-side-group">
-                <label class="side-label">左边</label>
-                <select v-if="currentElement && currentElement.box" :value="getSideBorderStyle('left')" @change="setSideBorderStyle('left', ($event.target as HTMLSelectElement).value)" class="side-control">
-                  <option value="">无</option>
-                  <option value="Solid">实线</option>
-                  <option value="Dashed">虚线</option>
-                  <option value="Dotted">点线</option>
-                  <option value="Double">双线</option>
-                </select>
-                <input v-if="currentElement && currentElement.box" :value="getSideBorderWidth('left')" @input="setSideBorderWidth('left', ($event.target as HTMLInputElement).value)" type="number" min="0" max="10" step="0.5" class="width-control" placeholder="宽度" />
-                <input v-if="currentElement && currentElement.box" :value="getSideBorderColor('left')" @input="setSideBorderColor('left', ($event.target as HTMLInputElement).value)" type="color" class="color-control" />
-              </div>
-              
-              <!-- 下边 -->
-              <div class="border-side-group">
-                <label class="side-label">下边</label>
-                <select v-if="currentElement && currentElement.box" :value="getSideBorderStyle('bottom')" @change="setSideBorderStyle('bottom', ($event.target as HTMLSelectElement).value)" class="side-control">
-                  <option value="">无</option>
-                  <option value="Solid">实线</option>
-                  <option value="Dashed">虚线</option>
-                  <option value="Dotted">点线</option>
-                  <option value="Double">双线</option>
-                </select>
-                <input v-if="currentElement && currentElement.box" :value="getSideBorderWidth('bottom')" @input="setSideBorderWidth('bottom', ($event.target as HTMLInputElement).value)" type="number" min="0" max="10" step="0.5" class="width-control" placeholder="宽度" />
-                <input v-if="currentElement && currentElement.box" :value="getSideBorderColor('bottom')" @input="setSideBorderColor('bottom', ($event.target as HTMLInputElement).value)" type="color" class="color-control" />
-              </div>
-              
-              <!-- 右边 -->
-              <div class="border-side-group">
-                <label class="side-label">右边</label>
-                <select v-if="currentElement && currentElement.box" :value="getSideBorderStyle('right')" @change="setSideBorderStyle('right', ($event.target as HTMLSelectElement).value)" class="side-control">
-                  <option value="">无</option>
-                  <option value="Solid">实线</option>
-                  <option value="Dashed">虚线</option>
-                  <option value="Dotted">点线</option>
-                  <option value="Double">双线</option>
-                </select>
-                <input v-if="currentElement && currentElement.box" :value="getSideBorderWidth('right')" @input="setSideBorderWidth('right', ($event.target as HTMLInputElement).value)" type="number" min="0" max="10" step="0.5" class="width-control" placeholder="宽度" />
-                <input v-if="currentElement && currentElement.box" :value="getSideBorderColor('right')" @input="setSideBorderColor('right', ($event.target as HTMLInputElement).value)" type="color" class="color-control" />
-              </div>
-            </div>
+            </template>
             
-            <!-- 边距设置 -->
-            <div class="box-section">
-              <h5>边距设置</h5>
-              <div class="form-group">
-                <label>全局边距（像素）</label>
-                <input v-if="currentElement && currentElement.box" v-model.number="currentElement.box.padding" type="number" placeholder="全部边距" />
-                <small>设置后会覆盖各边独立设置</small>
+            <!-- 其他元素的边框设置 (支持各边独立设置) -->
+            <template v-else>
+              <!-- 快捷边框设置 -->
+              <div class="box-section">
+                <h5>快捷设置</h5>
+                <div class="border-quick-actions">
+                  <button @click="removeAllBorders" class="btn-remove-border">四面无边框</button>
+                  <button @click="addSolidBorder" class="btn-add-border">四面实线边框(1px)</button>
+                </div>
               </div>
               
-              <div class="padding-grid">
-                <div class="form-group">
-                  <label>上边距</label>
-                  <input v-if="currentElement && currentElement.box" v-model.number="currentElement.box.topPadding" type="number" />
+              <!-- 各边边框设置 -->
+              <div class="box-section">
+                <h5>各边边框设置</h5>
+                
+                <!-- 上边 -->
+                <div class="border-side-group">
+                  <label class="side-label">上边</label>
+                  <select v-if="currentElement && currentElement.box" :value="getSideBorderStyle('top')" @change="setSideBorderStyle('top', ($event.target as HTMLSelectElement).value)" class="side-control">
+                    <option value="">无</option>
+                    <option value="Solid">实线</option>
+                    <option value="Dashed">虚线</option>
+                    <option value="Dotted">点线</option>
+                    <option value="Double">双线</option>
+                  </select>
+                  <input v-if="currentElement && currentElement.box" :value="getSideBorderWidth('top')" @input="setSideBorderWidth('top', ($event.target as HTMLInputElement).value)" type="number" min="0" max="10" step="0.5" class="width-control" placeholder="宽度" />
+                  <input v-if="currentElement && currentElement.box" :value="getSideBorderColor('top')" @input="setSideBorderColor('top', ($event.target as HTMLInputElement).value)" type="color" class="color-control" />
                 </div>
-                <div class="form-group">
-                  <label>左边距</label>
-                  <input v-if="currentElement && currentElement.box" v-model.number="currentElement.box.leftPadding" type="number" />
+                
+                <!-- 左边 -->
+                <div class="border-side-group">
+                  <label class="side-label">左边</label>
+                  <select v-if="currentElement && currentElement.box" :value="getSideBorderStyle('left')" @change="setSideBorderStyle('left', ($event.target as HTMLSelectElement).value)" class="side-control">
+                    <option value="">无</option>
+                    <option value="Solid">实线</option>
+                    <option value="Dashed">虚线</option>
+                    <option value="Dotted">点线</option>
+                    <option value="Double">双线</option>
+                  </select>
+                  <input v-if="currentElement && currentElement.box" :value="getSideBorderWidth('left')" @input="setSideBorderWidth('left', ($event.target as HTMLInputElement).value)" type="number" min="0" max="10" step="0.5" class="width-control" placeholder="宽度" />
+                  <input v-if="currentElement && currentElement.box" :value="getSideBorderColor('left')" @input="setSideBorderColor('left', ($event.target as HTMLInputElement).value)" type="color" class="color-control" />
                 </div>
-                <div class="form-group">
-                  <label>下边距</label>
-                  <input v-if="currentElement && currentElement.box" v-model.number="currentElement.box.bottomPadding" type="number" />
+                
+                <!-- 下边 -->
+                <div class="border-side-group">
+                  <label class="side-label">下边</label>
+                  <select v-if="currentElement && currentElement.box" :value="getSideBorderStyle('bottom')" @change="setSideBorderStyle('bottom', ($event.target as HTMLSelectElement).value)" class="side-control">
+                    <option value="">无</option>
+                    <option value="Solid">实线</option>
+                    <option value="Dashed">虚线</option>
+                    <option value="Dotted">点线</option>
+                    <option value="Double">双线</option>
+                  </select>
+                  <input v-if="currentElement && currentElement.box" :value="getSideBorderWidth('bottom')" @input="setSideBorderWidth('bottom', ($event.target as HTMLInputElement).value)" type="number" min="0" max="10" step="0.5" class="width-control" placeholder="宽度" />
+                  <input v-if="currentElement && currentElement.box" :value="getSideBorderColor('bottom')" @input="setSideBorderColor('bottom', ($event.target as HTMLInputElement).value)" type="color" class="color-control" />
                 </div>
-                <div class="form-group">
-                  <label>右边距</label>
-                  <input v-if="currentElement && currentElement.box" v-model.number="currentElement.box.rightPadding" type="number" />
+                
+                <!-- 右边 -->
+                <div class="border-side-group">
+                  <label class="side-label">右边</label>
+                  <select v-if="currentElement && currentElement.box" :value="getSideBorderStyle('right')" @change="setSideBorderStyle('right', ($event.target as HTMLSelectElement).value)" class="side-control">
+                    <option value="">无</option>
+                    <option value="Solid">实线</option>
+                    <option value="Dashed">虚线</option>
+                    <option value="Dotted">点线</option>
+                    <option value="Double">双线</option>
+                  </select>
+                  <input v-if="currentElement && currentElement.box" :value="getSideBorderWidth('right')" @input="setSideBorderWidth('right', ($event.target as HTMLInputElement).value)" type="number" min="0" max="10" step="0.5" class="width-control" placeholder="宽度" />
+                  <input v-if="currentElement && currentElement.box" :value="getSideBorderColor('right')" @input="setSideBorderColor('right', ($event.target as HTMLInputElement).value)" type="color" class="color-control" />
                 </div>
               </div>
-            </div>
+              
+              <!-- 边距设置 -->
+              <div class="box-section">
+                <h5>边距设置</h5>
+                <div class="form-group">
+                  <label>全局边距（像素）</label>
+                  <input v-if="currentElement && currentElement.box" v-model.number="currentElement.box.padding" type="number" placeholder="全部边距" />
+                  <small>设置后会覆盖各边独立设置</small>
+                </div>
+                
+                <div class="padding-grid">
+                  <div class="form-group">
+                    <label>上边距</label>
+                    <input v-if="currentElement && currentElement.box" v-model.number="currentElement.box.topPadding" type="number" />
+                  </div>
+                  <div class="form-group">
+                    <label>左边距</label>
+                    <input v-if="currentElement && currentElement.box" v-model.number="currentElement.box.leftPadding" type="number" />
+                  </div>
+                  <div class="form-group">
+                    <label>下边距</label>
+                    <input v-if="currentElement && currentElement.box" v-model.number="currentElement.box.bottomPadding" type="number" />
+                  </div>
+                  <div class="form-group">
+                    <label>右边距</label>
+                    <input v-if="currentElement && currentElement.box" v-model.number="currentElement.box.rightPadding" type="number" />
+                  </div>
+                </div>
+              </div>
+            </template>
           </template>
         </div>
         
         <!-- 样式设置标签页 -->
         <div class="element-tab-content" v-show="activeElementTab === 'style'">
-          <h4>样式设置</h4>
-          <div class="form-group">
-            <label>背景颜色</label>
+          <template v-if="currentElement && currentElement.type === 'break'">
+            <div class="box-section">
+              <p style="font-size: 12px; color: #666;">分页符元素不支持样式设置。</p>
+            </div>
+          </template>
+          <template v-else>
+            <h4>样式设置</h4>
+            <div class="form-group">
+              <label>背景颜色</label>
             <div class="color-picker-container" style="display: flex; flex-direction: column; gap: 8px;">
               <div style="display: flex; gap: 8px; align-items: center;">
                 <input v-if="currentElement" v-model="tempColor" type="color" @input="updateBackcolorFromControls" style="width: 40px; padding: 0; border: 1px solid #ddd; cursor: pointer;" />
@@ -405,6 +427,7 @@
                 下划线
               </label>
             </div>
+          </template>
           </template>
         </div>
       </div>

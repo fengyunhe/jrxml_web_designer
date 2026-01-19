@@ -2,9 +2,9 @@
   <div v-if="visible" class="reward-modal" @click.self="closeModal">
     <div class="reward-content">
       <button class="close-btn" @click="closeModal">×</button>
-      <h3>感谢您的支持！</h3>
+      <h3>您的支持是我持续更新的动力！</h3>
       <img src="/src/assets/FIREGOD_CN.jpg" alt="打赏码" class="reward-image">
-      <p>扫码打赏，感谢支持！</p>
+      <p>使用微信扫码打赏，感谢支持！</p>
     </div>
   </div>
 </template>

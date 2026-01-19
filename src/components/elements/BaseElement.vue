@@ -117,7 +117,7 @@ const elementStyle = computed(() => {
     borderLeft: calculateBorder('left'),
     borderBottom: calculateBorder('bottom'),
     borderRight: calculateBorder('right'),
-    borderRadius: (props.element.type === 'rectangle' && (props.element as any).radius) ? `${(props.element as any).radius}px` : undefined,
+    borderRadius: props.element.type === 'ellipse' ? '50%' : ((props.element.type === 'rectangle' && (props.element as any).radius) ? `${(props.element as any).radius}px` : undefined),
     fontFamily: props.element.fontFamily || props.reportFontFamily,
     fontSize: props.element.fontSize ? `${props.element.fontSize}px` : (props.reportFontSize ? `${props.reportFontSize}px` : undefined),
     fontWeight: props.element.isBold !== undefined ? (props.element.isBold ? 'bold' : 'normal') : (props.reportIsBold ? 'bold' : 'normal'),

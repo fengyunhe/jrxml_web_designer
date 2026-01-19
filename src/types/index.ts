@@ -1,5 +1,5 @@
 // 元素类型枚举
-export type ElementType = 'staticText' | 'textField' | 'image' | 'line' | 'rectangle';
+export type ElementType = 'staticText' | 'textField' | 'image' | 'line' | 'rectangle' | 'ellipse' | 'break';
 
 // Band类型枚举
 export type BandType = 'detail' | 'pageHeader' | 'pageFooter' | 'title' | 'summary' | 'columnHeader' | 'columnFooter' | 'background' | 'lastPageFooter' | 'noData';
@@ -161,13 +161,27 @@ export interface RectangleElement extends DesignElementBase {
   pen?: Pen; // 边框样式
 }
 
+// 椭圆元素接口
+export interface EllipseElement extends DesignElementBase {
+  type: 'ellipse';
+  pen?: Pen; // 边框样式
+}
+
+// 分页符元素接口
+export interface BreakElement extends DesignElementBase {
+  type: 'break';
+  breakType?: 'Page' | 'Column';
+}
+
 // 设计元素联合类型
 export type DesignElement = 
   | StaticTextElement 
   | TextFieldElement 
   | ImageElement 
   | LineElement
-  | RectangleElement;
+  | RectangleElement
+  | EllipseElement
+  | BreakElement;
 
 // 报表区域接口
 export interface Band {

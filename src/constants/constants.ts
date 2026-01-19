@@ -96,6 +96,8 @@ export const ELEMENT_TYPE_CONSTANTS = {
   IMAGE: 'image',
   LINE: 'line',
   RECTANGLE: 'rectangle',
+  ELLIPSE: 'ellipse',
+  BREAK: 'break',
 };
 
 // 元素尺寸常量

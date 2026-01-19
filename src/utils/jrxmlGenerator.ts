@@ -135,6 +135,10 @@ function generateElementXML(element: any): string {
       return generateLineXML(element);
     case 'rectangle':
       return generateRectangleXML(element);
+    case 'ellipse':
+      return generateEllipseXML(element);
+    case 'break':
+      return generateBreakXML(element);
     default:
       return '';
   }
@@ -597,6 +601,60 @@ function generateRectangleXML(element: any): string {
   }
   
   xml += '    </rectangle>\n';
+  return xml;
+}
+
+// 生成椭圆XML
+function generateEllipseXML(element: any): string {
+  let xml = '    <ellipse>\n      <reportElement x="' + toInt(element.x) + '" y="' + toInt(element.y) + '" width="' + toInt(element.width) + '" height="' + toInt(element.height) + '"';
+  
+  // 处理backcolor属性
+  if (element.backcolor) {
+    xml += ` backcolor="${element.backcolor}"`;
+  }
+  
+  if (element.mode) {
+    xml += ` mode="${element.mode}"`;
+  }
+  
+  xml += '/>\n';
+  
+  // 生成graphicElement
+  let hasGraphicElement = false;
+  let graphicElementXml = '      <graphicElement';
+  
+  if (element.fill) {
+    graphicElementXml += ` fill="${element.fill}"`;
+    hasGraphicElement = true;
+  }
+  
+  graphicElementXml += '>\n';
+  
+  // 生成pen
+  if (element.pen && (element.pen.lineWidth !== undefined || element.pen.lineStyle || element.pen.lineColor)) {
+    hasGraphicElement = true;
+    graphicElementXml += '        <pen';
+    if (element.pen.lineWidth !== undefined) graphicElementXml += ` lineWidth="${element.pen.lineWidth}"`;
+    if (element.pen.lineStyle) graphicElementXml += ` lineStyle="${element.pen.lineStyle}"`;
+    if (element.pen.lineColor) graphicElementXml += ` lineColor="${element.pen.lineColor}"`;
+    graphicElementXml += '/>\n';
+  }
+  
+  graphicElementXml += '      </graphicElement>\n';
+  
+  if (hasGraphicElement) {
+    xml += graphicElementXml;
+  }
+  
+  xml += '    </ellipse>\n';
+  return xml;
+}
+
+// 生成分页符XML
+function generateBreakXML(element: any): string {
+  // 默认为Page类型
+  const type = element.breakType || 'Page';
+  let xml = `    <break type="${type}">\n      <reportElement x="${toInt(element.x)}" y="${toInt(element.y)}" width="${toInt(element.width)}" height="${toInt(element.height)}"/>\n    </break>\n`;
   return xml;
 }
 

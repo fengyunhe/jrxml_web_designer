@@ -118,6 +118,34 @@ export class ElementRegistry {
         backcolor: '#f0f0f0'
       }
     });
+
+    this.registerElement({
+      type: 'ellipse',
+      name: '椭圆',
+      icon: '◯',
+      defaultProps: {
+        type: 'ellipse',
+        x: 0,
+        y: 0,
+        width: 100,
+        height: 100,
+        backcolor: '#f0f0f0'
+      }
+    });
+
+    this.registerElement({
+      type: 'break',
+      name: '分页符',
+      icon: '⤓', // 或者其他合适的图标
+      defaultProps: {
+        type: 'break',
+        x: 0,
+        y: 0,
+        width: 100,
+        height: 1, // Break通常很扁
+        breakType: 'Page'
+      }
+    });
   }
 
   // 注册元素
@@ -227,7 +255,9 @@ export class ElementRegistry {
         textField: './TextFieldElement.vue',
         image: './ImageElement.vue',
         line: './LineElement.vue',
-        rectangle: './RectangleElement.vue'
+        rectangle: './RectangleElement.vue',
+        ellipse: './EllipseElement.vue',
+        break: './BreakElement.vue'
       };
 
       const componentPath = componentMap[type];

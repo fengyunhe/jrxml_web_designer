@@ -76,7 +76,7 @@ export function parseJRXMLContent(jrxmlContent: string): { properties: ReportPro
 
 function parseBandElements(bandElem: Element): any[] {
   const elements: any[] = [];
-  const elementTypes = ['staticText', 'textField', 'image', 'line', 'rectangle'];
+  const elementTypes = ['staticText', 'textField', 'image', 'line', 'rectangle', 'ellipse', 'break'];
 
   elementTypes.forEach(type => {
     bandElem.querySelectorAll(type).forEach(element => {
@@ -94,7 +94,7 @@ function parseElement(element: Element, type: string): any {
   const reportElement = element.querySelector('reportElement');
   if (!reportElement) return null;
 
-  const validElementTypes: Array<'staticText' | 'textField' | 'image' | 'line' | 'rectangle'> = ['staticText', 'textField', 'image', 'line', 'rectangle'];
+  const validElementTypes: Array<'staticText' | 'textField' | 'image' | 'line' | 'rectangle' | 'ellipse' | 'break'> = ['staticText', 'textField', 'image', 'line', 'rectangle', 'ellipse', 'break'];
   const elementType = validElementTypes.includes(type as any) ? (type as any) : undefined;
   if (!elementType) return null;
 
@@ -139,6 +139,12 @@ function parseElement(element: Element, type: string): any {
       break;
     case 'rectangle':
       parseRectangleElement(element, result);
+      break;
+    case 'ellipse':
+      parseEllipseElement(element, result);
+      break;
+    case 'break':
+      parseBreakElement(element, result);
       break;
   }
 
@@ -396,6 +402,21 @@ function parseRectangleElement(element: Element, result: any): void {
   const graphicElement = parseGraphicElement(element);
   if (Object.keys(graphicElement).length > 0) {
     Object.assign(result, graphicElement);
+  }
+}
+
+function parseEllipseElement(element: Element, result: any): void {
+  const graphicElement = parseGraphicElement(element);
+  if (Object.keys(graphicElement).length > 0) {
+    Object.assign(result, graphicElement);
+  }
+}
+
+function parseBreakElement(element: Element, result: any): void {
+  if (element.hasAttribute('type')) {
+    result.breakType = element.getAttribute('type');
+  } else {
+    result.breakType = 'Page';
   }
 }
 
