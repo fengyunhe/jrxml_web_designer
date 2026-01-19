@@ -111,14 +111,17 @@ const handleChildSelect = (bIndex: number, childIndex: number, isMultiSelect?: b
 };
 
 const handleChildDragStart = (event: MouseEvent, bIndex: number, childIndex: number) => {
+  event.stopPropagation(); // 阻止事件冒泡到Frame
   emit('dragStart', event, props.bandIndex, childIndex, props.elementIndex);
 };
 
 const handleChildResizeStart = (event: MouseEvent, bIndex: number, childIndex: number) => {
+  event.stopPropagation(); // 阻止事件冒泡到Frame
   emit('resizeStart', event, props.bandIndex, childIndex, props.elementIndex);
 };
 
 const handleChildContextMenu = (event: MouseEvent, bIndex: number, childIndex: number) => {
+  event.stopPropagation(); // 阻止事件冒泡到Frame
   emit('contextmenu', event, props.bandIndex, childIndex, props.elementIndex);
 };
 </script>
