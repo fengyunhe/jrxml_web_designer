@@ -106,7 +106,10 @@ export interface DesignElementBase {
   y: number;
   width: number;
   height: number;
+  forecolor?: string; // 添加forecolor属性
   backcolor?: string;
+  mode?: 'Opaque' | 'Transparent';
+  fill?: 'Solid' | 'None'; // 添加fill属性
   border?: string;
   box?: Box;
   fontFamily?: string;
@@ -154,6 +157,8 @@ export interface LineElement extends DesignElementBase {
 // 矩形元素接口
 export interface RectangleElement extends DesignElementBase {
   type: 'rectangle';
+  radius?: number; // 圆角半径
+  pen?: Pen; // 边框样式
 }
 
 // 设计元素联合类型

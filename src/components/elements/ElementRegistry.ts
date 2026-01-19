@@ -33,7 +33,7 @@ export class ElementRegistry {
     this.registerElement({
       type: 'staticText',
       name: '静态文本',
-      icon: '📝',
+      icon: 'T',
       defaultProps: {
         type: 'staticText',
         x: 0,
@@ -54,7 +54,7 @@ export class ElementRegistry {
     this.registerElement({
       type: 'textField',
       name: '动态文本',
-      icon: '📊',
+      icon: '{ }',
       defaultProps: {
         type: 'textField',
         x: 0,
@@ -79,7 +79,7 @@ export class ElementRegistry {
     this.registerElement({
       type: 'image',
       name: '图片',
-      icon: '🖼️',
+      icon: '🖼',
       defaultProps: {
         type: 'image',
         x: 0,
@@ -93,7 +93,7 @@ export class ElementRegistry {
     this.registerElement({
       type: 'line',
       name: '线条',
-      icon: '📏',
+      icon: '─',
       defaultProps: {
         type: 'line',
         x: 0,
@@ -108,7 +108,7 @@ export class ElementRegistry {
     this.registerElement({
       type: 'rectangle',
       name: '矩形',
-      icon: '⬜',
+      icon: '▭',
       defaultProps: {
         type: 'rectangle',
         x: 0,

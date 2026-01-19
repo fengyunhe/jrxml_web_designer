@@ -1,28 +1,9 @@
 // 导入类型定义
 import type { DesignElement, BandType, Band } from '../types';
+import type { ReportProperties, Field, Parameter } from './jrxml/types';
+import { buildJasperReportOpenTag } from './jrxml/xmlBuilder';
 
-// JRXML生成器
-export interface ReportProperties {
-  name: string;
-  pageWidth: number;
-  pageHeight: number;
-  leftMargin: number;
-  rightMargin: number;
-  topMargin: number;
-  bottomMargin: number;
-}
-
-export interface Field {
-  name: string;
-  class: string;
-}
-
-// 报表参数接口
-export interface Parameter {
-  name: string;
-  class: string;
-  defaultValue?: string;
-}
+export type { ReportProperties, Field, Parameter } from './jrxml/types';
 
 // 辅助函数：确保坐标值为整数
 function toInt(value: any): number {
@@ -79,20 +60,7 @@ export function generateJRXMLContent(
   
   // 获取更新后的字段列表
   const updatedFields = Array.from(fieldMap.values());
-  
-  let jrxml = `<?xml version="1.0" encoding="UTF-8"?>
-<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports"
-              xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-              xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" 
-    name="${safeProperties.name}"
-    pageWidth="${safeProperties.pageWidth}"
-    pageHeight="${safeProperties.pageHeight}"
-    columnWidth="${safeProperties.pageWidth - safeProperties.leftMargin - safeProperties.rightMargin}"
-    leftMargin="${safeProperties.leftMargin}"
-    rightMargin="${safeProperties.rightMargin}"
-    topMargin="${safeProperties.topMargin}"
-    bottomMargin="${safeProperties.bottomMargin}">
-`;
+  let jrxml = buildJasperReportOpenTag(safeProperties);
 
   // 添加参数定义
   if (parameters.length > 0) {
@@ -369,8 +337,16 @@ function getDefaultBandHeight(bandType: string): number {
 function generateStaticTextXML(element: any): string {
   let xml = `    <staticText>\n      <reportElement x="${toInt(element.x)}" y="${toInt(element.y)}" width="${toInt(element.width)}" height="${toInt(element.height)}"`;
   
+  if (element.forecolor) {
+    xml += ` forecolor="${element.forecolor}"`;
+  }
+  
   if (element.backcolor) {
     xml += ` backcolor="${element.backcolor}"`;
+  }
+  
+  if (element.mode) {
+    xml += ` mode="${element.mode}"`;
   }
   
   xml += '/>\n';
@@ -469,6 +445,10 @@ function generateTextFieldXML(element: any): string {
   
   if (element.backcolor) {
     xml += ` backcolor="${element.backcolor}"`;
+  }
+  
+  if (element.mode) {
+    xml += ` mode="${element.mode}"`;
   }
   
   // 添加reportElement的其他可选属性
@@ -570,22 +550,60 @@ function generateLineXML(element: any): string {
 
 // 生成矩形XML
 function generateRectangleXML(element: any): string {
-  let xml = `    <rectangle>
-      <reportElement x="${toInt(element.x)}" y="${toInt(element.y)}" width="${toInt(element.width)}" height="${toInt(element.height)}"`;
+  let xml = '    <rectangle';
+  
+  if (element.radius !== undefined && element.radius > 0) {
+    xml += ` radius="${element.radius}"`;
+  }
+  
+  xml += `>\n      <reportElement x="${toInt(element.x)}" y="${toInt(element.y)}" width="${toInt(element.width)}" height="${toInt(element.height)}"`;
   
   // 处理过时的backcolor属性，转换为backcolor属性
   if (element.backcolor) {
     xml += ` backcolor="${element.backcolor}"`;
   }
   
-  xml += '/>\n      <graphicElement fill="Solid"/>\n    </rectangle>\n';
+  if (element.mode) {
+    xml += ` mode="${element.mode}"`;
+  }
+  
+  xml += '/>\n';
+  
+  // 生成graphicElement
+  let hasGraphicElement = false;
+  let graphicElementXml = '      <graphicElement';
+  
+  if (element.fill) {
+    graphicElementXml += ` fill="${element.fill}"`;
+    hasGraphicElement = true;
+  }
+  
+  graphicElementXml += '>\n';
+  
+  // 生成pen
+  if (element.pen && (element.pen.lineWidth !== undefined || element.pen.lineStyle || element.pen.lineColor)) {
+    hasGraphicElement = true;
+    graphicElementXml += '        <pen';
+    if (element.pen.lineWidth !== undefined) graphicElementXml += ` lineWidth="${element.pen.lineWidth}"`;
+    if (element.pen.lineStyle) graphicElementXml += ` lineStyle="${element.pen.lineStyle}"`;
+    if (element.pen.lineColor) graphicElementXml += ` lineColor="${element.pen.lineColor}"`;
+    graphicElementXml += '/>\n';
+  }
+  
+  graphicElementXml += '      </graphicElement>\n';
+  
+  if (hasGraphicElement) {
+    xml += graphicElementXml;
+  }
+  
+  xml += '    </rectangle>\n';
   return xml;
 }
 
 // 不再需要UUID生成函数，已移除
 
 // 解析JRXML内容为设计器数据结构
-export function parseJRXMLContent(jrxmlContent: string): { properties: ReportProperties; bands: Band[]; fields: Field[]; parameters: Parameter[] } {
+function parseJRXMLContentLegacy(jrxmlContent: string): { properties: ReportProperties; bands: Band[]; fields: Field[]; parameters: Parameter[] } {
   // 使用DOMParser解析XML
   const parser = new DOMParser();
   const xmlDoc = parser.parseFromString(jrxmlContent, 'text/xml');
@@ -1002,6 +1020,10 @@ function parseGraphicElement(element: Element): any {
       graphicElement.stretchType = graphicEl.getAttribute('stretchType');
     }
     
+    if (graphicEl.hasAttribute('fill')) {
+      graphicElement.fill = graphicEl.getAttribute('fill');
+    }
+    
     // 处理过时的pen属性，转换为pen子元素
     const penElement = graphicEl.querySelector('pen');
     if (penElement) {
@@ -1037,3 +1059,5 @@ if (typeof window === 'undefined' && typeof DOMParser === 'undefined') {
   // 这里提供一个简单的兼容性提示
   console.warn('DOMParser is not available. In Node.js environment, please use a library like xmldom.');
 }
+
+export { parseJRXMLContent } from './jrxml/parse';

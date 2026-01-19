@@ -83,14 +83,8 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted } from 'vue';
 import notification from '../../../utils/notification';
-
-interface DesignerFile {
-  id: string;
-  name: string;
-  content?: string;
-  lastModified?: Date | string;
-  createdAt?: Date | string;
-}
+import { useDesignerFiles } from '@/composables/useDesignerFiles';
+import type { DesignerFile } from '@/types/designerFile';
 
 interface Props {
   currentFileName: string;
@@ -100,6 +94,8 @@ interface Props {
 interface Emits {
   (e: 'create-new-file'): void;
   (e: 'load-file', file: DesignerFile): void;
+  (e: 'save-current-file'): void;
+  (e: 'save-as-file'): void;
   (e: 'update:currentFileName', name: string): void;
   (e: 'update:currentFileId', id: string | null): void;
 }
@@ -107,12 +103,31 @@ interface Emits {
 const props = defineProps<Props>();
 const emit = defineEmits<Emits>();
 
+const currentFileNameRef = computed({
+  get: () => props.currentFileName,
+  set: (value: string) => emit('update:currentFileName', value)
+});
+
+const currentFileIdRef = computed({
+  get: () => props.currentFileId,
+  set: (value: string | null) => emit('update:currentFileId', value)
+});
+
 // 文件管理相关状态
 const showFileMenu = ref(false);
 const showFileSubmenu = ref(false);
 const fileMenuContainer = ref<HTMLElement | null>(null);
-const files = ref<DesignerFile[]>([]);
 const fileFilterText = ref('');
+
+const {
+  files,
+  loadFilesFromStorage,
+  renameFile,
+  deleteFile
+} = useDesignerFiles({
+  currentFileName: currentFileNameRef,
+  currentFileId: currentFileIdRef
+});
 
 // 计算属性：过滤后的文件列表
 const filteredFiles = computed(() => {
@@ -145,32 +160,6 @@ function toggleFileSubmenu() {
   }
 }
 
-// 从localStorage加载文件列表
-function loadFilesFromStorage() {
-  try {
-    const storedFiles = localStorage.getItem('pdfDesignerFiles');
-    if (storedFiles) {
-      const parsedFiles = JSON.parse(storedFiles) as DesignerFile[];
-      files.value = parsedFiles.map((file: DesignerFile) => ({
-        ...file,
-        lastModified: new Date(file.lastModified || Date.now()),
-        createdAt: new Date(file.createdAt || Date.now())
-      }));
-    }
-  } catch (error) {
-    console.error('加载文件列表失败:', error);
-  }
-}
-
-// 保存文件列表到localStorage
-function saveFilesToStorage() {
-  try {
-    localStorage.setItem('pdfDesignerFiles', JSON.stringify(files.value));
-  } catch (error) {
-    console.error('保存文件列表失败:', error);
-  }
-}
-
 // 从子菜单选择文件
 function selectFileFromSubmenu(file: DesignerFile) {
   showFileSubmenu.value = false;
@@ -182,32 +171,14 @@ function selectFileFromSubmenu(file: DesignerFile) {
 function renameFileFromSubmenu(file: DesignerFile) {
   const newName = prompt('请输入新的文件名:', file.name);
   if (newName && newName !== file.name) {
-    const fileIndex = files.value.findIndex((f: DesignerFile) => f.id === file.id);
-    if (fileIndex !== -1 && files.value[fileIndex]) {
-      files.value[fileIndex].name = newName;
-      files.value[fileIndex].lastModified = new Date();
-      saveFilesToStorage();
-      
-      if (props.currentFileId === file.id) {
-        emit('update:currentFileName', newName);
-      }
-    }
+    renameFile(file.id, newName);
   }
 }
 
 // 从子菜单删除文件
 function deleteFileFromSubmenu(file: DesignerFile) {
   if (confirm(`确定要删除文件 "${file.name}" 吗？此操作不可撤销。`)) {
-    const fileIndex = files.value.findIndex((f: DesignerFile) => f.id === file.id);
-    if (fileIndex !== -1) {
-      files.value.splice(fileIndex, 1);
-      saveFilesToStorage();
-      
-      if (props.currentFileId === file.id) {
-        emit('update:currentFileName', '未命名报表');
-        emit('update:currentFileId', null);
-      }
-    }
+    deleteFile(file.id);
   }
 }
 
@@ -250,14 +221,13 @@ function openLocalFile() {
 // 保存当前文件到存储
 function saveCurrentFileToStorage() {
   showFileMenu.value = false;
-  // 触发父组件的保存逻辑
-  // 这里需要通过事件通知父组件执行保存操作
+  emit('save-current-file');
 }
 
 // 另存为本地文件
 function saveAsLocalFile() {
   showFileMenu.value = false;
-  // 触发父组件的另存为逻辑
+  emit('save-as-file');
 }
 
 // 加载文件

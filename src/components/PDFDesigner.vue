@@ -15,6 +15,8 @@
           :current-file-id="currentFileId"
           @create-new-file="createNewFile"
           @load-file="loadFile"
+          @save-current-file="saveCurrentFileToStorage"
+          @save-as-file="saveAsLocalFile"
           @update:currentFileName="currentFileName = $event"
           @update:currentFileId="currentFileId = $event"
         />
@@ -202,15 +204,6 @@
 </template>
 
 <script setup lang="ts">
-// 定义文件接口类型
-interface DesignerFile {
-  id: string;
-  name: string;
-  content?: string;
-  lastModified?: Date | string;
-  createdAt?: Date | string;
-}
-
 import ResizablePanel from './panels/ResizablePanel.vue';
 import DesignerCanvas from './designer/DesignerCanvas.vue';
 import RewardModal from './modals/RewardModal.vue';
@@ -223,7 +216,12 @@ import FileManager from './designer/controls/FileManager.vue';
 import ZoomControls from './designer/controls/ZoomControls.vue';
 import ElementProperties from './designer/properties/ElementProperties.vue';
 import type {Band, BandType, DesignElement, ReportField, ReportParameter} from '../types';
+import type { DesignerFile } from '@/types/designerFile';
 import {computed, onMounted, onUnmounted, ref, watch} from 'vue';
+import { useDesignerFiles } from '@/composables/useDesignerFiles';
+import { useUndoRedo } from '@/composables/useUndoRedo';
+import { useZoom } from '@/composables/useZoom';
+import { useSnapAlignment } from '@/composables/useSnapAlignment';
 import {
   BAND_CONSTANTS,
   BAND_HEIGHT_CONSTANTS,
@@ -245,7 +243,7 @@ import {
 
 import {getBandDisplayName} from '../utils/bandUtils';
 
-import {clearLocalStorage, loadFromLocalStorage, saveToLocalStorage} from '../utils/fileUtils';
+import {clearLocalStorage as clearReportLocalStorage, loadFromLocalStorage, saveToLocalStorage} from '../utils/fileUtils';
 
 // 导入元素边界验证工具
 import {
@@ -258,6 +256,7 @@ import {generateJRXMLContent, parseJRXMLContent} from '../utils/jrxmlGenerator';
 
 // 导入通知管理器
 import notification from '../utils/notification';
+import { getAllElements as getAllElementConfigs } from '@/components/elements/ElementRegistry';
 
 // 标签页相关
 const activeTab = ref('pageSettings');
@@ -273,88 +272,8 @@ const propertyPanelWidth = ref(PANEL_CONSTANTS.DEFAULT_PROPERTY_PANEL_WIDTH); //
 // 左侧面板宽度
 const leftPanelWidth = ref(PANEL_CONSTANTS.DEFAULT_LEFT_PANEL_WIDTH); 
 
-// 自动吸附功能开关
-const enableSnapToGrid = ref(false);
-const enableSnapToAlignment = ref(true); // 默认开启对齐线吸附
-
-// 对齐线相关状态
-const alignmentLines = ref({
-  horizontal: [] as number[],
-  vertical: [] as number[]
-});
-
-// 缩放相关状态
-const zoomLevel = ref(ZOOM_CONSTANTS.DEFAULT_ZOOM); // 默认缩放级别为100%
-
 // DesignerCanvas组件引用
 const designerCanvasRef = ref<any>(null);
-
-// 重置缩放
-function resetZoom() {
-  zoomLevel.value = ZOOM_CONSTANTS.DEFAULT_ZOOM;
-}
-
-// 计算适应窗口的最佳缩放比例
-function calculateOptimalZoom(): number {
-  // 获取设计区域的可用大小
-  const designerContainer = document.querySelector('.designer-canvas') || document.querySelector('.pdf-designer');
-  if (!designerContainer) {
-    return ZOOM_CONSTANTS.DEFAULT_ZOOM;
-  }
-
-  // 获取设计区域的实际可用宽度
-  const availableWidth = designerContainer.clientWidth - 40; // 减去边距
-
-  // 计算宽度的缩放比例
-  const widthRatio = availableWidth / paperWidth.value;
-
-  // 使用宽度缩放比例，确保报表宽度适应设计区域
-  const optimalZoom = widthRatio * ZOOM_CONSTANTS.OPTIMAL_ZOOM_MARGIN;
-
-  // 从预设的缩放级别中选择最接近的
-  const zoomLevels = ZOOM_CONSTANTS.ZOOM_LEVELS;
-  let closestZoom = zoomLevels[0] || ZOOM_CONSTANTS.DEFAULT_ZOOM;
-  let minDiff = Math.abs((zoomLevels[0] || ZOOM_CONSTANTS.DEFAULT_ZOOM) - optimalZoom);
-
-  for (let i = 1; i < zoomLevels.length; i++) {
-    const level = zoomLevels[i];
-    if (level !== undefined) {
-      const diff = Math.abs(level - optimalZoom);
-      if (diff < minDiff) {
-        minDiff = diff;
-        closestZoom = level;
-      }
-    }
-  }
-
-  // 确保缩放比例在有效范围内
-  return Math.max(ZOOM_CONSTANTS.MIN_ZOOM, Math.min(ZOOM_CONSTANTS.MAX_ZOOM, closestZoom));
-}
-
-// 处理来自DesignerCanvas的缩放变化
-function handleZoomChange(delta: number) {
-  // 计算新的缩放级别
-  const newZoom = Math.max(ZOOM_CONSTANTS.MIN_ZOOM, Math.min(ZOOM_CONSTANTS.MAX_ZOOM, zoomLevel.value + delta));
-  
-  // 从预设的缩放级别中选择最接近的
-  const zoomLevels = ZOOM_CONSTANTS.ZOOM_LEVELS;
-  let closestZoom = zoomLevels[0] || ZOOM_CONSTANTS.DEFAULT_ZOOM;
-  let minDiff = Math.abs((zoomLevels[0] || ZOOM_CONSTANTS.DEFAULT_ZOOM) - newZoom);
-  
-  for (let i = 1; i < zoomLevels.length; i++) {
-    const level = zoomLevels[i];
-    if (level !== undefined) {
-      const diff = Math.abs(level - newZoom);
-      if (diff < minDiff) {
-        minDiff = diff;
-        closestZoom = level;
-      }
-    }
-  }
-  
-  // 设置新的缩放级别
-  zoomLevel.value = closestZoom;
-}
 
 // 底部面板高度
 const bottomPanelHeight = ref(PANEL_CONSTANTS.DEFAULT_BOTTOM_PANEL_HEIGHT); // 默认高度400px
@@ -382,61 +301,24 @@ const reportProperties = ref({
 });
 
 // 文件管理相关状态
-const showFileMenu = ref(false);
-const showFileSubmenu = ref(false);
-const currentFileName = ref('未命名报表');
-const currentFileId = ref<string | null>(null);
-const fileMenuContainer = ref<HTMLElement | null>(null);
+const {
+  currentFileName,
+  currentFileId,
+  loadFilesFromStorage,
+  loadLastFile,
+  findFileById,
+  saveCurrentFileContent,
+  clearStoredFiles,
+  setLastFile
+} = useDesignerFiles();
 
-// 文件列表相关
-const files = ref<DesignerFile[]>([]);
-const fileFilterText = ref('');
-
-// 从localStorage加载文件列表
-function loadFilesFromStorage() {
-  try {
-    const storedFiles = localStorage.getItem('pdfDesignerFiles');
-    if (storedFiles) {
-      const parsedFiles = JSON.parse(storedFiles) as DesignerFile[];
-      files.value = parsedFiles.map((file: DesignerFile) => ({
-        ...file,
-        lastModified: new Date(file.lastModified || Date.now()),
-        createdAt: new Date(file.createdAt || Date.now())
-      }));
-    }
-  } catch (error) {
-    console.error('加载文件列表失败:', error);
-  }
+function clearLocalStorage() {
+  clearReportLocalStorage();
+  clearStoredFiles();
+  notification.success('本地数据已清空');
 }
-
-// 保存文件列表到localStorage
-function saveFilesToStorage() {
-  try {
-    localStorage.setItem('pdfDesignerFiles', JSON.stringify(files.value));
-  } catch (error) {
-    console.error('保存文件列表失败:', error);
-  }
-}
-
-// 点击外部关闭菜单
-function handleClickOutside(event: MouseEvent) {
-  if (fileMenuContainer.value && !fileMenuContainer.value.contains(event.target as Node)) {
-    showFileMenu.value = false;
-    showFileSubmenu.value = false;
-  }
-}
-
-// 监听点击事件
-onMounted(() => {
-  document.addEventListener('click', handleClickOutside);
-});
-
-onUnmounted(() => {
-  document.removeEventListener('click', handleClickOutside);
-});
 
 function createNewFile() {
-  showFileMenu.value = false;
   // 创建新文件的逻辑
   const timestamp = new Date().getTime();
   currentFileName.value = `未命名报表${timestamp}`;
@@ -483,57 +365,17 @@ function createNewFile() {
 }
 
 function saveCurrentFileToStorage() {
-  showFileMenu.value = false;
-  // 保存当前文件到本地存储
   const fileData = saveCurrentFile();
-  
-  try {
-    // 从localStorage获取现有文件列表
-    const storedFiles = localStorage.getItem('pdfDesignerFiles');
-    const files = storedFiles ? JSON.parse(storedFiles) : [];
-    
-    // 查找当前文件是否已存在
-    const existingFileIndex = files.findIndex((file: any) => file.id === currentFileId.value);
-    
-    if (existingFileIndex !== -1) {
-      // 更新现有文件
-      files[existingFileIndex] = {
-        ...files[existingFileIndex],
-        content: JSON.stringify(fileData),
-        lastModified: new Date().toISOString()
-      };
-    } else if (currentFileId.value) {
-      // 添加新文件
-      files.push({
-        id: currentFileId.value,
-        name: currentFileName.value,
-        content: JSON.stringify(fileData),
-        lastModified: new Date().toISOString(),
-        createdAt: new Date().toISOString()
-      });
-    } else {
-      // 如果没有文件ID，创建一个新文件
-      const newId = `file_${new Date().getTime()}`;
-      currentFileId.value = newId;
-      files.push({
-        id: newId,
-        name: currentFileName.value,
-        content: JSON.stringify(fileData),
-        lastModified: new Date().toISOString(),
-        createdAt: new Date().toISOString()
-      });
-    }
-    
-    // 保存更新后的文件列表
-    localStorage.setItem('pdfDesignerFiles', JSON.stringify(files));
+
+  const ok = saveCurrentFileContent(fileData);
+  if (ok) {
     notification.success('文件保存成功');
-  } catch (error) {
-    console.error('保存文件失败:', error);
+  } else {
     notification.error('保存文件失败');
   }
 }
 
-function loadFile(fileData: any) {
+function loadFile(fileData: DesignerFile | any) {
   try {
     // 解析文件内容
     const fileContent = typeof fileData.content === 'string' 
@@ -566,13 +408,8 @@ function loadFile(fileData: any) {
     // 更新当前文件信息
     currentFileName.value = fileData.name || '未命名报表';
     currentFileId.value = fileData.id || null;
-    
-    // 保存最后编辑的文件信息到localStorage
     if (fileData.id) {
-      localStorage.setItem('pdfDesignerLastFile', JSON.stringify({
-        id: fileData.id,
-        name: fileData.name
-      }));
+      setLastFile({ id: fileData.id, name: fileData.name });
     }
     
     // 清除当前选中的元素
@@ -582,6 +419,15 @@ function loadFile(fileData: any) {
     console.error('加载文件失败:', error);
     notification.error('文件格式不正确，无法加载');
   }
+}
+
+function saveAsLocalFile() {
+  const newName = prompt('请输入新的文件名:', currentFileName.value);
+  if (!newName) return;
+  const timestamp = Date.now();
+  currentFileName.value = newName;
+  currentFileId.value = `file_${timestamp}`;
+  saveCurrentFileToStorage();
 }
 
 function saveCurrentFile() {
@@ -631,12 +477,7 @@ function saveCurrentFile() {
 }
 
 // 可用元素
-const elements = ref([
-  { type: ELEMENT_TYPE_CONSTANTS.STATIC_TEXT, name: '静态文本' },
-  { type: ELEMENT_TYPE_CONSTANTS.TEXT_FIELD, name: '动态文本' },
-  { type: ELEMENT_TYPE_CONSTANTS.IMAGE, name: '图片' },
-  { type: ELEMENT_TYPE_CONSTANTS.LINE, name: '线条' }
-]);
+const elements = computed(() => getAllElementConfigs().map(config => ({ type: config.type, name: config.name })));
 
 // 定义元素接口
 // 使用从types/index.ts导入的Pen和Box接口
@@ -680,12 +521,12 @@ const reportParameters = ref<ReportParameter[]>([
 ]);
 
 // 历史记录栈 - 用于撤销功能
-interface HistoryState {
+type HistoryState = {
   reportProperties: typeof reportProperties.value;
   bands: typeof bands.value;
   reportFields: typeof reportFields.value;
   reportParameters: typeof reportParameters.value;
-}
+};
 
 // 超出边界的元素
 const outOfBoundsElements = ref<Array<{bandIndex: number, elementIndex: number, element: DesignElement}>>([]);
@@ -708,81 +549,32 @@ function updateOutOfBoundsElements() {
   }
 }
 
-// 历史记录栈 - 用于撤销功能
-const historyStack = ref<HistoryState[]>([]);
-const redoStack = ref<HistoryState[]>([]);
-const MAX_HISTORY_SIZE = HISTORY_CONSTANTS.MAX_HISTORY_SIZE; // 最大历史记录数量
-const isDraggingOrResizing = ref(false); // 标记是否正在拖动或调整大小
-
-// 保存当前状态到历史记录
-function saveStateToHistory() {
-  // 创建状态快照（深拷贝）
-  const stateSnapshot: HistoryState = {
-    reportProperties: JSON.parse(JSON.stringify(reportProperties.value)),
-    bands: JSON.parse(JSON.stringify(bands.value)),
-    reportFields: JSON.parse(JSON.stringify(reportFields.value)),
-    reportParameters: JSON.parse(JSON.stringify(reportParameters.value))
-  };
-  
-  // 添加到历史栈
-  historyStack.value.push(stateSnapshot);
-  
-  // 如果历史栈超过最大限制，删除最旧的记录
-  if (historyStack.value.length > MAX_HISTORY_SIZE) {
-    historyStack.value.shift();
+const {
+  historyStack,
+  redoStack,
+  saveStateToHistory,
+  undo,
+  redo
+} = useUndoRedo<HistoryState>({
+  maxHistorySize: HISTORY_CONSTANTS.MAX_HISTORY_SIZE,
+  getState: () => ({
+    reportProperties: reportProperties.value,
+    bands: bands.value,
+    reportFields: reportFields.value,
+    reportParameters: reportParameters.value
+  }),
+  applyState: (state) => {
+    reportProperties.value = state.reportProperties;
+    bands.value = state.bands;
+    reportFields.value = state.reportFields;
+    reportParameters.value = state.reportParameters;
+  },
+  onAfterRestore: () => {
+    updateJRXML();
   }
-  
-  // 清空重做栈
-  redoStack.value = [];
-}
+});
 
-// 撤销功能
-function undo() {
-  if (historyStack.value.length === 0) return;
-  
-  // 保存当前状态到重做栈
-  const currentState: HistoryState = {
-    reportProperties: JSON.parse(JSON.stringify(reportProperties.value)),
-    bands: JSON.parse(JSON.stringify(bands.value)),
-    reportFields: JSON.parse(JSON.stringify(reportFields.value)),
-    reportParameters: JSON.parse(JSON.stringify(reportParameters.value))
-  };
-  redoStack.value.push(currentState);
-  
-  // 恢复上一个状态
-  const previousState = historyStack.value.pop()!;
-  reportProperties.value = previousState.reportProperties;
-  bands.value = previousState.bands;
-  reportFields.value = previousState.reportFields;
-  reportParameters.value = previousState.reportParameters;
-  
-  // 更新JRXML
-  updateJRXML();
-}
-
-// 重做功能
-function redo() {
-  if (redoStack.value.length === 0) return;
-  
-  // 保存当前状态到历史栈
-  const currentState: HistoryState = {
-    reportProperties: JSON.parse(JSON.stringify(reportProperties.value)),
-    bands: JSON.parse(JSON.stringify(bands.value)),
-    reportFields: JSON.parse(JSON.stringify(reportFields.value)),
-    reportParameters: JSON.parse(JSON.stringify(reportParameters.value))
-  };
-  historyStack.value.push(currentState);
-  
-  // 应用下一个状态
-  const nextState = redoStack.value.pop()!;
-  reportProperties.value = nextState.reportProperties;
-  bands.value = nextState.bands;
-  reportFields.value = nextState.reportFields;
-  reportParameters.value = nextState.reportParameters;
-  
-  // 更新JRXML
-  updateJRXML();
-}
+const isDraggingOrResizing = ref(false); // 标记是否正在拖动或调整大小
 
 // 添加新参数
 // 移除未使用的参数管理函数
@@ -812,6 +604,10 @@ const removeDesignAreaFocused = () => {
 // 计算属性
 const paperWidth = computed(() => reportProperties.value?.pageWidth || REPORT_CONSTANTS.DEFAULT_PAGE_WIDTH);
 const paperHeight = computed(() => reportProperties.value?.pageHeight || REPORT_CONSTANTS.DEFAULT_PAGE_HEIGHT);
+const { zoomLevel, resetZoom, calculateOptimalZoom, handleZoomChange } = useZoom({
+  paperWidth,
+  zoomConstants: ZOOM_CONSTANTS
+});
 const currentElement = computed(() => {
   if (selectedElement.value && bands.value && Array.isArray(bands.value)) {
     const band = bands.value[selectedElement.value.bandIndex];
@@ -916,6 +712,18 @@ const verticalRulerLabels = computed(() => {
 // 拖拽相关
 const draggingInfo = ref<{bandIndex: number, elementIndex: number, startX: number, startY: number, lastTargetBandIndex?: number} | null>(null);
 const highlightedBandIndex = ref<number | null>(null); // 高亮显示的目标band索引
+const {
+  enableSnapToGrid,
+  enableSnapToAlignment,
+  alignmentLines,
+  detectAlignmentLines,
+  clearAlignmentLines
+} = useSnapAlignment({
+  bands,
+  reportProperties,
+  highlightedBandIndex,
+  bandSpacing: BAND_CONSTANTS.SPACING
+});
 // 拖动时显示的坐标信息
 const dragCoordinates = ref<{x: number, y: number, visible: boolean, bandName: string}>({ x: 0, y: 0, visible: false, bandName: '' });
 // 调整大小相关
@@ -1103,283 +911,6 @@ const handleDragLeave = (event: DragEvent) => {
   }
 };
 
-// 检测对齐线
-const detectAlignmentLines = (currentElement: DesignElement, currentBandIndex: number, updateState: boolean = true) => {
-  const threshold = 3; // 对齐阈值，像素 - 减小阈值使吸附更精确
-  const verticalAlignmentLines: number[] = []; // 垂直对齐线（X坐标）
-  const horizontalAlignmentLines: number[] = []; // 水平对齐线（Y坐标）
-  
-  // 用于存储吸附信息的对象
-  const snapInfo = {
-    horizontal: null as { position: number; offset: number } | null,
-    vertical: null as { position: number; offset: number } | null
-  };
-  
-  // 获取页边距
-  const { leftMargin = 0, topMargin = 0 } = reportProperties.value || {};
-  
-  // 计算当前band的Y坐标偏移
-  let currentBandY = 0;
-  const bandSpacing = BAND_CONSTANTS.SPACING; // band之间的间距，与DesignerCanvas.vue中的margin-bottom一致
-  for (let i = 0; i < currentBandIndex; i++) {
-    currentBandY += bands.value[i]?.height || 0;
-    if (i < currentBandIndex - 1) {
-      currentBandY += bandSpacing; // 只在band之间添加间距，不在最后一个band后添加
-    }
-  }
-  
-  // 获取当前元素的边界
-  const currentLeft = currentElement.x;
-  const currentRight = currentElement.x + currentElement.width;
-  const currentTop = currentElement.y;
-  const currentBottom = currentElement.y + currentElement.height;
-  const currentCenterX = currentElement.x + currentElement.width / 2;
-  const currentCenterY = currentElement.y + currentElement.height / 2;
-  
-  // 遍历所有band和元素，检测对齐关系
-  let bandOffsetY = 0;
-  bands.value.forEach((band, bandIndex) => {
-    band.elements.forEach((element, _elementIndex) => {
-      // 跳过当前元素
-      if (bandIndex === currentBandIndex && element === currentElement) return;
-      
-      // 获取其他元素的边界
-      const otherLeft = element.x;
-      const otherRight = element.x + element.width;
-      const otherTop = element.y;
-      const otherBottom = element.y + element.height;
-      const otherCenterX = element.x + element.width / 2;
-      const otherCenterY = element.y + element.height / 2;
-      
-      // 检测垂直对齐线（左右对齐）
-      // 左边对齐
-      if (Math.abs(currentLeft - otherLeft) < threshold) {
-        const linePosition = otherLeft + leftMargin;
-        verticalAlignmentLines.push(linePosition);
-        
-        // 更新吸附信息
-        if (!snapInfo.horizontal || Math.abs(currentLeft - otherLeft) < Math.abs(snapInfo.horizontal.offset)) {
-          snapInfo.horizontal = {
-            position: linePosition,
-            offset: otherLeft - currentLeft
-          };
-        }
-      }
-      // 右边对齐
-      if (Math.abs(currentRight - otherRight) < threshold) {
-        const linePosition = otherRight + leftMargin;
-        verticalAlignmentLines.push(linePosition);
-        
-        // 更新吸附信息
-        if (!snapInfo.horizontal || Math.abs(currentRight - otherRight) < Math.abs(snapInfo.horizontal.offset)) {
-          snapInfo.horizontal = {
-            position: linePosition,
-            offset: otherRight - currentRight
-          };
-        }
-      }
-      // 中心对齐
-      if (Math.abs(currentCenterX - otherCenterX) < threshold) {
-        const linePosition = otherCenterX + leftMargin;
-        verticalAlignmentLines.push(linePosition);
-        
-        // 更新吸附信息
-        if (!snapInfo.horizontal || Math.abs(currentCenterX - otherCenterX) < Math.abs(snapInfo.horizontal.offset)) {
-          snapInfo.horizontal = {
-            position: linePosition,
-            offset: otherCenterX - currentCenterX
-          };
-        }
-      }
-      // 左边对齐到其他元素的右边
-      if (Math.abs(currentLeft - otherRight) < threshold) {
-        const linePosition = otherRight + leftMargin;
-        verticalAlignmentLines.push(linePosition);
-        
-        // 更新吸附信息
-        if (!snapInfo.horizontal || Math.abs(currentLeft - otherRight) < Math.abs(snapInfo.horizontal.offset)) {
-          snapInfo.horizontal = {
-            position: linePosition,
-            offset: otherRight - currentLeft
-          };
-        }
-      }
-      // 右边对齐到其他元素的左边
-      if (Math.abs(currentRight - otherLeft) < threshold) {
-        const linePosition = otherLeft + leftMargin;
-        verticalAlignmentLines.push(linePosition);
-        
-        // 更新吸附信息
-        if (!snapInfo.horizontal || Math.abs(currentRight - otherLeft) < Math.abs(snapInfo.horizontal.offset)) {
-          snapInfo.horizontal = {
-            position: linePosition,
-            offset: otherLeft - currentRight
-          };
-        }
-      }
-      
-      // 检测水平对齐线（上下对齐）
-      // 对于相同band中的元素，进行完整的对齐检测和吸附
-      if (bandIndex === currentBandIndex) {
-        // 顶部对齐
-        if (Math.abs(currentTop - otherTop) < threshold) {
-          // 添加当前band的Y坐标偏移到参考线位置
-          const linePosition = otherTop + topMargin + bandOffsetY;
-          horizontalAlignmentLines.push(linePosition);
-          
-          // 更新吸附信息，元素坐标不需要考虑band偏移
-          if (!snapInfo.vertical || Math.abs(currentTop - otherTop) < Math.abs(snapInfo.vertical.offset)) {
-            snapInfo.vertical = {
-              position: linePosition,
-              offset: otherTop - currentTop
-            };
-          }
-        }
-        // 底部对齐
-        if (Math.abs(currentBottom - otherBottom) < threshold) {
-          // 添加当前band的Y坐标偏移到参考线位置
-          const linePosition = otherBottom + topMargin + bandOffsetY;
-          horizontalAlignmentLines.push(linePosition);
-          
-          // 更新吸附信息，元素坐标不需要考虑band偏移
-          if (!snapInfo.vertical || Math.abs(currentBottom - otherBottom) < Math.abs(snapInfo.vertical.offset)) {
-            snapInfo.vertical = {
-              position: linePosition,
-              offset: otherBottom - currentBottom
-            };
-          }
-        }
-        // 中心对齐
-        if (Math.abs(currentCenterY - otherCenterY) < threshold) {
-          // 添加当前band的Y坐标偏移到参考线位置
-          const linePosition = otherCenterY + topMargin + bandOffsetY;
-          horizontalAlignmentLines.push(linePosition);
-          
-          // 更新吸附信息，元素坐标不需要考虑band偏移
-          if (!snapInfo.vertical || Math.abs(currentCenterY - otherCenterY) < Math.abs(snapInfo.vertical.offset)) {
-            snapInfo.vertical = {
-              position: linePosition,
-              offset: otherCenterY - currentCenterY
-            };
-          }
-        }
-        // 顶部对齐到其他元素的底部
-        if (Math.abs(currentTop - otherBottom) < threshold) {
-          // 添加当前band的Y坐标偏移到参考线位置
-          const linePosition = otherBottom + topMargin + bandOffsetY;
-          horizontalAlignmentLines.push(linePosition);
-          
-          // 更新吸附信息，元素坐标不需要考虑band偏移
-          if (!snapInfo.vertical || Math.abs(currentTop - otherBottom) < Math.abs(snapInfo.vertical.offset)) {
-            snapInfo.vertical = {
-              position: linePosition,
-              offset: otherBottom - currentTop
-            };
-          }
-        }
-        // 底部对齐到其他元素的顶部
-        if (Math.abs(currentBottom - otherTop) < threshold) {
-          // 添加当前band的Y坐标偏移到参考线位置
-          const linePosition = otherTop + topMargin + bandOffsetY;
-          horizontalAlignmentLines.push(linePosition);
-          
-          // 更新吸附信息，元素坐标不需要考虑band偏移
-          if (!snapInfo.vertical || Math.abs(currentBottom - otherTop) < Math.abs(snapInfo.vertical.offset)) {
-            snapInfo.vertical = {
-              position: linePosition,
-              offset: otherTop - currentBottom
-            };
-          }
-        }
-      }
-      // 对于不同band中的元素，只显示参考线但不进行吸附
-      else {
-        // 只有当鼠标悬浮在目标band中时，才检测横向对齐线
-        // 使用highlightedBandIndex来判断当前鼠标悬浮的band
-        if (highlightedBandIndex.value === bandIndex) {
-          // 计算当前元素相对于目标band的Y坐标
-          // 获取当前元素所在band和目标band的Y坐标偏移差
-          let sourceBandOffsetY = 0;
-          let targetBandOffsetY = 0;
-          
-          // 计算源band的Y坐标偏移
-          for (let i = 0; i < currentBandIndex; i++) {
-            sourceBandOffsetY += bands.value[i]?.height || 0;
-            if (i < currentBandIndex - 1) {
-              sourceBandOffsetY += bandSpacing;
-            }
-          }
-          
-          // 计算目标band的Y坐标偏移
-          for (let i = 0; i < bandIndex; i++) {
-            targetBandOffsetY += bands.value[i]?.height || 0;
-            if (i < bandIndex - 1) {
-              targetBandOffsetY += bandSpacing;
-            }
-          }
-          
-          // 计算当前元素相对于目标band的Y坐标
-          const relativeY = currentTop + (sourceBandOffsetY - targetBandOffsetY);
-          const relativeBottom = currentBottom + (sourceBandOffsetY - targetBandOffsetY);
-          const relativeCenterY = currentCenterY + (sourceBandOffsetY - targetBandOffsetY);
-          
-          // 顶部对齐
-          if (Math.abs(relativeY - otherTop) < threshold) {
-            // 添加目标band的Y坐标偏移到参考线位置
-            const linePosition = otherTop + topMargin + targetBandOffsetY;
-            horizontalAlignmentLines.push(linePosition);
-          }
-          // 底部对齐
-          if (Math.abs(relativeBottom - otherBottom) < threshold) {
-            // 添加目标band的Y坐标偏移到参考线位置
-            const linePosition = otherBottom + topMargin + targetBandOffsetY;
-            horizontalAlignmentLines.push(linePosition);
-          }
-          // 中心对齐
-          if (Math.abs(relativeCenterY - otherCenterY) < threshold) {
-            // 添加目标band的Y坐标偏移到参考线位置
-            const linePosition = otherCenterY + topMargin + targetBandOffsetY;
-            horizontalAlignmentLines.push(linePosition);
-          }
-          // 顶部对齐到其他元素的底部
-          if (Math.abs(relativeY - otherBottom) < threshold) {
-            // 添加目标band的Y坐标偏移到参考线位置
-            const linePosition = otherBottom + topMargin + targetBandOffsetY;
-            horizontalAlignmentLines.push(linePosition);
-          }
-          // 底部对齐到其他元素的顶部
-          if (Math.abs(relativeBottom - otherTop) < threshold) {
-            // 添加目标band的Y坐标偏移到参考线位置
-            const linePosition = otherTop + topMargin + targetBandOffsetY;
-            horizontalAlignmentLines.push(linePosition);
-          }
-        }
-      }
-    });
-    
-    // 更新band的Y坐标偏移，考虑band之间的间距
-    bandOffsetY += band.height + bandSpacing;
-  });
-  
-  // 更新对齐线状态
-  if (updateState) {
-    alignmentLines.value = {
-      horizontal: [...new Set(horizontalAlignmentLines)], // 水平对齐线（Y坐标）
-      vertical: [...new Set(verticalAlignmentLines)] // 垂直对齐线（X坐标）
-    };
-  }
-  
-  // 返回吸附信息
-  return snapInfo;
-};
-
-// 清除对齐线
-const clearAlignmentLines = () => {
-  alignmentLines.value = {
-    horizontal: [],
-    vertical: []
-  };
-};
 const getDefaultElementProperties = (type: string): Partial<DesignElement> => {
   // 使用报表的默认字体设置
   const defaultFontProps = {
@@ -2632,25 +2163,13 @@ onMounted(() => {
   console.log('本地数据加载完成');
   
   // 尝试加载最后编辑的文件
-  try {
-    const lastFileData = localStorage.getItem('pdfDesignerLastFile');
-    if (lastFileData) {
-      const lastFile = JSON.parse(lastFileData);
-      console.log('找到最后编辑的文件:', lastFile.name);
-      
-      // 从文件列表中查找最后编辑的文件
-      const storedFiles = localStorage.getItem('pdfDesignerFiles');
-      if (storedFiles) {
-        const files = JSON.parse(storedFiles);
-        const lastFileInList = files.find((file: any) => file.id === lastFile.id);
-        if (lastFileInList) {
-          console.log('加载最后编辑的文件内容');
-          loadFile(lastFileInList);
-        }
-      }
+  loadFilesFromStorage();
+  const lastFile = loadLastFile();
+  if (lastFile) {
+    const lastFileInList = findFileById(lastFile.id);
+    if (lastFileInList) {
+      loadFile(lastFileInList);
     }
-  } catch (error) {
-    console.error('加载最后编辑的文件失败:', error);
   }
   
   // 初始加载后更新JRXML，使用setTimeout确保所有数据都已加载

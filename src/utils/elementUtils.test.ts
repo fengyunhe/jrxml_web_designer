@@ -324,7 +324,7 @@ describe('elementUtils', () => {
       expect(element.x).toBe(10)
       expect(element.y).toBe(20)
       expect(element.width).toBe(100)
-      expect(element.height).toBe(30)
+      expect(element.height).toBe(100)
       expect((element as any).imageExpression).toBe('')
     })
 
@@ -335,7 +335,7 @@ describe('elementUtils', () => {
       expect(element.x).toBe(10)
       expect(element.y).toBe(20)
       expect(element.width).toBe(100)
-      expect(element.height).toBe(30)
+      expect(element.height).toBe(2)
       expect((element as any).lineDirection).toBe('TopDown')
     })
 
@@ -346,7 +346,7 @@ describe('elementUtils', () => {
       expect(element.x).toBe(10)
       expect(element.y).toBe(20)
       expect(element.width).toBe(100)
-      expect(element.height).toBe(30)
+      expect(element.height).toBe(100)
     })
 
     it('should create a base element for unknown types', () => {

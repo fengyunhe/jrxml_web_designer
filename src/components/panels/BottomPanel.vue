@@ -89,6 +89,24 @@ const localJrxmlContent = computed({
   set: (value) => emit('update:jrxml-content', value)
 });
 
+// 计算行号
+const lineNumbers = computed(() => {
+  if (!localJrxmlContent.value) return '';
+  const lines = localJrxmlContent.value.split('\n').length;
+  return Array.from({ length: lines }, (_, i) => i + 1).join('\n');
+});
+
+// 引用
+const textareaRef = ref<HTMLTextAreaElement | null>(null);
+const lineNumbersRef = ref<HTMLDivElement | null>(null);
+
+// 同步滚动
+const syncScroll = () => {
+  if (textareaRef.value && lineNumbersRef.value) {
+    lineNumbersRef.value.scrollTop = textareaRef.value.scrollTop;
+  }
+};
+
 // 处理底部面板大小变化
 const handleBottomPanelSizeChange = (newSize: number) => {
   bottomPanelHeight.value = newSize;
@@ -248,13 +266,18 @@ const saveJRXML = (): void => {
           </div>
         </div>
         <div class="jrxml-content">
-          <textarea 
-            v-if="localJrxmlContent" 
-            v-model="localJrxmlContent" 
-            class="jrxml-editor" 
-            spellcheck="false"
-            @keyup.ctrl.s.prevent="saveJRXML"
-          ></textarea>
+          <div v-if="localJrxmlContent" class="editor-container">
+            <div class="line-numbers" ref="lineNumbersRef">{{ lineNumbers }}</div>
+            <textarea 
+              ref="textareaRef"
+              v-model="localJrxmlContent" 
+              class="jrxml-editor" 
+              spellcheck="false"
+              @keyup.ctrl.s.prevent="saveJRXML"
+              @scroll="syncScroll"
+              @input="syncScroll" 
+            ></textarea>
+          </div>
           <div v-else class="jrxml-placeholder">点击"生成JRXML"按钮查看内容</div>
         </div>
       </div>
@@ -455,7 +478,31 @@ const saveJRXML = (): void => {
   border: v-bind('UI_CONSTANTS.BORDER_THIN + "px"') solid #ddd;
 }
 
+.editor-container {
+  display: flex;
+  width: 100%;
+  height: 100%;
+}
+
+.line-numbers {
+  flex-shrink: 0;
+  width: 40px;
+  background-color: #f0f0f0;
+  color: #999;
+  text-align: right;
+  padding: v-bind('UI_CONSTANTS.PANEL_PADDING + "px"') 8px;
+  font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+  font-size: v-bind('UI_CONSTANTS.FONT_SIZE_SMALL + "px"');
+  line-height: 1.5;
+  overflow: hidden;
+  user-select: none;
+  border-right: 1px solid #ddd;
+  white-space: pre;
+  box-sizing: border-box;
+}
+
 .jrxml-editor {
+  flex: 1;
   width: 100%;
   height: 100%;
   padding: v-bind('UI_CONSTANTS.PANEL_PADDING + "px"');
@@ -463,20 +510,15 @@ const saveJRXML = (): void => {
   font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
   font-size: v-bind('UI_CONSTANTS.FONT_SIZE_SMALL + "px"');
   line-height: 1.5;
-  white-space: pre-wrap;
-  word-wrap: break-word;
+  white-space: pre; /* 保持 pre，不换行，以保持行号对应 */
+  word-wrap: normal; /* 不自动换行 */
+  overflow-x: auto; /* 允许横向滚动 */
   border: none;
   outline: none;
   resize: none;
   tab-size: 2;
   box-sizing: border-box;
-  /* 优化代码显示效果 */
   color: #333;
-  text-shadow: 0 1px 0 rgba(255,255,255,.8);
-  /* 增加行号效果的背景 */
-  background-image: linear-gradient(transparent 19px, #eee 19px, #eee 20px, transparent 20px);
-  background-size: 100% v-bind('UI_CONSTANTS.LINE_HEIGHT_PX + "px"');
-  background-position: 0 1em;
 }
 
 .jrxml-editor:focus {

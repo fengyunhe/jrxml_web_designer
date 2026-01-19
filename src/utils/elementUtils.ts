@@ -1,7 +1,7 @@
 // 元素相关的工具函数
 
 import type { DesignElement } from '@/types';
-import { ELEMENT_TYPE_CONSTANTS } from '@/constants/constants';
+import { getElementConfig, createElement } from '@/components/elements/ElementRegistry';
 
 // 获取元素的唯一键
 export function getElementKey(element: { element: DesignElement, bandIndex: number, elementIndex: number }): string {
@@ -10,26 +10,14 @@ export function getElementKey(element: { element: DesignElement, bandIndex: numb
 
 // 获取元素类型名称
 export function getElementTypeName(type: string): string {
-  const typeNames: Record<string, string> = {
-    [ELEMENT_TYPE_CONSTANTS.STATIC_TEXT]: '静态文本',
-    [ELEMENT_TYPE_CONSTANTS.TEXT_FIELD]: '动态文本',
-    [ELEMENT_TYPE_CONSTANTS.IMAGE]: '图片',
-    [ELEMENT_TYPE_CONSTANTS.LINE]: '线条',
-    [ELEMENT_TYPE_CONSTANTS.RECTANGLE]: '矩形',
-  };
-  return typeNames[type] || type;
+  const config = getElementConfig(type);
+  return config?.name || type;
 }
 
 // 获取元素图标
 export function getElementIcon(type: string): string {
-  const icons: Record<string, string> = {
-    [ELEMENT_TYPE_CONSTANTS.STATIC_TEXT]: 'T',
-    [ELEMENT_TYPE_CONSTANTS.TEXT_FIELD]: '{ }',
-    [ELEMENT_TYPE_CONSTANTS.IMAGE]: '🖼',
-    [ELEMENT_TYPE_CONSTANTS.LINE]: '─',
-    [ELEMENT_TYPE_CONSTANTS.RECTANGLE]: '▭'
-  };
-  return icons[type] || '?';
+  const config = getElementConfig(type);
+  return config?.icon || '?';
 }
 
 // 获取元素显示信息（不包含Band）
@@ -116,28 +104,16 @@ export function selectElementsByField(bands: any[], fieldName: string, selectEle
 
 // 创建新元素
 export function createNewElement(type: string, x: number, y: number): DesignElement {
-  const baseElement: DesignElement = {
-    type: type as any,
-    x,
-    y,
-    width: 100,
-    height: 30,
-  };
-
-  // 根据类型添加特定属性
-  switch (type) {
-    case ELEMENT_TYPE_CONSTANTS.STATIC_TEXT:
-      return { ...baseElement, type: 'staticText' as any, text: '静态文本' };
-    case ELEMENT_TYPE_CONSTANTS.TEXT_FIELD:
-      return { ...baseElement, type: 'textField' as any, isBlankWhenNull: true };
-    case ELEMENT_TYPE_CONSTANTS.IMAGE:
-      return { ...baseElement, type: 'image' as any, imageExpression: '' };
-    case ELEMENT_TYPE_CONSTANTS.LINE:
-      return { ...baseElement, type: 'line' as any, lineDirection: 'TopDown' as any };
-    case ELEMENT_TYPE_CONSTANTS.RECTANGLE:
-      return { ...baseElement, type: 'rectangle' as any };
-    default:
-      return baseElement;
+  try {
+    return createElement(type, { x, y });
+  } catch {
+    return {
+      type: type as any,
+      x,
+      y,
+      width: 100,
+      height: 30
+    } as DesignElement;
   }
 }
 
