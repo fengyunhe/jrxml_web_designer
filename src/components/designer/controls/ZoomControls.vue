@@ -1,17 +1,20 @@
 <template>
   <div class="zoom-controls">
-    <button @click="zoomOut" class="btn-zoom" title="缩小">-</button>
+    <button @click="zoomOut" class="btn-zoom" :title="t('zoom.zoomOut')">-</button>
     <select v-model="localZoomLevel" @change="applyZoom" class="zoom-select">
       <option v-for="level in ZOOM_LEVELS" :key="level" :value="level">{{ Math.round(level * 100) }}%</option>
     </select>
-    <button @click="zoomIn" class="btn-zoom" title="放大">+</button>
-    <button @click="resetZoom" class="btn-zoom" title="重置缩放">{{ Math.round(DEFAULT_ZOOM * 100) }}%</button>
-    <button @click="calculateOptimalZoom" class="btn-zoom" title="适应窗口">⊡</button>
+    <button @click="zoomIn" class="btn-zoom" :title="t('zoom.zoomIn')">+</button>
+    <button @click="resetZoom" class="btn-zoom" :title="t('zoom.resetZoom')">{{ Math.round(DEFAULT_ZOOM * 100) }}%</button>
+    <button @click="calculateOptimalZoom" class="btn-zoom" :title="t('zoom.fitWindow')">⊡</button>
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, watch } from 'vue';
+import { useI18n } from 'vue-i18n';
+
+const { t } = useI18n();
 
 interface Props {
   zoomLevel: number;

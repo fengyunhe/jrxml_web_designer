@@ -2,7 +2,7 @@
   <div class="element-library">
     <!-- 基础元素库 -->
     <div class="element-list-container">
-      <h3>元素库</h3>
+      <h3>{{ t('elementLibrary.title') }}</h3>
       <div class="element-list">
         <div 
           v-for="element in elements" 
@@ -13,26 +13,26 @@
           draggable="true"
         >
           <span class="element-icon">{{ getElementIcon(element.type) }}</span>
-          <span class="element-name">{{ element.name }}</span>
+          <span class="element-name">{{ t(element.name) }}</span>
         </div>
       </div>
     </div>
     
     <!-- 报表元素区域 -->
     <div class="report-elements-section">
-      <h4>报表元素</h4>
+      <h4>{{ t('elementLibrary.reportElements') }}</h4>
       <div class="filter-input-container">
         <input 
           v-model="elementFilterText" 
           type="text" 
-          placeholder="过滤元素..." 
+          :placeholder="t('elementLibrary.filterElements')" 
           class="filter-input"
         />
         <button 
           v-if="elementFilterText" 
           @click="elementFilterText = ''" 
           class="clear-filter-btn"
-          title="清除过滤"
+          :title="t('elementLibrary.filterElements')"
         >
           ✕
         </button>
@@ -51,7 +51,7 @@
               <span class="element-icon">{{ getElementIcon(element.element.type) }}</span>
               <span class="element-info">{{ getElementDisplayInfoWithoutBand(element.element) }}</span>
             </div>
-            <button class="action-button delete-button" @click.stop="handleDeleteElement(element)" title="删除元素">🗑️</button>
+            <button class="action-button delete-button" @click.stop="handleDeleteElement(element)" :title="t('elementLibrary.deleteElement')">🗑️</button>
           </div>
         </div>
       </div>
@@ -59,7 +59,7 @@
     
     <!-- 报表参数区域 -->
     <div class="data-parameters-section">
-      <h4>报表参数</h4>
+      <h4>{{ t('elementLibrary.reportParameters') }}</h4>
       <div class="parameters-mini-view">
         <div 
           v-for="(param, index) in reportParameters" 
@@ -76,8 +76,8 @@
     <!-- 数据字段区域 -->
     <div class="data-fields-section">
       <div class="section-header">
-        <h4>数据字段</h4>
-        <button class="add-button" @click="handleAddField" title="添加数据字段">+</button>
+        <h4>{{ t('elementLibrary.dataFields') }}</h4>
+        <button class="add-button" @click="handleAddField" :title="t('elementLibrary.addDataField')">+</button>
       </div>
       <div class="fields-mini-view">
         <div 
@@ -90,13 +90,13 @@
             <span class="field-type">({{ field.class }})</span>
           </div>
           <div class="field-actions">
-            <button class="action-button edit-button" @click.stop="handleEditField(field)" title="编辑字段">✏️</button>
-            <button class="action-button delete-button" @click.stop="handleDeleteField(field.name)" title="删除字段">🗑️</button>
+            <button class="action-button edit-button" @click.stop="handleEditField(field)" :title="t('elementLibrary.editField')">✏️</button>
+            <button class="action-button delete-button" @click.stop="handleDeleteField(field.name)" :title="t('elementLibrary.deleteField')">🗑️</button>
           </div>
         </div>
         <div v-if="reportFields.length === 0" class="empty-state">
-          <p>暂无数据字段</p>
-          <p class="empty-hint">点击上方「+」按钮添加字段</p>
+          <p>{{ t('elementLibrary.noDataFields') }}</p>
+          <p class="empty-hint">{{ t('elementLibrary.clickToAddField') }}</p>
         </div>
       </div>
     </div>
@@ -104,8 +104,8 @@
     <!-- 确认对话框 -->
     <ConfirmModal 
       v-model:visible="showConfirmModal"
-      title="删除确认"
-      message="确定要删除该元素吗？"
+      :title="t('elementLibrary.deleteConfirm')"
+      :message="t('elementLibrary.deleteElementConfirm')"
       @confirm="handleConfirmDelete"
     />
   </div>
@@ -113,6 +113,7 @@
 
 <script setup lang="ts">
 import { ref, computed } from 'vue';
+import { useI18n } from 'vue-i18n';
 import ConfirmModal from './modals/ConfirmModal.vue';
 import type { DesignElement, StaticTextElement, TextFieldElement, ReportField, ReportParameter } from '../types';
 import {
@@ -124,6 +125,8 @@ import {
   selectElementsByField,
   selectElementsByParameter
 } from '../utils/elementUtils';
+
+const { t } = useI18n();
 
 // 定义组件属性
 interface Props {
@@ -232,20 +235,11 @@ const groupedReportElements = computed(() => {
 
 // 获取band显示名称
 function getBandDisplayName(bandType: string): string {
-  const bandNames: Record<string, string> = {
-    'TITLE': '标题',
-    'PAGE_HEADER': '页眉',
-    'COLUMN_HEADER': '列标题',
-    'DETAIL': '详细数据',
-    'COLUMN_FOOTER': '列脚',
-    'PAGE_FOOTER': '页脚',
-    'SUMMARY': '汇总',
-    'BACKGROUND': '背景',
-    'LAST_PAGE_FOOTER': '末页页脚',
-    'NO_DATA': '无数据'
-  };
-  
-  return bandNames[bandType] || bandType;
+  const bandNameKey = bandType as keyof typeof import('../locales/zh.json')['bandNames'];
+  // We can't directly access the JSON type safely here without more complex TS setup,
+  // but we can assume the key exists if it's a valid BandType.
+  // Using t() is the correct way.
+  return t(`bandNames.${bandType}`);
 }
 
 // 处理拖拽开始

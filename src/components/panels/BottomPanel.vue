@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, watch } from 'vue';
+import { useI18n } from 'vue-i18n';
 import ResizablePanel from './ResizablePanel.vue';
 import PdfPreviewModal from '../modals/PdfPreviewModal.vue';
 import {
@@ -8,6 +9,14 @@ import {
 } from '../../constants/constants';
 import { getAvailableFonts } from '../../utils/fontUtils';
 import type { Band, BandType } from '../../types';
+
+const { t } = useI18n();
+
+// 获取Band显示名称
+function getBandDisplayName(bandType: string): string {
+  // Assuming keys exist in bandNames section of locale files.
+  return t(`bandNames.${bandType}`);
+}
 
 // 定义组件属性
 interface Props {
@@ -294,15 +303,15 @@ const saveJRXML = (): void => {
     <div class="tab-content page-settings-tab" v-show="activeTab === 'pageSettings'">
       <div class="settings-grid">
         <div class="settings-section">
-          <h4>基本信息</h4>
+          <h4>{{ t('bottomPanel.basicInfo') }}</h4>
           <div class="form-group">
-            <label>报表名称</label>
+            <label>{{ t('bottomPanel.reportName') }}</label>
             <input v-model="localReportProperties.name" type="text" />
           </div>
 
           <div class="form-row">
             <div class="form-group flex-1">
-              <label>纸张规格</label>
+              <label>{{ t('bottomPanel.paperSize') }}</label>
               <select v-model="selectedPaperSize" @change="handlePaperSizeChange">
                 <option v-for="size in PAPER_SIZES" :key="size.name" :value="size.name">
                   {{ size.name }}
@@ -310,72 +319,72 @@ const saveJRXML = (): void => {
               </select>
             </div>
             <div class="form-group flex-1">
-              <label>纸张方向</label>
+              <label>{{ t('bottomPanel.paperOrientation') }}</label>
               <select v-model="orientation" @change="handleOrientationChange">
-                <option value="Portrait">纵向 (Portrait)</option>
-                <option value="Landscape">横向 (Landscape)</option>
+                <option value="Portrait">{{ t('bottomPanel.portrait') }}</option>
+                <option value="Landscape">{{ t('bottomPanel.landscape') }}</option>
               </select>
             </div>
           </div>
           <div class="form-row">
             <div class="form-group flex-1">
-              <label>页面宽度</label>
+              <label>{{ t('bottomPanel.pageWidth') }}</label>
               <input v-model.number="localReportProperties.pageWidth" type="number" />
             </div>
             <div class="form-group flex-1">
-              <label>页面高度</label>
+              <label>{{ t('bottomPanel.pageHeight') }}</label>
               <input v-model.number="localReportProperties.pageHeight" type="number" />
             </div>
           </div>
         </div>
         
         <div class="settings-section">
-          <h4>页边距设置</h4>
+          <h4>{{ t('bottomPanel.pageMargins') }}</h4>
           <div class="form-group">
-            <label>页边距 (px)</label>
+            <label>{{ t('bottomPanel.marginsPx') }}</label>
             <div class="margin-inputs">
-              <input v-model.number="localReportProperties.leftMargin" type="number" placeholder="左" />
-              <input v-model.number="localReportProperties.rightMargin" type="number" placeholder="右" />
-              <input v-model.number="localReportProperties.topMargin" type="number" placeholder="上" />
-              <input v-model.number="localReportProperties.bottomMargin" type="number" placeholder="下" />
+              <input v-model.number="localReportProperties.leftMargin" type="number" :placeholder="t('properties.leftSide')" />
+              <input v-model.number="localReportProperties.rightMargin" type="number" :placeholder="t('properties.rightSide')" />
+              <input v-model.number="localReportProperties.topMargin" type="number" :placeholder="t('properties.topSide')" />
+              <input v-model.number="localReportProperties.bottomMargin" type="number" :placeholder="t('properties.bottomSide')" />
             </div>
           </div>
         </div>
 
         <!-- 字体设置 - 紧凑布局 -->
         <div class="settings-section font-settings-compact">
-          <h4>默认字体设置</h4>
+          <h4>{{ t('bottomPanel.defaultFontSettings') }}</h4>
           <div class="font-settings-row">
             <div class="font-setting-item">
-              <label>字体名称</label>
+              <label>{{ t('properties.fontName') }}</label>
               <select v-model="localReportProperties.defaultFont.name">
                 <option v-for="font in availableFonts" :key="font" :value="font">{{ font }}</option>
               </select>
             </div>
             <div class="font-setting-item">
-              <label>字体大小</label>
+              <label>{{ t('properties.fontSize') }}</label>
               <input v-model.number="localReportProperties.defaultFont.size" type="number" />
             </div>
           </div>
           <div class="font-style-options">
             <label>
               <input v-model="localReportProperties.defaultFont.isBold" type="checkbox" />
-              粗体
+              {{ t('properties.bold') }}
             </label>
             <label>
               <input v-model="localReportProperties.defaultFont.isItalic" type="checkbox" />
-              斜体
+              {{ t('properties.italic') }}
             </label>
             <label>
               <input v-model="localReportProperties.defaultFont.isUnderline" type="checkbox" />
-              下划线
+              {{ t('properties.underline') }}
             </label>
           </div>
         </div>
         
         <!-- Band选择 -->
         <div class="settings-section band-selection-section">
-          <h4>Band选择</h4>
+          <h4>{{ t('bottomPanel.bandSelection') }}</h4>
           <div class="band-selection-grid">
             <div v-for="bandType in allBandTypes" :key="bandType.type" class="band-selection-item">
               <label>
@@ -385,12 +394,12 @@ const saveJRXML = (): void => {
                   v-model="localSelectedBandTypes"
                   @change="handleBandSelectionChange"
                 />
-                {{ bandType.name }}
+                {{ getBandDisplayName(bandType.type) }}
               </label>
             </div>
           </div>
           <div class="band-selection-note">
-            <small>勾选的band将自动添加到报表中，取消勾选的band将从报表中移除</small>
+            <small>{{ t('bottomPanel.bandSelectionHint') }}</small>
           </div>
         </div>
       </div>
@@ -401,11 +410,11 @@ const saveJRXML = (): void => {
       <div class="jrxml-container">
         <div class="jrxml-header">
           <div class="jrxml-actions">
-            <button @click="copyJRXML" class="btn-secondary btn-small">复制</button>
-            <button @click="saveJRXML" class="btn-primary btn-small">应用</button>
-            <button @click="regenerateJRXML" class="btn-secondary btn-small">重新生成</button>
-            <button @click="generateJRXML" class="btn-primary btn-small">生成JRXML</button>
-            <button @click="openPdfPreview" class="btn-preview btn-small">预览PDF</button>
+            <button @click="copyJRXML" class="btn-secondary btn-small">{{ t('bottomPanel.copy') }}</button>
+            <button @click="saveJRXML" class="btn-primary btn-small">{{ t('bottomPanel.apply') }}</button>
+            <button @click="regenerateJRXML" class="btn-secondary btn-small">{{ t('bottomPanel.regenerate') }}</button>
+            <button @click="generateJRXML" class="btn-primary btn-small">{{ t('bottomPanel.generateJRXML') }}</button>
+            <button @click="openPdfPreview" class="btn-preview btn-small">{{ t('bottomPanel.previewPDF') }}</button>
           </div>
         </div>
         <div class="jrxml-content">
@@ -421,7 +430,7 @@ const saveJRXML = (): void => {
               @input="syncScroll" 
             ></textarea>
           </div>
-          <div v-else class="jrxml-placeholder">点击"生成JRXML"按钮查看内容</div>
+          <div v-else class="jrxml-placeholder">{{ t('bottomPanel.clickToGenerate') }}</div>
         </div>
       </div>
     </div>

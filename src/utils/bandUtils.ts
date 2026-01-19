@@ -2,22 +2,12 @@
 
 import type { Band,BandType } from '@/types';
 import { BAND_TYPE_CONSTANTS, BAND_HEIGHT_CONSTANTS, BAND_CONSTANTS } from '@/constants/constants';
+import i18n from '@/i18n';
 
 // 获取Band的显示名称
 export function getBandDisplayName(bandType: string): string {
-  const bandNames: Record<string, string> = {
-    [BAND_TYPE_CONSTANTS.TITLE]: '标题',
-    [BAND_TYPE_CONSTANTS.PAGE_HEADER]: '页眉',
-    [BAND_TYPE_CONSTANTS.COLUMN_HEADER]: '列标题',
-    [BAND_TYPE_CONSTANTS.DETAIL]: '详情',
-    [BAND_TYPE_CONSTANTS.COLUMN_FOOTER]: '列脚',
-    [BAND_TYPE_CONSTANTS.PAGE_FOOTER]: '页脚',
-    [BAND_TYPE_CONSTANTS.SUMMARY]: '总结',
-    [BAND_TYPE_CONSTANTS.BACKGROUND]: '背景',
-    [BAND_TYPE_CONSTANTS.LAST_PAGE_FOOTER]: '末页页脚',
-    [BAND_TYPE_CONSTANTS.NO_DATA]: '无数据',
-  };
-  return bandNames[bandType] || bandType;
+  // @ts-ignore
+  return i18n.global.t(`bandNames.${bandType}`);
 }
 
 // 创建新Band

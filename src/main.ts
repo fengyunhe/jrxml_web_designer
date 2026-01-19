@@ -1,9 +1,12 @@
 import { createApp } from 'vue'
 import './style.css'
 import App from './App.vue'
+import i18n from './i18n'
 import { initializeAllPlugins } from './plugins/PluginRegistry'
 
 // 初始化插件系统
 initializeAllPlugins()
 
-createApp(App).mount('#app')
+const app = createApp(App)
+app.use(i18n)
+app.mount('#app')

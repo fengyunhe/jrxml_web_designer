@@ -93,8 +93,8 @@
             'drag-over': highlightedBandIndex === bandIndex
           }"
         >
-          <div class="band-header">
-            <span>{{ band.type }}</span>
+          <div class="band-background-label-container">
+            <span class="band-background-label">{{ t('bandNames.' + band.type) }}</span>
           </div>
           <div class="band-content">
             <ElementFactory
@@ -165,7 +165,11 @@ import { onMounted, onBeforeUnmount, ref } from 'vue';
 import ElementFactory from '../elements/ElementFactory.vue';
 import SelectionBox from './SelectionBox.vue';
 import { BAND_CONSTANTS } from '@/constants/constants';
+import { getBandDisplayName } from '@/utils/bandUtils';
 import type { Band } from '@/types';
+import { useI18n } from 'vue-i18n';
+
+const { t } = useI18n();
 
 // Props
 interface Props {
@@ -668,30 +672,32 @@ onBeforeUnmount(() => {
   background-color: rgba(255, 248, 240, 0.9);
 }
 
-.band-header {
+.band-background-label-container {
   position: absolute;
   top: 0;
   left: 0;
-  background-color: rgba(245, 245, 245, 0.8);
-  padding: 2px 5px;
-  font-size: 12px;
-  font-weight: bold;
-  color: #666;
-  border-right: 1px solid #ddd;
-  border-bottom: 1px solid #ddd;
-  z-index: 10;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
   pointer-events: none;
-  opacity: 0;
-  transition: opacity 0.2s ease;
+  z-index: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
-.band:hover .band-header {
-  opacity: 1;
+.band-background-label {
+  font-size: 40px;
+  font-weight: bold;
+  color: rgba(0, 0, 0, 0.05);
+  user-select: none;
+  white-space: nowrap;
 }
 
 .band-content {
   position: relative;
   min-height: 30px;
+  z-index: 1;
 }
 
 .band-resize-handle {

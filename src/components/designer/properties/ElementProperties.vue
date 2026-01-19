@@ -1,14 +1,14 @@
 <template>
   <div class="element-properties">
-    <h3>属性设置</h3>
+    <h3>{{ t('properties.title') }}</h3>
     
     <!-- 报表属性 -->
     <div v-if="!selectedBandIndex && !selectedElement" class="property-section">
-      <h4>报表属性</h4>
+      <h4>{{ t('properties.reportProperties') }}</h4>
       
       <!-- Band高度设置 -->
       <div class="form-group">
-        <h4>Band高度设置</h4>
+        <h4>{{ t('properties.bandHeightSettings') }}</h4>
         <div class="band-heights-grid">
           <div v-for="(band, index) in bands" :key="index" class="band-height-item">
             <label>{{ getBandDisplayName(band.type) }}</label>
@@ -47,22 +47,22 @@
         
         <!-- 基本属性标签页 -->
         <div class="element-tab-content" v-show="activeElementTab === 'basic'">
-          <h4>基本属性</h4>
+          <h4>{{ t('properties.basicProperties') }}</h4>
           <div class="basic-properties-grid">
             <div class="form-group">
-              <label>X坐标</label>
+              <label>{{ t('properties.x') }}</label>
               <input v-if="currentElement" v-model.number="currentElement.x" type="number" @change="ensureIntegerValue(currentElement, 'x')" />
             </div>
             <div class="form-group">
-              <label>Y坐标</label>
+              <label>{{ t('properties.y') }}</label>
               <input v-if="currentElement" v-model.number="currentElement.y" type="number" @change="ensureIntegerValue(currentElement, 'y')" />
             </div>
             <div class="form-group">
-              <label>宽度</label>
+              <label>{{ t('properties.width') }}</label>
               <input v-if="currentElement" v-model.number="currentElement.width" type="number" @change="ensureIntegerValue(currentElement, 'width')" />
             </div>
             <div class="form-group">
-              <label>高度</label>
+              <label>{{ t('properties.height') }}</label>
               <input v-if="currentElement" v-model.number="currentElement.height" type="number" @change="ensureIntegerValue(currentElement, 'height')" />
             </div>
           </div>
@@ -70,130 +70,130 @@
           <!-- 根据元素类型显示特定属性 -->
           <template v-if="currentElement.type === 'staticText'">
             <div class="form-group">
-              <label>文本内容</label>
+              <label>{{ t('properties.textContent') }}</label>
               <textarea v-if="currentElement" v-model="currentElement.text"></textarea>
             </div>
             <div class="form-group">
-              <label>字体大小</label>
+              <label>{{ t('properties.fontSize') }}</label>
               <input v-if="currentElement" v-model.number="currentElement.fontSize" type="number" />
             </div>
             <div class="checkbox-group">
               <label>
                 <input v-if="currentElement" v-model="currentElement.isBold" type="checkbox" />
-                粗体
+                {{ t('properties.bold') }}
               </label>
               <label>
                 <input v-if="currentElement" v-model="currentElement.isItalic" type="checkbox" />
-                斜体
+                {{ t('properties.italic') }}
               </label>
               <label>
                 <input v-if="currentElement" v-model="currentElement.isUnderline" type="checkbox" />
-                下划线
+                {{ t('properties.underline') }}
               </label>
             </div>
           </template>
           
           <template v-else-if="currentElement && currentElement.type === 'textField'">
             <div class="form-group" v-if="currentElement && currentElement.type === 'textField'">
-              <label>表达式</label>
+              <label>{{ t('properties.expression') }}</label>
               <input v-if="currentElement" :value="getTextFieldExpression(currentElement)" @input="updateTextFieldExpression" type="text" />
-              <small>例如: $F{字段名} 或 $F{字段名}.toString()</small>
+              <small>{{ t('properties.expressionHint') }}</small>
             </div>
             <div class="form-group">
-              <label>格式模式</label>
+              <label>{{ t('properties.pattern') }}</label>
               <input v-if="currentElement" v-model="currentElement.pattern" type="text" />
-              <small>例如: 日期格式 "yyyy-MM-dd"，数字格式 "#,##0.00"</small>
+              <small>{{ t('properties.patternHint') }}</small>
             </div>
             <div class="form-group">
-              <label>文本对齐</label>
+              <label>{{ t('properties.textAlignment') }}</label>
               <select v-if="currentElement" v-model="currentElement.textAlignment">
-                <option value="Left">左对齐</option>
-                <option value="Center">居中</option>
-                <option value="Right">右对齐</option>
-                <option value="Justified">两端对齐</option>
+                <option value="Left">{{ t('properties.left') }}</option>
+                <option value="Center">{{ t('properties.center') }}</option>
+                <option value="Right">{{ t('properties.right') }}</option>
+                <option value="Justified">{{ t('properties.justified') }}</option>
               </select>
             </div>
             <div class="form-group">
-              <label>垂直对齐</label>
+              <label>{{ t('properties.verticalAlignment') }}</label>
               <select v-if="currentElement" v-model="currentElement.verticalAlignment">
-                <option value="Top">顶部</option>
-                <option value="Middle">中间</option>
-                <option value="Bottom">底部</option>
+                <option value="Top">{{ t('properties.top') }}</option>
+                <option value="Middle">{{ t('properties.middle') }}</option>
+                <option value="Bottom">{{ t('properties.bottom') }}</option>
               </select>
             </div>
             <div class="form-group">
-              <label>字体大小</label>
+              <label>{{ t('properties.fontSize') }}</label>
               <input v-if="currentElement" v-model.number="currentElement.fontSize" type="number" />
             </div>
             <div class="checkbox-group">
               <label>
                 <input v-if="currentElement" v-model="currentElement.isBold" type="checkbox" />
-                粗体
+                {{ t('properties.bold') }}
               </label>
               <label>
                 <input v-if="currentElement" v-model="currentElement.isItalic" type="checkbox" />
-                斜体
+                {{ t('properties.italic') }}
               </label>
               <label>
                 <input v-if="currentElement" v-model="currentElement.isUnderline" type="checkbox" />
-                下划线
+                {{ t('properties.underline') }}
               </label>
             </div>
             <div class="checkbox-group">
               <label>
                 <input v-if="currentElement" v-model="currentElement.isStretchWithOverflow" type="checkbox" />
-                内容超出时自动拉伸
+                {{ t('properties.stretchWithOverflow') }}
               </label>
             </div>
             <div class="checkbox-group">
               <label>
                 <input v-if="currentElement" v-model="currentElement.isBlankWhenNull" type="checkbox" />
-                值为null时显示空白
+                {{ t('properties.blankWhenNull') }}
               </label>
             </div>
             <div class="form-group">
-              <label>表达式计算时机</label>
+              <label>{{ t('properties.evaluationTime') }}</label>
               <select v-if="currentElement" v-model="currentElement.evaluationTime">
-                <option value="Now">当前</option>
-                <option value="Report">报表结束时</option>
-                <option value="Page">页结束时</option>
-                <option value="Column">列结束时</option>
-                <option value="Group">组结束时</option>
-                <option value="Band">区域渲染时</option>
-                <option value="Auto">自动</option>
+                <option value="Now">{{ t('properties.evalTime.Now') }}</option>
+                <option value="Report">{{ t('properties.evalTime.Report') }}</option>
+                <option value="Page">{{ t('properties.evalTime.Page') }}</option>
+                <option value="Column">{{ t('properties.evalTime.Column') }}</option>
+                <option value="Group">{{ t('properties.evalTime.Group') }}</option>
+                <option value="Band">{{ t('properties.evalTime.Band') }}</option>
+                <option value="Auto">{{ t('properties.evalTime.Auto') }}</option>
               </select>
             </div>
           </template>
           
           <template v-else-if="currentElement && currentElement.type === 'image'">
             <div class="form-group">
-              <label>图片表达式</label>
+              <label>{{ t('properties.imageExpression') }}</label>
               <input v-if="currentElement" v-model="currentElement.imageExpression" type="text" />
-              <small>例如: "logo.png" 或 $F{imageFieldName}</small>
+              <small>{{ t('properties.imageExpressionHint') }}</small>
             </div>
           </template>
           <template v-else-if="currentElement && currentElement.type === 'rectangle'">
             <div class="form-group">
-              <label>圆角半径</label>
+              <label>{{ t('properties.radius') }}</label>
               <input v-if="currentElement" v-model.number="currentElement.radius" type="number" min="0" @change="ensureIntegerValue(currentElement, 'radius')" />
             </div>
           </template>
           <template v-else-if="currentElement && currentElement.type === 'break'">
             <div class="form-group">
-              <label>分页符类型</label>
+              <label>{{ t('properties.breakType') }}</label>
               <select v-if="currentElement" v-model="currentElement.breakType" @change="emit('update-jrxml')">
-                <option value="Page">分页 (Page Break)</option>
-                <option value="Column">分栏 (Column Break)</option>
+                <option value="Page">{{ t('properties.pageBreak') }}</option>
+                <option value="Column">{{ t('properties.columnBreak') }}</option>
               </select>
             </div>
           </template>
           <template v-else-if="currentElement && currentElement.type === 'frame'">
             <div class="form-group">
-              <label>布局模式</label>
+              <label>{{ t('properties.layoutMode') }}</label>
               <select v-if="currentElement" v-model="currentElement.layout" @change="emit('update-jrxml')">
-                <option :value="undefined">自由布局 (Free Layout)</option>
-                <option value="HorizontalLayout">水平布局 (Horizontal Layout)</option>
-                <option value="VerticalLayout">垂直布局 (Vertical Layout)</option>
+                <option :value="undefined">{{ t('properties.freeLayout') }}</option>
+                <option value="HorizontalLayout">{{ t('properties.horizontalLayout') }}</option>
+                <option value="VerticalLayout">{{ t('properties.verticalLayout') }}</option>
               </select>
             </div>
           </template>
@@ -203,36 +203,36 @@
         <div class="element-tab-content" v-show="activeElementTab === 'box'">
           <template v-if="currentElement && currentElement.type === 'break'">
             <div class="box-section">
-              <p style="font-size: 12px; color: #666;">分页符元素不支持边框设置。</p>
+              <p style="font-size: 12px; color: #666;">{{ t('properties.breakNoBorder') }}</p>
             </div>
           </template>
           <template v-else>
-            <h4>边框设置</h4>
+            <h4>{{ t('properties.boxSettings') }}</h4>
             
             <!-- 矩形/椭圆元素的边框设置 (统一设置) -->
             <template v-if="currentElement && (currentElement.type === 'rectangle' || currentElement.type === 'ellipse')">
               <div class="box-section">
-                <h5>统一边框设置</h5>
-                <p style="font-size: 12px; color: #666; margin-bottom: 12px;">该元素只支持统一设置边框</p>
+                <h5>{{ t('properties.unifiedBorder') }}</h5>
+                <p style="font-size: 12px; color: #666; margin-bottom: 12px;">{{ t('properties.unifiedBorderHint') }}</p>
                 
                 <div class="border-side-group">
-                  <label class="side-label">样式</label>
+                  <label class="side-label">{{ t('properties.style') }}</label>
                   <select :value="getRectangleBorderStyle()" @change="setRectangleBorderStyle(($event.target as HTMLSelectElement).value)" class="side-control">
-                    <option value="">无</option>
-                    <option value="Solid">实线</option>
-                    <option value="Dashed">虚线</option>
-                    <option value="Dotted">点线</option>
-                    <option value="Double">双线</option>
+                    <option value="">{{ t('properties.none') }}</option>
+                    <option value="Solid">{{ t('properties.solid') }}</option>
+                    <option value="Dashed">{{ t('properties.dashed') }}</option>
+                    <option value="Dotted">{{ t('properties.dotted') }}</option>
+                    <option value="Double">{{ t('properties.double') }}</option>
                   </select>
                 </div>
                 
                 <div class="border-side-group">
-                  <label class="side-label">宽度</label>
-                  <input :value="getRectangleBorderWidth()" @input="setRectangleBorderWidth(($event.target as HTMLInputElement).value)" type="number" min="0" max="10" step="0.5" class="side-control" placeholder="宽度" />
+                  <label class="side-label">{{ t('properties.width') }}</label>
+                  <input :value="getRectangleBorderWidth()" @input="setRectangleBorderWidth(($event.target as HTMLInputElement).value)" type="number" min="0" max="10" step="0.5" class="side-control" :placeholder="t('properties.width')" />
                 </div>
                 
                 <div class="border-side-group">
-                  <label class="side-label">颜色</label>
+                  <label class="side-label">{{ t('properties.color') }}</label>
                   <input :value="getRectangleBorderColor()" @input="setRectangleBorderColor(($event.target as HTMLInputElement).value)" type="color" class="color-control" style="flex: 1;" />
                 </div>
               </div>
@@ -242,98 +242,98 @@
             <template v-else>
               <!-- 快捷边框设置 -->
               <div class="box-section">
-                <h5>快捷设置</h5>
+                <h5>{{ t('properties.quickSettings') }}</h5>
                 <div class="border-quick-actions">
-                  <button @click="removeAllBorders" class="btn-remove-border">四面无边框</button>
-                  <button @click="addSolidBorder" class="btn-add-border">四面实线边框(1px)</button>
+                  <button @click="removeAllBorders" class="btn-remove-border">{{ t('properties.noBorders') }}</button>
+                  <button @click="addSolidBorder" class="btn-add-border">{{ t('properties.allBorders') }}</button>
                 </div>
               </div>
               
               <!-- 各边边框设置 -->
               <div class="box-section">
-                <h5>各边边框设置</h5>
+                <h5>{{ t('properties.sideBorders') }}</h5>
                 
                 <!-- 上边 -->
                 <div class="border-side-group">
-                  <label class="side-label">上边</label>
+                  <label class="side-label">{{ t('properties.topSide') }}</label>
                   <select v-if="currentElement && currentElement.box" :value="getSideBorderStyle('top')" @change="setSideBorderStyle('top', ($event.target as HTMLSelectElement).value)" class="side-control">
-                    <option value="">无</option>
-                    <option value="Solid">实线</option>
-                    <option value="Dashed">虚线</option>
-                    <option value="Dotted">点线</option>
-                    <option value="Double">双线</option>
+                    <option value="">{{ t('properties.none') }}</option>
+                    <option value="Solid">{{ t('properties.solid') }}</option>
+                    <option value="Dashed">{{ t('properties.dashed') }}</option>
+                    <option value="Dotted">{{ t('properties.dotted') }}</option>
+                    <option value="Double">{{ t('properties.double') }}</option>
                   </select>
-                  <input v-if="currentElement && currentElement.box" :value="getSideBorderWidth('top')" @input="setSideBorderWidth('top', ($event.target as HTMLInputElement).value)" type="number" min="0" max="10" step="0.5" class="width-control" placeholder="宽度" />
+                  <input v-if="currentElement && currentElement.box" :value="getSideBorderWidth('top')" @input="setSideBorderWidth('top', ($event.target as HTMLInputElement).value)" type="number" min="0" max="10" step="0.5" class="width-control" :placeholder="t('properties.width')" />
                   <input v-if="currentElement && currentElement.box" :value="getSideBorderColor('top')" @input="setSideBorderColor('top', ($event.target as HTMLInputElement).value)" type="color" class="color-control" />
                 </div>
                 
                 <!-- 左边 -->
                 <div class="border-side-group">
-                  <label class="side-label">左边</label>
+                  <label class="side-label">{{ t('properties.leftSide') }}</label>
                   <select v-if="currentElement && currentElement.box" :value="getSideBorderStyle('left')" @change="setSideBorderStyle('left', ($event.target as HTMLSelectElement).value)" class="side-control">
-                    <option value="">无</option>
-                    <option value="Solid">实线</option>
-                    <option value="Dashed">虚线</option>
-                    <option value="Dotted">点线</option>
-                    <option value="Double">双线</option>
+                    <option value="">{{ t('properties.none') }}</option>
+                    <option value="Solid">{{ t('properties.solid') }}</option>
+                    <option value="Dashed">{{ t('properties.dashed') }}</option>
+                    <option value="Dotted">{{ t('properties.dotted') }}</option>
+                    <option value="Double">{{ t('properties.double') }}</option>
                   </select>
-                  <input v-if="currentElement && currentElement.box" :value="getSideBorderWidth('left')" @input="setSideBorderWidth('left', ($event.target as HTMLInputElement).value)" type="number" min="0" max="10" step="0.5" class="width-control" placeholder="宽度" />
+                  <input v-if="currentElement && currentElement.box" :value="getSideBorderWidth('left')" @input="setSideBorderWidth('left', ($event.target as HTMLInputElement).value)" type="number" min="0" max="10" step="0.5" class="width-control" :placeholder="t('properties.width')" />
                   <input v-if="currentElement && currentElement.box" :value="getSideBorderColor('left')" @input="setSideBorderColor('left', ($event.target as HTMLInputElement).value)" type="color" class="color-control" />
                 </div>
                 
                 <!-- 下边 -->
                 <div class="border-side-group">
-                  <label class="side-label">下边</label>
+                  <label class="side-label">{{ t('properties.bottomSide') }}</label>
                   <select v-if="currentElement && currentElement.box" :value="getSideBorderStyle('bottom')" @change="setSideBorderStyle('bottom', ($event.target as HTMLSelectElement).value)" class="side-control">
-                    <option value="">无</option>
-                    <option value="Solid">实线</option>
-                    <option value="Dashed">虚线</option>
-                    <option value="Dotted">点线</option>
-                    <option value="Double">双线</option>
+                    <option value="">{{ t('properties.none') }}</option>
+                    <option value="Solid">{{ t('properties.solid') }}</option>
+                    <option value="Dashed">{{ t('properties.dashed') }}</option>
+                    <option value="Dotted">{{ t('properties.dotted') }}</option>
+                    <option value="Double">{{ t('properties.double') }}</option>
                   </select>
-                  <input v-if="currentElement && currentElement.box" :value="getSideBorderWidth('bottom')" @input="setSideBorderWidth('bottom', ($event.target as HTMLInputElement).value)" type="number" min="0" max="10" step="0.5" class="width-control" placeholder="宽度" />
+                  <input v-if="currentElement && currentElement.box" :value="getSideBorderWidth('bottom')" @input="setSideBorderWidth('bottom', ($event.target as HTMLInputElement).value)" type="number" min="0" max="10" step="0.5" class="width-control" :placeholder="t('properties.width')" />
                   <input v-if="currentElement && currentElement.box" :value="getSideBorderColor('bottom')" @input="setSideBorderColor('bottom', ($event.target as HTMLInputElement).value)" type="color" class="color-control" />
                 </div>
                 
                 <!-- 右边 -->
                 <div class="border-side-group">
-                  <label class="side-label">右边</label>
+                  <label class="side-label">{{ t('properties.rightSide') }}</label>
                   <select v-if="currentElement && currentElement.box" :value="getSideBorderStyle('right')" @change="setSideBorderStyle('right', ($event.target as HTMLSelectElement).value)" class="side-control">
-                    <option value="">无</option>
-                    <option value="Solid">实线</option>
-                    <option value="Dashed">虚线</option>
-                    <option value="Dotted">点线</option>
-                    <option value="Double">双线</option>
+                    <option value="">{{ t('properties.none') }}</option>
+                    <option value="Solid">{{ t('properties.solid') }}</option>
+                    <option value="Dashed">{{ t('properties.dashed') }}</option>
+                    <option value="Dotted">{{ t('properties.dotted') }}</option>
+                    <option value="Double">{{ t('properties.double') }}</option>
                   </select>
-                  <input v-if="currentElement && currentElement.box" :value="getSideBorderWidth('right')" @input="setSideBorderWidth('right', ($event.target as HTMLInputElement).value)" type="number" min="0" max="10" step="0.5" class="width-control" placeholder="宽度" />
+                  <input v-if="currentElement && currentElement.box" :value="getSideBorderWidth('right')" @input="setSideBorderWidth('right', ($event.target as HTMLInputElement).value)" type="number" min="0" max="10" step="0.5" class="width-control" :placeholder="t('properties.width')" />
                   <input v-if="currentElement && currentElement.box" :value="getSideBorderColor('right')" @input="setSideBorderColor('right', ($event.target as HTMLInputElement).value)" type="color" class="color-control" />
                 </div>
               </div>
               
               <!-- 边距设置 -->
               <div class="box-section">
-                <h5>边距设置</h5>
+                <h5>{{ t('properties.marginSettings') }}</h5>
                 <div class="form-group">
-                  <label>全局边距（像素）</label>
-                  <input v-if="currentElement && currentElement.box" v-model.number="currentElement.box.padding" type="number" placeholder="全部边距" />
-                  <small>设置后会覆盖各边独立设置</small>
+                  <label>{{ t('properties.globalMargin') }}</label>
+                  <input v-if="currentElement && currentElement.box" v-model.number="currentElement.box.padding" type="number" :placeholder="t('properties.globalMargin')" />
+                  <small>{{ t('properties.globalMarginHint') }}</small>
                 </div>
                 
                 <div class="padding-grid">
                   <div class="form-group">
-                    <label>上边距</label>
+                    <label>{{ t('properties.topMargin') }}</label>
                     <input v-if="currentElement && currentElement.box" v-model.number="currentElement.box.topPadding" type="number" />
                   </div>
                   <div class="form-group">
-                    <label>左边距</label>
+                    <label>{{ t('properties.leftMargin') }}</label>
                     <input v-if="currentElement && currentElement.box" v-model.number="currentElement.box.leftPadding" type="number" />
                   </div>
                   <div class="form-group">
-                    <label>下边距</label>
+                    <label>{{ t('properties.bottomMargin') }}</label>
                     <input v-if="currentElement && currentElement.box" v-model.number="currentElement.box.bottomPadding" type="number" />
                   </div>
                   <div class="form-group">
-                    <label>右边距</label>
+                    <label>{{ t('properties.rightMargin') }}</label>
                     <input v-if="currentElement && currentElement.box" v-model.number="currentElement.box.rightPadding" type="number" />
                   </div>
                 </div>
@@ -346,13 +346,13 @@
         <div class="element-tab-content" v-show="activeElementTab === 'style'">
           <template v-if="currentElement && currentElement.type === 'break'">
             <div class="box-section">
-              <p style="font-size: 12px; color: #666;">分页符元素不支持样式设置。</p>
+              <p style="font-size: 12px; color: #666;">{{ t('properties.breakNoStyle') }}</p>
             </div>
           </template>
           <template v-else>
-            <h4>样式设置</h4>
+            <h4>{{ t('properties.styleSettings') }}</h4>
             <div class="form-group">
-              <label>背景颜色</label>
+              <label>{{ t('properties.backgroundColor') }}</label>
             <div class="color-picker-container" style="display: flex; flex-direction: column; gap: 8px;">
               <div style="display: flex; gap: 8px; align-items: center;">
                 <input v-if="currentElement" v-model="tempColor" type="color" @input="updateBackcolorFromControls" style="width: 40px; padding: 0; border: 1px solid #ddd; cursor: pointer;" />
@@ -368,7 +368,7 @@
               
               <!-- 透明度滑块 -->
               <div style="display: flex; align-items: center; gap: 8px;">
-                <span style="font-size: 12px; color: #666; width: 40px;">透明度</span>
+                <span style="font-size: 12px; color: #666; width: 40px;">{{ t('properties.opacity') }}</span>
                 <input 
                   type="range" 
                   min="0" 
@@ -384,26 +384,26 @@
           </div>
           
           <div class="form-group">
-            <label>背景模式</label>
+            <label>{{ t('properties.backgroundMode') }}</label>
             <select v-if="currentElement" v-model="currentElement.mode" @change="emit('update-jrxml')">
-              <option :value="undefined">默认(透明)</option>
-              <option value="Transparent">透明</option>
-              <option value="Opaque">不透明</option>
+              <option :value="undefined">{{ t('properties.defaultTransparent') }}</option>
+              <option value="Transparent">{{ t('properties.transparent') }}</option>
+              <option value="Opaque">{{ t('properties.opaque') }}</option>
             </select>
           </div>
           
           <template v-if="currentElement && currentElement.type !== 'line' && currentElement.type !== 'image' && currentElement.type !== 'frame'">
             <div class="form-group">
-              <label>字体名称</label>
+              <label>{{ t('properties.fontName') }}</label>
               <select v-if="currentElement" v-model="currentElement.fontFamily" style="appearance: none; -webkit-appearance: none;">
-                <option value="">使用默认字体</option>
+                <option value="">{{ t('properties.useDefaultFont') }}</option>
                 <option v-for="font in availableFonts" :key="font" :value="font">{{ font }}</option>
               </select>
-              <small class="font-hint">提示：可以直接在下拉框中输入字体名称</small>
+              <small class="font-hint">{{ t('properties.fontHint') }}</small>
             </div>
             
             <div class="form-group">
-              <label>文本对齐</label>
+              <label>{{ t('properties.textAlignment') }}</label>
               <div class="alignment-controls">
                 <button 
                   v-for="align in ['Left', 'Center', 'Right']" 
@@ -411,15 +411,15 @@
                   @click="setHorizontalAlignment(align as 'Left' | 'Center' | 'Right')"
                   :class="{ active: currentElement && currentElement.textAlignment === align }"
                   class="align-button"
-                  title="水平对齐: {{ align }}"
+                  :title="t(`properties.${align.toLowerCase()}`)"
                 >
-                  {{ align === 'Left' ? '左对齐' : align === 'Center' ? '居中对齐' : '右对齐' }}
+                  {{ t(`properties.${align.toLowerCase()}`) }}
                 </button>
               </div>
             </div>
             
             <div class="form-group">
-              <label>垂直对齐</label>
+              <label>{{ t('properties.verticalAlignment') }}</label>
               <div class="alignment-controls">
                 <button 
                   v-for="align in ['Top', 'Middle', 'Bottom']" 
@@ -427,9 +427,9 @@
                   @click="setVerticalAlignment(align as 'Top' | 'Middle' | 'Bottom')"
                   :class="{ active: currentElement && currentElement.verticalAlignment === align }"
                   class="align-button"
-                  title="垂直对齐: {{ align }}"
+                  :title="t(`properties.${align.toLowerCase()}`)"
                 >
-                  {{ align === 'Top' ? '顶部对齐' : align === 'Middle' ? '垂直居中' : '底部对齐' }}
+                  {{ t(`properties.${align.toLowerCase()}`) }}
                 </button>
               </div>
             </div>
@@ -437,15 +437,15 @@
             <div class="checkbox-group">
               <label>
                 <input v-if="currentElement" v-model="currentElement.isBold" type="checkbox" />
-                粗体
+                {{ t('properties.bold') }}
               </label>
               <label>
                 <input v-if="currentElement" v-model="currentElement.isItalic" type="checkbox" />
-                斜体
+                {{ t('properties.italic') }}
               </label>
               <label>
                 <input v-if="currentElement" v-model="currentElement.isUnderline" type="checkbox" />
-                下划线
+                {{ t('properties.underline') }}
               </label>
             </div>
           </template>
@@ -454,7 +454,7 @@
       </div>
       
       <div class="element-actions">
-        <button @click="deleteElement" class="btn-danger">删除元素</button>
+        <button @click="deleteElement" class="btn-danger">{{ t('properties.deleteElement') }}</button>
       </div>
     </div>
   </div>
@@ -462,8 +462,11 @@
 
 <script setup lang="ts">
 import { computed, ref, onMounted, watch } from 'vue';
+import { useI18n } from 'vue-i18n';
 import type { Band, SelectedElementInfo } from '../../../types';
 import { getAvailableFonts } from '../../../utils/fontUtils';
+
+const { t } = useI18n();
 
 interface Props {
   selectedBandIndex: number | null;
@@ -484,10 +487,10 @@ const emit = defineEmits<Emits>();
 
 // 标签页相关
 const activeElementTab = ref('basic');
-const elementTabs = ref([
-  { id: 'basic', name: '基本属性' },
-  { id: 'box', name: 'Box设置' },
-  { id: 'style', name: '样式设置' }
+const elementTabs = computed(() => [
+  { id: 'basic', name: t('properties.basicProperties') },
+  { id: 'box', name: t('properties.boxSettings') },
+  { id: 'style', name: t('properties.styleSettings') }
 ]);
 
 // 可用字体列表
@@ -522,19 +525,9 @@ const currentElement = computed(() => {
 
 // 获取Band显示名称
 function getBandDisplayName(bandType: string): string {
-  const bandNames: Record<string, string> = {
-    'TITLE': '标题',
-    'PAGE_HEADER': '页眉',
-    'COLUMN_HEADER': '列标题',
-    'DETAIL': '详细数据',
-    'COLUMN_FOOTER': '列脚',
-    'PAGE_FOOTER': '页脚',
-    'SUMMARY': '汇总',
-    'BACKGROUND': '背景',
-    'LAST_PAGE_FOOTER': '末页页脚',
-    'NO_DATA': '无数据'
-  };
-  return bandNames[bandType] || bandType;
+  // Use t() with dynamic key. 
+  // Assuming keys exist in bandNames section of locale files.
+  return t(`bandNames.${bandType}`);
 }
 
 // 更新Band高度

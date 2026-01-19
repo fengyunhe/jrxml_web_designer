@@ -1,36 +1,36 @@
 <template>
   <div class="file-menu-container" ref="fileMenuContainer">
-    <button @click="toggleFileMenu" class="file-menu-button">文件管理</button>
+    <button @click="toggleFileMenu" class="file-menu-button">{{ t('fileManager.title') }}</button>
     <div v-if="showFileMenu" class="file-menu-dropdown">
       <div class="menu-item" @click="createNewFile">
         <span class="menu-icon">📄</span>
-        <span>新建文件</span>
+        <span>{{ t('fileManager.newFile') }}</span>
       </div>
       <div class="menu-item" @click="openLocalFile">
         <span class="menu-icon">📂</span>
-        <span>打开本地文件</span>
+        <span>{{ t('fileManager.openLocalFile') }}</span>
       </div>
-      <div class="menu-item" @click="saveCurrentFileToStorage" :disabled="!currentFileName || currentFileName === '未命名报表'">
+      <div class="menu-item" @click="saveCurrentFileToStorage" :disabled="!currentFileName || currentFileName === t('fileManager.untitledReport')">
         <span class="menu-icon">💾</span>
-        <span>保存</span>
+        <span>{{ t('fileManager.save') }}</span>
       </div>
       <div class="menu-item" @click="saveAsLocalFile">
         <span class="menu-icon">💾</span>
-        <span>另存为</span>
+        <span>{{ t('fileManager.saveAs') }}</span>
       </div>
       <div class="menu-divider"></div>
       <div class="menu-item file-submenu-container" @click="toggleFileSubmenu">
         <span class="menu-icon">📋</span>
-        <span>文件列表</span>
+        <span>{{ t('fileManager.fileList') }}</span>
         <span class="submenu-arrow">▶</span>
         <div v-if="showFileSubmenu" class="file-submenu" @click.stop>
           <div class="submenu-header">
-            <h4>文件列表</h4>
+            <h4>{{ t('fileManager.fileList') }}</h4>
             <div class="file-filter">
               <input 
                 v-model="fileFilterText" 
                 type="text" 
-                placeholder="搜索文件..." 
+                :placeholder="t('fileManager.searchFile')" 
                 class="filter-input"
                 @click.stop
               />
@@ -38,7 +38,7 @@
                 v-if="fileFilterText" 
                 @click.stop="fileFilterText = ''" 
                 class="clear-filter-btn"
-                title="清除搜索"
+                :title="t('fileManager.searchFile')"
               >
                 ✕
               </button>
@@ -57,22 +57,22 @@
                 <span class="file-date">{{ formatDate(file.lastModified) }}</span>
               </div>
               <div class="file-item-actions">
-                <button @click.stop="renameFileFromSubmenu(file)" class="btn-icon" title="重命名">
+                <button @click.stop="renameFileFromSubmenu(file)" class="btn-icon" :title="t('fileManager.rename')">
                   ✏️
                 </button>
-                <button @click.stop="deleteFileFromSubmenu(file)" class="btn-icon btn-danger" title="删除">
+                <button @click.stop="deleteFileFromSubmenu(file)" class="btn-icon btn-danger" :title="t('fileManager.delete')">
                   🗑️
                 </button>
               </div>
             </div>
             <div v-if="filteredFiles.length === 0" class="empty-state">
-              <p>没有找到文件</p>
-              <button @click.stop="createNewFile" class="btn-primary">创建新文件</button>
+              <p>{{ t('fileManager.noFilesFound') }}</p>
+              <button @click.stop="createNewFile" class="btn-primary">{{ t('fileManager.createNewFile') }}</button>
             </div>
           </div>
           <div class="submenu-footer">
-            <button @click.stop="createNewFile" class="btn-small btn-primary">新建文件</button>
-            <button @click.stop="openLocalFile" class="btn-small btn-secondary">打开本地文件</button>
+            <button @click.stop="createNewFile" class="btn-small btn-primary">{{ t('fileManager.newFile') }}</button>
+            <button @click.stop="openLocalFile" class="btn-small btn-secondary">{{ t('fileManager.openLocalFile') }}</button>
           </div>
         </div>
       </div>
@@ -81,8 +81,8 @@
     <!-- 重命名弹窗 -->
     <InputModal
       v-model:visible="showRenameModal"
-      title="重命名文件"
-      message="请输入新的文件名："
+      :title="t('fileManager.renameFile')"
+      :message="t('fileManager.enterNewFileName')"
       :default-value="pendingFile?.name || ''"
       @confirm="handleConfirmRename"
     />
@@ -90,8 +90,8 @@
     <!-- 删除确认弹窗 -->
     <ConfirmModal
       v-model:visible="showDeleteModal"
-      title="删除文件"
-      :message="`确定要删除文件 &quot;${pendingFile?.name}&quot; 吗？此操作不可撤销。`"
+      :title="t('fileManager.deleteFile')"
+      :message="t('fileManager.deleteFileConfirm', { name: pendingFile?.name })"
       @confirm="handleConfirmDelete"
     />
   </div>
@@ -99,11 +99,14 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted } from 'vue';
+import { useI18n } from 'vue-i18n';
 import notification from '../../../utils/notification';
 import { useDesignerFiles } from '@/composables/useDesignerFiles';
 import type { DesignerFile } from '@/types/designerFile';
 import ConfirmModal from '../../modals/ConfirmModal.vue';
 import InputModal from '../../modals/InputModal.vue';
+
+const { t } = useI18n();
 
 interface Props {
   currentFileName: string;
@@ -244,7 +247,7 @@ function openLocalFile() {
           });
         } catch (error) {
           console.error('加载文件失败:', error);
-          notification.error('文件格式不正确，无法加载');
+          notification.error(t('fileManager.invalidFileFormat'));
         }
       };
       reader.readAsText(file);
@@ -296,17 +299,18 @@ onUnmounted(() => {
 }
 
 .file-menu-button {
-  padding: 8px 16px;
-  background-color: #f5f5f5;
-  border: 1px solid #ddd;
+  padding: 0.3rem 0.8rem;
+  background-color: #6c757d;
+  color: white;
+  border: none;
   border-radius: 4px;
   cursor: pointer;
-  font-size: 14px;
+  font-size: 0.85rem;
   transition: all 0.2s ease;
 }
 
 .file-menu-button:hover {
-  background-color: #e0e0e0;
+  background-color: #5a6268;
 }
 
 .file-menu-dropdown {

@@ -32,7 +32,7 @@ export class ElementRegistry {
   private registerDefaultElements(): void {
     this.registerElement({
       type: 'staticText',
-      name: '静态文本',
+      name: 'elementNames.staticText',
       icon: 'T',
       defaultProps: {
         type: 'staticText',
@@ -53,7 +53,7 @@ export class ElementRegistry {
 
     this.registerElement({
       type: 'textField',
-      name: '动态文本',
+      name: 'elementNames.textField',
       icon: '{ }',
       defaultProps: {
         type: 'textField',
@@ -78,7 +78,7 @@ export class ElementRegistry {
 
     this.registerElement({
       type: 'image',
-      name: '图片',
+      name: 'elementNames.image',
       icon: '🖼',
       defaultProps: {
         type: 'image',
@@ -92,7 +92,7 @@ export class ElementRegistry {
 
     this.registerElement({
       type: 'line',
-      name: '线条',
+      name: 'elementNames.line',
       icon: '─',
       defaultProps: {
         type: 'line',
@@ -107,7 +107,7 @@ export class ElementRegistry {
 
     this.registerElement({
       type: 'rectangle',
-      name: '矩形',
+      name: 'elementNames.rectangle',
       icon: '▭',
       defaultProps: {
         type: 'rectangle',
@@ -121,7 +121,7 @@ export class ElementRegistry {
 
     this.registerElement({
       type: 'ellipse',
-      name: '椭圆',
+      name: 'elementNames.ellipse',
       icon: '◯',
       defaultProps: {
         type: 'ellipse',
@@ -135,7 +135,7 @@ export class ElementRegistry {
 
     this.registerElement({
       type: 'break',
-      name: '分页符',
+      name: 'elementNames.break',
       icon: '⤓', // 或者其他合适的图标
       defaultProps: {
         type: 'break',
@@ -149,7 +149,7 @@ export class ElementRegistry {
 
     this.registerElement({
       type: 'frame',
-      name: '容器',
+      name: 'elementNames.frame',
       icon: '☐', // 框图标
       defaultProps: {
         type: 'frame',

@@ -1,6 +1,6 @@
 <template>
   <div class="band-height-controls">
-    <h4>Band高度设置</h4>
+    <h4>{{ t('properties.bandHeightSettings') }}</h4>
     <div class="band-heights-grid">
       <div v-for="(band, index) in bands" :key="index" class="band-height-item">
         <label>{{ getBandDisplayName(band.type) }}</label>
@@ -21,7 +21,10 @@
 </template>
 
 <script setup lang="ts">
+import { useI18n } from 'vue-i18n';
 import type { Band } from '../../../types';
+
+const { t } = useI18n();
 
 interface Props {
   bands: Band[];
@@ -37,19 +40,9 @@ const emit = defineEmits<Emits>();
 
 // 获取Band显示名称
 function getBandDisplayName(bandType: string): string {
-  const bandNames: Record<string, string> = {
-    'TITLE': '标题',
-    'PAGE_HEADER': '页眉',
-    'COLUMN_HEADER': '列标题',
-    'DETAIL': '详细数据',
-    'COLUMN_FOOTER': '列脚',
-    'PAGE_FOOTER': '页脚',
-    'SUMMARY': '汇总',
-    'BACKGROUND': '背景',
-    'LAST_PAGE_FOOTER': '末页页脚',
-    'NO_DATA': '无数据'
-  };
-  return bandNames[bandType] || bandType;
+  // Use t() with dynamic key. 
+  // Assuming keys exist in bandNames section of locale files.
+  return t(`bandNames.${bandType}`);
 }
 
 // 更新Band高度

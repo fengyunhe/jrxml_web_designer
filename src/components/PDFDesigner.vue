@@ -2,15 +2,15 @@
   <div class="pdf-designer">
     <div class="designer-header">
       <div class="header-left">
-        <h1>PDF模板设计器</h1>
+        <h1>{{ t('app.title') }}</h1>
         <div class="header-undo-redo">
-          <button @click="undo" class="btn-secondary">撤销</button>
-          <button @click="redo" class="btn-secondary">重做</button>
+          <button @click="undo" class="btn-secondary">{{ t('actions.undo') }}</button>
+          <button @click="redo" class="btn-secondary">{{ t('actions.redo') }}</button>
         </div>
       </div>
       <div class="header-actions">
         <!-- 文件管理组件 -->
-        <FileManager
+        <FileManager 
           :current-file-name="currentFileName"
           :current-file-id="currentFileId"
           @create-new-file="createNewFile"
@@ -20,27 +20,26 @@
           @update:currentFileName="currentFileName = $event"
           @update:currentFileId="currentFileId = $event"
         />
-        <span class="current-file-name">{{ currentFileName }}</span>
         
         <button @click="toggleLeftPanel" class="btn-secondary">
-          {{ showLeftPanel ? '隐藏左侧面板' : '显示左侧面板' }}
+          {{ showLeftPanel ? t('actions.hideLeftPanel') : t('actions.showLeftPanel') }}
         </button>
         <button @click="toggleRightPanel" class="btn-secondary">
-          {{ showRightPanel ? '隐藏右侧面板' : '显示右侧面板' }}
+          {{ showRightPanel ? t('actions.hideRightPanel') : t('actions.showRightPanel') }}
         </button>
         <button @click="toggleBottomPanel" class="btn-secondary">
-          {{ showBottomPanel ? '隐藏底部面板' : '显示底部面板' }}
+          {{ showBottomPanel ? t('actions.hideBottomPanel') : t('actions.showBottomPanel') }}
         </button>
         
         <!-- 自动吸附开关 -->
         <div class="snap-toggle">
           <label>
             <input type="checkbox" v-model="enableSnapToGrid" />
-            网格吸附
+            {{ t('actions.snapToGrid') }}
           </label>
           <label>
             <input type="checkbox" v-model="enableSnapToAlignment" />
-            对齐线吸附
+            {{ t('actions.snapToAlignment') }}
           </label>
         </div>
         
@@ -51,11 +50,16 @@
           @update:zoomLevel="zoomLevel = $event"
         />
         
-        <button @click="clearLocalStorage" class="btn-secondary">清空本地数据</button>
-        <button @click="generateJRXML" class="btn-primary">生成JRXML</button>
-        <button @click="openPdfPreview" class="btn-primary">预览PDF</button>
-        <button @click="showReward = true" class="btn-secondary">打赏</button>
-        <button @click="showHelp = true" class="btn-secondary">使用说明</button>
+        <button @click="clearLocalStorage" class="btn-secondary">{{ t('actions.clearLocalData') }}</button>
+        <SplitButton 
+          :actions="[
+            { label: t('actions.previewPDF'), handler: openPdfPreview, class: 'btn-primary' },
+            { label: t('actions.generateJRXML'), handler: generateJRXML, class: 'btn-primary' }
+          ]" 
+        />
+        <button @click="showReward = true" class="btn-secondary">{{ t('actions.donate') }}</button>
+        <button @click="showHelp = true" class="btn-secondary">{{ t('actions.help') }}</button>
+        <LanguageSwitcher />
       </div>
     </div>
     
@@ -215,9 +219,12 @@ import ElementLibrary from './ElementLibrary.vue';
 import FileManager from './designer/controls/FileManager.vue';
 import ZoomControls from './designer/controls/ZoomControls.vue';
 import ElementProperties from './designer/properties/ElementProperties.vue';
+import LanguageSwitcher from './common/LanguageSwitcher.vue';
+import SplitButton from './common/SplitButton.vue';
 import type {Band, BandType, DesignElement, ReportField, ReportParameter, SelectedElementInfo, DraggingInfo, EditingElementInfo, FrameElement} from '../types';
 import type { DesignerFile } from '@/types/designerFile';
 import {computed, onMounted, onUnmounted, ref, watch} from 'vue';
+import { useI18n } from 'vue-i18n';
 import { useDesignerFiles } from '@/composables/useDesignerFiles';
 import { useUndoRedo } from '@/composables/useUndoRedo';
 import { useZoom } from '@/composables/useZoom';
@@ -257,6 +264,8 @@ import {generateJRXMLContent, parseJRXMLContent} from '../utils/jrxmlGenerator';
 // 导入通知管理器
 import notification from '../utils/notification';
 import { getAllElements as getAllElementConfigs, createElement } from '@/components/elements/ElementRegistry';
+
+const { t } = useI18n();
 
 // 标签页相关
 const activeTab = ref('pageSettings');
@@ -311,6 +320,17 @@ const {
   clearStoredFiles,
   setLastFile
 } = useDesignerFiles();
+
+// 更新网页标题
+watch(currentFileName, (newName) => {
+  document.title = newName ? `${newName} - ${t('app.title')}` : t('app.title');
+}, { immediate: true });
+
+// 监听语言变化，更新标题
+watch(() => t('app.title'), () => {
+  const name = currentFileName.value;
+  document.title = name ? `${name} - ${t('app.title')}` : t('app.title');
+});
 
 function clearLocalStorage() {
   clearReportLocalStorage();
@@ -4653,19 +4673,6 @@ const handleBandSelectionChange = (): void => {
   user-select: none;
 }
 /* 文件管理相关样式 */
-.current-file-name {
-  margin: 0 v-bind('UI_CONSTANTS.MEDIUM_MARGIN + "px"');
-  padding: v-bind('UI_CONSTANTS.SMALL_MARGIN + "px"') v-bind('UI_CONSTANTS.MEDIUM_MARGIN + "px"');
-  background-color: #f0f0f0;
-  border-radius: v-bind('UI_CONSTANTS.BORDER_RADIUS_SMALL + "px"');
-  font-size: v-bind('UI_CONSTANTS.FONT_SIZE_SMALL + "px"');
-  color: #666;
-  max-width: 200px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
 /* 报表边距容器样式 */
 .pager {
   position: relative;
