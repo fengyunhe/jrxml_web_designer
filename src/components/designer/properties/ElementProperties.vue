@@ -77,9 +77,19 @@
               <label>字体大小</label>
               <input v-if="currentElement" v-model.number="currentElement.fontSize" type="number" />
             </div>
-            <div class="form-group">
-              <label>是否粗体</label>
-              <input v-if="currentElement" v-model="currentElement.isBold" type="checkbox" />
+            <div class="checkbox-group">
+              <label>
+                <input v-if="currentElement" v-model="currentElement.isBold" type="checkbox" />
+                粗体
+              </label>
+              <label>
+                <input v-if="currentElement" v-model="currentElement.isItalic" type="checkbox" />
+                斜体
+              </label>
+              <label>
+                <input v-if="currentElement" v-model="currentElement.isUnderline" type="checkbox" />
+                下划线
+              </label>
             </div>
           </template>
           
