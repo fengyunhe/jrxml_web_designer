@@ -835,29 +835,69 @@ const handleDrop = (event: DragEvent) => {
       // 保存状态到历史记录
       saveStateToHistory();
       
-      // 确保元素不会超出边距限制
-      // 注意：由于现在使用padding，元素坐标是相对于内容区域的
-      const availableWidth = paperWidth.value - (reportProperties.value?.leftMargin || 0) - (reportProperties.value?.rightMargin || 0);
+      // 检测是否在 Frame 上
+      let targetFrameIndex = -1;
       
-      // 限制元素不超出右边界
-      if (newElement.x + newElement.width > availableWidth) {
-        newElement.x = Math.round(availableWidth - newElement.width);
+      // 遍历 Band 中的 Frame，检测新元素是否落在 Frame 上
+      for (let i = targetBand.elements.length - 1; i >= 0; i--) {
+        const el = targetBand.elements[i];
+        if (el.type === 'frame') {
+          // 检查新元素的中心点是否在 Frame 内
+          const centerX = newElement.x + newElement.width / 2;
+          const centerY = newElement.y + newElement.height / 2;
+          
+          if (centerX >= el.x && centerX <= el.x + el.width &&
+              centerY >= el.y && centerY <= el.y + el.height) {
+             targetFrameIndex = i;
+             break;
+          }
+        }
       }
       
-      // 确保元素宽度不超过可用空间
-      if (newElement.width > availableWidth) {
-        newElement.width = Math.round(availableWidth);
+      if (targetFrameIndex !== -1) {
+         // 添加到 Frame
+         const frame = targetBand.elements[targetFrameIndex];
+         if (!frame.elements) frame.elements = [];
+         
+         // 转换为相对于 Frame 的坐标
+         newElement.x -= frame.x;
+         newElement.y -= frame.y;
+         
+         // Frame 内边界检查
+         if (newElement.x < 0) newElement.x = 0;
+         if (newElement.y < 0) newElement.y = 0;
+         if (newElement.x + newElement.width > frame.width) newElement.x = Math.max(0, frame.width - newElement.width);
+         if (newElement.y + newElement.height > frame.height) newElement.y = Math.max(0, frame.height - newElement.height);
+         
+         frame.elements.push(newElement);
+         // 选中新添加的元素，注意传递 parentFrameIndex
+         selectElement(bandIndex, frame.elements.length - 1, false, targetFrameIndex);
+         
+      } else {
+        // 添加到 Band (原有逻辑)
+        // 确保元素不会超出边距限制
+        const availableWidth = paperWidth.value - (reportProperties.value?.leftMargin || 0) - (reportProperties.value?.rightMargin || 0);
+        
+        // 限制元素不超出右边界
+        if (newElement.x + newElement.width > availableWidth) {
+          newElement.x = Math.round(availableWidth - newElement.width);
+        }
+        
+        // 确保元素宽度不超过可用空间
+        if (newElement.width > availableWidth) {
+          newElement.width = Math.round(availableWidth);
+        }
+        
+        // 确保元素不超出band高度
+        if (newElement.y + newElement.height > targetBand.height) {
+          newElement.y = Math.round(targetBand.height - newElement.height);
+        }
+        
+        targetBand.elements.push(newElement);
+        
+        // 选中刚添加的元素
+        selectElement(bandIndex, targetBand.elements.length - 1);
       }
-      
-      // 确保元素不超出band高度
-      if (newElement.y + newElement.height > targetBand.height) {
-        newElement.y = Math.round(targetBand.height - newElement.height);
-      }
-      
-      targetBand.elements.push(newElement);
-      
-      // 选中刚添加的元素
-      selectElement(bandIndex, targetBand.elements.length - 1);
       
       // 更新JRXML
       updateJRXML();
@@ -964,12 +1004,12 @@ const selectBand = (index: number) => {
 };
 
 // 选择元素
-const selectElement = (bandIndex: number, elementIndex: number, isMultiSelect = false) => {
+const selectElement = (bandIndex: number, elementIndex: number, isMultiSelect = false, parentFrameIndex?: number) => {
   // 快速更新选中状态，避免不必要的DOM操作
   if (isMultiSelect) {
     // 多选模式
     const existingIndex = selectedElements.value.findIndex(
-      el => el.bandIndex === bandIndex && el.elementIndex === elementIndex
+      el => el.bandIndex === bandIndex && el.elementIndex === elementIndex && el.parentFrameIndex === parentFrameIndex
     );
     
     if (existingIndex !== -1) {
@@ -977,7 +1017,7 @@ const selectElement = (bandIndex: number, elementIndex: number, isMultiSelect = 
       selectedElements.value.splice(existingIndex, 1);
     } else {
       // 添加到多选列表
-      selectedElements.value.push({ bandIndex, elementIndex });
+      selectedElements.value.push({ bandIndex, elementIndex, parentFrameIndex });
     }
     
     // 如果没有选中任何元素，则清空selectedElement
@@ -987,13 +1027,17 @@ const selectElement = (bandIndex: number, elementIndex: number, isMultiSelect = 
       // 将最后一个选中的元素作为当前选中的元素
       const lastSelected = selectedElements.value[selectedElements.value.length - 1];
       if (lastSelected) {
-        selectedElement.value = { bandIndex: lastSelected.bandIndex, elementIndex: lastSelected.elementIndex };
+        selectedElement.value = { 
+          bandIndex: lastSelected.bandIndex, 
+          elementIndex: lastSelected.elementIndex,
+          parentFrameIndex: lastSelected.parentFrameIndex
+        };
       }
     }
   } else {
     // 单选模式
-    selectedElement.value = { bandIndex, elementIndex };
-    selectedElements.value = [{ bandIndex, elementIndex }]; // 清空多选列表，只保留当前选中的元素
+    selectedElement.value = { bandIndex, elementIndex, parentFrameIndex };
+    selectedElements.value = [{ bandIndex, elementIndex, parentFrameIndex }]; // 清空多选列表，只保留当前选中的元素
   }
   
   selectedBandIndex.value = null;
@@ -1003,7 +1047,16 @@ const selectElement = (bandIndex: number, elementIndex: number, isMultiSelect = 
   
   // 确保元素有box属性，如果没有则初始化
   const band = bands.value[bandIndex];
-  const element = band?.elements[elementIndex];
+  let element;
+  
+  if (parentFrameIndex !== undefined) {
+    const frame = band?.elements[parentFrameIndex];
+    if (frame && frame.type === 'frame' && frame.elements) {
+      element = frame.elements[elementIndex];
+    }
+  } else {
+    element = band?.elements[elementIndex];
+  }
   
   if (element && !element.box) {
     // 使用initBox函数初始化box属性
@@ -1086,15 +1139,24 @@ let cachedMouseMoveHandler: ((e: MouseEvent) => void) | null = null;
 let cachedMouseUpHandler: ((e: MouseEvent) => void) | null = null;
 
 // 开始拖拽元素
-const startDragging = (event: MouseEvent, bandIndex: number, elementIndex: number) => {
+const startDragging = (event: MouseEvent, bandIndex: number, elementIndex: number, parentFrameIndex?: number) => {
   event.stopPropagation();
-  selectElement(bandIndex, elementIndex);
+  selectElement(bandIndex, elementIndex, false, parentFrameIndex);
   
   // 自动隐藏底部面板
   showBottomPanel.value = false;
   
   const band = bands.value[bandIndex];
-  const draggedElement = band?.elements[elementIndex];
+  let draggedElement;
+  
+  if (parentFrameIndex !== undefined) {
+    const frame = band?.elements[parentFrameIndex];
+    if (frame && frame.type === 'frame' && frame.elements) {
+      draggedElement = frame.elements[elementIndex];
+    }
+  } else {
+    draggedElement = band?.elements[elementIndex];
+  }
   
   if (draggedElement) {
     // 获取当前缩放比例
@@ -1116,6 +1178,7 @@ const startDragging = (event: MouseEvent, bandIndex: number, elementIndex: numbe
     draggingInfo.value = {
       bandIndex,
       elementIndex,
+      parentFrameIndex,
       startX: ((event.clientX - paperOffsetX) / currentZoom) - draggedElement.x,
       startY: ((event.clientY - paperOffsetY) / currentZoom) - draggedElement.y,
       lastTargetBandIndex: bandIndex // 初始化为当前band索引
@@ -1128,7 +1191,20 @@ const startDragging = (event: MouseEvent, bandIndex: number, elementIndex: numbe
       cachedMouseMoveHandler = (e: MouseEvent) => {
         if (draggingInfo.value) {
           const currentBand = bands.value[draggingInfo.value.bandIndex];
-          const currentElement = currentBand?.elements[draggingInfo.value.elementIndex];
+          let currentElement;
+          let containerWidth = (paperWidth.value - (reportProperties.value?.leftMargin || 0) - (reportProperties.value?.rightMargin || 0));
+          let containerHeight = null; // Frame height limit
+
+          if (draggingInfo.value.parentFrameIndex !== undefined) {
+             const frame = currentBand?.elements[draggingInfo.value.parentFrameIndex];
+             if (frame && frame.type === 'frame' && frame.elements) {
+               currentElement = frame.elements[draggingInfo.value.elementIndex];
+               containerWidth = frame.width;
+               containerHeight = frame.height;
+             }
+          } else {
+             currentElement = currentBand?.elements[draggingInfo.value.elementIndex];
+          }
           
           if (currentBand && currentElement) {
             // 获取当前缩放比例
@@ -1137,7 +1213,7 @@ const startDragging = (event: MouseEvent, bandIndex: number, elementIndex: numbe
             // 计算元素相对于paper的位置，考虑缩放比例
             // 注意：由于现在使用padding，元素坐标是相对于内容区域的
             // 计算可用宽度，不除以currentZoom因为newX计算已经考虑了缩放
-            const availableWidth = (paperWidth.value - (reportProperties.value?.leftMargin || 0) - (reportProperties.value?.rightMargin || 0));
+            // const availableWidth = ... (已在上面计算为 containerWidth)
             
             // 获取paper元素的位置信息，用于更准确的坐标计算
             let paperOffsetX = 0;
@@ -1152,43 +1228,49 @@ const startDragging = (event: MouseEvent, bandIndex: number, elementIndex: numbe
             }
             
             // 计算新的X和Y坐标，考虑缩放和偏移
-            let newX = Math.max(0, Math.min(((e.clientX - paperOffsetX) / currentZoom) - draggingInfo.value.startX, availableWidth - currentElement.width));
+            let newX = Math.max(0, Math.min(((e.clientX - paperOffsetX) / currentZoom) - draggingInfo.value.startX, containerWidth - currentElement.width));
             let newY = ((e.clientY - paperOffsetY) / currentZoom) - draggingInfo.value.startY; // 移除y坐标的下限限制
             
-            // 获取第一个band和最后一个band的位置信息
-            const firstBandElement = document.querySelectorAll('.band')[0] as HTMLElement;
-            const lastBandElement = document.querySelectorAll('.band')[bands.value.length - 1] as HTMLElement;
-            
-            // 计算当前band在页面中的位置
-            const currentBandElement = document.querySelectorAll('.band')[draggingInfo.value.bandIndex] as HTMLElement;
-            let currentBandTopInPage = 0;
-            
-            if (firstBandElement && lastBandElement && currentBandElement && paperEl) {
-              const firstBandRect = firstBandElement.getBoundingClientRect();
-              const lastBandRect = lastBandElement.getBoundingClientRect();
-              const currentBandRect = currentBandElement.getBoundingClientRect();
-              const paperRect = paperEl.getBoundingClientRect();
-              
-              // 计算第一个band和最后一个band相对于页面的位置
-              const firstBandTopInPage = (firstBandRect.top - paperRect.top) / currentZoom;
-              const lastBandBottomInPage = (lastBandRect.bottom - paperRect.top) / currentZoom;
-              currentBandTopInPage = (currentBandRect.top - paperRect.top) / currentZoom;
-              
-              // 计算元素在页面中的绝对位置（相对于整个页面）
-              const elementTopInPage = currentBandTopInPage + newY;
-              
-              // 限制元素顶部不能超出第一个band的上边界
-              if (elementTopInPage < firstBandTopInPage) {
-                const adjustment = firstBandTopInPage - elementTopInPage;
-                newY += adjustment;
-              }
-              
-              // 对于最后一个band中的元素，限制其底部不能超出最后一个band的底部边界
-              if (draggingInfo.value.bandIndex === bands.value.length - 1) {
-                // 计算元素在最后一个band中的最大Y坐标
-                const maxRelativeY = lastBandBottomInPage - currentBandTopInPage - currentElement.height;
-                newY = Math.min(newY, maxRelativeY);
-              }
+            // 如果在 Frame 中，限制 Y 坐标
+            if (containerHeight !== null) {
+               newY = Math.max(0, Math.min(newY, containerHeight - currentElement.height));
+            } else {
+                // 原有的 Band Y 限制逻辑
+                // 获取第一个band和最后一个band的位置信息
+                const firstBandElement = document.querySelectorAll('.band')[0] as HTMLElement;
+                const lastBandElement = document.querySelectorAll('.band')[bands.value.length - 1] as HTMLElement;
+                
+                // 计算当前band在页面中的位置
+                const currentBandElement = document.querySelectorAll('.band')[draggingInfo.value.bandIndex] as HTMLElement;
+                let currentBandTopInPage = 0;
+                
+                if (firstBandElement && lastBandElement && currentBandElement && paperEl) {
+                  const firstBandRect = firstBandElement.getBoundingClientRect();
+                  const lastBandRect = lastBandElement.getBoundingClientRect();
+                  const currentBandRect = currentBandElement.getBoundingClientRect();
+                  const paperRect = paperEl.getBoundingClientRect();
+                  
+                  // 计算第一个band和最后一个band相对于页面的位置
+                  const firstBandTopInPage = (firstBandRect.top - paperRect.top) / currentZoom;
+                  const lastBandBottomInPage = (lastBandRect.bottom - paperRect.top) / currentZoom;
+                  currentBandTopInPage = (currentBandRect.top - paperRect.top) / currentZoom;
+                  
+                  // 计算元素在页面中的绝对位置（相对于整个页面）
+                  const elementTopInPage = currentBandTopInPage + newY;
+                  
+                  // 限制元素顶部不能超出第一个band的上边界
+                  if (elementTopInPage < firstBandTopInPage) {
+                    const adjustment = firstBandTopInPage - elementTopInPage;
+                    newY += adjustment;
+                  }
+                  
+                  // 对于最后一个band中的元素，限制其底部不能超出最后一个band的底部边界
+                  if (draggingInfo.value.bandIndex === bands.value.length - 1) {
+                    // 计算元素在最后一个band中的最大Y坐标
+                    const maxRelativeY = lastBandBottomInPage - currentBandTopInPage - currentElement.height;
+                    newY = Math.min(newY, maxRelativeY);
+                  }
+                }
             }
             
             // 应用自动吸附功能
@@ -1389,10 +1471,19 @@ const startDragging = (event: MouseEvent, bandIndex: number, elementIndex: numbe
         
         if (draggingInfo.value) {
           const currentBand = bands.value[draggingInfo.value.bandIndex];
-          const currentElement = currentBand?.elements[draggingInfo.value.elementIndex];
+          let currentElement;
+          
+          if (draggingInfo.value.parentFrameIndex !== undefined) {
+            const frame = currentBand?.elements[draggingInfo.value.parentFrameIndex];
+            if (frame && frame.type === 'frame' && frame.elements) {
+              currentElement = frame.elements[draggingInfo.value.elementIndex];
+            }
+          } else {
+            currentElement = currentBand?.elements[draggingInfo.value.elementIndex];
+          }
           
           if (currentBand && currentElement) {
-            // 优先使用最后一次高亮的band索引，如果存在的话
+            // 1. 获取目标 Band
             let targetBandIndex = draggingInfo.value.bandIndex;
             
             // 如果有最后一次高亮的band索引，且该索引有效，则使用它
@@ -1404,13 +1495,10 @@ const startDragging = (event: MouseEvent, bandIndex: number, elementIndex: numbe
               // 否则，使用鼠标位置来确定目标band
               const paperEl = document.querySelector('.paper') as HTMLElement;
               if (paperEl) {
-                // 获取所有band元素
                 const bandElements = document.querySelectorAll('.band');
                 for (let i = 0; i < bandElements.length; i++) {
                   const bandElement = bandElements[i] as HTMLElement;
                   const bandRect = bandElement.getBoundingClientRect();
-                  
-                  // 使用鼠标位置来确定目标band，确保元素始终移动到鼠标所在的band
                   if (e.clientY >= bandRect.top && e.clientY <= bandRect.bottom) {
                     targetBandIndex = i;
                     break;
@@ -1419,48 +1507,106 @@ const startDragging = (event: MouseEvent, bandIndex: number, elementIndex: numbe
               }
             }
             
-            // 如果元素移动到了不同的band
-            if (targetBandIndex !== draggingInfo.value.bandIndex) {
-              // 如果元素是从第一个band移动到其他band，需要检查y坐标
-              if (draggingInfo.value.bandIndex === 0 && targetBandIndex > 0) {
-                // 从第一个band移动到其他band，不需要特殊处理
-              } else if (draggingInfo.value.bandIndex > 0 && targetBandIndex === 0) {
-                // 从其他band移动到第一个band，需要确保y坐标不小于0
-                const targetBandElement = document.querySelectorAll('.band')[targetBandIndex] as HTMLElement | undefined;
-                if (targetBandElement) {
-                  // 使用拖拽过程中显示的Y坐标，而不是鼠标位置
-                  currentElement.y = Math.max(0, dragCoordinates.value.y);
-                }
-              }
-              
-              const targetBand = bands.value[targetBandIndex];
-              if (targetBand) {
-                // 移除原band中的元素
-                currentBand.elements.splice(draggingInfo.value.elementIndex, 1);
-                
-                // 计算元素相对于目标band的y坐标
-                const targetBandElement = document.querySelectorAll('.band')[targetBandIndex] as HTMLElement | undefined;
-                if (targetBandElement) {
-                  // 使用拖拽过程中显示的Y坐标，而不是鼠标位置
-                  // 确保Y坐标不小于0
-                  currentElement.y = Math.max(0, dragCoordinates.value.y);
-                
-                  // 添加到新band中，使用相对于band的坐标
-                  targetBand.elements.push(currentElement);
-                
-                  // 更新选中的元素索引
-                  selectedElement.value = {
-                    bandIndex: targetBandIndex,
-                    elementIndex: targetBand.elements.length - 1
-                  };
-                }
+            const targetBand = bands.value[targetBandIndex];
+            
+            // 2. 计算元素在页面上的绝对坐标（或者相对于目标 Band 的坐标）
+            // 计算 Source Parent 相对于 Source Band 的坐标
+            let sourceParentRelX = 0;
+            let sourceParentRelY = 0;
+            if (draggingInfo.value.parentFrameIndex !== undefined) {
+               const frame = bands.value[draggingInfo.value.bandIndex].elements[draggingInfo.value.parentFrameIndex];
+               if (frame) {
+                 sourceParentRelX = frame.x;
+                 sourceParentRelY = frame.y;
+               }
+            }
+            
+            // 计算元素相对于 Source Band 的坐标
+            const elementRelSourceBandX = sourceParentRelX + currentElement.x;
+            const elementRelSourceBandY = sourceParentRelY + currentElement.y;
+            
+            // 计算 Source Band 相对于 Target Band 的偏移
+            const sourceBandElement = document.querySelectorAll('.band')[draggingInfo.value.bandIndex].getBoundingClientRect();
+            const targetBandElement = document.querySelectorAll('.band')[targetBandIndex].getBoundingClientRect();
+            const currentZoom = zoomLevel.value;
+            const bandOffsetY = (sourceBandElement.top - targetBandElement.top) / currentZoom;
+            
+            const elementRelTargetBandX = elementRelSourceBandX;
+            const elementRelTargetBandY = elementRelSourceBandY + bandOffsetY;
+            
+            // 3. 在 Target Band 中查找目标 Frame
+            let targetFrameIndex = -1;
+            if (targetBand && targetBand.elements) {
+              // 遍历 Target Band 中的 Frame
+              for (let i = targetBand.elements.length - 1; i >= 0; i--) {
+                  const el = targetBand.elements[i];
+                  if (el.type === 'frame') {
+                      // Check intersection using element center
+                      const centerX = elementRelTargetBandX + currentElement.width / 2;
+                      const centerY = elementRelTargetBandY + currentElement.height / 2;
+                      
+                      if (centerX >= el.x && centerX <= el.x + el.width &&
+                          centerY >= el.y && centerY <= el.y + el.height) {
+                         targetFrameIndex = i;
+                         break;
+                      }
+                  }
               }
             }
-            // 元素在同一band内移动，使用拖拽过程中显示的坐标值
-            else {
-              // 使用拖拽过程中显示的坐标值，确保元素位置与显示一致
-              currentElement.x = dragCoordinates.value.x;
-              currentElement.y = dragCoordinates.value.y;
+            
+            // 4. 判断是否改变了容器
+            const isSameBand = draggingInfo.value.bandIndex === targetBandIndex;
+            const isSameFrame = draggingInfo.value.parentFrameIndex === (targetFrameIndex === -1 ? undefined : targetFrameIndex);
+            
+            if ((!isSameBand || !isSameFrame) && targetBand) {
+               // Reparenting
+               
+               // Remove from Source
+               let element;
+               if (draggingInfo.value.parentFrameIndex !== undefined) {
+                   const frame = bands.value[draggingInfo.value.bandIndex].elements[draggingInfo.value.parentFrameIndex];
+                   if (frame && frame.elements) {
+                     element = frame.elements.splice(draggingInfo.value.elementIndex, 1)[0];
+                   }
+               } else {
+                   element = bands.value[draggingInfo.value.bandIndex].elements.splice(draggingInfo.value.elementIndex, 1)[0];
+               }
+               
+               if (element) {
+                 // Add to Target
+                 if (targetFrameIndex !== -1) {
+                     const frame = targetBand.elements[targetFrameIndex];
+                     if (!frame.elements) frame.elements = [];
+                     
+                     // Convert to Frame Rel Coords
+                     element.x = Math.round(elementRelTargetBandX - frame.x);
+                     element.y = Math.round(elementRelTargetBandY - frame.y);
+                     
+                     // Limit
+                     element.x = Math.max(0, element.x);
+                     element.y = Math.max(0, element.y);
+                     
+                     frame.elements.push(element);
+                     selectElement(targetBandIndex, frame.elements.length - 1, false, targetFrameIndex);
+                 } else {
+                     // Add to Band
+                     element.x = Math.round(elementRelTargetBandX);
+                     element.y = Math.round(elementRelTargetBandY);
+                     
+                     // Limit Y >= 0
+                     element.y = Math.max(0, element.y);
+                     
+                     targetBand.elements.push(element);
+                     selectElement(targetBandIndex, targetBand.elements.length - 1);
+                 }
+               }
+            } else {
+              // 同容器移动，使用拖拽过程中显示的坐标值
+              // 注意：dragCoordinates 可能只更新了显示值，实际值已经在 mousemove 中通过 currentElement 引用更新了
+              // 这里主要是确保整数和边界
+              currentElement.x = Math.round(currentElement.x);
+              currentElement.y = Math.round(currentElement.y);
+              if (currentElement.y < 0) currentElement.y = 0;
             }
           }
         }

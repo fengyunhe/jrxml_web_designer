@@ -204,6 +204,7 @@ export interface Band {
 export interface SelectedElementInfo {
   bandIndex: number;
   elementIndex: number;
+  parentFrameIndex?: number; // 如果在 Frame 内，这是 Frame 在 Band 中的索引
 }
 
 // 多选元素信息接口
@@ -211,6 +212,7 @@ export interface SelectedElementsInfo {
   elements: Array<{
     bandIndex: number;
     elementIndex: number;
+    parentFrameIndex?: number;
   }>;
 }
 
@@ -218,14 +220,18 @@ export interface SelectedElementsInfo {
 export interface EditingElementInfo {
   bandIndex: number;
   elementIndex: number;
+  parentFrameIndex?: number;
 }
 
 // 拖拽信息接口
 export interface DraggingInfo {
   bandIndex: number;
   elementIndex: number;
+  parentFrameIndex?: number;
   startX: number;
   startY: number;
+  lastTargetBandIndex?: number;
+  lastTargetFrameIndex?: number; // 记录最后一次目标Frame索引
 }
 
 // 选择框接口

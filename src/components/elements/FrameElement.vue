@@ -28,7 +28,7 @@
           :element="childElement"
           :band-index="bandIndex"
           :element-index="childIndex"
-          :selected-element="null" 
+          :selected-element="selectedElement && selectedElement.parentFrameIndex === elementIndex && selectedElement.elementIndex === childIndex ? selectedElement : null"
           :selected-elements="[]"
           :editing-element="null"
           :is-dragging="false" 
@@ -38,6 +38,10 @@
           :report-is-italic="reportIsItalic"
           :report-is-underline="reportIsUnderline"
           :is-out-of-bounds="false"
+          @select="handleChildSelect"
+          @drag-start="handleChildDragStart"
+          @resize-start="handleChildResizeStart"
+          @contextmenu="handleChildContextMenu"
         />
       </template>
       
@@ -74,30 +78,48 @@ defineProps<{
 
 // Emits
 const emit = defineEmits<{
-  select: [bandIndex: number, elementIndex: number, isMultiSelect?: boolean];
-  dragStart: [event: MouseEvent, bandIndex: number, elementIndex: number];
-  resizeStart: [event: MouseEvent, bandIndex: number, elementIndex: number];
-  contextmenu: [event: MouseEvent, bandIndex: number, elementIndex: number];
+  select: [bandIndex: number, elementIndex: number, isMultiSelect?: boolean, parentFrameIndex?: number];
+  dragStart: [event: MouseEvent, bandIndex: number, elementIndex: number, parentFrameIndex?: number];
+  resizeStart: [event: MouseEvent, bandIndex: number, elementIndex: number, parentFrameIndex?: number];
+  contextmenu: [event: MouseEvent, bandIndex: number, elementIndex: number, parentFrameIndex?: number];
 }>();
 
 // 处理选择
-const handleSelect = (bandIndex: number, elementIndex: number, isMultiSelect?: boolean) => {
-  emit('select', bandIndex, elementIndex, isMultiSelect);
+const handleSelect = (bandIndex: number, elementIndex: number, isMultiSelect?: boolean, parentFrameIndex?: number) => {
+  emit('select', bandIndex, elementIndex, isMultiSelect, parentFrameIndex);
 };
 
 // 处理拖拽开始
-const handleDragStart = (event: MouseEvent, bandIndex: number, elementIndex: number) => {
-  emit('dragStart', event, bandIndex, elementIndex);
+const handleDragStart = (event: MouseEvent, bandIndex: number, elementIndex: number, parentFrameIndex?: number) => {
+  emit('dragStart', event, bandIndex, elementIndex, parentFrameIndex);
 };
 
 // 处理调整大小开始
-const handleResizeStart = (event: MouseEvent, bandIndex: number, elementIndex: number) => {
-  emit('resizeStart', event, bandIndex, elementIndex);
+const handleResizeStart = (event: MouseEvent, bandIndex: number, elementIndex: number, parentFrameIndex?: number) => {
+  emit('resizeStart', event, bandIndex, elementIndex, parentFrameIndex);
 };
 
 // 处理上下文菜单
-const handleContextMenu = (event: MouseEvent, bandIndex: number, elementIndex: number) => {
-  emit('contextmenu', event, bandIndex, elementIndex);
+const handleContextMenu = (event: MouseEvent, bandIndex: number, elementIndex: number, parentFrameIndex?: number) => {
+  emit('contextmenu', event, bandIndex, elementIndex, parentFrameIndex);
+};
+
+// 处理子元素事件
+const handleChildSelect = (bIndex: number, childIndex: number, isMultiSelect?: boolean) => {
+  // 当选中Frame内的子元素时，传递Frame的elementIndex作为parentFrameIndex
+  emit('select', props.bandIndex, childIndex, isMultiSelect, props.elementIndex);
+};
+
+const handleChildDragStart = (event: MouseEvent, bIndex: number, childIndex: number) => {
+  emit('dragStart', event, props.bandIndex, childIndex, props.elementIndex);
+};
+
+const handleChildResizeStart = (event: MouseEvent, bIndex: number, childIndex: number) => {
+  emit('resizeStart', event, props.bandIndex, childIndex, props.elementIndex);
+};
+
+const handleChildContextMenu = (event: MouseEvent, bIndex: number, childIndex: number) => {
+  emit('contextmenu', event, props.bandIndex, childIndex, props.elementIndex);
 };
 </script>
 

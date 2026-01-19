@@ -68,11 +68,11 @@ const props = defineProps<{
 
 // Emits
 const emit = defineEmits<{
-  select: [bandIndex: number, elementIndex: number, isMultiSelect?: boolean];
-  dragStart: [event: MouseEvent, bandIndex: number, elementIndex: number];
-  resizeStart: [event: MouseEvent, bandIndex: number, elementIndex: number];
-  contextmenu: [event: MouseEvent, bandIndex: number, elementIndex: number];
-  startEditing: [bandIndex: number, elementIndex: number];
+  select: [bandIndex: number, elementIndex: number, isMultiSelect?: boolean, parentFrameIndex?: number];
+  dragStart: [event: MouseEvent, bandIndex: number, elementIndex: number, parentFrameIndex?: number];
+  resizeStart: [event: MouseEvent, bandIndex: number, elementIndex: number, parentFrameIndex?: number];
+  contextmenu: [event: MouseEvent, bandIndex: number, elementIndex: number, parentFrameIndex?: number];
+  startEditing: [bandIndex: number, elementIndex: number, parentFrameIndex?: number];
   finishEditing: [];
   cancelEditing: [];
   checkFields: [fields: string[]];
@@ -113,20 +113,20 @@ const commonProps = computed(() => ({
 
 // 通用事件
 const commonEvents = {
-  select: (bandIndex: number, elementIndex: number, isMultiSelect = false) => {
-    emit('select', bandIndex, elementIndex, isMultiSelect);
+  select: (bandIndex: number, elementIndex: number, isMultiSelect = false, parentFrameIndex?: number) => {
+    emit('select', bandIndex, elementIndex, isMultiSelect, parentFrameIndex);
   },
-  dragStart: (event: MouseEvent, bandIndex: number, elementIndex: number) => {
-    emit('dragStart', event, bandIndex, elementIndex);
+  dragStart: (event: MouseEvent, bandIndex: number, elementIndex: number, parentFrameIndex?: number) => {
+    emit('dragStart', event, bandIndex, elementIndex, parentFrameIndex);
   },
-  resizeStart: (event: MouseEvent, bandIndex: number, elementIndex: number) => {
-    emit('resizeStart', event, bandIndex, elementIndex);
+  resizeStart: (event: MouseEvent, bandIndex: number, elementIndex: number, parentFrameIndex?: number) => {
+    emit('resizeStart', event, bandIndex, elementIndex, parentFrameIndex);
   },
-  contextmenu: (event: MouseEvent, bandIndex: number, elementIndex: number) => {
-    emit('contextmenu', event, bandIndex, elementIndex);
+  contextmenu: (event: MouseEvent, bandIndex: number, elementIndex: number, parentFrameIndex?: number) => {
+    emit('contextmenu', event, bandIndex, elementIndex, parentFrameIndex);
   },
-  startEditing: (bandIndex: number, elementIndex: number) => {
-    emit('startEditing', bandIndex, elementIndex);
+  startEditing: (bandIndex: number, elementIndex: number, parentFrameIndex?: number) => {
+    emit('startEditing', bandIndex, elementIndex, parentFrameIndex);
   },
   finishEditing: () => {
     emit('finishEditing');
