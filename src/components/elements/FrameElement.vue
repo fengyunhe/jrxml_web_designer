@@ -62,7 +62,7 @@ import type { FrameElement, SelectedElementInfo } from '../../types';
 const ElementFactory = defineAsyncComponent(() => import('./ElementFactory.vue'));
 
 // Props
-defineProps<{
+const props = defineProps<{
   element: FrameElement;
   bandIndex: number;
   elementIndex: number;
