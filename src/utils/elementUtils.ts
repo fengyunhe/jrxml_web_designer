@@ -41,63 +41,77 @@ export function getElementDisplayInfoWithoutBand(element: DesignElement): string
 }
 
 // 检查元素是否被选中
-export function isElementSelected(element: { element: DesignElement, bandIndex: number, elementIndex: number }, selectedElement: { bandIndex: number, elementIndex: number } | null | undefined): boolean {
+export function isElementSelected(element: { element: DesignElement, bandIndex: number, elementIndex: number, parentFrameIndex?: number }, selectedElement: { bandIndex: number, elementIndex: number, parentFrameIndex?: number } | null | undefined): boolean {
   return selectedElement !== null && 
          selectedElement !== undefined &&
          selectedElement.bandIndex === element.bandIndex && 
-         selectedElement.elementIndex === element.elementIndex;
+         selectedElement.elementIndex === element.elementIndex &&
+         selectedElement.parentFrameIndex === element.parentFrameIndex;
 }
 
 // 从列表中选择元素
-export function selectElementFromList(element: { element: DesignElement, bandIndex: number, elementIndex: number },selectElement: (bandIndex: number, elementIndex: number) => void): void {
-  selectElement(element.bandIndex, element.elementIndex);
+export function selectElementFromList(element: { element: DesignElement, bandIndex: number, elementIndex: number, parentFrameIndex?: number }, selectElement: (bandIndex: number, elementIndex: number, isMultiSelect?: boolean, parentFrameIndex?: number) => void): void {
+  selectElement(element.bandIndex, element.elementIndex, false, element.parentFrameIndex);
 }
 
-// 根据参数选择元素
-export function selectElementsByParameter(bands: any[], paramName: string, selectElement: (bandIndex: number, elementIndex: number) => void): void {
-  // 查找使用该参数的元素
-  let foundElement = false;
+// 递归查找元素
+function findElementsByPredicate(bands: any[], predicate: (element: DesignElement) => boolean, callback: (bandIndex: number, elementIndex: number, parentFrameIndex?: number) => void): boolean {
+  let found = false;
   
   bands.forEach((band, bandIndex) => {
     if (band.elements) {
       band.elements.forEach((element: DesignElement, elementIndex: number) => {
-        // 检查元素的表达式是否包含该参数
-        if (element.type === 'textField' && (element as any).expression && (element as any).expression.includes(`$P{${paramName}}`)) {
-          selectElement(bandIndex, elementIndex);
-          foundElement = true;
+        // 检查元素自身
+        if (predicate(element)) {
+          callback(bandIndex, elementIndex, undefined);
+          found = true;
           return;
+        }
+        
+        // 如果是 Frame，递归检查子元素
+        if (element.type === 'frame' && (element as any).elements) {
+          (element as any).elements.forEach((childElement: DesignElement, childIndex: number) => {
+            if (predicate(childElement)) {
+              callback(bandIndex, childIndex, elementIndex);
+              found = true;
+            }
+          });
         }
       });
     }
   });
   
+  return found;
+}
+
+// 根据参数选择元素
+export function selectElementsByParameter(bands: any[], paramName: string, selectElement: (bandIndex: number, elementIndex: number, isMultiSelect?: boolean, parentFrameIndex?: number) => void): void {
+  const predicate = (element: DesignElement) => {
+    return element.type === 'textField' && (element as any).expression && (element as any).expression.includes(`$P{${paramName}}`);
+  };
+  
+  const found = findElementsByPredicate(bands, predicate, (bandIndex, elementIndex, parentFrameIndex) => {
+    selectElement(bandIndex, elementIndex, false, parentFrameIndex);
+  });
+  
   // 如果没有找到使用该参数的元素，可以显示提示
-  if (!foundElement) {
-    // 可以添加提示逻辑，这里暂时不实现
+  if (!found) {
     console.log(`没有找到使用参数 $P{${paramName}} 的元素`);
   }
 }
 
 // 根据字段选择元素
-export function selectElementsByField(bands: any[], fieldName: string, selectElement: (bandIndex: number, elementIndex: number) => void): void {
-  // 查找使用该字段的元素
-  let foundElement = false;
+export function selectElementsByField(bands: any[], fieldName: string, selectElement: (bandIndex: number, elementIndex: number, isMultiSelect?: boolean, parentFrameIndex?: number) => void): void {
+  const predicate = (element: DesignElement) => {
+    return element.type === 'textField' && (element as any).expression && (element as any).expression.includes(`$F{${fieldName}}`);
+  };
   
-  bands.forEach((band, bandIndex) => {
-    if (band.elements) {
-      band.elements.forEach((element: DesignElement, elementIndex: number) => {
-        // 检查元素的表达式是否包含该字段
-        if (element.type === 'textField' && (element as any).expression && (element as any).expression.includes(`$F{${fieldName}}`)) {
-          selectElement(bandIndex, elementIndex);
-          foundElement = true;
-        }
-      });
-    }
+  const found = findElementsByPredicate(bands, predicate, (bandIndex, elementIndex, parentFrameIndex) => {
+    selectElement(bandIndex, elementIndex, false, parentFrameIndex);
   });
   
   // 如果没有找到使用该字段的元素，可以显示提示
-  if (!foundElement) {
-    // 可以添加提示逻辑，这里暂时不实现
+  if (!found) {
     console.log(`没有找到使用字段 $F{${fieldName}} 的元素`);
   }
 }

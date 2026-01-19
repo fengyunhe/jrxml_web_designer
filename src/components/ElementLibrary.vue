@@ -45,6 +45,7 @@
             :key="getElementKey(element)"
             class="report-element-item"
             :class="{ 'selected': isElementSelected(element, selectedElement) }"
+            :style="{ paddingLeft: (6 + (element.level || 0) * 12) + 'px' }"
           >
             <div class="element-info-container" @click="selectElementFromList(element, selectElement)">
               <span class="element-icon">{{ getElementIcon(element.element.type) }}</span>
@@ -128,11 +129,11 @@ interface Props {
 interface Emits {
   (e: 'drag-start', event: DragEvent, element: any): void;
   (e: 'element-double-click', element: any): void;
-  (e: 'select-element', bandIndex: number, elementIndex: number): void;
+  (e: 'select-element', bandIndex: number, elementIndex: number, isMultiSelect?: boolean, parentFrameIndex?: number): void;
   (e: 'add-field'): void;
   (e: 'edit-field', field: ReportField): void;
   (e: 'delete-field', fieldName: string): void;
-  (e: 'delete-element', bandIndex: number, elementIndex: number): void;
+  (e: 'delete-element', bandIndex: number, elementIndex: number, parentFrameIndex?: number): void;
 }
 
 // 使用默认值
@@ -160,8 +161,9 @@ const groupedReportElements = computed(() => {
         grouped[bandName] = [];
       }
       
-      band.elements.forEach((element, elementIndex) => {
-        if (!elementFilterText.value || 
+      const processElement = (element: DesignElement, elementIndex: number, parentFrameIndex?: number, level: number = 0) => {
+         // 过滤逻辑
+         if (!elementFilterText.value || 
             element.type.toLowerCase().includes(elementFilterText.value.toLowerCase()) ||
             (element.type === 'staticText' && (element as StaticTextElement).text && ((element as StaticTextElement).text || '').toLowerCase().includes(elementFilterText.value.toLowerCase())) ||
             (element.type === 'textField' && ((element as TextFieldElement).expression || '').toLowerCase().includes(elementFilterText.value.toLowerCase()))
@@ -169,9 +171,49 @@ const groupedReportElements = computed(() => {
           grouped[bandName]?.push({
             element,
             bandIndex,
-            elementIndex
+            elementIndex,
+            parentFrameIndex,
+            level
           });
         }
+
+        // 递归处理 Frame 子元素
+        // 无论父元素是否匹配过滤条件，都检查子元素（或者你可以决定只有父元素匹配才显示子元素，但通常期望搜索能找到任何层级的元素）
+        // 这里简化逻辑：如果是 Frame，继续递归，并在 processElement 内部判断是否添加
+        if (element.type === 'frame' && (element as any).elements) {
+           (element as any).elements.forEach((childElement: DesignElement, childIndex: number) => {
+              // 对于子元素，parentFrameIndex 应该是当前 Frame 的 elementIndex（如果是 Band 直接子元素）
+              // 但 elementIndex 是相对于其父容器的。
+              // 这里有一个问题：parentFrameIndex 是指在 Band.elements 中的索引。
+              // 如果 Frame 嵌套 Frame，parentFrameIndex 需要指向直接父 Frame。
+              // 但是目前的数据结构 selectedElementInfo 只支持一层 parentFrameIndex (number)。
+              // 如果支持多层嵌套，SelectedElementInfo 需要修改为支持路径或递归结构。
+              // 假设目前只支持一层 Frame 嵌套（或者数据结构限制），我们需要确认 SelectedElementInfo 的定义。
+              // 回顾 types/index.ts: parentFrameIndex?: number; // 如果在 Frame 内，这是 Frame 在 Band 中的索引
+              
+              // 如果是第一层 Frame (level === 0)，则 parentFrameIndex 是 undefined，传递给子元素的是 elementIndex。
+              // 如果是嵌套 Frame (level > 0)，则 parentFrameIndex 应该是指向最外层 Frame？还是直接父 Frame？
+              // 根据之前的逻辑：
+              // const frame = band.elements[parentFrameIndex];
+              // currentElement = frame.elements[elementIndex];
+              // 这意味着目前的实现只支持一层 Frame 嵌套。
+              // 如果 Frame 里面还有 Frame，目前的 selectedElement 结构（parentFrameIndex: number）无法精确定位。
+              // 暂时假设只支持一层 Frame，或者只渲染一层子元素。
+              
+              if (level === 0) {
+                 processElement(childElement, childIndex, elementIndex, level + 1);
+              } else {
+                 // 如果已经是嵌套层级，且不支持多级定位，可能无法正确选中。
+                 // 但为了显示，我们可以继续递归，只是点击选中可能会有问题。
+                 // 暂时只支持一层嵌套的显示和选中。
+                 processElement(childElement, childIndex, undefined, level + 1); // 这里的 undefined 是占位，因为无法正确传递多级 parent
+              }
+           });
+        }
+      };
+
+      band.elements.forEach((element, elementIndex) => {
+         processElement(element, elementIndex, undefined, 0);
       });
     }
   });
@@ -240,7 +282,7 @@ function handleDeleteField(fieldName: string): void {
 // 处理删除元素
 function handleDeleteElement(element: any): void {
   if (confirm('确定要删除该元素吗？')) {
-    emit('delete-element', element.bandIndex, element.elementIndex);
+    emit('delete-element', element.bandIndex, element.elementIndex, element.parentFrameIndex);
   }
 }
 </script>
