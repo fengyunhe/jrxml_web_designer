@@ -4,7 +4,10 @@ import type { DesignElement } from '@/types';
 import { getElementConfig, createElement } from '@/components/elements/ElementRegistry';
 
 // 获取元素的唯一键
-export function getElementKey(element: { element: DesignElement, bandIndex: number, elementIndex: number }): string {
+export function getElementKey(element: { element: DesignElement, bandIndex: number, elementIndex: number, parentFrameIndex?: number }): string {
+  if (element.parentFrameIndex !== undefined) {
+    return `${element.element.type}-${element.bandIndex}-${element.parentFrameIndex}-${element.elementIndex}`;
+  }
   return `${element.element.type}-${element.bandIndex}-${element.elementIndex}`;
 }
 
@@ -42,9 +45,15 @@ export function getElementDisplayInfoWithoutBand(element: DesignElement): string
 
 // 检查元素是否被选中
 export function isElementSelected(element: { element: DesignElement, bandIndex: number, elementIndex: number, parentFrameIndex?: number }, selectedElement: { bandIndex: number, elementIndex: number, parentFrameIndex?: number } | null | undefined): boolean {
-  return selectedElement !== null && 
-         selectedElement !== undefined &&
-         selectedElement.bandIndex === element.bandIndex && 
+  if (!selectedElement) return false;
+  
+  // 如果两个元素都有 UUID，则优先使用 UUID 进行比较
+  if (element.element.uuid && (selectedElement as any).uuid) {
+    return element.element.uuid === (selectedElement as any).uuid;
+  }
+  
+  // 否则回退到基于位置的比较
+  return selectedElement.bandIndex === element.bandIndex && 
          selectedElement.elementIndex === element.elementIndex &&
          selectedElement.parentFrameIndex === element.parentFrameIndex;
 }
@@ -118,10 +127,11 @@ export function selectElementsByField(bands: any[], fieldName: string, selectEle
 
 // 创建新元素
 export function createNewElement(type: string, x: number, y: number): DesignElement {
+  let element: DesignElement;
   try {
-    return createElement(type, { x, y });
+    element = createElement(type, { x, y });
   } catch {
-    return {
+    element = {
       type: type as any,
       x,
       y,
@@ -129,12 +139,22 @@ export function createNewElement(type: string, x: number, y: number): DesignElem
       height: 30
     } as DesignElement;
   }
+  
+  // 生成 UUID
+  if (!element.uuid) {
+    element.uuid = crypto.randomUUID();
+  }
+  
+  return element;
 }
 
 // 复制元素
 export function duplicateElement(element: DesignElement, offsetX: number = 10, offsetY: number = 10): DesignElement {
   // 深拷贝元素
   const duplicatedElement = JSON.parse(JSON.stringify(element));
+  
+  // 生成新的 UUID
+  duplicatedElement.uuid = crypto.randomUUID();
   
   // 处理边框属性，只保留宽度大于0的边框
   if (duplicatedElement.box) {

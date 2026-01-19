@@ -256,7 +256,7 @@ import {generateJRXMLContent, parseJRXMLContent} from '../utils/jrxmlGenerator';
 
 // 导入通知管理器
 import notification from '../utils/notification';
-import { getAllElements as getAllElementConfigs } from '@/components/elements/ElementRegistry';
+import { getAllElements as getAllElementConfigs, createElement } from '@/components/elements/ElementRegistry';
 
 // 标签页相关
 const activeTab = ref('pageSettings');
@@ -583,7 +583,7 @@ const isDraggingOrResizing = ref(false); // 标记是否正在拖动或调整大
 const selectedBandIndex = ref<number | null>(null);
 const selectedElement = ref<{bandIndex: number, elementIndex: number} | null>(null);
 const selectedElements = ref<{bandIndex: number, elementIndex: number}[]>([]); // 多选元素数组
-const editingElement = ref<{bandIndex: number, elementIndex: number} | null>(null);
+const editingElement = ref<{bandIndex: number, elementIndex: number, parentFrameIndex?: number} | null>(null);
 const editInput = ref<HTMLInputElement | null>(null);
 
 
@@ -727,7 +727,7 @@ const {
 // 拖动时显示的坐标信息
 const dragCoordinates = ref<{x: number, y: number, visible: boolean, bandName: string}>({ x: 0, y: 0, visible: false, bandName: '' });
 // 调整大小相关
-const resizingInfo = ref<{bandIndex: number, elementIndex: number, startX: number, startY: number, startWidth: number, startHeight: number} | null>(null);
+const resizingInfo = ref<{bandIndex: number, elementIndex: number, startX: number, startY: number, startWidth: number, startHeight: number, parentFrameIndex?: number} | null>(null);
 
 // 跟踪最后点击的band
 const lastClickedBandIndex = ref<number>(3); // 默认为DETAIL区域（索引3）
@@ -759,11 +759,10 @@ const handleElementDoubleClick = (element: any) => {
   
   // 创建新元素
   const newElement: DesignElement = {
-    type: element.type,
+    ...createElement(element.type),
+    uuid: crypto.randomUUID(), // 生成 UUID
     x: 50, // 默认位置
     y: 20, // 默认位置
-    width: 100,
-    height: 30,
     ...getDefaultElementProperties(element.type)
   };
   
@@ -822,11 +821,10 @@ const handleDrop = (event: DragEvent) => {
     
     // 创建新元素
     const newElement: DesignElement = {
-      type: elementData.type,
+      ...createElement(elementData.type),
+      uuid: crypto.randomUUID(), // 生成 UUID
       x: Math.round(Math.max(0, scaledX - 50)), // 减去元素宽度的一半以居中，并确保为整数
       y: Math.round(Math.max(0, scaledY - currentY)), // 相对于band的位置，并确保为整数
-      width: 100,
-      height: 30,
       ...getDefaultElementProperties(elementData.type)
     };
     
@@ -984,7 +982,7 @@ const getDefaultElementProperties = (type: string): Partial<DesignElement> => {
       return { lineDirection: 'TopDown', lineWidth: 1 };
     case 'rectangle':
       return { 
-        backcolor: '#f0f0f0',
+        mode: 'Transparent',
         border: '1px solid #ccc' // 为矩形元素默认添加边框
       };
     default:
@@ -1005,6 +1003,21 @@ const selectBand = (index: number) => {
 
 // 选择元素
 const selectElement = (bandIndex: number, elementIndex: number, isMultiSelect = false, parentFrameIndex?: number) => {
+  // 获取元素引用以获取 UUID
+  const band = bands.value[bandIndex];
+  let element;
+  
+  if (parentFrameIndex !== undefined) {
+    const frame = band?.elements[parentFrameIndex];
+    if (frame && frame.type === 'frame' && frame.elements) {
+      element = frame.elements[elementIndex];
+    }
+  } else {
+    element = band?.elements[elementIndex];
+  }
+  
+  const uuid = element?.uuid;
+
   // 快速更新选中状态，避免不必要的DOM操作
   if (isMultiSelect) {
     // 多选模式
@@ -1017,7 +1030,7 @@ const selectElement = (bandIndex: number, elementIndex: number, isMultiSelect = 
       selectedElements.value.splice(existingIndex, 1);
     } else {
       // 添加到多选列表
-      selectedElements.value.push({ bandIndex, elementIndex, parentFrameIndex });
+      selectedElements.value.push({ bandIndex, elementIndex, parentFrameIndex, uuid });
     }
     
     // 如果没有选中任何元素，则清空selectedElement
@@ -1030,33 +1043,21 @@ const selectElement = (bandIndex: number, elementIndex: number, isMultiSelect = 
         selectedElement.value = { 
           bandIndex: lastSelected.bandIndex, 
           elementIndex: lastSelected.elementIndex,
-          parentFrameIndex: lastSelected.parentFrameIndex
+          parentFrameIndex: lastSelected.parentFrameIndex,
+          uuid: lastSelected.uuid
         };
       }
     }
   } else {
     // 单选模式
-    selectedElement.value = { bandIndex, elementIndex, parentFrameIndex };
-    selectedElements.value = [{ bandIndex, elementIndex, parentFrameIndex }]; // 清空多选列表，只保留当前选中的元素
+    selectedElement.value = { bandIndex, elementIndex, parentFrameIndex, uuid };
+    selectedElements.value = [{ bandIndex, elementIndex, parentFrameIndex, uuid }]; // 清空多选列表，只保留当前选中的元素
   }
   
   selectedBandIndex.value = null;
   
   // 自动隐藏底部面板
   showBottomPanel.value = false;
-  
-  // 确保元素有box属性，如果没有则初始化
-  const band = bands.value[bandIndex];
-  let element;
-  
-  if (parentFrameIndex !== undefined) {
-    const frame = band?.elements[parentFrameIndex];
-    if (frame && frame.type === 'frame' && frame.elements) {
-      element = frame.elements[elementIndex];
-    }
-  } else {
-    element = band?.elements[elementIndex];
-  }
   
   if (element && !element.box) {
     // 使用initBox函数初始化box属性
@@ -1114,7 +1115,7 @@ const selectElementsInRect = (rect: { left: number, top: number, right: number, 
       
       // 如果有重叠，添加到选择列表
       if (isOverlapping) {
-        selectedElements.value.push({ bandIndex, elementIndex });
+        selectedElements.value.push({ bandIndex, elementIndex, uuid: element.uuid });
       }
     });
     
@@ -1126,7 +1127,11 @@ const selectElementsInRect = (rect: { left: number, top: number, right: number, 
   if (selectedElements.value.length > 0) {
     const lastSelected = selectedElements.value[selectedElements.value.length - 1];
     if (lastSelected) {
-      selectedElement.value = { bandIndex: lastSelected.bandIndex, elementIndex: lastSelected.elementIndex };
+      selectedElement.value = { 
+        bandIndex: lastSelected.bandIndex, 
+        elementIndex: lastSelected.elementIndex,
+        uuid: lastSelected.uuid
+      };
     }
   }
   
@@ -1228,13 +1233,16 @@ const startDragging = (event: MouseEvent, bandIndex: number, elementIndex: numbe
             }
             
             // 计算新的X和Y坐标，考虑缩放和偏移
-            let newX = Math.max(0, Math.min(((e.clientX - paperOffsetX) / currentZoom) - draggingInfo.value.startX, containerWidth - currentElement.width));
+            let newX = ((e.clientX - paperOffsetX) / currentZoom) - draggingInfo.value.startX;
             let newY = ((e.clientY - paperOffsetY) / currentZoom) - draggingInfo.value.startY; // 移除y坐标的下限限制
             
-            // 如果在 Frame 中，限制 Y 坐标
-            if (containerHeight !== null) {
-               newY = Math.max(0, Math.min(newY, containerHeight - currentElement.height));
+            // 如果在 Frame 中，不限制坐标，允许移出 Frame
+            if (draggingInfo.value.parentFrameIndex !== undefined) {
+               // 不做限制
             } else {
+               // 在 Band 中，限制 X 坐标
+               newX = Math.max(0, Math.min(newX, containerWidth - currentElement.width));
+
                 // 原有的 Band Y 限制逻辑
                 // 获取第一个band和最后一个band的位置信息
                 const firstBandElement = document.querySelectorAll('.band')[0] as HTMLElement;
@@ -1717,10 +1725,10 @@ const deleteElement = () => {
 };
 
 // 开始编辑静态文本
-const startEditing = (bandIndex: number, elementIndex: number) => {
-  editingElement.value = { bandIndex, elementIndex };
+const startEditing = (bandIndex: number, elementIndex: number, parentFrameIndex?: number) => {
+  editingElement.value = { bandIndex, elementIndex, parentFrameIndex };
   // 选择该元素
-  selectElement(bandIndex, elementIndex);
+  selectElement(bandIndex, elementIndex, false, parentFrameIndex);
   
   // 自动隐藏底部面板
   showBottomPanel.value = false;
@@ -1924,6 +1932,9 @@ const copyElement = async () => {
       try {
         // 深拷贝元素数据
         let elementData = JSON.parse(JSON.stringify(band.elements[elementIndex]));
+        
+        // 生成新的 UUID，避免复制 UUID
+        elementData.uuid = crypto.randomUUID();
         
         // 处理边框属性，只保留宽度大于0的边框
         if (elementData.box) {
@@ -3085,14 +3096,23 @@ const getBandOffsetY = (bandIndex: number): number => {
 };
 
 // 开始调整元素大小
-const startResizingElement = (event: MouseEvent, bandIndex: number, elementIndex: number): void => {
+const startResizingElement = (event: MouseEvent, bandIndex: number, elementIndex: number, direction: string, parentFrameIndex?: number): void => {
   event.preventDefault();
   
   // 自动隐藏底部面板
   showBottomPanel.value = false;
   
   const band = bands.value[bandIndex];
-  const element = band?.elements[elementIndex];
+  let element;
+  
+  if (parentFrameIndex !== undefined) {
+    const frame = band?.elements[parentFrameIndex];
+    if (frame && frame.type === 'frame' && frame.elements) {
+      element = frame.elements[elementIndex];
+    }
+  } else {
+    element = band?.elements[elementIndex];
+  }
   
   if (element) {
     // 获取当前缩放比例
@@ -3116,7 +3136,8 @@ const startResizingElement = (event: MouseEvent, bandIndex: number, elementIndex
       startX: (event.clientX - paperOffsetX) / currentZoom,
       startY: (event.clientY - paperOffsetY) / currentZoom,
       startWidth: element.width,
-      startHeight: element.height
+      startHeight: element.height,
+      parentFrameIndex
     };
     
     isDraggingOrResizing.value = true;
@@ -3124,7 +3145,20 @@ const startResizingElement = (event: MouseEvent, bandIndex: number, elementIndex
     const handleMouseMove = (e: MouseEvent) => {
       if (resizingInfo.value) {
         const currentBand = bands.value[resizingInfo.value.bandIndex];
-        const element = currentBand?.elements[resizingInfo.value.elementIndex];
+        let element;
+        let containerWidth = (paperWidth.value - (reportProperties.value?.leftMargin || 0) - (reportProperties.value?.rightMargin || 0));
+        let containerHeight = currentBand.height;
+
+        if (resizingInfo.value.parentFrameIndex !== undefined) {
+            const frame = currentBand?.elements[resizingInfo.value.parentFrameIndex];
+            if (frame && frame.type === 'frame' && frame.elements) {
+            element = frame.elements[resizingInfo.value.elementIndex];
+            containerWidth = frame.width;
+            containerHeight = frame.height;
+            }
+        } else {
+            element = currentBand?.elements[resizingInfo.value.elementIndex];
+        }
         
         if (currentBand && element) {
           // 获取当前缩放比例
@@ -3156,8 +3190,14 @@ const startResizingElement = (event: MouseEvent, bandIndex: number, elementIndex
           // 限制不能超出纸张右边界（考虑右边距）和band底部边界
           // 修正计算：使用正确的缩放比例计算
           // 元素的x坐标是相对于内容区域的，所以最大宽度应该是页面宽度减去左右边距再减去元素的x坐标
-          const maxElementWidth = paperWidth.value - leftMargin - rightMargin - element.x;
-          const availableHeight = (currentBand.height - element.y);
+          let maxElementWidth;
+          if (resizingInfo.value.parentFrameIndex !== undefined) {
+             maxElementWidth = containerWidth - element.x;
+          } else {
+             maxElementWidth = paperWidth.value - leftMargin - rightMargin - element.x;
+          }
+          
+          const availableHeight = (containerHeight - element.y);
           newWidth = Math.min(newWidth, maxElementWidth);
           newHeight = Math.min(newHeight, availableHeight);
           
@@ -3350,16 +3390,16 @@ const handleCheckFields = (fields: string[]): void => {
 };
 
 // 处理元素上下文菜单
-const handleElementContextMenu = (event: MouseEvent, bandIndex: number, elementIndex: number): void => {
+const handleElementContextMenu = (event: MouseEvent, bandIndex: number, elementIndex: number, parentFrameIndex?: number): void => {
   // 可以在这里添加上下文菜单的处理逻辑
   // 例如：显示右键菜单，提供元素操作选项
-  console.log('Context menu requested for element:', bandIndex, elementIndex);
+  console.log('Context menu requested for element:', bandIndex, elementIndex, parentFrameIndex);
   
   // 阻止默认上下文菜单
   event.preventDefault();
   
   // 选中元素
-  selectElement(bandIndex, elementIndex);
+  selectElement(bandIndex, elementIndex, false, parentFrameIndex);
 };
 
 // 处理Band选择变化

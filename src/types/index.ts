@@ -101,6 +101,7 @@ export interface ReportProperties {
 
 // 设计元素基础接口
 export interface DesignElementBase {
+  uuid?: string; // 符合XSD要求的唯一标识符
   type: ElementType;
   x: number;
   y: number;
@@ -205,6 +206,7 @@ export interface SelectedElementInfo {
   bandIndex: number;
   elementIndex: number;
   parentFrameIndex?: number; // 如果在 Frame 内，这是 Frame 在 Band 中的索引
+  uuid?: string;
 }
 
 // 多选元素信息接口
@@ -213,6 +215,7 @@ export interface SelectedElementsInfo {
     bandIndex: number;
     elementIndex: number;
     parentFrameIndex?: number;
+    uuid?: string;
   }>;
 }
 

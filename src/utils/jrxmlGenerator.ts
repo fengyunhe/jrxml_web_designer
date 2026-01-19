@@ -343,6 +343,10 @@ function getDefaultBandHeight(bandType: string): number {
 function generateStaticTextXML(element: any): string {
   let xml = `    <staticText>\n      <reportElement x="${toInt(element.x)}" y="${toInt(element.y)}" width="${toInt(element.width)}" height="${toInt(element.height)}"`;
   
+  if (element.uuid) {
+    xml += ` uuid="${element.uuid}"`;
+  }
+  
   if (element.forecolor) {
     xml += ` forecolor="${element.forecolor}"`;
   }
@@ -455,6 +459,10 @@ function generateTextFieldXML(element: any): string {
   
   xml += `>\n      <reportElement x="${toInt(element.x)}" y="${toInt(element.y)}" width="${toInt(element.width)}" height="${toInt(element.height)}"`;
   
+  if (element.uuid) {
+    xml += ` uuid="${element.uuid}"`;
+  }
+  
   if (element.backcolor) {
     xml += ` backcolor="${element.backcolor}"`;
   }
@@ -542,7 +550,13 @@ function generateImageXML(element: any): string {
   }
   
   xml += `>
-      <reportElement x="${toInt(element.x)}" y="${toInt(element.y)}" width="${toInt(element.width)}" height="${toInt(element.height)}"/>
+      <reportElement x="${toInt(element.x)}" y="${toInt(element.y)}" width="${toInt(element.width)}" height="${toInt(element.height)}"`;
+
+  if (element.uuid) {
+    xml += ` uuid="${element.uuid}"`;
+  }
+
+  xml += `/>
 `;
 
   const imageExpressionValue = element.imageExpression || '""';
@@ -555,7 +569,13 @@ function generateLineXML(element: any): string {
   // 处理过时的direction属性，转换为direction属性
   const direction = element.lineDirection || element.direction || 'TopDown'; // XSD中默认是TopDown
   let xml = `    <line direction="${direction}">
-      <reportElement x="${toInt(element.x)}" y="${toInt(element.y)}" width="${toInt(element.width)}" height="${toInt(element.height)}"/>
+      <reportElement x="${toInt(element.x)}" y="${toInt(element.y)}" width="${toInt(element.width)}" height="${toInt(element.height)}"`;
+
+  if (element.uuid) {
+    xml += ` uuid="${element.uuid}"`;
+  }
+
+  xml += `/>
     </line>\n`;
   return xml;
 }
@@ -569,6 +589,10 @@ function generateRectangleXML(element: any): string {
   }
   
   xml += `>\n      <reportElement x="${toInt(element.x)}" y="${toInt(element.y)}" width="${toInt(element.width)}" height="${toInt(element.height)}"`;
+  
+  if (element.uuid) {
+    xml += ` uuid="${element.uuid}"`;
+  }
   
   // 处理过时的backcolor属性，转换为backcolor属性
   if (element.backcolor) {
@@ -616,6 +640,10 @@ function generateRectangleXML(element: any): string {
 function generateEllipseXML(element: any): string {
   let xml = '    <ellipse>\n      <reportElement x="' + toInt(element.x) + '" y="' + toInt(element.y) + '" width="' + toInt(element.width) + '" height="' + toInt(element.height) + '"';
   
+  if (element.uuid) {
+    xml += ` uuid="${element.uuid}"`;
+  }
+  
   // 处理backcolor属性
   if (element.backcolor) {
     xml += ` backcolor="${element.backcolor}"`;
@@ -662,6 +690,10 @@ function generateEllipseXML(element: any): string {
 function generateFrameXML(element: any): string {
   let xml = '    <frame>\n      <reportElement x="' + toInt(element.x) + '" y="' + toInt(element.y) + '" width="' + toInt(element.width) + '" height="' + toInt(element.height) + '"';
   
+  if (element.uuid) {
+    xml += ` uuid="${element.uuid}"`;
+  }
+  
   if (element.backcolor) {
     xml += ` backcolor="${element.backcolor}"`;
   }
@@ -690,7 +722,13 @@ function generateFrameXML(element: any): string {
 function generateBreakXML(element: any): string {
   // 默认为Page类型
   const type = element.breakType || 'Page';
-  let xml = `    <break type="${type}">\n      <reportElement x="${toInt(element.x)}" y="${toInt(element.y)}" width="${toInt(element.width)}" height="${toInt(element.height)}"/>\n    </break>\n`;
+  let xml = `    <break type="${type}">\n      <reportElement x="${toInt(element.x)}" y="${toInt(element.y)}" width="${toInt(element.width)}" height="${toInt(element.height)}"`;
+
+  if (element.uuid) {
+    xml += ` uuid="${element.uuid}"`;
+  }
+
+  xml += `/>\n    </break>\n`;
   return xml;
 }
 

@@ -55,7 +55,7 @@ const props = defineProps<{
   bandIndex: number;
   elementIndex: number;
   selectedElement: SelectedElementInfo | null;
-  selectedElements: {bandIndex: number, elementIndex: number}[]; // 添加多选支持
+  selectedElements: {bandIndex: number, elementIndex: number, parentFrameIndex?: number}[]; // 添加多选支持
   editingElement: EditingElementInfo | null;
   isDragging?: boolean;
   reportFontFamily?: string;
@@ -64,6 +64,7 @@ const props = defineProps<{
   reportIsItalic?: boolean;
   reportIsUnderline?: boolean;
   isOutOfBounds?: boolean;
+  parentFrameIndex?: number;
 }>();
 
 // Emits
@@ -108,7 +109,8 @@ const commonProps = computed(() => ({
   reportIsBold: props.reportIsBold,
   reportIsItalic: props.reportIsItalic,
   reportIsUnderline: props.reportIsUnderline,
-  isOutOfBounds: props.isOutOfBounds
+  isOutOfBounds: props.isOutOfBounds,
+  parentFrameIndex: props.parentFrameIndex
 }));
 
 // 通用事件

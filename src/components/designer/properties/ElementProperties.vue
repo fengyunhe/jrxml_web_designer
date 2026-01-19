@@ -496,7 +496,15 @@ const currentElement = computed(() => {
   if (props.selectedElement && props.bands && Array.isArray(props.bands)) {
     const band = props.bands[props.selectedElement.bandIndex];
     if (band && band.elements && Array.isArray(band.elements)) {
-      return band.elements[props.selectedElement.elementIndex];
+      // 检查是否是嵌套在Frame中的元素
+      if (props.selectedElement.parentFrameIndex !== undefined) {
+        const frame = band.elements[props.selectedElement.parentFrameIndex];
+        if (frame && frame.type === 'frame' && frame.elements) {
+          return frame.elements[props.selectedElement.elementIndex];
+        }
+      } else {
+        return band.elements[props.selectedElement.elementIndex];
+      }
     }
   }
   return null;
@@ -582,6 +590,8 @@ function getSideBorderWidth(side: string): number {
   const widthKey = `${side}BorderWidth`;
   if (box[widthKey] !== undefined) return box[widthKey];
   if (box[penKey]?.lineWidth !== undefined) return box[penKey].lineWidth;
+  // Fallback to global pen
+  if (box.pen?.lineWidth !== undefined) return box.pen.lineWidth;
   return 0;
 }
 
@@ -606,6 +616,8 @@ function getSideBorderStyle(side: string): string {
   const styleKey = `${side}BorderStyle`;
   if (box[styleKey] !== undefined) return box[styleKey];
   if (box[penKey]?.lineStyle !== undefined) return box[penKey].lineStyle;
+  // Fallback to global pen
+  if (box.pen?.lineStyle !== undefined) return box.pen.lineStyle;
   return '';
 }
 
@@ -630,6 +642,8 @@ function getSideBorderColor(side: string): string {
   const colorKey = `${side}BorderColor`;
   if (box[colorKey] !== undefined) return box[colorKey];
   if (box[penKey]?.lineColor !== undefined) return box[penKey].lineColor;
+  // Fallback to global pen
+  if (box.pen?.lineColor !== undefined) return box.pen.lineColor;
   return '#000000';
 }
 
@@ -689,12 +703,9 @@ function addSolidBorder() {
 // 监听 currentElement.backcolor 变化，更新临时变量
 watch(() => currentElement.value?.backcolor, (newVal) => {
   if (!newVal) {
-    // 只有当 tempColor 为空或为默认值时才重置
-    // 这样可以避免从空值切换到有值时闪烁
-    if (!tempColor.value || tempColor.value === '#000000') {
-      tempColor.value = '#ffffff';
-      tempOpacity.value = 1;
-    }
+    // 当元素没有背景色时，默认显示白色透明，避免受上一个选中元素颜色的影响
+    tempColor.value = '#ffffff';
+    tempOpacity.value = 0;
     return;
   }
   
@@ -770,8 +781,8 @@ function updateBackcolorFromControls() {
 // 背景颜色变更处理
 function onBackcolorChange() {
   if (currentElement.value) {
-    // 如果设置了背景色但没有设置模式，自动设置为不透明
-    if (!currentElement.value.mode) {
+    // 如果设置了背景色，自动设置为不透明，确保颜色可见
+    if (!currentElement.value.mode || currentElement.value.mode === 'Transparent') {
       currentElement.value.mode = 'Opaque';
     }
     emit('save-state');
@@ -786,7 +797,7 @@ function deleteElement() {
 
 // 矩形边框相关辅助函数
 function getRectangleBorderWidth(): number {
-  if (!currentElement.value?.pen) return 0;
+  if (!currentElement.value?.pen) return 1;
   return currentElement.value.pen.lineWidth || 0;
 }
 
@@ -802,8 +813,8 @@ function setRectangleBorderWidth(value: string) {
 }
 
 function getRectangleBorderStyle(): string {
-  if (!currentElement.value?.pen) return '';
-  return currentElement.value.pen.lineStyle || '';
+  if (!currentElement.value?.pen) return 'Solid';
+  return currentElement.value.pen.lineStyle || 'Solid';
 }
 
 function setRectangleBorderStyle(value: string) {

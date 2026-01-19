@@ -32,7 +32,7 @@ const props = defineProps<{
   bandIndex: number;
   elementIndex: number;
   selectedElement: SelectedElementInfo | null;
-  selectedElements?: {bandIndex: number, elementIndex: number}[]; // 添加多选支持
+  selectedElements?: {bandIndex: number, elementIndex: number, parentFrameIndex?: number}[]; // 添加多选支持
   isDragging?: boolean;
   reportFontFamily?: string;
   reportFontSize?: number;
@@ -52,17 +52,36 @@ const emit = defineEmits<{
 
 // 是否选中
 const isSelected = computed(() => {
+  // 1. 优先使用 UUID 进行比较（最准确）
+  if (props.element.uuid) {
+    // 检查多选
+    if (props.selectedElements && props.selectedElements.length > 0) {
+      return props.selectedElements.some(el => el.uuid === props.element.uuid);
+    }
+    // 检查单选
+    if (props.selectedElement && props.selectedElement.uuid) {
+      return props.selectedElement.uuid === props.element.uuid;
+    }
+  }
+
+  // 2. 降级到索引比较（辅助函数：将 undefined 视为 -1 进行比较）
+  const getPFI = (pfi: number | undefined) => pfi === undefined ? -1 : pfi;
+  const currentPFI = getPFI(props.parentFrameIndex);
+
   // 检查是否在多选列表中
   if (props.selectedElements && props.selectedElements.length > 0) {
     return props.selectedElements.some(
-      el => el.bandIndex === props.bandIndex && el.elementIndex === props.elementIndex
+      el => el.bandIndex === props.bandIndex && 
+            el.elementIndex === props.elementIndex && 
+            getPFI(el.parentFrameIndex) === currentPFI
     );
   }
   
   // 单选逻辑
   return props.selectedElement && 
          props.selectedElement.bandIndex === props.bandIndex && 
-         props.selectedElement.elementIndex === props.elementIndex;
+         props.selectedElement.elementIndex === props.elementIndex &&
+         getPFI(props.selectedElement.parentFrameIndex) === currentPFI;
 });
 
 // 元素样式 - 使用更适合的类型断言方式
@@ -263,7 +282,7 @@ const getBorderStyle = (side: string, box?: any): string | undefined => {
 const handleSelect = (event: MouseEvent) => {
   // 检查是否按下了Ctrl或Shift键（多选）
   const isMultiSelect = event.ctrlKey || event.shiftKey || event.metaKey;
-  emit('select', props.bandIndex, props.elementIndex, isMultiSelect);
+  emit('select', props.bandIndex, props.elementIndex, isMultiSelect, props.parentFrameIndex);
 };
 
 // 处理鼠标按下（拖拽）
@@ -290,7 +309,7 @@ const handleMouseDown = (event: MouseEvent) => {
       if (!isDragging) {
         isDragging = true;
         // 触发拖动开始事件
-        emit('dragStart', moveEvent, props.bandIndex, props.elementIndex);
+        emit('dragStart', moveEvent, props.bandIndex, props.elementIndex, props.parentFrameIndex);
       }
     }
   };
@@ -318,13 +337,13 @@ const handleResize = (_direction: string, event?: MouseEvent) => {
   // 获取当前事件对象
   const resizeEvent = event || window.event as MouseEvent;
   if (resizeEvent) {
-    emit('resizeStart', resizeEvent, props.bandIndex, props.elementIndex);
+    emit('resizeStart', resizeEvent, props.bandIndex, props.elementIndex, props.parentFrameIndex);
   }
 };
 
 // 处理上下文菜单
 const handleContextMenu = (event: MouseEvent) => {
-  emit('contextmenu', event, props.bandIndex, props.elementIndex);
+  emit('contextmenu', event, props.bandIndex, props.elementIndex, props.parentFrameIndex);
 };
 </script>
 

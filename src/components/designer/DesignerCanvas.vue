@@ -176,7 +176,7 @@ interface Props {
   selectedBandIndex: number | null;
   highlightedBandIndex: number | null;
   selectedElement: any;
-  selectedElements: {bandIndex: number, elementIndex: number}[]; // 添加多选支持
+  selectedElements: {bandIndex: number, elementIndex: number, parentFrameIndex?: number}[]; // 添加多选支持
   editingElement: any;
   isDraggingOrResizing: boolean;
   horizontalRulerTicks: any[];
@@ -265,20 +265,20 @@ const selectBand = (bandIndex: number) => {
   emit('select-band', bandIndex);
 };
 
-const selectElement = (bandIndex: number, elementIndex: number, isMultiSelect = false) => {
-  emit('select-element', bandIndex, elementIndex, isMultiSelect);
+const selectElement = (bandIndex: number, elementIndex: number, isMultiSelect = false, parentFrameIndex?: number) => {
+  emit('select-element', bandIndex, elementIndex, isMultiSelect, parentFrameIndex);
 };
 
-const startDragging = (event: MouseEvent, bandIndex: number, elementIndex: number) => {
-  emit('start-dragging', event, bandIndex, elementIndex);
+const startDragging = (event: MouseEvent, bandIndex: number, elementIndex: number, parentFrameIndex?: number) => {
+  emit('start-dragging', event, bandIndex, elementIndex, parentFrameIndex);
 };
 
-const startResizingElement = (event: MouseEvent, bandIndex: number, elementIndex: number) => {
-  emit('start-resizing-element', event, bandIndex, elementIndex, 'se'); // 默认方向为'se'
+const startResizingElement = (event: MouseEvent, bandIndex: number, elementIndex: number, parentFrameIndex?: number) => {
+  emit('start-resizing-element', event, bandIndex, elementIndex, 'se', parentFrameIndex); // 默认方向为'se'
 };
 
-const startEditing = (bandIndex: number, elementIndex: number) => {
-  emit('start-editing', bandIndex, elementIndex);
+const startEditing = (bandIndex: number, elementIndex: number, parentFrameIndex?: number) => {
+  emit('start-editing', bandIndex, elementIndex, parentFrameIndex);
 };
 
 const finishEditing = () => {
@@ -300,8 +300,8 @@ const checkFields = (fields: string[]) => {
 };
 
 // 处理元素上下文菜单
-const handleElementContextMenu = (event: MouseEvent, bandIndex: number, elementIndex: number) => {
-  emit('contextmenu', event, bandIndex, elementIndex);
+const handleElementContextMenu = (event: MouseEvent, bandIndex: number, elementIndex: number, parentFrameIndex?: number) => {
+  emit('contextmenu', event, bandIndex, elementIndex, parentFrameIndex);
 };
 
 const startResizingBand = (event: MouseEvent, bandIndex: number) => {

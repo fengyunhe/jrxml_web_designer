@@ -11,6 +11,7 @@
     :report-is-bold="reportIsBold"
     :report-is-italic="reportIsItalic"
     :report-is-underline="reportIsUnderline"
+    :parent-frame-index="parentFrameIndex"
     @select="handleSelect"
     @drag-start="handleDragStart"
     @resize-start="handleResizeStart"
@@ -41,14 +42,15 @@ const props = defineProps<{
   reportIsBold?: boolean;
   reportIsItalic?: boolean;
   reportIsUnderline?: boolean;
+  parentFrameIndex?: number;
 }>();
 
 // Emits
 const emit = defineEmits<{
-  select: [bandIndex: number, elementIndex: number, isMultiSelect?: boolean];
-  dragStart: [event: MouseEvent, bandIndex: number, elementIndex: number];
-  resizeStart: [event: MouseEvent, bandIndex: number, elementIndex: number];
-  contextmenu: [event: MouseEvent, bandIndex: number, elementIndex: number];
+  select: [bandIndex: number, elementIndex: number, isMultiSelect?: boolean, parentFrameIndex?: number];
+  dragStart: [event: MouseEvent, bandIndex: number, elementIndex: number, parentFrameIndex?: number];
+  resizeStart: [event: MouseEvent, bandIndex: number, elementIndex: number, parentFrameIndex?: number];
+  contextmenu: [event: MouseEvent, bandIndex: number, elementIndex: number, parentFrameIndex?: number];
 }>();
 
 // 计算矩形样式
@@ -99,22 +101,22 @@ const rectangleStyle = computed(() => {
 
 // 处理选择
 const handleSelect = (bandIndex: number, elementIndex: number, isMultiSelect?: boolean) => {
-  emit('select', bandIndex, elementIndex, isMultiSelect);
+  emit('select', bandIndex, elementIndex, isMultiSelect, props.parentFrameIndex);
 };
 
 // 处理拖拽开始
 const handleDragStart = (event: MouseEvent, bandIndex: number, elementIndex: number) => {
-  emit('dragStart', event, bandIndex, elementIndex);
+  emit('dragStart', event, bandIndex, elementIndex, props.parentFrameIndex);
 };
 
 // 处理调整大小开始
 const handleResizeStart = (event: MouseEvent, bandIndex: number, elementIndex: number) => {
-  emit('resizeStart', event, bandIndex, elementIndex);
+  emit('resizeStart', event, bandIndex, elementIndex, props.parentFrameIndex);
 };
 
 // 处理上下文菜单
 const handleContextMenu = (event: MouseEvent, bandIndex: number, elementIndex: number) => {
-  emit('contextmenu', event, bandIndex, elementIndex);
+  emit('contextmenu', event, bandIndex, elementIndex, props.parentFrameIndex);
 };
 </script>
 

@@ -115,7 +115,7 @@ export class ElementRegistry {
         y: 0,
         width: 100,
         height: 100,
-        backcolor: '#f0f0f0'
+        mode: 'Transparent'
       }
     });
 
@@ -129,7 +129,7 @@ export class ElementRegistry {
         y: 0,
         width: 100,
         height: 100,
-        backcolor: '#f0f0f0'
+        mode: 'Transparent'
       }
     });
 

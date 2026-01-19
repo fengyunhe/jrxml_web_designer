@@ -11,6 +11,7 @@
     :report-is-bold="reportIsBold"
     :report-is-italic="reportIsItalic"
     :report-is-underline="reportIsUnderline"
+    :parent-frame-index="parentFrameIndex"
     @select="handleSelect"
     @drag-start="handleDragStart"
     @resize-start="handleResizeStart"
@@ -28,9 +29,9 @@
           :element="childElement"
           :band-index="bandIndex"
           :element-index="childIndex"
-          :selected-element="selectedElement && selectedElement.parentFrameIndex === elementIndex && selectedElement.elementIndex === childIndex ? selectedElement : null"
-          :selected-elements="[]"
-          :editing-element="null"
+          :selected-element="selectedElement"
+          :selected-elements="selectedElements || []"
+          :editing-element="editingElement"
           :is-dragging="false" 
           :report-font-family="reportFontFamily"
           :report-font-size="reportFontSize"
@@ -38,10 +39,15 @@
           :report-is-italic="reportIsItalic"
           :report-is-underline="reportIsUnderline"
           :is-out-of-bounds="false"
+          :parent-frame-index="elementIndex"
           @select="handleChildSelect"
           @drag-start="handleChildDragStart"
           @resize-start="handleChildResizeStart"
           @contextmenu="handleChildContextMenu"
+          @start-editing="handleChildStartEditing"
+          @finish-editing="handleChildFinishEditing"
+          @cancel-editing="handleChildCancelEditing"
+          @check-fields="handleChildCheckFields"
         />
       </template>
       
@@ -56,7 +62,7 @@
 <script setup lang="ts">
 import { defineAsyncComponent } from 'vue';
 import BaseElement from './BaseElement.vue';
-import type { FrameElement, SelectedElementInfo } from '../../types';
+import type { FrameElement, SelectedElementInfo, EditingElementInfo } from '../../types';
 
 // 异步导入 ElementFactory 以避免循环依赖
 const ElementFactory = defineAsyncComponent(() => import('./ElementFactory.vue'));
@@ -67,6 +73,8 @@ const props = defineProps<{
   bandIndex: number;
   elementIndex: number;
   selectedElement: SelectedElementInfo | null;
+  selectedElements?: {bandIndex: number, elementIndex: number, parentFrameIndex?: number}[]; // 添加多选支持
+  editingElement?: EditingElementInfo | null;
   isDragging?: boolean;
   isOutOfBounds?: boolean;
   reportFontFamily?: string;
@@ -74,6 +82,7 @@ const props = defineProps<{
   reportIsBold?: boolean;
   reportIsItalic?: boolean;
   reportIsUnderline?: boolean;
+  parentFrameIndex?: number; // 添加 parentFrameIndex prop
 }>();
 
 // Emits
@@ -82,6 +91,10 @@ const emit = defineEmits<{
   dragStart: [event: MouseEvent, bandIndex: number, elementIndex: number, parentFrameIndex?: number];
   resizeStart: [event: MouseEvent, bandIndex: number, elementIndex: number, parentFrameIndex?: number];
   contextmenu: [event: MouseEvent, bandIndex: number, elementIndex: number, parentFrameIndex?: number];
+  startEditing: [bandIndex: number, elementIndex: number, parentFrameIndex?: number];
+  finishEditing: [];
+  cancelEditing: [];
+  checkFields: [fields: string[]];
 }>();
 
 // 处理选择
@@ -123,6 +136,22 @@ const handleChildResizeStart = (event: MouseEvent, bIndex: number, childIndex: n
 const handleChildContextMenu = (event: MouseEvent, bIndex: number, childIndex: number) => {
   event.stopPropagation(); // 阻止事件冒泡到Frame
   emit('contextmenu', event, props.bandIndex, childIndex, props.elementIndex);
+};
+
+const handleChildStartEditing = (bIndex: number, childIndex: number) => {
+  emit('startEditing', props.bandIndex, childIndex, props.elementIndex);
+};
+
+const handleChildFinishEditing = () => {
+  emit('finishEditing');
+};
+
+const handleChildCancelEditing = () => {
+  emit('cancelEditing');
+};
+
+const handleChildCheckFields = (fields: string[]) => {
+  emit('checkFields', fields);
 };
 </script>
 

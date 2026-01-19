@@ -101,6 +101,7 @@ function parseElement(element: Element, type: string): any {
   if (!elementType) return null;
 
   const result: Partial<DesignElement> = {
+    uuid: reportElement.getAttribute('uuid') || crypto.randomUUID(), // 读取 UUID，如果不存在则自动生成
     type: elementType,
     x: parseInt(reportElement.getAttribute('x') || '0'),
     y: parseInt(reportElement.getAttribute('y') || '0'),

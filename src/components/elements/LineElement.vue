@@ -11,6 +11,7 @@
     :report-is-bold="reportIsBold"
     :report-is-italic="reportIsItalic"
     :report-is-underline="reportIsUnderline"
+    :parent-frame-index="parentFrameIndex"
     @select="handleSelect"
     @drag-start="handleDragStart"
     @resize-start="handleResizeStart"
@@ -40,13 +41,14 @@ const props = defineProps<{
   reportIsBold?: boolean;
   reportIsItalic?: boolean;
   reportIsUnderline?: boolean;
+  parentFrameIndex?: number;
 }>();
 
 // Emits
 const emit = defineEmits<{
-  select: [bandIndex: number, elementIndex: number];
-  dragStart: [event: MouseEvent, bandIndex: number, elementIndex: number];
-  resizeStart: [event: MouseEvent, bandIndex: number, elementIndex: number];
+  select: [bandIndex: number, elementIndex: number, isMultiSelect?: boolean, parentFrameIndex?: number];
+  dragStart: [event: MouseEvent, bandIndex: number, elementIndex: number, parentFrameIndex?: number];
+  resizeStart: [event: MouseEvent, bandIndex: number, elementIndex: number, parentFrameIndex?: number];
 }>();
 
 // 线条样式
@@ -87,18 +89,18 @@ const lineStyle = computed(() => {
 });
 
 // 处理选择
-const handleSelect = (bandIndex: number, elementIndex: number) => {
-  emit('select', bandIndex, elementIndex);
+const handleSelect = (bandIndex: number, elementIndex: number, isMultiSelect?: boolean) => {
+  emit('select', bandIndex, elementIndex, isMultiSelect, props.parentFrameIndex);
 };
 
 // 处理拖拽开始
 const handleDragStart = (event: MouseEvent, bandIndex: number, elementIndex: number) => {
-  emit('dragStart', event, bandIndex, elementIndex);
+  emit('dragStart', event, bandIndex, elementIndex, props.parentFrameIndex);
 };
 
 // 处理调整大小开始
 const handleResizeStart = (event: MouseEvent, bandIndex: number, elementIndex: number) => {
-  emit('resizeStart', event, bandIndex, elementIndex);
+  emit('resizeStart', event, bandIndex, elementIndex, props.parentFrameIndex);
 };
 </script>
 
