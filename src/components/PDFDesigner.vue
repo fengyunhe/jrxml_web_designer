@@ -1474,12 +1474,17 @@ const startDragging = (event: MouseEvent, bandIndex: number, elementIndex: numbe
           let currentElement;
           
           if (draggingInfo.value.parentFrameIndex !== undefined) {
-            const frame = currentBand?.elements[draggingInfo.value.parentFrameIndex];
-            if (frame && frame.type === 'frame' && frame.elements) {
-              currentElement = frame.elements[draggingInfo.value.elementIndex];
+            // 增加安全检查
+            if (currentBand && currentBand.elements && currentBand.elements[draggingInfo.value.parentFrameIndex]) {
+              const frame = currentBand.elements[draggingInfo.value.parentFrameIndex];
+              if (frame && frame.type === 'frame' && frame.elements) {
+                currentElement = frame.elements[draggingInfo.value.elementIndex];
+              }
             }
           } else {
-            currentElement = currentBand?.elements[draggingInfo.value.elementIndex];
+            if (currentBand && currentBand.elements) {
+              currentElement = currentBand.elements[draggingInfo.value.elementIndex];
+            }
           }
           
           if (currentBand && currentElement) {
@@ -1665,10 +1670,19 @@ const deleteElement = () => {
     });
     
     // 删除元素
-    sortedElements.forEach(({ bandIndex, elementIndex }) => {
+    sortedElements.forEach(({ bandIndex, elementIndex, parentFrameIndex }) => {
       const band = bands.value[bandIndex];
       if (band && band.elements) {
-        band.elements.splice(elementIndex, 1);
+        if (parentFrameIndex !== undefined) {
+           // 删除 Frame 内的元素
+           const frame = band.elements[parentFrameIndex];
+           if (frame && frame.type === 'frame' && frame.elements) {
+             frame.elements.splice(elementIndex, 1);
+           }
+        } else {
+           // 删除 Band 内的元素
+           band.elements.splice(elementIndex, 1);
+        }
       }
     });
     
@@ -1678,10 +1692,18 @@ const deleteElement = () => {
   } else if (selectedElement.value) {
     // 删除单个选中的元素（保持原有逻辑）
     saveStateToHistory();
-    const { bandIndex, elementIndex } = selectedElement.value;
+    const { bandIndex, elementIndex, parentFrameIndex } = selectedElement.value;
     const band = bands.value[bandIndex];
     if (band && band.elements) {
-      band.elements.splice(elementIndex, 1);
+      if (parentFrameIndex !== undefined) {
+         // 删除 Frame 内的元素
+         const frame = band.elements[parentFrameIndex];
+         if (frame && frame.type === 'frame' && frame.elements) {
+           frame.elements.splice(elementIndex, 1);
+         }
+      } else {
+         band.elements.splice(elementIndex, 1);
+      }
       selectedElement.value = null;
     }
   }
