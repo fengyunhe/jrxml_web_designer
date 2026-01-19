@@ -10,15 +10,15 @@
     @mousedown.stop="handleMouseDown"
     @contextmenu.stop="handleContextMenu"
   >
+    <!-- 子组件将覆盖此内容 -->
+    <slot></slot>
+
     <!-- 调整大小手柄 -->
     <div 
       v-if="isSelected"
       class="resize-handle resize-handle-se"
       @mousedown.stop="(event) => handleResize('se', event)"
     ></div>
-    
-    <!-- 子组件将覆盖此内容 -->
-    <slot></slot>
   </div>
 </template>
 
@@ -365,5 +365,6 @@ const handleContextMenu = (event: MouseEvent) => {
   height: 10px;
   background-color: #1890ff;
   cursor: se-resize;
+  z-index: 20;
 }
 </style>

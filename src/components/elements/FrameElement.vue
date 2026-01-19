@@ -17,10 +17,10 @@
     @contextmenu="handleContextMenu"
   >
     <!-- Frame 元素内容 -->
-    <div class="frame-content">
+    <div class="frame-content" :class="{ 'frame-empty': !element.elements || element.elements.length === 0 }">
       <!-- 暂时为空，未来可以支持嵌套元素 -->
       <div v-if="!element.elements || element.elements.length === 0" class="frame-placeholder">
-        <!-- 只有当没有内容且处于设计模式时才显示占位符，这里简单处理为空 -->
+        <span class="frame-label">Frame</span>
       </div>
     </div>
   </BaseElement>
@@ -79,5 +79,30 @@ const handleContextMenu = (event: MouseEvent, bandIndex: number, elementIndex: n
   width: 100%;
   height: 100%;
   position: relative;
+}
+
+.frame-empty {
+  /* 当为空时，显示一个淡灰色的背景和虚线边框，方便设计 */
+  border: 1px dashed #e0e0e0;
+  background-color: rgba(240, 240, 240, 0.2);
+}
+
+/* 如果选中了，边框颜色加深 */
+:deep(.design-element.selected) .frame-empty {
+  border-color: #a0a0a0;
+}
+
+.frame-placeholder {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.frame-label {
+  font-size: 10px;
+  color: #ccc;
+  user-select: none;
 }
 </style>
