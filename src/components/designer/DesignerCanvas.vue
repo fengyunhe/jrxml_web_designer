@@ -165,6 +165,7 @@ import { onMounted, onUnmounted, ref } from 'vue';
 import ElementFactory from '../elements/ElementFactory.vue';
 import SelectionBox from './SelectionBox.vue';
 import { BAND_CONSTANTS } from '@/constants/constants';
+import type { Band } from '@/types';
 
 // Props
 interface Props {
@@ -172,7 +173,7 @@ interface Props {
   paperHeight: number;
   zoomLevel: number;
   reportProperties: any;
-  bands: any[];
+  bands: Band[];
   selectedBandIndex: number | null;
   highlightedBandIndex: number | null;
   selectedElement: any;
