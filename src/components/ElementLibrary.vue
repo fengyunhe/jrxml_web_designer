@@ -250,8 +250,8 @@ function handleElementDoubleClick(element: any): void {
 }
 
 // 选择元素
-function selectElement(bandIndex: number, elementIndex: number): void {
-  emit('select-element', bandIndex, elementIndex);
+function selectElement(bandIndex: number, elementIndex: number, isMultiSelect?: boolean, parentFrameIndex?: number): void {
+  emit('select-element', bandIndex, elementIndex, isMultiSelect, parentFrameIndex);
 }
 
 // 通过参数选择元素（包装函数）
