@@ -76,15 +76,17 @@ export function parseJRXMLContent(jrxmlContent: string): { properties: ReportPro
 
 function parseBandElements(bandElem: Element): any[] {
   const elements: any[] = [];
-  const elementTypes = ['staticText', 'textField', 'image', 'line', 'rectangle', 'ellipse', 'break'];
+  const validElementTypes = ['staticText', 'textField', 'image', 'line', 'rectangle', 'ellipse', 'break', 'frame'];
 
-  elementTypes.forEach(type => {
-    bandElem.querySelectorAll(type).forEach(element => {
-      const parsedElement = parseElement(element, type);
+  // 遍历直接子元素，而不是使用 querySelectorAll（避免递归查找嵌套元素）
+  // 这也保留了元素的Z-order（堆叠顺序）
+  Array.from(bandElem.children).forEach(child => {
+    if (validElementTypes.includes(child.tagName)) {
+      const parsedElement = parseElement(child, child.tagName);
       if (parsedElement) {
         elements.push(parsedElement);
       }
-    });
+    }
   });
 
   return elements;
@@ -94,7 +96,7 @@ function parseElement(element: Element, type: string): any {
   const reportElement = element.querySelector('reportElement');
   if (!reportElement) return null;
 
-  const validElementTypes: Array<'staticText' | 'textField' | 'image' | 'line' | 'rectangle' | 'ellipse' | 'break'> = ['staticText', 'textField', 'image', 'line', 'rectangle', 'ellipse', 'break'];
+  const validElementTypes: Array<'staticText' | 'textField' | 'image' | 'line' | 'rectangle' | 'ellipse' | 'break' | 'frame'> = ['staticText', 'textField', 'image', 'line', 'rectangle', 'ellipse', 'break', 'frame'];
   const elementType = validElementTypes.includes(type as any) ? (type as any) : undefined;
   if (!elementType) return null;
 
@@ -145,6 +147,9 @@ function parseElement(element: Element, type: string): any {
       break;
     case 'break':
       parseBreakElement(element, result);
+      break;
+    case 'frame':
+      parseFrameElement(element, result);
       break;
   }
 
@@ -417,6 +422,48 @@ function parseBreakElement(element: Element, result: any): void {
     result.breakType = element.getAttribute('type');
   } else {
     result.breakType = 'Page';
+  }
+}
+
+function parseFrameElement(element: Element, result: any): void {
+  // 递归解析容器内的子元素
+  // 注意：这里我们使用 parseBandElements 来解析容器内的元素，因为它支持所有元素类型
+  // 但我们需要小心不要无限递归，因为 parseBandElements 会查找所有类型的元素
+  // 这里的 element 是 frame 元素，它包含了子元素，就像 band 一样
+  
+  // 然而，querySelectorAll 会查找所有后代，包括嵌套的后代。
+  // parseBandElements 使用 querySelectorAll，这可能会导致重复解析嵌套结构中的元素。
+  // 但由于我们是递归构建树结构，每次调用 parseBandElements(element) 都会返回该层级及其子层级的元素列表。
+  // 问题在于：parseBandElements 返回的是扁平列表吗？
+  // 不，parseBandElements 对每个找到的元素调用 parseElement。
+  // 如果 parseElement 递归处理 frame，那么我们构建的是树。
+  // 但是 querySelectorAll 会找到直接子元素和深层子元素。
+  // 例如：Frame1 > Frame2 > Text1
+  // parseBandElements(Frame1) 会找到 Frame2 和 Text1。
+  // 它会为 Frame2 创建一个对象（包含递归解析的 Text1）。
+  // 它也会为 Text1 创建一个对象。
+  // 这样 Text1 会出现两次：一次在 Frame2 内部，一次作为 Frame1 的直接子元素（错误地）。
+  
+  // 修正方法：我们需要只解析直接子元素。
+  // 但 DOM API 的 children 属性包含所有子节点，我们需要过滤。
+  // 或者我们可以让 parseBandElements 使用 :scope > selector，但这在某些环境可能不支持。
+  // 或者我们可以遍历 element.children 并检查 tagName。
+  
+  const elements: any[] = [];
+  const validElementTypes = ['staticText', 'textField', 'image', 'line', 'rectangle', 'ellipse', 'break', 'frame'];
+  
+  // 遍历直接子元素
+  Array.from(element.children).forEach(child => {
+    if (validElementTypes.includes(child.tagName)) {
+      const parsedElement = parseElement(child, child.tagName);
+      if (parsedElement) {
+        elements.push(parsedElement);
+      }
+    }
+  });
+  
+  if (elements.length > 0) {
+    result.elements = elements;
   }
 }
 

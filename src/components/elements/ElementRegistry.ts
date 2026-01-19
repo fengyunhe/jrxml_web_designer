@@ -146,6 +146,22 @@ export class ElementRegistry {
         breakType: 'Page'
       }
     });
+
+    this.registerElement({
+      type: 'frame',
+      name: '容器',
+      icon: '☐', // 框图标
+      defaultProps: {
+        type: 'frame',
+        x: 0,
+        y: 0,
+        width: 200,
+        height: 100,
+        backcolor: '#FFFFFF',
+        mode: 'Transparent', // 默认为透明
+        elements: []
+      }
+    });
   }
 
   // 注册元素
@@ -257,7 +273,8 @@ export class ElementRegistry {
         line: './LineElement.vue',
         rectangle: './RectangleElement.vue',
         ellipse: './EllipseElement.vue',
-        break: './BreakElement.vue'
+        break: './BreakElement.vue',
+        frame: './FrameElement.vue'
       };
 
       const componentPath = componentMap[type];

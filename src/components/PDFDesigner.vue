@@ -2876,7 +2876,7 @@ const startResizingBand = (event: MouseEvent, bandIndex: number): void => {
     if (!bands.value || !bands.value[bandIndex]) return;
     // 考虑缩放比例计算高度变化，使用paperOffsetY来更准确地计算
     const deltaY = (e.clientY - paperOffsetY) / currentZoom - (startY - paperOffsetY) / currentZoom;
-    const newHeight = Math.max(BAND_CONSTANTS.MIN_HEIGHT, startHeight + deltaY);
+    const newHeight = Math.max(BAND_CONSTANTS.MIN_HEIGHT, Math.round(startHeight + deltaY));
     bands.value[bandIndex].height = newHeight;
     
     // 调整该区域内元素的位置，确保元素不会超出区域边界
@@ -2884,8 +2884,8 @@ const startResizingBand = (event: MouseEvent, bandIndex: number): void => {
     if (band && band.elements) {
       band.elements.forEach(element => {
         // 考虑缩放比例的元素位置调整
-        if ((element.y + element.height) * currentZoom > newHeight) {
-          element.y = Math.max(0, (newHeight / currentZoom) - element.height);
+        if ((element.y + element.height) > newHeight) {
+          element.y = Math.max(0, newHeight - element.height);
         }
       });
     }

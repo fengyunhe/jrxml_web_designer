@@ -17,9 +17,10 @@
                 v-model.number="band.height" 
                 type="number" 
                 min="0"
+                step="1"
                 class="band-height-input"
-                @change="updateBandHeight(index)"
-                @blur="updateBandHeight(index)"
+                @change="ensureIntegerValue(band, 'height'); updateBandHeight(index)"
+                @blur="ensureIntegerValue(band, 'height'); updateBandHeight(index)"
               />
               <span class="band-height-unit">px</span>
             </div>
@@ -371,7 +372,7 @@
             </select>
           </div>
           
-          <template v-if="currentElement && currentElement.type !== 'line' && currentElement.type !== 'image'">
+          <template v-if="currentElement && currentElement.type !== 'line' && currentElement.type !== 'image' && currentElement.type !== 'frame'">
             <div class="form-group">
               <label>字体名称</label>
               <select v-if="currentElement" v-model="currentElement.fontFamily" style="appearance: none; -webkit-appearance: none;">

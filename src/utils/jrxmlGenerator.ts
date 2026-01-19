@@ -139,6 +139,8 @@ function generateElementXML(element: any): string {
       return generateEllipseXML(element);
     case 'break':
       return generateBreakXML(element);
+    case 'frame':
+      return generateFrameXML(element);
     default:
       return '';
   }
@@ -647,6 +649,34 @@ function generateEllipseXML(element: any): string {
   }
   
   xml += '    </ellipse>\n';
+  return xml;
+}
+
+// 生成容器XML
+function generateFrameXML(element: any): string {
+  let xml = '    <frame>\n      <reportElement x="' + toInt(element.x) + '" y="' + toInt(element.y) + '" width="' + toInt(element.width) + '" height="' + toInt(element.height) + '"';
+  
+  if (element.backcolor) {
+    xml += ` backcolor="${element.backcolor}"`;
+  }
+  
+  if (element.mode) {
+    xml += ` mode="${element.mode}"`;
+  }
+  
+  xml += '/>\n';
+  
+  // 生成box元素
+  xml += generateBoxXML(element.box);
+  
+  // 生成子元素
+  if (element.elements && element.elements.length > 0) {
+    element.elements.forEach((child: any) => {
+      xml += generateElementXML(child);
+    });
+  }
+  
+  xml += '    </frame>\n';
   return xml;
 }
 
