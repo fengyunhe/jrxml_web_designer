@@ -30,7 +30,7 @@ import BaseElement from './BaseElement.vue';
 import type { BreakElement, SelectedElementInfo } from '../../types';
 
 // Props
-defineProps<{
+const props = defineProps<{
   element: BreakElement;
   bandIndex: number;
   elementIndex: number;

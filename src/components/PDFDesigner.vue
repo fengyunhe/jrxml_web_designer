@@ -215,7 +215,7 @@ import ElementLibrary from './ElementLibrary.vue';
 import FileManager from './designer/controls/FileManager.vue';
 import ZoomControls from './designer/controls/ZoomControls.vue';
 import ElementProperties from './designer/properties/ElementProperties.vue';
-import type {Band, BandType, DesignElement, ReportField, ReportParameter} from '../types';
+import type {Band, BandType, DesignElement, ReportField, ReportParameter, SelectedElementInfo, DraggingInfo, EditingElementInfo, FrameElement} from '../types';
 import type { DesignerFile } from '@/types/designerFile';
 import {computed, onMounted, onUnmounted, ref, watch} from 'vue';
 import { useDesignerFiles } from '@/composables/useDesignerFiles';
@@ -581,9 +581,9 @@ const isDraggingOrResizing = ref(false); // 标记是否正在拖动或调整大
 
 // 选中状态
 const selectedBandIndex = ref<number | null>(null);
-const selectedElement = ref<{bandIndex: number, elementIndex: number} | null>(null);
-const selectedElements = ref<{bandIndex: number, elementIndex: number}[]>([]); // 多选元素数组
-const editingElement = ref<{bandIndex: number, elementIndex: number, parentFrameIndex?: number} | null>(null);
+const selectedElement = ref<SelectedElementInfo | null>(null);
+const selectedElements = ref<SelectedElementInfo[]>([]); // 多选元素数组
+const editingElement = ref<EditingElementInfo | null>(null);
 const editInput = ref<HTMLInputElement | null>(null);
 
 
@@ -710,7 +710,7 @@ const verticalRulerLabels = computed(() => {
 });
 
 // 拖拽相关
-const draggingInfo = ref<{bandIndex: number, elementIndex: number, startX: number, startY: number, lastTargetBandIndex?: number} | null>(null);
+const draggingInfo = ref<DraggingInfo | null>(null);
 const highlightedBandIndex = ref<number | null>(null); // 高亮显示的目标band索引
 const {
   enableSnapToGrid,
@@ -839,6 +839,7 @@ const handleDrop = (event: DragEvent) => {
       // 遍历 Band 中的 Frame，检测新元素是否落在 Frame 上
       for (let i = targetBand.elements.length - 1; i >= 0; i--) {
         const el = targetBand.elements[i];
+        if (!el) continue;
         if (el.type === 'frame') {
           // 检查新元素的中心点是否在 Frame 内
           const centerX = newElement.x + newElement.width / 2;
@@ -854,7 +855,7 @@ const handleDrop = (event: DragEvent) => {
       
       if (targetFrameIndex !== -1) {
          // 添加到 Frame
-         const frame = targetBand.elements[targetFrameIndex];
+         const frame = targetBand.elements[targetFrameIndex] as FrameElement;
          if (!frame.elements) frame.elements = [];
          
          // 转换为相对于 Frame 的坐标
@@ -1008,7 +1009,7 @@ const selectElement = (bandIndex: number, elementIndex: number, isMultiSelect = 
   let element;
   
   if (parentFrameIndex !== undefined) {
-    const frame = band?.elements[parentFrameIndex];
+    const frame = band?.elements[parentFrameIndex] as FrameElement;
     if (frame && frame.type === 'frame' && frame.elements) {
       element = frame.elements[elementIndex];
     }
@@ -1155,7 +1156,7 @@ const startDragging = (event: MouseEvent, bandIndex: number, elementIndex: numbe
   let draggedElement;
   
   if (parentFrameIndex !== undefined) {
-    const frame = band?.elements[parentFrameIndex];
+    const frame = band?.elements[parentFrameIndex] as FrameElement;
     if (frame && frame.type === 'frame' && frame.elements) {
       draggedElement = frame.elements[elementIndex];
     }
@@ -1527,7 +1528,7 @@ const startDragging = (event: MouseEvent, bandIndex: number, elementIndex: numbe
             let sourceParentRelX = 0;
             let sourceParentRelY = 0;
             if (draggingInfo.value.parentFrameIndex !== undefined) {
-               const frame = bands.value[draggingInfo.value.bandIndex].elements[draggingInfo.value.parentFrameIndex];
+               const frame = bands.value[draggingInfo.value.bandIndex]?.elements[draggingInfo.value.parentFrameIndex];
                if (frame) {
                  sourceParentRelX = frame.x;
                  sourceParentRelY = frame.y;
@@ -1539,8 +1540,13 @@ const startDragging = (event: MouseEvent, bandIndex: number, elementIndex: numbe
             const elementRelSourceBandY = sourceParentRelY + currentElement.y;
             
             // 计算 Source Band 相对于 Target Band 的偏移
-            const sourceBandElement = document.querySelectorAll('.band')[draggingInfo.value.bandIndex].getBoundingClientRect();
-            const targetBandElement = document.querySelectorAll('.band')[targetBandIndex].getBoundingClientRect();
+            const sourceBandEl = document.querySelectorAll('.band')[draggingInfo.value.bandIndex];
+            const targetBandEl = document.querySelectorAll('.band')[targetBandIndex];
+            
+            if (!sourceBandEl || !targetBandEl) return;
+            
+            const sourceBandElement = sourceBandEl.getBoundingClientRect();
+            const targetBandElement = targetBandEl.getBoundingClientRect();
             const currentZoom = zoomLevel.value;
             const bandOffsetY = (sourceBandElement.top - targetBandElement.top) / currentZoom;
             
@@ -1560,6 +1566,7 @@ const startDragging = (event: MouseEvent, bandIndex: number, elementIndex: numbe
                   }
 
                   const el = targetBand.elements[i];
+                  if (!el) continue;
                   if (el.type === 'frame') {
                       // Check intersection using element center
                       const centerX = elementRelTargetBandX + currentElement.width / 2;
@@ -1584,18 +1591,18 @@ const startDragging = (event: MouseEvent, bandIndex: number, elementIndex: numbe
                // Remove from Source
                let element;
                if (draggingInfo.value.parentFrameIndex !== undefined) {
-                   const frame = bands.value[draggingInfo.value.bandIndex].elements[draggingInfo.value.parentFrameIndex];
+                   const frame = bands.value[draggingInfo.value.bandIndex]?.elements[draggingInfo.value.parentFrameIndex] as FrameElement;
                    if (frame && frame.elements) {
                      element = frame.elements.splice(draggingInfo.value.elementIndex, 1)[0];
                    }
                } else {
-                   element = bands.value[draggingInfo.value.bandIndex].elements.splice(draggingInfo.value.elementIndex, 1)[0];
+                   element = bands.value[draggingInfo.value.bandIndex]?.elements.splice(draggingInfo.value.elementIndex, 1)[0];
                }
                
                if (element) {
                  // Add to Target
                  if (targetFrameIndex !== -1) {
-                     const frame = targetBand.elements[targetFrameIndex];
+                     const frame = targetBand.elements[targetFrameIndex] as FrameElement;
                      if (!frame.elements) frame.elements = [];
                      
                      // Convert to Frame Rel Coords
@@ -1605,6 +1612,8 @@ const startDragging = (event: MouseEvent, bandIndex: number, elementIndex: numbe
                      // Limit
                      element.x = Math.max(0, element.x);
                      element.y = Math.max(0, element.y);
+                     if (element.x + element.width > frame.width) element.x = Math.max(0, frame.width - element.width);
+                     if (element.y + element.height > frame.height) element.y = Math.max(0, frame.height - element.height);
                      
                      frame.elements.push(element);
                      selectElement(targetBandIndex, frame.elements.length - 1, false, targetFrameIndex);
@@ -3145,6 +3154,8 @@ const startResizingElement = (event: MouseEvent, bandIndex: number, elementIndex
     const handleMouseMove = (e: MouseEvent) => {
       if (resizingInfo.value) {
         const currentBand = bands.value[resizingInfo.value.bandIndex];
+        if (!currentBand) return;
+
         let element;
         let containerWidth = (paperWidth.value - (reportProperties.value?.leftMargin || 0) - (reportProperties.value?.rightMargin || 0));
         let containerHeight = currentBand.height;

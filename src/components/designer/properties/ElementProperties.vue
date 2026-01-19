@@ -717,9 +717,9 @@ watch(() => currentElement.value?.backcolor, (newVal) => {
     // 解析 rgba(r, g, b, a)
     const match = newVal.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)(?:,\s*([\d.]+))?\)/);
     if (match) {
-      const r = parseInt(match[1]);
-      const g = parseInt(match[2]);
-      const b = parseInt(match[3]);
+      const r = parseInt(match[1]!);
+      const g = parseInt(match[2]!);
+      const b = parseInt(match[3]!);
       const a = match[4] ? parseFloat(match[4]) : 1;
       
       // RGB 转 Hex
@@ -731,9 +731,9 @@ watch(() => currentElement.value?.backcolor, (newVal) => {
     // 解析 rgb(r, g, b)
     const match = newVal.match(/rgb\((\d+),\s*(\d+),\s*(\d+)\)/);
     if (match) {
-      const r = parseInt(match[1]);
-      const g = parseInt(match[2]);
-      const b = parseInt(match[3]);
+      const r = parseInt(match[1]!);
+      const g = parseInt(match[2]!);
+      const b = parseInt(match[3]!);
       
       // RGB 转 Hex
       const hex = '#' + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1);
@@ -763,7 +763,7 @@ function updateBackcolorFromControls() {
     
     // 处理简写 hex (e.g. #fff)
     if (hex.length === 3) {
-      hex = hex[0] + hex[0] + hex[1] + hex[1] + hex[2] + hex[2];
+      hex = hex[0]! + hex[0]! + hex[1]! + hex[1]! + hex[2]! + hex[2]!;
     }
     
     const r = parseInt(hex.slice(0, 2), 16);
@@ -797,48 +797,54 @@ function deleteElement() {
 
 // 矩形边框相关辅助函数
 function getRectangleBorderWidth(): number {
-  if (!currentElement.value?.pen) return 1;
-  return currentElement.value.pen.lineWidth || 0;
+  const el = currentElement.value as any;
+  if (!el?.pen) return 1;
+  return el.pen.lineWidth || 0;
 }
 
 function setRectangleBorderWidth(value: string) {
   if (!currentElement.value) return;
+  const el = currentElement.value as any;
   const numValue = parseFloat(value) || 0;
   emit('save-state');
-  if (!currentElement.value.pen) {
-    currentElement.value.pen = {};
+  if (!el.pen) {
+    el.pen = {};
   }
-  currentElement.value.pen.lineWidth = numValue;
+  el.pen.lineWidth = numValue;
   emit('update-jrxml');
 }
 
 function getRectangleBorderStyle(): string {
-  if (!currentElement.value?.pen) return 'Solid';
-  return currentElement.value.pen.lineStyle || 'Solid';
+  const el = currentElement.value as any;
+  if (!el?.pen) return 'Solid';
+  return el.pen.lineStyle || 'Solid';
 }
 
 function setRectangleBorderStyle(value: string) {
   if (!currentElement.value) return;
+  const el = currentElement.value as any;
   emit('save-state');
-  if (!currentElement.value.pen) {
-    currentElement.value.pen = {};
+  if (!el.pen) {
+    el.pen = {};
   }
-  currentElement.value.pen.lineStyle = value;
+  el.pen.lineStyle = value;
   emit('update-jrxml');
 }
 
 function getRectangleBorderColor(): string {
-  if (!currentElement.value?.pen) return '#000000';
-  return currentElement.value.pen.lineColor || '#000000';
+  const el = currentElement.value as any;
+  if (!el?.pen) return '#000000';
+  return el.pen.lineColor || '#000000';
 }
 
 function setRectangleBorderColor(value: string) {
   if (!currentElement.value) return;
+  const el = currentElement.value as any;
   emit('save-state');
-  if (!currentElement.value.pen) {
-    currentElement.value.pen = {};
+  if (!el.pen) {
+    el.pen = {};
   }
-  currentElement.value.pen.lineColor = value;
+  el.pen.lineColor = value;
   emit('update-jrxml');
 }
 </script>

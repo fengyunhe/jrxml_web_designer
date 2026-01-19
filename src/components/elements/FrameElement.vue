@@ -31,7 +31,7 @@
           :element-index="childIndex"
           :selected-element="selectedElement"
           :selected-elements="selectedElements || []"
-          :editing-element="editingElement"
+          :editing-element="editingElement || null"
           :is-dragging="false" 
           :report-font-family="reportFontFamily"
           :report-font-size="reportFontSize"

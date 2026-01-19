@@ -31,8 +31,9 @@ const props = defineProps<{
   element: DesignElement;
   bandIndex: number;
   elementIndex: number;
+  parentFrameIndex?: number;
   selectedElement: SelectedElementInfo | null;
-  selectedElements?: {bandIndex: number, elementIndex: number, parentFrameIndex?: number}[]; // 添加多选支持
+  selectedElements?: {bandIndex: number, elementIndex: number, parentFrameIndex?: number, uuid?: string}[]; // 添加多选支持
   isDragging?: boolean;
   reportFontFamily?: string;
   reportFontSize?: number;
@@ -44,10 +45,10 @@ const props = defineProps<{
 
 // Emits
 const emit = defineEmits<{
-  select: [bandIndex: number, elementIndex: number, isMultiSelect?: boolean];
-  dragStart: [event: MouseEvent, bandIndex: number, elementIndex: number];
-  resizeStart: [event: MouseEvent, bandIndex: number, elementIndex: number];
-  contextmenu: [event: MouseEvent, bandIndex: number, elementIndex: number];
+  select: [bandIndex: number, elementIndex: number, isMultiSelect?: boolean, parentFrameIndex?: number];
+  dragStart: [event: MouseEvent, bandIndex: number, elementIndex: number, parentFrameIndex?: number];
+  resizeStart: [event: MouseEvent, bandIndex: number, elementIndex: number, parentFrameIndex?: number];
+  contextmenu: [event: MouseEvent, bandIndex: number, elementIndex: number, parentFrameIndex?: number];
 }>();
 
 // 是否选中
