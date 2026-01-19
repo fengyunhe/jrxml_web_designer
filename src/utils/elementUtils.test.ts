@@ -196,7 +196,7 @@ describe('elementUtils', () => {
       
       selectElementFromList(element, selectElement)
       
-      expect(selectElement).toHaveBeenCalledWith(1, 2)
+      expect(selectElement).toHaveBeenCalledWith(1, 2, false, undefined)
     })
   })
 
@@ -230,8 +230,8 @@ describe('elementUtils', () => {
       selectElementsByParameter(bands, 'param1', selectElement)
       
       expect(selectElement).toHaveBeenCalledTimes(2)
-      expect(selectElement).toHaveBeenCalledWith(0, 0)
-      expect(selectElement).toHaveBeenCalledWith(1, 0)
+      expect(selectElement).toHaveBeenCalledWith(0, 0, false, undefined)
+      expect(selectElement).toHaveBeenCalledWith(1, 0, false, undefined)
     })
 
     it('should not select elements that do not use the specified parameter', () => {
@@ -272,7 +272,7 @@ describe('elementUtils', () => {
       selectElementsByField(bands, 'field1', selectElement)
       
       expect(selectElement).toHaveBeenCalledTimes(1)
-      expect(selectElement).toHaveBeenCalledWith(0, 0)
+      expect(selectElement).toHaveBeenCalledWith(0, 0, false, undefined)
     })
 
     it('should not select elements that do not use the specified field', () => {
