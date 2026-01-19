@@ -732,9 +732,14 @@ const resizingInfo = ref<{bandIndex: number, elementIndex: number, startX: numbe
 // 跟踪最后点击的band
 const lastClickedBandIndex = ref<number>(3); // 默认为DETAIL区域（索引3）
 
+// 跟踪从组件库拖拽的元素（修复Mac Tauri环境下dataTransfer可能失效的问题）
+const draggedLibraryElement = ref<any>(null);
+
 // 处理拖放
 const handleDragStart = (event: DragEvent, element: any) => {
+  draggedLibraryElement.value = element;
   if (event.dataTransfer) {
+    event.dataTransfer.effectAllowed = 'copy';
     event.dataTransfer.setData('application/json', JSON.stringify(element));
   }
 };
@@ -786,8 +791,25 @@ const handleElementDoubleClick = (element: any) => {
 
 const handleDrop = (event: DragEvent) => {
   event.preventDefault();
-  if (event.dataTransfer) {
-    const elementData = JSON.parse(event.dataTransfer.getData('application/json'));
+  
+  let elementData = null;
+  
+  // 优先从内部状态获取（解决Mac Tauri环境下可能获取不到dataTransfer的问题）
+  if (draggedLibraryElement.value) {
+    elementData = draggedLibraryElement.value;
+    draggedLibraryElement.value = null; // 重置状态
+  } else if (event.dataTransfer) {
+    try {
+      const data = event.dataTransfer.getData('application/json');
+      if (data) {
+        elementData = JSON.parse(data);
+      }
+    } catch (e) {
+      console.error('解析拖拽数据失败:', e);
+    }
+  }
+  
+  if (elementData) {
     
     // 获取paper元素作为参考点
     const paper = document.querySelector('.paper') as HTMLElement;
@@ -910,6 +932,9 @@ const handleDrop = (event: DragEvent) => {
 // 处理拖动过程中的视觉反馈
 const handleDragOver = (event: DragEvent) => {
   event.preventDefault();
+  if (event.dataTransfer) {
+    event.dataTransfer.dropEffect = 'copy';
+  }
   
   // 获取paper元素作为参考点
   const paper = document.querySelector('.paper') as HTMLElement;

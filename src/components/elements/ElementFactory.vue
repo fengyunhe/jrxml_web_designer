@@ -13,6 +13,10 @@ import StaticTextElement from './StaticTextElement.vue';
 import TextFieldElement from './TextFieldElement.vue';
 import ImageElement from './ImageElement.vue';
 import LineElement from './LineElement.vue';
+import RectangleElement from './RectangleElement.vue';
+import EllipseElement from './EllipseElement.vue';
+import BreakElement from './BreakElement.vue';
+import FrameElement from './FrameElement.vue';
 import type { 
   DesignElement,
   SelectedElementInfo,
@@ -24,7 +28,11 @@ const componentCache = ref<Record<string, any>>({
   staticText: StaticTextElement,
   textField: TextFieldElement,
   image: ImageElement,
-  line: LineElement
+  line: LineElement,
+  rectangle: RectangleElement,
+  ellipse: EllipseElement,
+  break: BreakElement,
+  frame: FrameElement
 });
 
 // 预加载组件

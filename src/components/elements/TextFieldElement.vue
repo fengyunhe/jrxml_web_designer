@@ -16,14 +16,28 @@
     @drag-start="handleDragStart"
     @resize-start="handleResizeStart"
   >
-    <span @dblclick.stop="handleStartEditing">{{ displayText }}</span>
+    <template v-if="isEditing">
+      <input 
+        v-model="element.expression" 
+        type="text" 
+        class="inline-edit-input"
+        @blur="handleFinishEditing"
+        @keyup.enter="handleFinishEditing"
+        @keyup.esc="handleCancelEditing"
+        ref="editInput"
+        placeholder="请输入表达式"
+      />
+    </template>
+    <template v-else>
+      <span @dblclick.stop="handleStartEditing">{{ displayText }}</span>
+    </template>
   </BaseElement>
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue';
+import { ref, computed, watch } from 'vue';
 import BaseElement from './BaseElement.vue';
-import type { TextFieldElement, SelectedElementInfo } from '../../types';
+import type { TextFieldElement, SelectedElementInfo, EditingElementInfo } from '../../types';
 
 // Props
 const props = defineProps<{
@@ -31,6 +45,7 @@ const props = defineProps<{
   bandIndex: number;
   elementIndex: number;
   selectedElement: SelectedElementInfo | null;
+  editingElement: EditingElementInfo | null;
   isDragging?: boolean;
   isOutOfBounds?: boolean;
   reportFontFamily?: string;
@@ -48,7 +63,31 @@ const emit = defineEmits<{
   resizeStart: [event: MouseEvent, bandIndex: number, elementIndex: number, parentFrameIndex?: number];
   updateElement: [];
   checkFields: [fields: string[]];
+  startEditing: [bandIndex: number, elementIndex: number, parentFrameIndex?: number];
+  finishEditing: [];
+  cancelEditing: [];
 }>();
+
+// Refs
+const editInput = ref<HTMLInputElement | null>(null);
+
+// 是否正在编辑
+const isEditing = computed(() => {
+  return props.editingElement && 
+         props.editingElement.bandIndex === props.bandIndex && 
+         props.editingElement.elementIndex === props.elementIndex &&
+         props.editingElement.parentFrameIndex === props.parentFrameIndex;
+});
+
+// 当进入编辑状态时，聚焦输入框
+watch(() => isEditing.value, (newVal) => {
+  if (newVal && editInput.value) {
+    setTimeout(() => {
+      editInput.value?.focus();
+      editInput.value?.select();
+    }, 10);
+  }
+});
 
 // 显示文本
 const displayText = computed(() => {
@@ -75,32 +114,49 @@ const handleResizeStart = (event: MouseEvent, bandIndex: number, elementIndex: n
 
 // 开始编辑表达式
 const handleStartEditing = () => {
-  // 获取当前表达式，优先使用expression，其次使用fieldName
-  const currentExpression = props.element.expression || '';
-  
-  // 使用prompt弹窗输入新表达式，默认值为当前表达式
-  const newExpression = prompt('请输入新的表达式:', currentExpression);
-  
-  // 如果用户点击了确定且表达式有变化，则更新表达式
-  if (newExpression !== null && newExpression !== currentExpression) {
-    // 提取表达式中的所有字段引用 $F{fieldName}
-    const fieldReferences: string[] = [];
-    const fieldRegex = /\$F\{([^}]+)\}/g;
-    let match;
-    while ((match = fieldRegex.exec(newExpression)) !== null) {
-      if (match[1]) {
-        fieldReferences.push(match[1]);
-      }
-    }
-    
-    // 发送字段引用给父组件检查
-    if (fieldReferences.length > 0) {
-      emit('checkFields', fieldReferences);
-    }
-    
-      props.element.expression = newExpression;
-    // 触发父组件更新JRXML
-    emit('updateElement');
-  }
+  emit('startEditing', props.bandIndex, props.elementIndex, props.parentFrameIndex);
 };
-</script>","}}}
+
+// 完成编辑
+const handleFinishEditing = () => {
+  // 提取表达式中的所有字段引用 $F{fieldName}
+  const currentExpression = props.element.expression || '';
+  const fieldReferences: string[] = [];
+  const fieldRegex = /\$F\{([^}]+)\}/g;
+  let match;
+  while ((match = fieldRegex.exec(currentExpression)) !== null) {
+    if (match[1]) {
+      fieldReferences.push(match[1]);
+    }
+  }
+  
+  // 发送字段引用给父组件检查
+  if (fieldReferences.length > 0) {
+    emit('checkFields', fieldReferences);
+  }
+  
+  // 触发父组件更新JRXML
+  emit('updateElement');
+  emit('finishEditing');
+};
+
+// 取消编辑
+const handleCancelEditing = () => {
+  emit('cancelEditing');
+};
+</script>
+
+<style scoped>
+.inline-edit-input {
+  width: 100%;
+  padding: 0;
+  border: none;
+  outline: none;
+  background: transparent;
+  font-family: inherit;
+  font-size: inherit;
+  font-weight: inherit;
+  font-style: inherit;
+  text-decoration: inherit;
+}
+</style>

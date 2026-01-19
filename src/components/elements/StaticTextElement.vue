@@ -103,21 +103,13 @@ const handleResizeStart = (event: MouseEvent, bandIndex: number, elementIndex: n
 
 // 开始编辑
 const handleStartEditing = () => {
-  // 使用prompt弹窗输入新文本，默认值为当前文本
-  const currentText = props.element.text || '';
-  const newText = prompt('请输入新的文本内容:', currentText);
-  
-  // 如果用户点击了确定且文本有变化，则更新文本
-  if (newText !== null && newText !== currentText) {
-    // 直接更新元素文本
-    props.element.text = newText;
-    // 触发父组件更新JRXML
-    emit('finishEditing');
-  }
+  // 触发开始编辑事件，由父组件控制进入编辑状态
+  emit('startEditing', props.bandIndex, props.elementIndex, props.parentFrameIndex);
 };
 
 // 完成编辑
 const handleFinishEditing = () => {
+  // 只有在文本发生变化时才触发更新（如果需要额外的校验逻辑可以在这里添加）
   emit('finishEditing');
 };
 

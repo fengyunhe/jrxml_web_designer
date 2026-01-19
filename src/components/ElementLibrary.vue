@@ -100,11 +100,20 @@
         </div>
       </div>
     </div>
+    
+    <!-- 确认对话框 -->
+    <ConfirmModal 
+      v-model:visible="showConfirmModal"
+      title="删除确认"
+      message="确定要删除该元素吗？"
+      @confirm="handleConfirmDelete"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, computed } from 'vue';
+import ConfirmModal from './modals/ConfirmModal.vue';
 import type { DesignElement, StaticTextElement, TextFieldElement, ReportField, ReportParameter } from '../types';
 import {
   getElementDisplayInfoWithoutBand,
@@ -279,10 +288,22 @@ function handleDeleteField(fieldName: string): void {
   emit('delete-field', fieldName);
 }
 
+// 待删除的元素
+const pendingDeleteElement = ref<any>(null);
+const showConfirmModal = ref(false);
+
 // 处理删除元素
 function handleDeleteElement(element: any): void {
-  if (confirm('确定要删除该元素吗？')) {
+  pendingDeleteElement.value = element;
+  showConfirmModal.value = true;
+}
+
+// 确认删除
+function handleConfirmDelete(): void {
+  if (pendingDeleteElement.value) {
+    const element = pendingDeleteElement.value;
     emit('delete-element', element.bandIndex, element.elementIndex, element.parentFrameIndex);
+    pendingDeleteElement.value = null;
   }
 }
 </script>

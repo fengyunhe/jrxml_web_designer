@@ -77,6 +77,23 @@
         </div>
       </div>
     </div>
+
+    <!-- 重命名弹窗 -->
+    <InputModal
+      v-model:visible="showRenameModal"
+      title="重命名文件"
+      message="请输入新的文件名："
+      :default-value="pendingFile?.name || ''"
+      @confirm="handleConfirmRename"
+    />
+
+    <!-- 删除确认弹窗 -->
+    <ConfirmModal
+      v-model:visible="showDeleteModal"
+      title="删除文件"
+      :message="`确定要删除文件 &quot;${pendingFile?.name}&quot; 吗？此操作不可撤销。`"
+      @confirm="handleConfirmDelete"
+    />
   </div>
 </template>
 
@@ -85,6 +102,8 @@ import { ref, computed, onMounted, onUnmounted } from 'vue';
 import notification from '../../../utils/notification';
 import { useDesignerFiles } from '@/composables/useDesignerFiles';
 import type { DesignerFile } from '@/types/designerFile';
+import ConfirmModal from '../../modals/ConfirmModal.vue';
+import InputModal from '../../modals/InputModal.vue';
 
 interface Props {
   currentFileName: string;
@@ -118,6 +137,9 @@ const showFileMenu = ref(false);
 const showFileSubmenu = ref(false);
 const fileMenuContainer = ref<HTMLElement | null>(null);
 const fileFilterText = ref('');
+const showRenameModal = ref(false);
+const showDeleteModal = ref(false);
+const pendingFile = ref<DesignerFile | null>(null);
 
 const {
   files,
@@ -169,17 +191,30 @@ function selectFileFromSubmenu(file: DesignerFile) {
 
 // 从子菜单重命名文件
 function renameFileFromSubmenu(file: DesignerFile) {
-  const newName = prompt('请输入新的文件名:', file.name);
-  if (newName && newName !== file.name) {
-    renameFile(file.id, newName);
+  pendingFile.value = file;
+  showRenameModal.value = true;
+}
+
+// 确认重命名
+function handleConfirmRename(newName: string) {
+  if (pendingFile.value && newName && newName !== pendingFile.value.name) {
+    renameFile(pendingFile.value.id, newName);
   }
+  pendingFile.value = null;
 }
 
 // 从子菜单删除文件
 function deleteFileFromSubmenu(file: DesignerFile) {
-  if (confirm(`确定要删除文件 "${file.name}" 吗？此操作不可撤销。`)) {
-    deleteFile(file.id);
+  pendingFile.value = file;
+  showDeleteModal.value = true;
+}
+
+// 确认删除
+function handleConfirmDelete() {
+  if (pendingFile.value) {
+    deleteFile(pendingFile.value.id);
   }
+  pendingFile.value = null;
 }
 
 // 创建新文件
