@@ -1544,6 +1544,13 @@ const startDragging = (event: MouseEvent, bandIndex: number, elementIndex: numbe
             if (targetBand && targetBand.elements) {
               // 遍历 Target Band 中的 Frame
               for (let i = targetBand.elements.length - 1; i >= 0; i--) {
+                  // 避免将 Frame 放入自身：如果是在同一个 Band，且当前遍历到的 Frame 就是正在拖拽的元素，则跳过
+                  if (targetBandIndex === draggingInfo.value.bandIndex && 
+                      draggingInfo.value.parentFrameIndex === undefined && 
+                      i === draggingInfo.value.elementIndex) {
+                    continue;
+                  }
+
                   const el = targetBand.elements[i];
                   if (el.type === 'frame') {
                       // Check intersection using element center
