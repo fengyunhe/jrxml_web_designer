@@ -4,10 +4,10 @@
     <div class="top-ruler-container">
       <!-- 左上角空白区域 -->
       <div class="corner-space">
-        <div class="unit-label">mm</div>
+        <div class="unit-label">px</div>
       </div>
       <!-- 水平标尺 -->
-      <div class="horizontal-ruler" :style="{ width: (paperWidth * zoomLevel) + 'px' }">
+      <div class="horizontal-ruler" ref="horizontalRulerRef">
         <div class="ruler-content" :style="{ width: (paperWidth * zoomLevel) + 'px' }">
           <div 
             v-for="tick in horizontalRulerTicks" 
@@ -32,7 +32,7 @@
     <div class="main-content">
       <!-- 垂直标尺 -->
       <div class="vertical-ruler-container">
-        <div class="vertical-ruler" :style="{ height: (paperHeight * zoomLevel) + 'px' }">
+        <div class="vertical-ruler" ref="verticalRulerRef">
           <div class="ruler-content" :style="{ height: (paperHeight * zoomLevel) + 'px' }">
             <div 
               v-for="tick in verticalRulerTicks" 
@@ -54,7 +54,7 @@
       </div>
       
       <!-- 纸张容器 -->
-      <div class="paper-container">
+      <div class="paper-container" ref="paperContainerRef">
         <!-- 纸张 -->
         <div class="paper" 
              :style="{ 
@@ -161,7 +161,7 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, onUnmounted, ref } from 'vue';
+import { onMounted, onBeforeUnmount, ref } from 'vue';
 import ElementFactory from '../elements/ElementFactory.vue';
 import SelectionBox from './SelectionBox.vue';
 import { BAND_CONSTANTS } from '@/constants/constants';
@@ -244,6 +244,10 @@ const selectionBox = ref({
 });
 
 const isSelecting = ref(false);
+
+const horizontalRulerRef = ref<HTMLElement | null>(null);
+const verticalRulerRef = ref<HTMLElement | null>(null);
+const paperContainerRef = ref<HTMLElement | null>(null);
 
 // Methods
 const setDesignAreaFocused = () => {
@@ -455,19 +459,15 @@ onMounted(() => {
   }
   
   // 添加滚动事件监听器
-    const paperContainer = document.querySelector('.paper-container');
-    if (paperContainer) {
+    if (paperContainerRef.value) {
       const handleScroll = () => {
-        const horizontalRuler = document.querySelector('.horizontal-ruler');
-        const verticalRuler = document.querySelector('.vertical-ruler');
-        
-        if (horizontalRuler && verticalRuler) {
-          horizontalRuler.scrollLeft = paperContainer.scrollLeft;
-          verticalRuler.scrollTop = paperContainer.scrollTop;
+        if (horizontalRulerRef.value && verticalRulerRef.value && paperContainerRef.value) {
+          horizontalRulerRef.value.scrollLeft = paperContainerRef.value.scrollLeft;
+          verticalRulerRef.value.scrollTop = paperContainerRef.value.scrollTop;
         }
       };
       
-      paperContainer.addEventListener('scroll', handleScroll);
+      paperContainerRef.value.addEventListener('scroll', handleScroll);
       (window as any).paperContainerScrollListener = handleScroll;
     }
   
@@ -483,7 +483,13 @@ onMounted(() => {
   }
 });
 
-onUnmounted(() => {
+onBeforeUnmount(() => {
+  // 移除滚动事件监听器
+  const scrollListener = (window as any).paperContainerScrollListener;
+  if (scrollListener && paperContainerRef.value) {
+    paperContainerRef.value.removeEventListener('scroll', scrollListener);
+  }
+  
   // 移除鼠标滚轮事件监听器
   const wheelListener = (window as any).designerCanvasWheelListener;
   const designerCanvas = document.querySelector('.designer-canvas');
@@ -497,19 +503,18 @@ onUnmounted(() => {
     document.removeEventListener('keydown', keyDownListener as EventListener);
   }
   
-  // 移除滚动事件监听器
-  const scrollListener = (window as any).paperContainerScrollListener;
-  const paperContainer = document.querySelector('.paper-container');
-  if (scrollListener && paperContainer) {
-    paperContainer.removeEventListener('scroll', scrollListener);
-  }
-  
   // 移除paper点击事件监听器
   const paperClickListener = (window as any).paperClickListener;
   const paper = document.querySelector('.paper');
   if (paperClickListener && paper) {
     paper.removeEventListener('click', paperClickListener);
   }
+
+  // 清理全局引用
+  delete (window as any).paperContainerScrollListener;
+  delete (window as any).designerCanvasWheelListener;
+  delete (window as any).designerCanvasKeyDownListener;
+  delete (window as any).paperClickListener;
 });
 </script>
 
@@ -551,7 +556,8 @@ onUnmounted(() => {
 
 .horizontal-ruler {
   position: relative;
-  width: 100%;
+  flex: 1;
+  width: 0;
   height: 30px;
   background-color: #e8e8e8;
   border-bottom: 1px solid #ccc;

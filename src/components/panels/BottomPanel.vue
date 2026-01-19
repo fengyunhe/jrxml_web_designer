@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed, onMounted, watch } from 'vue';
 import ResizablePanel from './ResizablePanel.vue';
 import PdfPreviewModal from '../modals/PdfPreviewModal.vue';
 import {
@@ -52,6 +52,63 @@ const tabs = ref([
 // 底部面板高度
 const bottomPanelHeight = ref(props.initialHeight);
 
+// 纸张规格定义
+const PAPER_SIZES = [
+  { name: 'Letter', width: 612, height: 792 },
+  { name: 'Legal', width: 612, height: 1008 },
+  { name: 'A0', width: 2384, height: 3370 },
+  { name: 'A1', width: 1684, height: 2384 },
+  { name: 'A2', width: 1191, height: 1684 },
+  { name: 'A3', width: 842, height: 1190 },
+  { name: 'A4', width: 595, height: 842 },
+  { name: 'A5', width: 420, height: 595 },
+  { name: 'A6', width: 298, height: 420 },
+  { name: 'A7', width: 210, height: 298 },
+  { name: 'A8', width: 147, height: 210 },
+  { name: 'A9', width: 105, height: 147 },
+  { name: 'A10', width: 74, height: 105 },
+  { name: 'B0', width: 2835, height: 4008 },
+  { name: 'B1', width: 2004, height: 2835 },
+  { name: 'B2', width: 1417, height: 2004 },
+  { name: 'B3', width: 1001, height: 1417 },
+  { name: 'B4', width: 708, height: 1000 },
+  { name: 'B5', width: 498, height: 708 },
+  { name: 'B6', width: 354, height: 499 },
+  { name: 'B7', width: 249, height: 354 },
+  { name: 'B8', width: 176, height: 249 },
+  { name: 'B9', width: 125, height: 176 },
+  { name: 'B10', width: 88, height: 125 },
+  { name: 'C0', width: 2599, height: 3676 },
+  { name: 'C1', width: 1837, height: 2599 },
+  { name: 'C2', width: 1298, height: 1837 },
+  { name: 'C3', width: 918, height: 1298 },
+  { name: 'C4', width: 649, height: 918 },
+  { name: 'C5', width: 459, height: 649 },
+  { name: 'C6', width: 323, height: 459 },
+  { name: 'C7', width: 230, height: 323 },
+  { name: 'C8', width: 162, height: 230 },
+  { name: 'C9', width: 113, height: 162 },
+  { name: 'C10', width: 79, height: 113 },
+  { name: 'RA0', width: 2437, height: 3458 },
+  { name: 'RA1', width: 1729, height: 2437 },
+  { name: 'RA2', width: 1218, height: 1729 },
+  { name: 'SRA0', width: 2551, height: 3628 },
+  { name: 'SRA1', width: 1814, height: 2551 },
+  { name: 'SRA2', width: 1275, height: 1814 },
+  { name: 'Executive', width: 522, height: 756 },
+  { name: 'Statement', width: 396, height: 612 },
+  { name: 'Tabloid', width: 792, height: 1224 },
+  { name: 'Ledger', width: 1224, height: 792 },
+  { name: 'Note', width: 540, height: 780 },
+  { name: 'Folio', width: 612, height: 936 },
+  { name: 'Quarto', width: 610, height: 780 },
+  { name: '10x14', width: 720, height: 1008 },
+  { name: 'Custom', width: 0, height: 0 }
+];
+
+const selectedPaperSize = ref('A4');
+const orientation = ref('Portrait');
+
 // 可用字体列表
 const availableFonts = ref<string[]>([]);
 
@@ -76,6 +133,74 @@ const localReportProperties = computed({
   get: () => props.reportProperties,
   set: (value) => emit('update:report-properties', value)
 });
+
+// 检测纸张大小和方向
+const detectPaperSizeAndOrientation = () => {
+  if (!props.reportProperties) return;
+  
+  const w = props.reportProperties.pageWidth;
+  const h = props.reportProperties.pageHeight;
+  const isLandscape = w > h;
+  
+  // 只有在非手动更改方向时才更新方向（为了避免循环更新），但这里主要是初始化检测
+  // 实际上我们应该总是信任当前的宽高比
+  orientation.value = isLandscape ? 'Landscape' : 'Portrait';
+  
+  // 检查是否匹配预设尺寸
+  // 如果是横向，宽是长边；如果是纵向，高是长边
+  // 预设尺寸中 width 是短边，height 是长边
+  const checkW = isLandscape ? h : w;
+  const checkH = isLandscape ? w : h;
+  
+  const match = PAPER_SIZES.find(s => s.name !== 'Custom' && s.width === checkW && s.height === checkH);
+  selectedPaperSize.value = match ? match.name : 'Custom';
+};
+
+// 监听 reportProperties 变化，更新选中状态
+// 使用 deep: true 监听内部属性变化
+watch(() => props.reportProperties, () => {
+  // 当宽高发生变化时，重新检测
+  // 注意：这可能会在我们将要修改宽高时触发，所以需要小心处理
+  // 这里我们只在宽高不匹配当前选中的规格时更新
+  detectPaperSizeAndOrientation();
+}, { deep: true, immediate: true });
+
+// 处理纸张规格变化
+const handlePaperSizeChange = () => {
+  if (selectedPaperSize.value === 'Custom') return;
+  
+  const size = PAPER_SIZES.find(s => s.name === selectedPaperSize.value);
+  if (!size) return;
+  
+  // 根据当前方向应用尺寸
+  if (orientation.value === 'Landscape') {
+    localReportProperties.value.pageWidth = size.height;
+    localReportProperties.value.pageHeight = size.width;
+  } else {
+    localReportProperties.value.pageWidth = size.width;
+    localReportProperties.value.pageHeight = size.height;
+  }
+};
+
+// 处理方向变化
+const handleOrientationChange = () => {
+  const w = localReportProperties.value.pageWidth;
+  const h = localReportProperties.value.pageHeight;
+  
+  if (orientation.value === 'Landscape') {
+    // 切换到横向：如果当前是纵向（宽 < 高），则交换
+    if (w < h) {
+      localReportProperties.value.pageWidth = h;
+      localReportProperties.value.pageHeight = w;
+    }
+  } else {
+    // 切换到纵向：如果当前是横向（宽 > 高），则交换
+    if (w > h) {
+      localReportProperties.value.pageWidth = h;
+      localReportProperties.value.pageHeight = w;
+    }
+  }
+};
 
 // 计算属性：本地绑定的selectedBandTypes
 const localSelectedBandTypes = computed({
@@ -173,6 +298,24 @@ const saveJRXML = (): void => {
           <div class="form-group">
             <label>报表名称</label>
             <input v-model="localReportProperties.name" type="text" />
+          </div>
+
+          <div class="form-row">
+            <div class="form-group flex-1">
+              <label>纸张规格</label>
+              <select v-model="selectedPaperSize" @change="handlePaperSizeChange">
+                <option v-for="size in PAPER_SIZES" :key="size.name" :value="size.name">
+                  {{ size.name }}
+                </option>
+              </select>
+            </div>
+            <div class="form-group flex-1">
+              <label>纸张方向</label>
+              <select v-model="orientation" @change="handleOrientationChange">
+                <option value="Portrait">纵向 (Portrait)</option>
+                <option value="Landscape">横向 (Landscape)</option>
+              </select>
+            </div>
           </div>
           <div class="form-row">
             <div class="form-group flex-1">
