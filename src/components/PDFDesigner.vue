@@ -793,7 +793,7 @@ const handleElementDoubleClick = (element: any) => {
     x: 50, // 默认位置
     y: 20, // 默认位置
     ...getDefaultElementProperties(element.type)
-  };
+  } as DesignElement;
   
   // 为矩形、椭圆、容器和图片设置默认高度为band高度的一半
   if (['rectangle', 'ellipse', 'frame', 'image'].includes(element.type)) {
@@ -877,7 +877,7 @@ const handleDrop = (event: DragEvent) => {
       x: Math.round(Math.max(0, scaledX - 50)), // 减去元素宽度的一半以居中，并确保为整数
       y: Math.round(Math.max(0, scaledY - currentY)), // 相对于band的位置，并确保为整数
       ...getDefaultElementProperties(elementData.type)
-    };
+    } as DesignElement;
     
     const targetBand = bands.value[bandIndex];
     if (targetBand && targetBand.elements) {

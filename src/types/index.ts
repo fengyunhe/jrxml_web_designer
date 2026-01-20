@@ -1,5 +1,22 @@
 // 元素类型枚举
-export type ElementType = 'staticText' | 'textField' | 'image' | 'line' | 'rectangle' | 'ellipse' | 'break' | 'frame';
+export type ElementType = 'staticText' | 'textField' | 'image' | 'line' | 'rectangle' | 'ellipse' | 'break' | 'frame' | 'table';
+
+// 表格列接口
+export interface TableColumn {
+  uuid: string;
+  width: number;
+  name: string;
+  tableHeader?: DesignElement;
+  columnHeader?: DesignElement;
+  detailCell?: DesignElement;
+}
+
+// 表格数据集接口
+export interface TableDataset {
+  uuid: string;
+  name: string;
+  connectionExpression: string;
+}
 
 // Band类型枚举
 export type BandType = 'detail' | 'pageHeader' | 'pageFooter' | 'title' | 'summary' | 'columnHeader' | 'columnFooter' | 'background' | 'lastPageFooter' | 'noData';
@@ -181,6 +198,18 @@ export interface FrameElement extends DesignElementBase {
   layout?: 'FreeLayout' | 'HorizontalLayout' | 'VerticalLayout'; // 布局属性
 }
 
+// 表格元素接口
+export interface TableElement extends DesignElementBase {
+  type: 'table';
+  dataset: TableDataset;
+  columns: TableColumn[];
+  styles?: {
+    tableHeader?: string;
+    columnHeader?: string;
+    detail?: string;
+  };
+}
+
 // 设计元素联合类型
 export type DesignElement = 
   | StaticTextElement 
@@ -190,7 +219,8 @@ export type DesignElement =
   | RectangleElement
   | EllipseElement
   | BreakElement
-  | FrameElement;
+  | FrameElement
+  | TableElement;
 
 // 报表区域接口
 export interface Band {

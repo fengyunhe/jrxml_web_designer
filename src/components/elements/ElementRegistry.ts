@@ -162,6 +162,99 @@ export class ElementRegistry {
         elements: []
       }
     });
+
+    this.registerElement({
+      type: 'table',
+      name: 'elementNames.table',
+      icon: '⊞', // 表格图标
+      defaultProps: {
+        type: 'table',
+        x: 0,
+        y: 0,
+        width: 555,
+        height: 200,
+        dataset: {
+          uuid: crypto.randomUUID(),
+          name: 'tableDataset',
+          connectionExpression: '$P{REPORT_CONNECTION}'
+        },
+        columns: [
+          {
+            uuid: crypto.randomUUID(),
+            width: 160,
+            name: 'Column1',
+            tableHeader: {
+              type: 'staticText',
+              x: 0,
+              y: 0,
+              width: 160,
+              height: 30,
+              text: 'Header',
+              forecolor: '#006699',
+              backcolor: '#E6E6E6',
+              fontFamily: 'SansSerif',
+              fontSize: 19,
+              isBold: true
+            },
+            columnHeader: {
+              type: 'staticText',
+              x: 0,
+              y: 0,
+              width: 160,
+              height: 30,
+              text: 'Column Header'
+            },
+            detailCell: {
+              type: 'textField',
+              x: 0,
+              y: 0,
+              width: 160,
+              height: 30,
+              expression: '$F{FIELD_NAME}'
+            }
+          },
+          {
+            uuid: crypto.randomUUID(),
+            width: 180,
+            name: 'Column2',
+            tableHeader: {
+              type: 'staticText',
+              x: 0,
+              y: 0,
+              width: 180,
+              height: 30,
+              text: '',
+              forecolor: '#006699',
+              backcolor: '#E6E6E6',
+              fontFamily: 'SansSerif',
+              fontSize: 19,
+              isBold: true
+            },
+            columnHeader: {
+              type: 'staticText',
+              x: 0,
+              y: 0,
+              width: 180,
+              height: 30,
+              text: 'Column Header'
+            },
+            detailCell: {
+              type: 'textField',
+              x: 0,
+              y: 0,
+              width: 180,
+              height: 30,
+              expression: '$F{FIELD_NAME}'
+            }
+          }
+        ],
+        styles: {
+          tableHeader: 'Table_TH',
+          columnHeader: 'Table_CH',
+          detail: 'Table_TD'
+        }
+      }
+    });
   }
 
   // 注册元素
@@ -274,7 +367,8 @@ export class ElementRegistry {
         rectangle: './RectangleElement.vue',
         ellipse: './EllipseElement.vue',
         break: './BreakElement.vue',
-        frame: './FrameElement.vue'
+        frame: './FrameElement.vue',
+        table: './TableElement.vue'
       };
 
       const componentPath = componentMap[type];

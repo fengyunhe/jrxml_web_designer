@@ -86,17 +86,159 @@ function parseBandElements(bandElem: Element): any[] {
       if (parsedElement) {
         elements.push(parsedElement);
       }
+    } else if (child.tagName === 'componentElement') {
+      // 处理组件元素，特别是表格
+      const parsedComponent = parseComponentElement(child);
+      if (parsedComponent) {
+        elements.push(parsedComponent);
+      }
     }
   });
 
   return elements;
 }
 
+// 解析组件元素，主要用于表格
+function parseComponentElement(componentElem: Element): any {
+  const reportElement = componentElem.querySelector('reportElement');
+  if (!reportElement) return null;
+
+  // 查找表格元素
+  const tableElem = componentElem.querySelector('jr\:table');
+  if (!tableElem) return null;
+
+  // 解析表格
+  return parseTableElement(tableElem, reportElement);
+}
+
+// 解析表格元素
+function parseTableElement(tableElem: Element, reportElement: Element): any {
+  // 获取基本属性
+  const x = parseInt(reportElement.getAttribute('x') || '0');
+  const y = parseInt(reportElement.getAttribute('y') || '0');
+  const width = parseInt(reportElement.getAttribute('width') || '555');
+  const height = parseInt(reportElement.getAttribute('height') || '200');
+  const uuid = reportElement.getAttribute('uuid') || crypto.randomUUID();
+
+  // 解析表格样式
+  const styles: any = {};
+  const tableHeaderStyle = reportElement.getAttribute('com.jaspersoft.studio.table.style.table_header');
+  const columnHeaderStyle = reportElement.getAttribute('com.jaspersoft.studio.table.style.column_header');
+  const detailStyle = reportElement.getAttribute('com.jaspersoft.studio.table.style.detail');
+
+  if (tableHeaderStyle) styles.tableHeader = tableHeaderStyle;
+  if (columnHeaderStyle) styles.columnHeader = columnHeaderStyle;
+  if (detailStyle) styles.detail = detailStyle;
+
+  // 解析数据集
+  const datasetRunElem = tableElem.querySelector('datasetRun');
+  const subDataset = datasetRunElem?.getAttribute('subDataset') || 'tableDataset';
+
+  // 解析表格列
+  const columns: any[] = [];
+  tableElem.querySelectorAll('jr\:column').forEach((columnElem, index) => {
+    const columnWidth = parseInt(columnElem.getAttribute('width') || '100');
+    const columnUuid = columnElem.getAttribute('uuid') || crypto.randomUUID();
+    
+    // 获取列名
+    const columnNameProp = columnElem.querySelector('property[name="com.jaspersoft.studio.components.table.model.column.name"]');
+    const columnName = columnNameProp?.getAttribute('value') || `Column${index + 1}`;
+
+    // 解析表头、列头和详情单元格
+    const tableHeaderElem = columnElem.querySelector('jr\:tableHeader');
+    const columnHeaderElem = columnElem.querySelector('jr\:columnHeader');
+    const tableFooterElem = columnElem.querySelector('jr\:tableFooter');
+    const columnFooterElem = columnElem.querySelector('jr\:columnFooter');
+    const detailCellElem = columnElem.querySelector('jr\:detailCell');
+
+    const tableHeader = tableHeaderElem ? parseCellElement(tableHeaderElem) : {
+      type: 'staticText',
+      x: 0,
+      y: 0,
+      width: columnWidth,
+      height: 30,
+      text: ''
+    };
+    const columnHeader = columnHeaderElem ? parseCellElement(columnHeaderElem) : {
+      type: 'staticText',
+      x: 0,
+      y: 0,
+      width: columnWidth,
+      height: 30,
+      text: ''
+    };
+    const tableFooter = tableFooterElem ? parseCellElement(tableFooterElem) : {
+      type: 'textField',
+      x: 0,
+      y: 0,
+      width: columnWidth,
+      height: 30,
+      expression: ''
+    };
+    const columnFooter = columnFooterElem ? parseCellElement(columnFooterElem) : {
+      type: 'textField',
+      x: 0,
+      y: 0,
+      width: columnWidth,
+      height: 30,
+      expression: ''
+    };
+    const detailCell = detailCellElem ? parseCellElement(detailCellElem) : {
+      type: 'textField',
+      x: 0,
+      y: 0,
+      width: columnWidth,
+      height: 30,
+      expression: ''
+    };
+
+    columns.push({
+      uuid: columnUuid || crypto.randomUUID(),
+      width: columnWidth,
+      name: columnName,
+      tableHeader,
+      columnHeader,
+      tableFooter,
+      columnFooter,
+      detailCell
+    });
+  });
+
+  // 构建表格元素
+  const tableElement: any = {
+    type: 'table',
+    uuid,
+    x,
+    y,
+    width,
+    height,
+    styles,
+    dataset: {
+      uuid: crypto.randomUUID(),
+      name: subDataset,
+      type: 'table'
+    },
+    columns
+  };
+
+  return tableElement;
+}
+
+// 解析表格单元格元素
+function parseCellElement(cellElem: Element): any {
+  // 获取单元格内的第一个元素
+  const childElement = cellElem.firstElementChild;
+  if (!childElement) return undefined;
+
+  // 解析单元格内的元素
+  return parseElement(childElement, childElement.tagName);
+}
+
 function parseElement(element: Element, type: string): any {
   const reportElement = element.querySelector('reportElement');
   if (!reportElement) return null;
 
-  const validElementTypes: Array<'staticText' | 'textField' | 'image' | 'line' | 'rectangle' | 'ellipse' | 'break' | 'frame'> = ['staticText', 'textField', 'image', 'line', 'rectangle', 'ellipse', 'break', 'frame'];
+  const validElementTypes: Array<'staticText' | 'textField' | 'image' | 'line' | 'rectangle' | 'ellipse' | 'break' | 'frame' | 'table'> = ['staticText', 'textField', 'image', 'line', 'rectangle', 'ellipse', 'break', 'frame', 'table'];
   const elementType = validElementTypes.includes(type as any) ? (type as any) : undefined;
   if (!elementType) return null;
 

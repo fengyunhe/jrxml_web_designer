@@ -169,7 +169,21 @@
     "fontName": "Font Name",
     "useDefaultFont": "Use Default Font",
     "fontHint": "Tip: You can type font name directly",
-    "deleteElement": "Delete Element"
+    "deleteElement": "Delete Element",
+    "tableDataset": "Table Dataset",
+    "connectionExpression": "Connection Expression",
+    "tableColumns": "Table Columns",
+    "columnWidth": "Column Width",
+    "columnName": "Column Name",
+    "fieldExpression": "Field Expression",
+    "tableHeader": "Table Header",
+    "tableHeaderPlaceholder": "Enter table header text",
+    "tableFooter": "Table Footer",
+    "tableFooterPlaceholder": "Enter table footer expression",
+    "columnFooter": "Column Footer",
+    "columnFooterPlaceholder": "Enter column footer expression",
+    "addColumn": "Add Column",
+    "removeColumn": "Remove Column"
   },
   "bottomPanel": {
     "pageSettings": "Page Settings",

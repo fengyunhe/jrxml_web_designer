@@ -18,6 +18,7 @@ import RectangleElement from './RectangleElement.vue';
 import EllipseElement from './EllipseElement.vue';
 import BreakElement from './BreakElement.vue';
 import FrameElement from './FrameElement.vue';
+import TableElement from './TableElement.vue';
 import type { 
   DesignElement,
   SelectedElementInfo,
@@ -33,7 +34,8 @@ const componentCache: Record<string, any> = {
   rectangle: RectangleElement,
   ellipse: EllipseElement,
   break: BreakElement,
-  frame: FrameElement
+  frame: FrameElement,
+  table: TableElement
 };
 
 // 预加载组件

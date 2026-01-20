@@ -104,99 +104,267 @@
               <input v-if="currentElement" v-model="currentElement.pattern" type="text" />
               <small>{{ t('properties.patternHint') }}</small>
             </div>
+          </template>
+          
+          <!-- 表格属性 -->
+          <template v-else-if="currentElement && currentElement.type === 'table'">
             <div class="form-group">
-              <label>{{ t('properties.textAlignment') }}</label>
-              <select v-if="currentElement" v-model="currentElement.textAlignment">
-                <option value="Left">{{ t('properties.left') }}</option>
-                <option value="Center">{{ t('properties.center') }}</option>
-                <option value="Right">{{ t('properties.right') }}</option>
-                <option value="Justified">{{ t('properties.justified') }}</option>
-              </select>
+              <label>{{ t('properties.tableDataset') }}</label>
+              <input 
+                v-if="currentElement.dataset" 
+                v-model="(currentElement as any).dataset.name" 
+                type="text" 
+                :placeholder="t('properties.tableDataset')" 
+              />
             </div>
+            
             <div class="form-group">
-              <label>{{ t('properties.verticalAlignment') }}</label>
-              <select v-if="currentElement" v-model="currentElement.verticalAlignment">
-                <option value="Top">{{ t('properties.top') }}</option>
-                <option value="Middle">{{ t('properties.middle') }}</option>
-                <option value="Bottom">{{ t('properties.bottom') }}</option>
-              </select>
+              <label>{{ t('properties.connectionExpression') }}</label>
+              <input 
+                v-if="currentElement.dataset" 
+                v-model="(currentElement as any).dataset.connectionExpression" 
+                type="text" 
+                placeholder="$P{REPORT_CONNECTION}" 
+              />
             </div>
+            
             <div class="form-group">
-              <label>{{ t('properties.fontSize') }}</label>
-              <input v-if="currentElement" v-model.number="currentElement.fontSize" type="number" />
-            </div>
-            <div class="checkbox-group">
-              <label>
-                <input v-if="currentElement" v-model="currentElement.isBold" type="checkbox" />
-                {{ t('properties.bold') }}
-              </label>
-              <label>
-                <input v-if="currentElement" v-model="currentElement.isItalic" type="checkbox" />
-                {{ t('properties.italic') }}
-              </label>
-              <label>
-                <input v-if="currentElement" v-model="currentElement.isUnderline" type="checkbox" />
-                {{ t('properties.underline') }}
-              </label>
-            </div>
-            <div class="checkbox-group">
-              <label>
-                <input v-if="currentElement" v-model="currentElement.isStretchWithOverflow" type="checkbox" />
-                {{ t('properties.stretchWithOverflow') }}
-              </label>
-            </div>
-            <div class="checkbox-group">
-              <label>
-                <input v-if="currentElement" v-model="currentElement.isBlankWhenNull" type="checkbox" />
-                {{ t('properties.blankWhenNull') }}
-              </label>
-            </div>
-            <div class="form-group">
-              <label>{{ t('properties.evaluationTime') }}</label>
-              <select v-if="currentElement" v-model="currentElement.evaluationTime">
-                <option value="Now">{{ t('properties.evalTime.Now') }}</option>
-                <option value="Report">{{ t('properties.evalTime.Report') }}</option>
-                <option value="Page">{{ t('properties.evalTime.Page') }}</option>
-                <option value="Column">{{ t('properties.evalTime.Column') }}</option>
-                <option value="Group">{{ t('properties.evalTime.Group') }}</option>
-                <option value="Band">{{ t('properties.evalTime.Band') }}</option>
-                <option value="Auto">{{ t('properties.evalTime.Auto') }}</option>
-              </select>
+              <label>{{ t('properties.tableColumns') }}</label>
+              <div v-if="currentElement.columns" class="table-columns-list">
+                <div 
+                  v-for="(column, index) in (currentElement as any).columns" 
+                  :key="column.uuid || index" 
+                  class="table-column-item"
+                >
+                  <div class="table-column-header">
+                    <span>{{ column.name }}</span>
+                    <button 
+                      class="remove-column-btn" 
+                      @click="removeTableColumn(Number(index))"
+                      :title="t('properties.removeColumn')"
+                    >
+                      ✕
+                    </button>
+                  </div>
+                  <div class="table-column-properties">
+                    <div class="form-group small">
+                      <label>{{ t('properties.columnWidth') }}</label>
+                      <input 
+                        v-model.number="column.width" 
+                        type="number" 
+                        min="10"
+                        step="1"
+                        class="small-input"
+                        @change="emit('update-jrxml')"
+                      />
+                    </div>
+                    <div class="form-group small">
+                      <label>{{ t('properties.columnName') }}</label>
+                      <input 
+                        v-model="column.name" 
+                        type="text" 
+                        class="small-input"
+                        @change="emit('update-jrxml')"
+                      />
+                    </div>
+                    <div class="form-group small full-width">
+                      <label>{{ t('properties.fieldExpression') }}</label>
+                      <input 
+                        v-model="column.detailCell.expression" 
+                        type="text" 
+                        class="small-input"
+                        :placeholder="t('properties.expressionHint', { fieldHolder: '$F{fieldName}' })"
+                        @change="emit('update-jrxml')"
+                      />
+                    </div>
+                    <div class="form-group small full-width">
+                      <label>{{ t('properties.tableHeader') }}</label>
+                      <input 
+                        v-model="column.tableHeader.text" 
+                        type="text" 
+                        class="small-input"
+                        :placeholder="t('properties.tableHeaderPlaceholder')"
+                        @change="emit('update-jrxml')"
+                      />
+                    </div>
+                    <div class="form-group small full-width">
+                      <label>{{ t('properties.tableFooter') }}</label>
+                      <input 
+                        :value="column.tableFooter?.expression || ''"
+                        @input="(e) => {
+                          initTableCell(column, 'tableFooter');
+                          column.tableFooter.expression = (e.target as HTMLInputElement).value;
+                          emit('update-jrxml');
+                        }"
+                        type="text" 
+                        class="small-input"
+                        :placeholder="t('properties.tableFooterPlaceholder')"
+                      />
+                    </div>
+                    <div class="form-group small full-width">
+                      <label>{{ t('properties.columnFooter') }}</label>
+                      <input 
+                        :value="column.columnFooter?.expression || ''"
+                        @input="(e) => {
+                          initTableCell(column, 'columnFooter');
+                          column.columnFooter.expression = (e.target as HTMLInputElement).value;
+                          emit('update-jrxml');
+                        }"
+                        type="text" 
+                        class="small-input"
+                        :placeholder="t('properties.columnFooterPlaceholder')"
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <button 
+                class="add-column-btn" 
+                @click="addTableColumn"
+                :title="t('properties.addColumn')"
+              >
+                + {{ t('properties.addColumn') }}
+              </button>
             </div>
           </template>
           
-          <template v-else-if="currentElement && currentElement.type === 'image'">
-            <div class="form-group">
-              <label>{{ t('properties.imageExpression') }}</label>
-              <input v-if="currentElement" v-model="currentElement.imageExpression" type="text" />
-              <small>{{ t('properties.imageExpressionHint', { imageFileHolder: '$F{imageFieldName}' }) }}</small>
-            </div>
-          </template>
-          <template v-else-if="currentElement && currentElement.type === 'rectangle'">
-            <div class="form-group">
-              <label>{{ t('properties.radius') }}</label>
-              <input v-if="currentElement" v-model.number="currentElement.radius" type="number" min="0" @change="ensureIntegerValue(currentElement, 'radius')" />
-            </div>
-          </template>
-          <template v-else-if="currentElement && currentElement.type === 'break'">
-            <div class="form-group">
-              <label>{{ t('properties.breakType') }}</label>
-              <select v-if="currentElement" v-model="currentElement.breakType" @change="emit('update-jrxml')">
-                <option value="Page">{{ t('properties.pageBreak') }}</option>
-                <option value="Column">{{ t('properties.columnBreak') }}</option>
-              </select>
-            </div>
-          </template>
-          <template v-else-if="currentElement && currentElement.type === 'frame'">
-            <div class="form-group">
-              <label>{{ t('properties.layoutMode') }}</label>
-              <select v-if="currentElement" v-model="currentElement.layout" @change="emit('update-jrxml')">
-                <option :value="undefined">{{ t('properties.freeLayout') }}</option>
-                <option value="HorizontalLayout">{{ t('properties.horizontalLayout') }}</option>
-                <option value="VerticalLayout">{{ t('properties.verticalLayout') }}</option>
-              </select>
-            </div>
-          </template>
+          <!-- 使用计算属性来简化模板中的类型检查 -->
+          <div v-if="currentElement">
+            <!-- 静态文本特定属性 -->
+            <template v-if="elementType === 'staticText'">
+              <div class="form-group">
+                <label>{{ t('properties.textContent') }}</label>
+                <textarea v-model="(currentElement as any).text"></textarea>
+              </div>
+              <div class="form-group">
+                <label>{{ t('properties.fontSize') }}</label>
+                <input v-model.number="(currentElement as any).fontSize" type="number" />
+              </div>
+              <div class="checkbox-group">
+                <label>
+                  <input v-model="(currentElement as any).isBold" type="checkbox" />
+                  {{ t('properties.bold') }}
+                </label>
+                <label>
+                  <input v-model="(currentElement as any).isItalic" type="checkbox" />
+                  {{ t('properties.italic') }}
+                </label>
+                <label>
+                  <input v-model="(currentElement as any).isUnderline" type="checkbox" />
+                  {{ t('properties.underline') }}
+                </label>
+              </div>
+            </template>
+            
+            <!-- 文本字段特定属性 -->
+            <template v-else-if="elementType === 'textField'">
+              <div class="form-group">
+                <label>{{ t('properties.expression') }}</label>
+                <input v-model="(currentElement as any).expression" type="text" />
+              </div>
+              <div class="form-group">
+                <label>{{ t('properties.pattern') }}</label>
+                <input v-model="(currentElement as any).pattern" type="text" />
+              </div>
+              <div class="checkbox-group">
+                <label>
+                  <input v-model="(currentElement as any).isBlankWhenNull" type="checkbox" />
+                  {{ t('properties.blankWhenNull') }}
+                </label>
+              </div>
+              <div class="form-group">
+                <label>{{ t('properties.evaluationTime') }}</label>
+                <select v-model="(currentElement as any).evaluationTime">
+                  <option value="Now">{{ t('properties.evalTime.Now') }}</option>
+                  <option value="Report">{{ t('properties.evalTime.Report') }}</option>
+                  <option value="Page">{{ t('properties.evalTime.Page') }}</option>
+                  <option value="Column">{{ t('properties.evalTime.Column') }}</option>
+                  <option value="Group">{{ t('properties.evalTime.Group') }}</option>
+                  <option value="Band">{{ t('properties.evalTime.Band') }}</option>
+                  <option value="Auto">{{ t('properties.evalTime.Auto') }}</option>
+                </select>
+              </div>
+            </template>
+            
+            <!-- 图片特定属性 -->
+            <template v-else-if="elementType === 'image'">
+              <div class="form-group">
+                <label>{{ t('properties.imageExpression') }}</label>
+                <input v-model="(currentElement as any).imageExpression" type="text" />
+                <small>{{ t('properties.imageExpressionHint', { imageFileHolder: '$F{imageFieldName}' }) }}</small>
+              </div>
+            </template>
+            
+            <!-- 矩形特定属性 -->
+            <template v-else-if="elementType === 'rectangle'">
+              <div class="form-group">
+                <label>{{ t('properties.radius') }}</label>
+                <input v-model.number="(currentElement as any).radius" type="number" min="0" @change="ensureIntegerValue(currentElement, 'radius')" />
+              </div>
+            </template>
+            
+            <!-- 分页符特定属性 -->
+            <template v-else-if="elementType === 'break'">
+              <div class="form-group">
+                <label>{{ t('properties.breakType') }}</label>
+                <select v-model="(currentElement as any).breakType" @change="emit('update-jrxml')">
+                  <option value="Page">{{ t('properties.pageBreak') }}</option>
+                  <option value="Column">{{ t('properties.columnBreak') }}</option>
+                </select>
+              </div>
+            </template>
+            
+            <!-- 框架特定属性 -->
+            <template v-else-if="elementType === 'frame'">
+              <div class="form-group">
+                <label>{{ t('properties.layoutMode') }}</label>
+                <select v-model="(currentElement as any).layout" @change="emit('update-jrxml')">
+                  <option :value="undefined">{{ t('properties.freeLayout') }}</option>
+                  <option value="HorizontalLayout">{{ t('properties.horizontalLayout') }}</option>
+                  <option value="VerticalLayout">{{ t('properties.verticalLayout') }}</option>
+                </select>
+              </div>
+            </template>
+            
+            <!-- 通用文本属性 -->
+            <template v-if="['staticText', 'textField'].includes(elementType)">
+              <div class="form-group">
+                <label>{{ t('properties.textAlignment') }}</label>
+                <select v-model="(currentElement as any).textAlignment">
+                  <option value="Left">{{ t('properties.left') }}</option>
+                  <option value="Center">{{ t('properties.center') }}</option>
+                  <option value="Right">{{ t('properties.right') }}</option>
+                  <option value="Justified">{{ t('properties.justified') }}</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label>{{ t('properties.verticalAlignment') }}</label>
+                <select v-model="(currentElement as any).verticalAlignment">
+                  <option value="Top">{{ t('properties.top') }}</option>
+                  <option value="Middle">{{ t('properties.middle') }}</option>
+                  <option value="Bottom">{{ t('properties.bottom') }}</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label>{{ t('properties.fontSize') }}</label>
+                <input v-model.number="(currentElement as any).fontSize" type="number" />
+              </div>
+              <div class="checkbox-group">
+                <label>
+                  <input v-model="(currentElement as any).isBold" type="checkbox" />
+                  {{ t('properties.bold') }}
+                </label>
+                <label>
+                  <input v-model="(currentElement as any).isItalic" type="checkbox" />
+                  {{ t('properties.italic') }}
+                </label>
+                <label>
+                  <input v-model="(currentElement as any).isUnderline" type="checkbox" />
+                  {{ t('properties.underline') }}
+                </label>
+              </div>
+            </template>
+          </div>
         </div>
         
         <!-- 边框设置标签页 -->
@@ -523,6 +691,11 @@ const currentElement = computed(() => {
   return null;
 });
 
+// 计算当前元素类型
+const elementType = computed(() => {
+  return currentElement.value?.type || '';
+});
+
 // 获取Band显示名称
 function getBandDisplayName(bandType: string): string {
   // Use t() with dynamic key. 
@@ -745,6 +918,98 @@ watch(() => currentElement.value?.backcolor, (newVal) => {
     }
   }
 }, { immediate: true });
+
+// 初始化表格单元格
+function initTableCell(column: any, cellType: 'tableFooter' | 'columnFooter') {
+  if (!column[cellType]) {
+    column[cellType] = {
+      type: 'textField',
+      x: 0,
+      y: 0,
+      width: column.width,
+      height: 30,
+      expression: ''
+    };
+  }
+}
+
+// 表格列操作方法
+function addTableColumn() {
+  if (!currentElement.value || currentElement.value.type !== 'table') return;
+  
+  emit('save-state');
+  
+  const newColumn: any = {
+    uuid: crypto.randomUUID(),
+    width: 160,
+    name: `Column${currentElement.value.columns.length + 1}`,
+    tableHeader: {
+      type: 'staticText',
+      x: 0,
+      y: 0,
+      width: 160,
+      height: 30,
+      text: '',
+      forecolor: '#006699',
+      backcolor: '#E6E6E6',
+      fontFamily: 'SansSerif',
+      fontSize: 19,
+      isBold: true
+    },
+    columnHeader: {
+      type: 'staticText',
+      x: 0,
+      y: 0,
+      width: 160,
+      height: 30,
+      text: `New Column`
+    },
+    detailCell: {
+      type: 'textField',
+      x: 0,
+      y: 0,
+      width: 160,
+      height: 30,
+      expression: '$F{NEW_FIELD}'
+    },
+    tableFooter: {
+      type: 'textField',
+      x: 0,
+      y: 0,
+      width: 160,
+      height: 30,
+      expression: ''
+    },
+    columnFooter: {
+      type: 'textField',
+      x: 0,
+      y: 0,
+      width: 160,
+      height: 30,
+      expression: ''
+    }
+  };
+  
+  if (!currentElement.value.columns) {
+    currentElement.value.columns = [];
+  }
+  
+  currentElement.value.columns.push(newColumn);
+  emit('update-jrxml');
+}
+
+function removeTableColumn(index: number) {
+  if (!currentElement.value || currentElement.value.type !== 'table' || !currentElement.value.columns) return;
+  
+  if (currentElement.value.columns.length <= 1) {
+    // 至少保留一列
+    return;
+  }
+  
+  emit('save-state');
+  currentElement.value.columns.splice(index, 1);
+  emit('update-jrxml');
+}
 
 // 通过控件更新背景颜色
 function updateBackcolorFromControls() {
@@ -1155,5 +1420,91 @@ function setRectangleBorderColor(value: string) {
   margin-top: 4px;
   font-size: 10px;
   color: #999;
+}
+
+/* 表格属性样式 */
+.table-columns-list {
+  margin: 8px 0;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  padding: 8px;
+  background-color: #f9f9f9;
+}
+
+.table-column-item {
+  margin-bottom: 8px;
+  padding: 8px;
+  background-color: #fff;
+  border: 1px solid #e0e0e0;
+  border-radius: 4px;
+}
+
+.table-column-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+  font-weight: bold;
+}
+
+.remove-column-btn {
+  background: none;
+  border: none;
+  color: #e74c3c;
+  cursor: pointer;
+  font-size: 16px;
+  padding: 0;
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: all 0.2s;
+}
+
+.remove-column-btn:hover {
+  background-color: #ffe6e6;
+  transform: scale(1.1);
+}
+
+.table-column-properties {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.form-group.small {
+  flex: 1;
+  min-width: 120px;
+}
+
+.form-group.small.full-width {
+  width: 100%;
+  flex-basis: 100%;
+  margin-top: 8px;
+}
+
+.small-input {
+  width: 100%;
+  padding: 4px 8px;
+  font-size: 12px;
+  border: 1px solid #ddd;
+  border-radius: 3px;
+}
+
+.add-column-btn {
+  background-color: #4a90e2;
+  color: white;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 12px;
+  transition: all 0.2s;
+}
+
+.add-column-btn:hover {
+  background-color: #3a80d2;
 }
 </style>

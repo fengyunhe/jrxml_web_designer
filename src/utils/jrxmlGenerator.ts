@@ -141,6 +141,8 @@ function generateElementXML(element: any): string {
       return generateBreakXML(element);
     case 'frame':
       return generateFrameXML(element);
+    case 'table':
+      return generateTableXML(element);
     default:
       return '';
   }
@@ -722,13 +724,136 @@ function generateFrameXML(element: any): string {
 function generateBreakXML(element: any): string {
   // 默认为Page类型
   const type = element.breakType || 'Page';
-  let xml = `    <break type="${type}">\n      <reportElement x="${toInt(element.x)}" y="${toInt(element.y)}" width="${toInt(element.width)}" height="${toInt(element.height)}"`;
+  let xml = `    <break type="${type}">
+      <reportElement x="${toInt(element.x)}" y="${toInt(element.y)}" width="${toInt(element.width)}" height="${toInt(element.height)}"`;
 
   if (element.uuid) {
     xml += ` uuid="${element.uuid}"`;
   }
 
-  xml += `/>\n    </break>\n`;
+  xml += `/>
+    </break>
+`;
+  return xml;
+}
+
+// 生成表格XML
+function generateTableXML(element: any): string {
+  let xml = `    <componentElement>
+      <reportElement x="${toInt(element.x)}" y="${toInt(element.y)}" width="${toInt(element.width)}" height="${toInt(element.height)}"`;
+  
+  if (element.uuid) {
+    xml += ` uuid="${element.uuid}"`;
+  }
+  
+  xml += `>
+`;
+  
+  // 添加表格样式属性
+  if (element.styles) {
+    if (element.styles.tableHeader) {
+      xml += `        <property name="com.jaspersoft.studio.table.style.table_header" value="${element.styles.tableHeader}"/>
+`;
+    }
+    if (element.styles.columnHeader) {
+      xml += `        <property name="com.jaspersoft.studio.table.style.column_header" value="${element.styles.columnHeader}"/>
+`;
+    }
+    if (element.styles.detail) {
+      xml += `        <property name="com.jaspersoft.studio.table.style.detail" value="${element.styles.detail}"/>
+`;
+    }
+  }
+
+  xml +='</reportElement>'
+  
+  xml += `        <jr:table xmlns:jr="http://jasperreports.sourceforge.net/jasperreports/components" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports/components http://jasperreports.sourceforge.net/xsd/components.xsd">
+`;
+  
+  // 生成datasetRun
+  const dataset = element.dataset || {};
+  // 确保dataset有uuid，如果没有则生成一个
+  const datasetUuid = dataset.uuid || crypto.randomUUID();
+  // 更新element的dataset，确保uuid被保存
+  if (!element.dataset) {
+    element.dataset = {};
+  }
+  element.dataset.uuid = datasetUuid;
+  xml += `          <datasetRun subDataset="${dataset.name || 'tableDataset'}" uuid="${datasetUuid}">
+`;
+  xml += `            <connectionExpression><![CDATA[${dataset.connectionExpression || '$P{REPORT_CONNECTION}'}]]></connectionExpression>
+`;
+  xml += `          </datasetRun>
+`;
+  
+  // 生成列
+  const columns = element.columns || [];
+  columns.forEach((column: any, index: number) => {
+    // 确保column有uuid，如果没有则生成一个
+    const columnUuid = column.uuid || crypto.randomUUID();
+    // 更新column的uuid，确保被保存
+    column.uuid = columnUuid;
+    xml += `          <jr:column width="${toInt(column.width)}" uuid="${columnUuid}">
+`;
+    xml += `            <property name="com.jaspersoft.studio.components.table.model.column.name" value="${column.name || `Column${index + 1}`}"/>
+`;
+    
+    // 生成tableHeader
+    if (column.tableHeader) {
+      xml += `            <jr:tableHeader height="${toInt(column.tableHeader.height)}" rowSpan="1">
+`;
+      xml += generateElementXML(column.tableHeader).replace(/^    /gm, '                ');
+      xml += `            </jr:tableHeader>
+`;
+    } else {
+      xml += `            <jr:tableHeader height="30" rowSpan="1">
+            </jr:tableHeader>
+`;
+    }
+    
+    // 生成tableFooter
+    xml += `            <jr:tableFooter height="30" rowSpan="1">
+            </jr:tableFooter>
+`;
+    
+    // 生成columnHeader
+    if (column.columnHeader) {
+      xml += `            <jr:columnHeader height="${toInt(column.columnHeader.height)}" rowSpan="1">
+`;
+      xml += generateElementXML(column.columnHeader).replace(/^    /gm, '                ');
+      xml += `            </jr:columnHeader>
+`;
+    } else {
+      xml += `            <jr:columnHeader height="30" rowSpan="1">
+            </jr:columnHeader>
+`;
+    }
+    
+    // 生成columnFooter
+    xml += `            <jr:columnFooter height="30" rowSpan="1">
+            </jr:columnFooter>
+`;
+    
+    // 生成detailCell
+    if (column.detailCell) {
+      xml += `            <jr:detailCell height="${toInt(column.detailCell.height)}">
+`;
+      xml += generateElementXML(column.detailCell).replace(/^    /gm, '                ');
+      xml += `            </jr:detailCell>
+`;
+    } else {
+      xml += `            <jr:detailCell height="30">
+            </jr:detailCell>
+`;
+    }
+    
+    xml += `          </jr:column>
+`;
+  });
+  
+  xml += `        </jr:table>
+    </componentElement>
+`;
   return xml;
 }
 

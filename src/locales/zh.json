@@ -79,7 +79,8 @@
     "rectangle": "矩形",
     "ellipse": "椭圆",
     "break": "分页符",
-    "frame": "容器"
+    "frame": "容器",
+    "table": "表格"
   },
   "properties": {
     "title": "属性设置",
@@ -169,7 +170,21 @@
     "fontName": "字体名称",
     "useDefaultFont": "使用默认字体",
     "fontHint": "提示：可以直接在下拉框中输入字体名称",
-    "deleteElement": "删除元素"
+    "deleteElement": "删除元素",
+    "tableDataset": "表格数据集",
+    "connectionExpression": "连接表达式",
+    "tableColumns": "表格列",
+    "columnWidth": "列宽",
+    "columnName": "列名",
+    "fieldExpression": "字段表达式",
+    "tableHeader": "表格表头",
+    "tableHeaderPlaceholder": "请输入表格表头文本",
+    "tableFooter": "表格表尾",
+    "tableFooterPlaceholder": "请输入表格表尾表达式",
+    "columnFooter": "列尾",
+    "columnFooterPlaceholder": "请输入列尾表达式",
+    "addColumn": "添加列",
+    "removeColumn": "删除列"
   },
   "bottomPanel": {
     "pageSettings": "页面设置",
