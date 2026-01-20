@@ -1036,7 +1036,7 @@ const getDefaultElementProperties = (type: string): Partial<DesignElement> => {
         verticalAlignment: 'Top'
       };
     case 'image':
-      return { imageExpression: '"https://fengyunhe.github.io/jrxml_web_designer/assets/FIREGOD_CN-DlUaKets.jpg"' };
+      return { imageExpression: '"https://raw.githubusercontent.com/fengyunhe/jrxml_web_designer/refs/heads/master/src/assets/FIREGOD_CN.jpg"' };
     case 'line':
       return { lineDirection: 'TopDown', lineWidth: 1 };
     case 'rectangle':

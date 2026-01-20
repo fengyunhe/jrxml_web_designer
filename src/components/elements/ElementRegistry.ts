@@ -86,7 +86,7 @@ export class ElementRegistry {
         y: 0,
         width: 100,
         height: 100,
-        imageExpression: '"https://fengyunhe.github.io/jrxml_web_designer/assets/FIREGOD_CN-DlUaKets.jpg"'
+        imageExpression: '"https://raw.githubusercontent.com/fengyunhe/jrxml_web_designer/refs/heads/master/src/assets/FIREGOD_CN.jpg"'
       }
     });
 

@@ -325,7 +325,7 @@ describe('elementUtils', () => {
       expect(element.y).toBe(20)
       expect(element.width).toBe(100)
       expect(element.height).toBe(100)
-      expect((element as any).imageExpression).toBe('"https://fengyunhe.github.io/jrxml_web_designer/assets/FIREGOD_CN-DlUaKets.jpg"')
+      expect((element as any).imageExpression).toBe('"https://raw.githubusercontent.com/fengyunhe/jrxml_web_designer/refs/heads/master/src/assets/FIREGOD_CN.jpg"')
     })
 
     it('should create a new line element', () => {
