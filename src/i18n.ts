@@ -16,6 +16,9 @@ const i18n = createI18n({
   legacy: false, // Use Composition API mode
   locale: savedLocale, // 使用保存的语言或默认语言
   fallbackLocale: 'en',
+  interpolation: {
+    escapeValue: true // 默认 true，确保大括号转义生效
+  },
   messages: {
     zh,
     en

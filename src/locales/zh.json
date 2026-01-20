@@ -98,7 +98,7 @@
     "italic": "斜体",
     "underline": "下划线",
     "expression": "表达式",
-    "expressionHint": "例如: $F{字段名} 或 $F{字段名}.toString() 或 \"固定文字\"",
+    "expressionHint": "例如: $F{fieldName} 或 $F{fieldName}.toString() 或 \"固定文字\"",
     "defaultTextFieldExpression": "文本域",
     "defaultStaticText": "静态文本",
     "pattern": "格式模式",
