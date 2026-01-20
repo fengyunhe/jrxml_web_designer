@@ -19,6 +19,34 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Security
 
+## [0.3.0] - 2026-01-20
+
+### Added
+- 添加预览服务器设置功能
+- 添加报表参数管理功能
+- 添加图片预览功能并设置默认高度
+- 实现多语言支持，中英文切换功能
+- 增强设计画布和纸张尺寸支持
+- 添加模态对话框组件
+
+### Changed
+- 更新测试用例以使用i18n键和更准确的选择器
+- 移除图片路径显示和计算逻辑
+- 优化默认文本显示
+- 将DesignerCanvas中bands类型从any[]替换为Band类型
+- 清理未使用的依赖项
+- 更新应用版本号至0.2.1
+
+### Fixed
+- 解决中文斜体字体显示问题
+
+### Security
+
+## [0.2.1] - 2026-01-19
+
+### Fixed
+- 解决中文斜体字体显示问题
+
 ## [0.2.0] - 2026-01-19
 
 ### Added
@@ -41,7 +69,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Security
 
-## [0.1.0] - YYYY-MM-DD
+## [0.1.0] - 2026-01-15
 
 ### Added
 - 项目初始化
