@@ -97,7 +97,7 @@
             <div class="form-group" v-if="currentElement && currentElement.type === 'textField'">
               <label>{{ t('properties.expression') }}</label>
               <input v-if="currentElement" :value="getTextFieldExpression(currentElement)" @input="updateTextFieldExpression" type="text" />
-              <small>{{ t('properties.expressionHint') }}</small>
+              <small>{{ t('properties.expressionHint', { fieldHolder: '$F{fieldName}' }) }}</small>
             </div>
             <div class="form-group">
               <label>{{ t('properties.pattern') }}</label>
@@ -169,7 +169,7 @@
             <div class="form-group">
               <label>{{ t('properties.imageExpression') }}</label>
               <input v-if="currentElement" v-model="currentElement.imageExpression" type="text" />
-              <small>{{ t('properties.imageExpressionHint') }}</small>
+              <small>{{ t('properties.imageExpressionHint', { imageFileHolder: '$F{imageFieldName}' }) }}</small>
             </div>
           </template>
           <template v-else-if="currentElement && currentElement.type === 'rectangle'">

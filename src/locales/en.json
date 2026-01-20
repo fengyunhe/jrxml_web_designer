@@ -98,7 +98,7 @@
     "italic": "Italic",
     "underline": "Underline",
     "expression": "Expression",
-    "expressionHint": "e.g., $F{fieldName} or $F{fieldName}.toString() or 或 \"Fixed text\"" ,
+    "expressionHint": "e.g., {fieldHolder} or 或 \"Fixed text\"" ,
     "defaultTextFieldExpression": "Text Field",
     "defaultStaticText": "Static Text",
     "pattern": "Pattern",
@@ -125,7 +125,7 @@
       "Auto": "Auto"
     },
     "imageExpression": "Image Expression",
-    "imageExpressionHint": "e.g., \"logo.png\" or $F{imageFieldName}",
+    "imageExpressionHint": "e.g., \"logo.png\" or {imageFileHolder}",
     "radius": "Radius",
     "breakType": "Break Type",
     "pageBreak": "Page Break",
