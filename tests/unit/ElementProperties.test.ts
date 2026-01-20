@@ -63,9 +63,15 @@ describe('ElementProperties.vue', () => {
     // Switch to Box tab
     await wrapper.findAll('.element-tab-button')[1].trigger('click');
     
-    const widthInput = wrapper.find('input[placeholder="宽度"]');
-    const styleSelect = wrapper.find('select.side-control');
-    const colorInput = wrapper.find('input[type="color"]');
+    // 对于矩形元素，使用更准确的选择器，按照DOM结构顺序查找
+    const borderControls = wrapper.findAll('.border-side-group');
+    
+    // 样式选择器 - 第一个控制组的select
+    const styleSelect = borderControls[0].find('select');
+    // 宽度输入框 - 第二个控制组的input
+    const widthInput = borderControls[1].find('input');
+    // 颜色选择器 - 第三个控制组的input[type="color"]
+    const colorInput = borderControls[2].find('input[type="color"]');
 
     expect((widthInput.element as HTMLInputElement).value).toBe('2');
     expect((styleSelect.element as HTMLSelectElement).value).toBe('Dashed');

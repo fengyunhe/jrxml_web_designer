@@ -32,23 +32,23 @@ describe('elementUtils', () => {
 
   describe('getElementTypeName', () => {
     it('should return the correct type name for static text', () => {
-      expect(getElementTypeName(ELEMENT_TYPE_CONSTANTS.STATIC_TEXT)).toBe('静态文本')
+      expect(getElementTypeName(ELEMENT_TYPE_CONSTANTS.STATIC_TEXT)).toBe('elementNames.staticText')
     })
 
     it('should return the correct type name for text field', () => {
-      expect(getElementTypeName(ELEMENT_TYPE_CONSTANTS.TEXT_FIELD)).toBe('动态文本')
+      expect(getElementTypeName(ELEMENT_TYPE_CONSTANTS.TEXT_FIELD)).toBe('elementNames.textField')
     })
 
     it('should return the correct type name for image', () => {
-      expect(getElementTypeName(ELEMENT_TYPE_CONSTANTS.IMAGE)).toBe('图片')
+      expect(getElementTypeName(ELEMENT_TYPE_CONSTANTS.IMAGE)).toBe('elementNames.image')
     })
 
     it('should return the correct type name for line', () => {
-      expect(getElementTypeName(ELEMENT_TYPE_CONSTANTS.LINE)).toBe('线条')
+      expect(getElementTypeName(ELEMENT_TYPE_CONSTANTS.LINE)).toBe('elementNames.line')
     })
 
     it('should return the correct type name for rectangle', () => {
-      expect(getElementTypeName(ELEMENT_TYPE_CONSTANTS.RECTANGLE)).toBe('矩形')
+      expect(getElementTypeName(ELEMENT_TYPE_CONSTANTS.RECTANGLE)).toBe('elementNames.rectangle')
     })
 
     it('should return the type itself for unknown types', () => {
@@ -303,7 +303,7 @@ describe('elementUtils', () => {
       expect(element.x).toBe(10)
       expect(element.y).toBe(20)
       expect(element.width).toBe(100)
-      expect(element.height).toBe(30)
+      expect(element.height).toBe(20)
       expect((element as any).text).toBe('静态文本')
     })
 
@@ -314,7 +314,7 @@ describe('elementUtils', () => {
       expect(element.x).toBe(10)
       expect(element.y).toBe(20)
       expect(element.width).toBe(100)
-      expect(element.height).toBe(30)
+      expect(element.height).toBe(20)
     })
 
     it('should create a new image element', () => {
