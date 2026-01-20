@@ -2,6 +2,8 @@
 
 这是一个基于 Vue 3 的 JasperReport 模板设计器，完全在浏览器中运行，无需安装任何软件。设计完成后可直接下载或复制 JRXML 文件内容，随用随走。
 
+[English README](README_EN.md)
+
 ## 🎯 项目定位
 
 由于官方 JasperReport Studio 受到出口管制限制，本项目旨在提供一个轻量级、易用的替代方案，满足基本的 JRXML 设计需求。
