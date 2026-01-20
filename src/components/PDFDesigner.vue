@@ -792,6 +792,11 @@ const handleElementDoubleClick = (element: any) => {
     ...getDefaultElementProperties(element.type)
   };
   
+  // 为矩形、椭圆、容器和图片设置默认高度为band高度的一半
+  if (['rectangle', 'ellipse', 'frame', 'image'].includes(element.type)) {
+    newElement.height = Math.round(targetBand.height / 2);
+  }
+  
   // 确保band有elements数组
   if (!targetBand.elements) {
     targetBand.elements = [];
@@ -873,6 +878,10 @@ const handleDrop = (event: DragEvent) => {
     
     const targetBand = bands.value[bandIndex];
     if (targetBand && targetBand.elements) {
+      // 为矩形、椭圆、容器和图片设置默认高度为band高度的一半
+      if (['rectangle', 'ellipse', 'frame', 'image'].includes(elementData.type)) {
+        newElement.height = Math.round(targetBand.height / 2);
+      }
       // 保存状态到历史记录
       saveStateToHistory();
       
@@ -1024,7 +1033,7 @@ const getDefaultElementProperties = (type: string): Partial<DesignElement> => {
         verticalAlignment: 'Top'
       };
     case 'image':
-      return { imageExpression: '' };
+      return { imageExpression: '"https://fengyunhe.github.io/jrxml_web_designer/assets/FIREGOD_CN-DlUaKets.jpg"' };
     case 'line':
       return { lineDirection: 'TopDown', lineWidth: 1 };
     case 'rectangle':

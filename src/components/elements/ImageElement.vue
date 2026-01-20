@@ -16,14 +16,24 @@
     @drag-start="handleDragStart"
     @resize-start="handleResizeStart"
   >
-    <div class="image-placeholder">
-      <div class="image-icon">🖼️</div>
+    <div class="image-container">
+      <img 
+        v-if="imageUrl" 
+        :src="imageUrl" 
+        class="preview-image" 
+        alt="Preview" 
+        @error="handleImageError"
+        @dragstart.prevent="" 
+      />
+      <div v-else class="image-placeholder">
+        <div class="image-icon">🖼️</div>
+      </div>
     </div>
   </BaseElement>
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue';
+import { computed, ref } from 'vue';
 import BaseElement from './BaseElement.vue';
 import type { ImageElement, SelectedElementInfo } from '../../types';
 
@@ -50,6 +60,34 @@ const emit = defineEmits<{
   resizeStart: [event: MouseEvent, bandIndex: number, elementIndex: number, parentFrameIndex?: number];
 }>();
 
+// 图片加载错误标志
+const imageError = ref(false);
+
+// 解析图片表达式，提取URL
+const imageUrl = computed(() => {
+  if (!props.element.imageExpression || imageError.value) return null;
+  
+  const expr = props.element.imageExpression.trim();
+  // 检查是否是双引号包裹的字符串
+  if (expr.startsWith('"') && expr.endsWith('"')) {
+    // 移除双引号
+    const url = expr.slice(1, -1).trim();
+    // 检查是否是有效的URL格式
+    try {
+      new URL(url);
+      return url;
+    } catch {
+      return null;
+    }
+  }
+  return null;
+});
+
+// 处理图片加载错误
+const handleImageError = () => {
+  imageError.value = true;
+};
+
 // 处理选择
 const handleSelect = (bandIndex: number, elementIndex: number, isMultiSelect?: boolean) => {
   emit('select', bandIndex, elementIndex, isMultiSelect, props.parentFrameIndex);
@@ -67,6 +105,23 @@ const handleResizeStart = (event: MouseEvent, bandIndex: number, elementIndex: n
 </script>
 
 <style scoped>
+.image-container {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  background-color: rgba(0, 0, 0, 0.05);
+}
+
+.preview-image {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+  border-radius: 2px;
+}
+
 .image-placeholder {
   width: 100%;
   height: 100%;

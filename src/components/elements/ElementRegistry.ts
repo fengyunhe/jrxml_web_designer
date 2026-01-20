@@ -39,7 +39,7 @@ export class ElementRegistry {
         x: 0,
         y: 0,
         width: 100,
-        height: 30,
+        height: 20,
         text: '静态文本',
         fontFamily: 'SansSerif',
         fontSize: 12,
@@ -60,7 +60,7 @@ export class ElementRegistry {
         x: 0,
         y: 0,
         width: 100,
-        height: 30,
+        height: 20,
         expression: '"文本域"',
         isStretchWithOverflow: false,
         evaluationTime: 'Now',
@@ -86,7 +86,7 @@ export class ElementRegistry {
         y: 0,
         width: 100,
         height: 100,
-        imageExpression: ''
+        imageExpression: '"https://fengyunhe.github.io/jrxml_web_designer/assets/FIREGOD_CN-DlUaKets.jpg"'
       }
     });
 
