@@ -43,14 +43,6 @@
           </label>
         </div>
         
-        <!-- 缩放控制组件 -->
-        <ZoomControls
-          :zoom-level="zoomLevel"
-          :paper-width="paperWidth"
-          @update:zoomLevel="zoomLevel = $event"
-        />
-        
-        <button @click="clearLocalStorage" class="btn-secondary">{{ t('actions.clearLocalData') }}</button>
         <SplitButton 
           :actions="[
             { label: t('actions.previewPDF'), handler: openPdfPreview, class: 'btn-primary' },
@@ -94,7 +86,10 @@
           @add-field="handleAddField"
           @edit-field="handleEditField"
           @delete-field="handleDeleteField"
-          @delete-element="handleDeleteElement"
+          @add-parameter="handleAddParameter"
+          @edit-parameter="handleEditParameter"
+          @delete-parameter="handleDeleteParameter"
+          @delete-element="deleteElement"
         />
       </ResizablePanel>
       
@@ -132,7 +127,7 @@
         @handle-drag-over="handleDragOver"
         @handle-drag-leave="handleDragLeave"
         @start-resizing-band="startResizingBand"
-        @zoom-change="handleZoomChange"
+        @zoom-change="(newZoom) => zoomLevel = newZoom"
         @select-elements-in-rect="selectElementsInRect"
         @clear-selection="clearSelection"
         @check-fields="handleCheckFields"
@@ -252,7 +247,7 @@ import {
 
 import {getBandDisplayName} from '../utils/bandUtils';
 
-import {clearLocalStorage as clearReportLocalStorage, loadFromLocalStorage, saveToLocalStorage} from '../utils/fileUtils';
+import { loadFromLocalStorage, saveToLocalStorage } from '../utils/fileUtils';
 
 // 导入元素边界验证工具
 import {
@@ -334,11 +329,7 @@ watch(() => t('app.title'), () => {
   document.title = name ? `${name} - ${t('app.title')}` : t('app.title');
 });
 
-function clearLocalStorage() {
-  clearReportLocalStorage();
-  clearStoredFiles();
-  notification.success('本地数据已清空');
-}
+
 
 function createNewFile() {
   // 创建新文件的逻辑
@@ -3359,6 +3350,8 @@ const showPdfPreview = ref(false);
 // 字段管理相关
 const showFieldModal = ref(false);
 const editingField = ref<ReportField | undefined>(undefined);
+const editingParameter = ref<ReportParameter | undefined>(undefined);
+const isEditingParameter = ref(false);
 
 // 处理添加字段
 const handleAddField = (): void => {
@@ -3384,6 +3377,33 @@ const handleDeleteField = (fieldName: string): void => {
   }
 };
 
+// 处理添加报表参数
+const handleAddParameter = (): void => {
+  // 使用字段管理模态框，因为参数和字段的结构相似
+  editingParameter.value = undefined;
+  showFieldModal.value = true;
+  isEditingParameter.value = false;
+};
+
+// 处理编辑报表参数
+const handleEditParameter = (parameter: ReportParameter): void => {
+  editingParameter.value = { ...parameter };
+  showFieldModal.value = true;
+  isEditingParameter.value = true;
+};
+
+// 处理删除报表参数
+const handleDeleteParameter = (parameterName: string): void => {
+  if (confirm(`确定要删除参数 "${parameterName}" 吗？`)) {
+    const parameterIndex = reportParameters.value.findIndex(param => param.name === parameterName);
+    if (parameterIndex !== -1) {
+      reportParameters.value.splice(parameterIndex, 1);
+      saveStateToHistory();
+      updateJRXML();
+    }
+  }
+};
+
 // 处理删除元素
 const handleDeleteElement = (bandIndex: number, elementIndex: number): void => {
   const band = bands.value[bandIndex];
@@ -3400,21 +3420,41 @@ const handleDeleteElement = (bandIndex: number, elementIndex: number): void => {
 };
 
 // 处理字段保存
-const handleFieldSave = (field: ReportField): void => {
-  const existingFieldIndex = reportFields.value.findIndex(f => f.name === field.name);
-  
-  if (existingFieldIndex !== -1 && editingField.value?.name !== field.name) {
-    // 如果是编辑且字段名已存在，显示错误
-    alert('字段名称已存在，请使用其他名称');
-    return;
-  }
-  
-  if (existingFieldIndex !== -1) {
-    // 更新现有字段
-    reportFields.value[existingFieldIndex] = field;
+const handleFieldSave = (fieldOrParam: ReportField | ReportParameter): void => {
+  if (isEditingParameter.value) {
+    // 处理参数保存
+    const existingParamIndex = reportParameters.value.findIndex(p => p.name === fieldOrParam.name);
+    
+    if (existingParamIndex !== -1 && editingParameter.value?.name !== fieldOrParam.name) {
+      // 如果是编辑且参数名已存在，显示错误
+      alert('参数名称已存在，请使用其他名称');
+      return;
+    }
+    
+    if (existingParamIndex !== -1) {
+      // 更新现有参数
+      reportParameters.value[existingParamIndex] = fieldOrParam as ReportParameter;
+    } else {
+      // 添加新参数
+      reportParameters.value.push(fieldOrParam as ReportParameter);
+    }
   } else {
-    // 添加新字段
-    reportFields.value.push(field);
+    // 处理字段保存
+    const existingFieldIndex = reportFields.value.findIndex(f => f.name === fieldOrParam.name);
+    
+    if (existingFieldIndex !== -1 && editingField.value?.name !== fieldOrParam.name) {
+      // 如果是编辑且字段名已存在，显示错误
+      alert('字段名称已存在，请使用其他名称');
+      return;
+    }
+    
+    if (existingFieldIndex !== -1) {
+      // 更新现有字段
+      reportFields.value[existingFieldIndex] = fieldOrParam as ReportField;
+    } else {
+      // 添加新字段
+      reportFields.value.push(fieldOrParam as ReportField);
+    }
   }
   
   saveStateToHistory();
@@ -4527,6 +4567,11 @@ const handleBandSelectionChange = (): void => {
   font-size: 12px;
   cursor: pointer;
   margin: 0;
+  margin-right: 16px;
+}
+
+.snap-toggle label:last-child {
+  margin-right: 0;
 }
 
 .snap-toggle input[type="checkbox"] {

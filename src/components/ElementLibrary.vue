@@ -59,7 +59,10 @@
     
     <!-- 报表参数区域 -->
     <div class="data-parameters-section">
-      <h4>{{ t('elementLibrary.reportParameters') }}</h4>
+      <div class="section-header">
+        <h4>{{ t('elementLibrary.reportParameters') }}</h4>
+        <button class="add-button" @click="handleAddParameter" :title="t('elementLibrary.addReportParameter')">+</button>
+      </div>
       <div class="parameters-mini-view">
         <div 
           v-for="(param, index) in reportParameters" 
@@ -67,8 +70,18 @@
           class="field-mini-item"
           @click="selectElementsByParameterWrapper(param.name)"
         >
-          <span class="field-name">$P{ {{ param.name }} }</span>
-          <span class="field-type">({{ param.class }})</span>
+          <div class="field-info">
+            <span class="field-name">$P{ {{ param.name }} }</span>
+            <span class="field-type">({{ param.class }})</span>
+          </div>
+          <div class="field-actions">
+            <button class="action-button edit-button" @click.stop="handleEditParameter(param)" :title="t('elementLibrary.editParameter')">✏️</button>
+            <button class="action-button delete-button" @click.stop="handleDeleteParameter(param.name)" :title="t('elementLibrary.deleteParameter')">🗑️</button>
+          </div>
+        </div>
+        <div v-if="reportParameters.length === 0" class="empty-state">
+          <p>{{ t('elementLibrary.noReportParameters') }}</p>
+          <p class="empty-hint">{{ t('elementLibrary.clickToAddParameter') }}</p>
         </div>
       </div>
     </div>
@@ -145,6 +158,9 @@ interface Emits {
   (e: 'add-field'): void;
   (e: 'edit-field', field: ReportField): void;
   (e: 'delete-field', fieldName: string): void;
+  (e: 'add-parameter'): void;
+  (e: 'edit-parameter', parameter: ReportParameter): void;
+  (e: 'delete-parameter', parameterName: string): void;
   (e: 'delete-element', bandIndex: number, elementIndex: number, parentFrameIndex?: number): void;
 }
 
@@ -280,6 +296,21 @@ function handleEditField(field: ReportField): void {
 // 处理删除字段
 function handleDeleteField(fieldName: string): void {
   emit('delete-field', fieldName);
+}
+
+// 处理添加参数
+function handleAddParameter(): void {
+  emit('add-parameter');
+}
+
+// 处理编辑参数
+function handleEditParameter(parameter: ReportParameter): void {
+  emit('edit-parameter', parameter);
+}
+
+// 处理删除参数
+function handleDeleteParameter(parameterName: string): void {
+  emit('delete-parameter', parameterName);
 }
 
 // 待删除的元素

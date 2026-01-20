@@ -50,6 +50,11 @@
     "deleteField": "删除字段",
     "noDataFields": "暂无数据字段",
     "clickToAddField": "点击上方「+」按钮添加字段",
+    "addReportParameter": "添加报表参数",
+    "editParameter": "编辑参数",
+    "deleteParameter": "删除参数",
+    "noReportParameters": "暂无报表参数",
+    "clickToAddParameter": "点击上方「+」按钮添加参数",
     "deleteConfirm": "删除确认",
     "deleteElementConfirm": "确定要删除该元素吗？"
   },

@@ -157,6 +157,12 @@
         :visible="selectionBox.visible"
       />
     </div>
+    <!-- 缩放控制组件 -->
+    <ZoomControls
+      :zoom-level="zoomLevel"
+      :paper-width="paperWidth"
+      @update:zoomLevel="emit('zoom-change', $event)"
+    />
   </div>
 </template>
 
@@ -164,6 +170,7 @@
 import { onMounted, onBeforeUnmount, ref } from 'vue';
 import ElementFactory from '../elements/ElementFactory.vue';
 import SelectionBox from './SelectionBox.vue';
+import ZoomControls from './controls/ZoomControls.vue';
 import { BAND_CONSTANTS } from '@/constants/constants';
 import { getBandDisplayName } from '@/utils/bandUtils';
 import type { Band } from '@/types';

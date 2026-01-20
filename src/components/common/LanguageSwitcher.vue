@@ -7,9 +7,10 @@ const { locale } = useI18n()
 const currentLanguage = computed({
   get: () => locale.value,
   set: (value) => {
-    locale.value = value
+    locale.value = value;
+    sessionStorage.setItem('appLocale', value);
   }
-})
+});
 
 const languages = [
   { code: 'zh', name: '中文' },

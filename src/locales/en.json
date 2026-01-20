@@ -50,6 +50,11 @@
     "deleteField": "Delete Field",
     "noDataFields": "No data fields",
     "clickToAddField": "Click '+' above to add fields",
+    "addReportParameter": "Add Report Parameter",
+    "editParameter": "Edit Parameter",
+    "deleteParameter": "Delete Parameter",
+    "noReportParameters": "No report parameters",
+    "clickToAddParameter": "Click '+' above to add parameters",
     "deleteConfirm": "Delete Confirmation",
     "deleteElementConfirm": "Are you sure you want to delete this element?"
   },
