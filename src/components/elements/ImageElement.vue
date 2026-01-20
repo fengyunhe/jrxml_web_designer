@@ -18,7 +18,6 @@
   >
     <div class="image-placeholder">
       <div class="image-icon">🖼️</div>
-      <div class="image-path">{{ imageExpression || '图片' }}</div>
     </div>
   </BaseElement>
 </template>
@@ -50,12 +49,6 @@ const emit = defineEmits<{
   dragStart: [event: MouseEvent, bandIndex: number, elementIndex: number, parentFrameIndex?: number];
   resizeStart: [event: MouseEvent, bandIndex: number, elementIndex: number, parentFrameIndex?: number];
 }>();
-
-// 图片路径（仅显示文件名部分）
-const imageExpression = computed(() => {
-  if (!props.element.imageExpression) return '';
-  return props.element.imageExpression.split('/').pop()?.split('\\').pop() || '';
-});
 
 // 处理选择
 const handleSelect = (bandIndex: number, elementIndex: number, isMultiSelect?: boolean) => {
