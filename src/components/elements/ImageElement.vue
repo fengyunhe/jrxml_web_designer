@@ -112,7 +112,6 @@ const handleResizeStart = (event: MouseEvent, bandIndex: number, elementIndex: n
   align-items: center;
   justify-content: center;
   overflow: hidden;
-  background-color: rgba(0, 0, 0, 0.05);
 }
 
 .preview-image {
