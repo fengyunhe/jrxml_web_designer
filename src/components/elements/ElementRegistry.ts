@@ -61,7 +61,7 @@ export class ElementRegistry {
         y: 0,
         width: 100,
         height: 30,
-        expression: '',
+        expression: '"文本域"',
         isStretchWithOverflow: false,
         evaluationTime: 'Now',
         pattern: '',

@@ -202,6 +202,8 @@
     <PdfPreviewModal
       :visible="showPdfPreview"
       :jrxml-content="jrxmlContent"
+      :report-parameters="reportParameters"
+      :report-fields="reportFields"
       @update:visible="showPdfPreview = $event"
     />
   </div>
@@ -604,7 +606,6 @@ const selectedBandIndex = ref<number | null>(null);
 const selectedElement = ref<SelectedElementInfo | null>(null);
 const selectedElements = ref<SelectedElementInfo[]>([]); // 多选元素数组
 const editingElement = ref<EditingElementInfo | null>(null);
-const editInput = ref<HTMLInputElement | null>(null);
 
 
 
@@ -1008,12 +1009,12 @@ const getDefaultElementProperties = (type: string): Partial<DesignElement> => {
   switch (type) {
     case 'staticText':
       return { 
-        text: '静态文本', 
+        text: t('properties.defaultStaticText'), 
         ...defaultFontProps
       };
     case 'textField':
       return {
-        expression: '',
+        expression: `"${t('properties.defaultTextFieldExpression')}"`,
         isStretchWithOverflow: false,
         evaluationTime: 'Now',
         pattern: '',
@@ -1786,14 +1787,6 @@ const startEditing = (bandIndex: number, elementIndex: number, parentFrameIndex?
   
   // 自动隐藏底部面板
   showBottomPanel.value = false;
-  
-  // 等待DOM更新后聚焦输入框
-  setTimeout(() => {
-    if (editInput.value) {
-      editInput.value.focus();
-      editInput.value.select();
-    }
-  }, 10);
 };
 
 // 完成编辑

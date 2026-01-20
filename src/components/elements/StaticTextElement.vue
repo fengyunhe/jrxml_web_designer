@@ -15,6 +15,7 @@
     @select="handleSelect"
     @drag-start="handleDragStart"
     @resize-start="handleResizeStart"
+    @start-editing="handleStartEditing"
   >
     <template v-if="isEditing">
       <input 
@@ -28,15 +29,18 @@
       />
     </template>
     <template v-else>
-      <span @dblclick.stop="handleStartEditing">{{ element.text || '静态文本' }}</span>
+      <span>{{ element.text || t('properties.defaultStaticText') }}</span>
     </template>
   </BaseElement>
 </template>
 
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue';
+import { useI18n } from 'vue-i18n';
 import BaseElement from './BaseElement.vue';
 import type { StaticTextElement, SelectedElementInfo, EditingElementInfo } from '../../types';
+
+const { t } = useI18n();
 
 // Props
 const props = defineProps<{

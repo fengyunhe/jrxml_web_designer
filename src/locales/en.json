@@ -1,6 +1,6 @@
 {
   "app": {
-    "title": "PDF Template Designer"
+    "title": "JRXML Visual Designer"
   },
   "actions": {
     "undo": "Undo",
@@ -92,7 +92,9 @@
     "italic": "Italic",
     "underline": "Underline",
     "expression": "Expression",
-    "expressionHint": "e.g., $F{fieldName} or $F{fieldName}.toString()",
+    "expressionHint": "e.g., $F{fieldName} or $F{fieldName}.toString() or 或 \"Fixed text\"" ,
+    "defaultTextFieldExpression": "Text Field",
+    "defaultStaticText": "Static Text",
     "pattern": "Pattern",
     "patternHint": "e.g., Date: \"yyyy-MM-dd\", Number: \"#,##0.00\"",
     "textAlignment": "Text Alignment",
@@ -191,5 +193,37 @@
     "zoomOut": "Zoom Out",
     "resetZoom": "Reset Zoom",
     "fitWindow": "Fit Window"
+  },
+  "modal": {
+    "confirm": "Confirm",
+    "cancel": "Cancel"
+  },
+  "fieldManagement": {
+    "addField": "Add Data Field",
+    "editField": "Edit Data Field",
+    "fieldName": "Field Name",
+    "fieldClass": "Field Type",
+    "placeholderName": "Please enter field name",
+    "placeholderClass": "Please select field type",
+    "errors": {
+      "nameRequired": "Field name is required",
+      "classRequired": "Please select field type"
+    },
+    "save": "Save",
+    "cancel": "Cancel",
+    "fieldTypes": {
+      "string": "String",
+      "integer": "Integer",
+      "long": "Long",
+      "float": "Float",
+      "double": "Double",
+      "boolean": "Boolean",
+      "date": "Date",
+      "timestamp": "Timestamp",
+      "byteArray": "Byte Array"
+    }
+  },
+  "pdfPreview": {
+    "title": "PDF Preview"
   }
 }

@@ -1,6 +1,6 @@
 {
   "app": {
-    "title": "PDF模板设计器"
+    "title": "JRXML可视化设计器"
   },
   "actions": {
     "undo": "撤销",
@@ -92,7 +92,9 @@
     "italic": "斜体",
     "underline": "下划线",
     "expression": "表达式",
-    "expressionHint": "例如: $F{字段名} 或 $F{字段名}.toString()",
+    "expressionHint": "例如: $F{字段名} 或 $F{字段名}.toString() 或 \"固定文字\"",
+    "defaultTextFieldExpression": "文本域",
+    "defaultStaticText": "静态文本",
     "pattern": "格式模式",
     "patternHint": "例如: 日期格式 \"yyyy-MM-dd\"，数字格式 \"#,##0.00\"",
     "textAlignment": "文本对齐",
@@ -191,5 +193,37 @@
     "zoomOut": "缩小",
     "resetZoom": "重置缩放",
     "fitWindow": "适应窗口"
+  },
+  "modal": {
+    "confirm": "确定",
+    "cancel": "取消"
+  },
+  "fieldManagement": {
+    "addField": "添加数据字段",
+    "editField": "编辑数据字段",
+    "fieldName": "字段名称",
+    "fieldClass": "字段类型",
+    "placeholderName": "请输入字段名称",
+    "placeholderClass": "请选择字段类型",
+    "errors": {
+      "nameRequired": "字段名称不能为空",
+      "classRequired": "请选择字段类型"
+    },
+    "save": "保存",
+    "cancel": "取消",
+    "fieldTypes": {
+      "string": "字符串",
+      "integer": "整数",
+      "long": "长整数",
+      "float": "浮点数",
+      "double": "双精度浮点数",
+      "boolean": "布尔值",
+      "date": "日期",
+      "timestamp": "时间戳",
+      "byteArray": "字节数组"
+    }
+  },
+  "pdfPreview": {
+    "title": "PDF 预览"
   }
 }

@@ -51,7 +51,7 @@
               <span class="element-icon">{{ getElementIcon(element.element.type) }}</span>
               <span class="element-info">{{ getElementDisplayInfoWithoutBand(element.element) }}</span>
             </div>
-            <button class="action-button delete-button" @click.stop="handleDeleteElement(element)" :title="t('elementLibrary.deleteElement')">🗑️</button>
+            <button class="action-button delete-button" @click.stop="handleDeleteElement(element)" :title="t('properties.deleteElement')">🗑️</button>
           </div>
         </div>
       </div>

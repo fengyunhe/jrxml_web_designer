@@ -2,14 +2,14 @@
   <div v-if="visible" class="pdf-preview-modal" @click.self="closeModal">
     <div class="pdf-preview-content">
       <div class="pdf-preview-header">
-        <h3>PDF 预览</h3>
+        <h3>{{ t('pdfPreview.title') }}</h3>
         <button class="close-btn" @click="closeModal">×</button>
       </div>
       <div class="pdf-preview-body">
         <iframe
           :src="previewUrl"
           class="pdf-iframe"
-          title="PDF Preview"
+          :title="t('pdfPreview.title')"
           @load="handleIframeLoad"
         ></iframe>
       </div>
@@ -19,18 +19,18 @@
 
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue';
+import { useI18n } from 'vue-i18n';
 import { PDF_PREVIEW_API } from '../../config/apiConfig';
+import type { ReportParameter, ReportField } from '../../types';
 
-const props = defineProps({
-  visible: {
-    type: Boolean,
-    default: false
-  },
-  jrxmlContent: {
-    type: String,
-    default: ''
-  }
-});
+const { t } = useI18n();
+
+const props = defineProps<{
+  visible: boolean;
+  jrxmlContent: string;
+  reportParameters?: ReportParameter[];
+  reportFields?: ReportField[];
+}>();
 
 const emit = defineEmits(['update:visible']);
 
@@ -39,15 +39,61 @@ watch(() => props.visible, (newVisible) => {
   console.log('PdfPreviewModal visible变化:', newVisible);
 });
 
+// 生成MOCK值的函数
+const generateMockValue = (className: string): any => {
+  switch (className) {
+    case 'java.lang.String':
+      return 'Test String';
+    case 'java.lang.Integer':
+    case 'java.lang.Long':
+      return 123;
+    case 'java.lang.Double':
+    case 'java.lang.Float':
+      return 123.45;
+    case 'java.lang.Boolean':
+      return true;
+    case 'java.util.Date':
+      return new Date().toISOString().split('T')[0];
+    default:
+      return 'Test Value';
+  }
+};
+
 // 计算预览URL
 const previewUrl = computed(() => {
   console.log('生成预览URL，jrxml长度:', props.jrxmlContent.length);
+  
+  // 生成parameters JSON对象
+  const parameters: Record<string, any> = {};
+  (props.reportParameters || []).forEach(param => {
+    parameters[param.name] = generateMockValue(param.class);
+  });
+  
+  // 生成dataSource JSON数组（包含1行MOCK数据）
+  const dataSource: Record<string, any>[] = [];
+  for (let i = 0; i < 1; i++) {
+    const row: Record<string, any> = {};
+    (props.reportFields || []).forEach(field => {
+      row[field.name] = generateMockValue(field.class);
+    });
+    dataSource.push(row);
+  }
+  
+  // 输出发送给后端的完整参数到控制台
+  console.log('发送给后端的完整参数:', {
+    parameters,
+    dataSource,
+    jrxml: props.jrxmlContent
+  });
+  
   // 创建一个包含表单的HTML
   const formHtml = `
     <html>
     <body onload="document.getElementById('pdfForm').submit()">
       <form id="pdfForm" action="${PDF_PREVIEW_API}" method="POST" target="_self">
         <input type="hidden" name="jrxml" value="${props.jrxmlContent.replace(/"/g, '&quot;')}">
+        <input type="hidden" name="parameters" value="${JSON.stringify(parameters).replace(/"/g, '&quot;')}">
+        <input type="hidden" name="dataSource" value="${JSON.stringify(dataSource).replace(/"/g, '&quot;')}">
       </form>
     </body>
     </html>

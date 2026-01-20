@@ -3,6 +3,7 @@
     :is="getElementComponent"
     v-bind="commonProps"
     v-on="commonEvents"
+    :key="props.element.uuid || `${props.bandIndex}-${props.elementIndex}`"
   />
 </template>
 
@@ -23,8 +24,8 @@ import type {
   EditingElementInfo
 } from '../../types';
 
-// 组件缓存
-const componentCache = ref<Record<string, any>>({
+// 组件缓存 - 使用普通对象而非ref，避免组件被转换为响应式对象
+const componentCache: Record<string, any> = {
   staticText: StaticTextElement,
   textField: TextFieldElement,
   image: ImageElement,
@@ -33,13 +34,13 @@ const componentCache = ref<Record<string, any>>({
   ellipse: EllipseElement,
   break: BreakElement,
   frame: FrameElement
-});
+};
 
 // 预加载组件
 onMounted(() => {
   // 注册默认组件到缓存
   elementRegistry.getAllElements().forEach(config => {
-    if (!componentCache.value[config.type]) {
+    if (!componentCache[config.type]) {
       loadComponent(config.type);
     }
   });
@@ -50,7 +51,7 @@ async function loadComponent(type: string) {
   try {
     const component = await elementRegistry.loadElementComponent(type);
     if (component) {
-      componentCache.value[type] = component;
+      componentCache[type] = component;
     }
   } catch (error) {
     console.error(`Failed to load component for element type ${type}:`, error);
@@ -92,8 +93,8 @@ const getElementComponent = computed(() => {
   const type = props.element.type;
   
   // 从缓存中获取组件
-  if (componentCache.value[type]) {
-    return componentCache.value[type];
+  if (componentCache[type]) {
+    return componentCache[type];
   }
   
   // 动态加载组件

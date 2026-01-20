@@ -9,6 +9,7 @@
     :style="elementStyle"
     @mousedown.stop="handleMouseDown"
     @contextmenu.stop="handleContextMenu"
+    @dblclick.stop="handleDoubleClick"
   >
     <!-- 子组件将覆盖此内容 -->
     <slot></slot>
@@ -49,6 +50,7 @@ const emit = defineEmits<{
   dragStart: [event: MouseEvent, bandIndex: number, elementIndex: number, parentFrameIndex?: number];
   resizeStart: [event: MouseEvent, bandIndex: number, elementIndex: number, parentFrameIndex?: number];
   contextmenu: [event: MouseEvent, bandIndex: number, elementIndex: number, parentFrameIndex?: number];
+  startEditing: [bandIndex: number, elementIndex: number, parentFrameIndex?: number];
 }>();
 
 // 是否选中
@@ -345,6 +347,11 @@ const handleResize = (_direction: string, event?: MouseEvent) => {
 // 处理上下文菜单
 const handleContextMenu = (event: MouseEvent) => {
   emit('contextmenu', event, props.bandIndex, props.elementIndex, props.parentFrameIndex);
+};
+
+// 处理双击事件
+const handleDoubleClick = () => {
+  emit('startEditing', props.bandIndex, props.elementIndex, props.parentFrameIndex);
 };
 </script>
 

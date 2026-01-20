@@ -4,14 +4,18 @@
       <h3 class="confirm-title">{{ title }}</h3>
       <p class="confirm-message">{{ message }}</p>
       <div class="confirm-actions">
-        <button class="btn-cancel" @click="handleCancel">取消</button>
-        <button class="btn-confirm" @click="handleConfirm">确定</button>
+        <button class="btn-cancel" @click="handleCancel">{{ t('modal.cancel') }}</button>
+        <button class="btn-confirm" @click="handleConfirm">{{ t('modal.confirm') }}</button>
       </div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
+import { useI18n } from 'vue-i18n';
+
+const { t } = useI18n();
+
 const props = defineProps({
   visible: {
     type: Boolean,

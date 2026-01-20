@@ -15,6 +15,7 @@
     @select="handleSelect"
     @drag-start="handleDragStart"
     @resize-start="handleResizeStart"
+    @start-editing="handleStartEditing"
   >
     <template v-if="isEditing">
       <input 
@@ -29,15 +30,18 @@
       />
     </template>
     <template v-else>
-      <span @dblclick.stop="handleStartEditing">{{ displayText }}</span>
+      <span>{{ displayText }}</span>
     </template>
   </BaseElement>
 </template>
 
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue';
+import { useI18n } from 'vue-i18n';
 import BaseElement from './BaseElement.vue';
 import type { TextFieldElement, SelectedElementInfo, EditingElementInfo } from '../../types';
+
+const { t } = useI18n();
 
 // Props
 const props = defineProps<{
@@ -94,7 +98,7 @@ const displayText = computed(() => {
   if (props.element.expression) {
     return props.element.expression;
   } 
-  return '文本字段';
+  return `"${t('properties.defaultTextFieldExpression')}"`;
 });
 
 // 处理选择

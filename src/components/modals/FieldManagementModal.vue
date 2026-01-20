@@ -2,32 +2,32 @@
   <div v-if="visible" class="modal-overlay" @click.self="handleClose">
     <div class="modal-content">
       <div class="modal-header">
-        <h3>{{ isEditing ? '编辑数据字段' : '添加数据字段' }}</h3>
+        <h3>{{ isEditing ? t('fieldManagement.editField') : t('fieldManagement.addField') }}</h3>
         <button class="close-button" @click="handleClose">×</button>
       </div>
       <div class="modal-body">
         <form @submit.prevent="handleSubmit">
           <div class="form-group">
-            <label for="fieldName">字段名称 *</label>
+            <label for="fieldName">{{ t('fieldManagement.fieldName') }} *</label>
             <input 
               type="text" 
               id="fieldName" 
               v-model="localField.name" 
               required 
-              placeholder="请输入字段名称"
+              :placeholder="t('fieldManagement.placeholderName')"
               class="form-input"
             />
             <div v-if="errors.name" class="error-message">{{ errors.name }}</div>
           </div>
           <div class="form-group">
-            <label for="fieldClass">字段类型 *</label>
+            <label for="fieldClass">{{ t('fieldManagement.fieldClass') }} *</label>
             <select 
               id="fieldClass" 
               v-model="localField.class" 
               required 
               class="form-select"
             >
-              <option value="">请选择字段类型</option>
+              <option value="">{{ t('fieldManagement.placeholderClass') }}</option>
               <option v-for="type in allowedFieldTypes" :key="type.value" :value="type.value">
                 {{ type.label }}
               </option>
@@ -37,8 +37,8 @@
         </form>
       </div>
       <div class="modal-footer">
-        <button class="btn-secondary" @click="handleClose">取消</button>
-        <button class="btn-primary" @click="handleSubmit">保存</button>
+        <button class="btn-secondary" @click="handleClose">{{ t('fieldManagement.cancel') }}</button>
+        <button class="btn-primary" @click="handleSubmit">{{ t('fieldManagement.save') }}</button>
       </div>
     </div>
   </div>
@@ -46,6 +46,9 @@
 
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue';
+import { useI18n } from 'vue-i18n';
+
+const { t } = useI18n();
 
 // Props
 const props = defineProps<{
@@ -75,15 +78,15 @@ const isEditing = computed(() => !!props.field);
 
 // Allowed field types based on JRXML Schema
 const allowedFieldTypes = ref([
-  { label: '字符串', value: 'java.lang.String' },
-  { label: '整数', value: 'java.lang.Integer' },
-  { label: '长整数', value: 'java.lang.Long' },
-  { label: '浮点数', value: 'java.lang.Float' },
-  { label: '双精度浮点数', value: 'java.lang.Double' },
-  { label: '布尔值', value: 'java.lang.Boolean' },
-  { label: '日期', value: 'java.util.Date' },
-  { label: '时间戳', value: 'java.sql.Timestamp' },
-  { label: '字节数组', value: 'byte[]' }
+  { label: t('fieldManagement.fieldTypes.string'), value: 'java.lang.String' },
+  { label: t('fieldManagement.fieldTypes.integer'), value: 'java.lang.Integer' },
+  { label: t('fieldManagement.fieldTypes.long'), value: 'java.lang.Long' },
+  { label: t('fieldManagement.fieldTypes.float'), value: 'java.lang.Float' },
+  { label: t('fieldManagement.fieldTypes.double'), value: 'java.lang.Double' },
+  { label: t('fieldManagement.fieldTypes.boolean'), value: 'java.lang.Boolean' },
+  { label: t('fieldManagement.fieldTypes.date'), value: 'java.util.Date' },
+  { label: t('fieldManagement.fieldTypes.timestamp'), value: 'java.sql.Timestamp' },
+  { label: t('fieldManagement.fieldTypes.byteArray'), value: 'byte[]' }
 ]);
 
 // Watch for field prop changes
@@ -128,11 +131,11 @@ function validateForm() {
   const newErrors: { name?: string; class?: string } = {};
   
   if (!localField.value.name.trim()) {
-    newErrors.name = '字段名称不能为空';
+    newErrors.name = t('fieldManagement.errors.nameRequired');
   }
   
   if (!localField.value.class) {
-    newErrors.class = '请选择字段类型';
+    newErrors.class = t('fieldManagement.errors.classRequired');
   }
   
   errors.value = newErrors;
