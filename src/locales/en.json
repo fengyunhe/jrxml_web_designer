@@ -16,6 +16,7 @@
     "clearLocalData": "Clear Local Data",
     "generateJRXML": "Generate JRXML",
     "previewPDF": "Preview PDF",
+    "setPreviewServer": "Set Preview Server",
     "donate": "Donate",
     "help": "Help"
   },
@@ -230,5 +231,14 @@
   },
   "pdfPreview": {
     "title": "PDF Preview"
+  },
+  "previewServerSettings": {
+    "title": "Preview Server Settings",
+    "serverUrl": "Server URL",
+    "sourceInfo": "Preview server source code address："
+  },
+  "common": {
+    "save": "Save",
+    "cancel": "Cancel"
   }
 }

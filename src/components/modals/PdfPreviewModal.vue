@@ -20,7 +20,6 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
-import { PDF_PREVIEW_API } from '../../config/apiConfig';
 import type { ReportParameter, ReportField } from '../../types';
 
 const { t } = useI18n();
@@ -30,6 +29,7 @@ const props = defineProps<{
   jrxmlContent: string;
   reportParameters?: ReportParameter[];
   reportFields?: ReportField[];
+  previewServerUrl?: string;
 }>();
 
 const emit = defineEmits(['update:visible']);
@@ -63,6 +63,9 @@ const generateMockValue = (className: string): any => {
 const previewUrl = computed(() => {
   console.log('生成预览URL，jrxml长度:', props.jrxmlContent.length);
   
+  // 使用传入的预览服务器地址或默认地址
+  const apiUrl = props.previewServerUrl || 'https://jrxml-pdf-preview.firegod.cn/api/pdf/generateForm';
+  
   // 生成parameters JSON对象
   const parameters: Record<string, any> = {};
   (props.reportParameters || []).forEach(param => {
@@ -83,14 +86,15 @@ const previewUrl = computed(() => {
   console.log('发送给后端的完整参数:', {
     parameters,
     dataSource,
-    jrxml: props.jrxmlContent
+    jrxml: props.jrxmlContent,
+    apiUrl
   });
   
   // 创建一个包含表单的HTML
   const formHtml = `
     <html>
     <body onload="document.getElementById('pdfForm').submit()">
-      <form id="pdfForm" action="${PDF_PREVIEW_API}" method="POST" target="_self">
+      <form id="pdfForm" action="${apiUrl}" method="POST" target="_self">
         <input type="hidden" name="jrxml" value="${props.jrxmlContent.replace(/"/g, '&quot;')}">
         <input type="hidden" name="parameters" value="${JSON.stringify(parameters).replace(/"/g, '&quot;')}">
         <input type="hidden" name="dataSource" value="${JSON.stringify(dataSource).replace(/"/g, '&quot;')}">

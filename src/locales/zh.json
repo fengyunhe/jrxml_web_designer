@@ -16,6 +16,7 @@
     "clearLocalData": "清空本地数据",
     "generateJRXML": "生成JRXML",
     "previewPDF": "预览PDF",
+    "setPreviewServer": "设置预览服务器",
     "donate": "打赏",
     "help": "使用说明"
   },
@@ -230,5 +231,14 @@
   },
   "pdfPreview": {
     "title": "PDF 预览"
+  },
+  "previewServerSettings": {
+    "title": "预览服务器设置",
+    "serverUrl": "服务器地址",
+    "sourceInfo": "预览服务器源代码地址："
+  },
+  "common": {
+    "save": "保存",
+    "cancel": "取消"
   }
 }

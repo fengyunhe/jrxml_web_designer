@@ -27,6 +27,7 @@ interface Props {
   allBandTypes: any[];
   selectedBandTypes: BandType[];
   jrxmlContent: string;
+  previewServerUrl?: string;
 }
 
 // 定义组件事件
@@ -439,6 +440,7 @@ const saveJRXML = (): void => {
   <PdfPreviewModal
     :visible="showPdfPreview"
     :jrxml-content="localJrxmlContent"
+    :preview-server-url="props.previewServerUrl"
     @update:visible="showPdfPreview = $event"
   />
 </template>

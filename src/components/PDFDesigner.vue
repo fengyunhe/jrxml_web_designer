@@ -46,7 +46,8 @@
         <SplitButton 
           :actions="[
             { label: t('actions.previewPDF'), handler: openPdfPreview, class: 'btn-primary' },
-            { label: t('actions.generateJRXML'), handler: generateJRXML, class: 'btn-primary' }
+            { label: t('actions.generateJRXML'), handler: generateJRXML, class: 'btn-primary' },
+            { label: t('actions.setPreviewServer'), handler: openPreviewServerSettings, class: 'btn-primary' }
           ]" 
         />
         <button @click="showReward = true" class="btn-secondary">{{ t('actions.donate') }}</button>
@@ -168,6 +169,7 @@
       :all-band-types="allBandTypes"
       :selected-band-types="selectedBandTypes"
       :jrxml-content="jrxmlContent"
+      :preview-server-url="previewServerUrl"
       @update:visible="showBottomPanel = $event"
       @size-change="handleBottomPanelSizeChange"
       @update:report-properties="reportProperties = $event"
@@ -199,7 +201,16 @@
       :jrxml-content="jrxmlContent"
       :report-parameters="reportParameters"
       :report-fields="reportFields"
+      :preview-server-url="previewServerUrl"
       @update:visible="showPdfPreview = $event"
+    />
+    
+    <!-- 预览服务器设置弹窗 -->
+    <PreviewServerSettingsModal
+      :visible="showPreviewServerSettings"
+      :current-url="previewServerUrl"
+      @update:visible="showPreviewServerSettings = $event"
+      @update:url="updatePreviewServerUrl"
     />
   </div>
 </template>
@@ -211,6 +222,7 @@ import RewardModal from './modals/RewardModal.vue';
 import HelpModal from './modals/HelpModal.vue';
 import FieldManagementModal from './modals/FieldManagementModal.vue';
 import PdfPreviewModal from './modals/PdfPreviewModal.vue';
+import PreviewServerSettingsModal from './modals/PreviewServerSettingsModal.vue';
 import BottomPanel from './panels/BottomPanel.vue';
 import ElementLibrary from './ElementLibrary.vue';
 import FileManager from './designer/controls/FileManager.vue';
@@ -3347,10 +3359,25 @@ const showHelp = ref(false);
 // PDF预览相关
 const showPdfPreview = ref(false);
 
+// 预览服务器设置相关
+const showPreviewServerSettings = ref(false);
+const previewServerUrl = ref(localStorage.getItem('previewServerUrl') || 'https://jrxml-pdf-preview.firegod.cn/api/pdf/generateForm');
+
 // 字段管理相关
 const showFieldModal = ref(false);
 const editingField = ref<ReportField | undefined>(undefined);
 const editingParameter = ref<ReportParameter | undefined>(undefined);
+
+// 打开预览服务器设置
+const openPreviewServerSettings = (): void => {
+  showPreviewServerSettings.value = true;
+};
+
+// 更新预览服务器地址
+const updatePreviewServerUrl = (url: string): void => {
+  previewServerUrl.value = url;
+  localStorage.setItem('previewServerUrl', url);
+};
 const isEditingParameter = ref(false);
 
 // 处理添加字段
