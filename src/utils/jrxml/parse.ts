@@ -5,9 +5,10 @@ export function parseJRXMLContent(jrxmlContent: string): { properties: ReportPro
   const parser = new DOMParser();
   const xmlDoc = parser.parseFromString(jrxmlContent, 'text/xml');
 
-  const jasperReportElem = xmlDoc.querySelector('jasperReport');
+  // 直接使用根元素作为jasperReport元素，不严格验证tagName，因为解析器可能会添加命名空间前缀
+  const jasperReportElem = xmlDoc.documentElement;
   if (!jasperReportElem) {
-    throw new Error('Invalid JRXML: Missing jasperReport element');
+    throw new Error('Invalid JRXML: Missing root element');
   }
 
   const properties: ReportProperties = {
@@ -47,9 +48,30 @@ export function parseJRXMLContent(jrxmlContent: string): { properties: ReportPro
   const bandTypes = ['background', 'title', 'pageHeader', 'columnHeader', 'detail', 'columnFooter', 'pageFooter', 'lastPageFooter', 'summary', 'noData'];
 
   bandTypes.forEach(type => {
-    const bandContainer = xmlDoc.querySelector(`${type}`);
+    // 查找band容器元素，考虑命名空间
+    let bandContainer = xmlDoc.querySelector(`${type}`);
+    if (!bandContainer) {
+      // 尝试使用getElementsByTagNameNS，将undefined转换为null
+      bandContainer = xmlDoc.getElementsByTagNameNS('http://jasperreports.sourceforge.net/jasperreports', type)[0] || null;
+    }
+    if (!bandContainer) {
+      // 尝试使用localName匹配所有元素，将undefined转换为null
+      const allElements = xmlDoc.getElementsByTagName('*');
+      bandContainer = Array.from(allElements).find(element => element.localName === type) || null;
+    }
     if (!bandContainer) return;
-    const bandElem = bandContainer.querySelector('band');
+    
+    // 查找band元素，考虑命名空间
+    let bandElem = bandContainer.querySelector('band');
+    if (!bandElem) {
+      // 尝试使用getElementsByTagNameNS，将undefined转换为null
+      bandElem = bandContainer.getElementsByTagNameNS('http://jasperreports.sourceforge.net/jasperreports', 'band')[0] || null;
+    }
+    if (!bandElem) {
+      // 尝试使用localName匹配，将undefined转换为null
+      const containerChildren = Array.from(bandContainer.children);
+      bandElem = containerChildren.find(child => child.localName === 'band' || child.tagName === 'band') || null;
+    }
     if (!bandElem) return;
 
     const height = parseInt(bandElem.getAttribute('height') || '0');
@@ -103,8 +125,33 @@ function parseComponentElement(componentElem: Element): any {
   const reportElement = componentElem.querySelector('reportElement');
   if (!reportElement) return null;
 
-  // 查找表格元素 - 使用tagName匹配，避免CSS选择器的命名空间问题
-  const tableElem = Array.from(componentElem.children).find(child => child.tagName === 'jr:table');
+  // 查找表格元素 - 支持带命名空间和不带命名空间的table元素
+  let tableElem = null;
+  
+  // 1. 首先查找直接子元素
+  for (const child of Array.from(componentElem.children)) {
+    if (child.tagName === 'jr:table' || child.localName === 'table' || child.tagName === 'table') {
+      tableElem = child;
+      break;
+    }
+  }
+  
+  // 2. 如果没找到，尝试使用querySelector
+  if (!tableElem) {
+    tableElem = componentElem.querySelector('table');
+  }
+  
+  // 3. 如果还是没找到，尝试查找所有后代元素
+  if (!tableElem) {
+    const allDescendants = componentElem.getElementsByTagName('*');
+    for (const descendant of Array.from(allDescendants)) {
+      if (descendant.tagName === 'jr:table' || descendant.localName === 'table' || descendant.tagName === 'table') {
+        tableElem = descendant;
+        break;
+      }
+    }
+  }
+  
   if (!tableElem) return null;
 
   // 解析表格
@@ -134,10 +181,11 @@ function parseTableElement(tableElem: Element, reportElement: Element): any {
   const datasetRunElem = tableElem.querySelector('datasetRun');
   const subDataset = datasetRunElem?.getAttribute('subDataset') || 'tableDataset';
 
-  // 解析表格列 - 使用tagName匹配，避免CSS选择器的命名空间问题
+  // 解析表格列 - 支持带命名空间和不带命名空间的列元素
   const columns: any[] = [];
   Array.from(tableElem.children).forEach((child, index) => {
-    if (child.tagName !== 'jr:column') return;
+    // 检查是否为列元素，支持带命名空间和不带命名空间的column元素
+    if (child.tagName !== 'jr:column' && child.localName !== 'column' && child.tagName !== 'column') return;
     
     const columnElem = child;
     const columnWidth = parseInt(columnElem.getAttribute('width') || '100');
@@ -147,12 +195,22 @@ function parseTableElement(tableElem: Element, reportElement: Element): any {
     const columnNameProp = columnElem.querySelector('property[name="com.jaspersoft.studio.components.table.model.column.name"]');
     const columnName = columnNameProp?.getAttribute('value') || `Column${index + 1}`;
 
-    // 解析表头、列头和详情单元格 - 使用tagName匹配
-    const tableHeaderElem = Array.from(columnElem.children).find(cell => cell.tagName === 'jr:tableHeader');
-    const columnHeaderElem = Array.from(columnElem.children).find(cell => cell.tagName === 'jr:columnHeader');
-    const tableFooterElem = Array.from(columnElem.children).find(cell => cell.tagName === 'jr:tableFooter');
-    const columnFooterElem = Array.from(columnElem.children).find(cell => cell.tagName === 'jr:columnFooter');
-    const detailCellElem = Array.from(columnElem.children).find(cell => cell.tagName === 'jr:detailCell');
+    // 解析表头、列头和详情单元格 - 支持带命名空间和不带命名空间的单元格元素
+    const tableHeaderElem = Array.from(columnElem.children).find(cell => 
+      cell.tagName === 'jr:tableHeader' || cell.localName === 'tableHeader' || cell.tagName === 'tableHeader'
+    );
+    const columnHeaderElem = Array.from(columnElem.children).find(cell => 
+      cell.tagName === 'jr:columnHeader' || cell.localName === 'columnHeader' || cell.tagName === 'columnHeader'
+    );
+    const tableFooterElem = Array.from(columnElem.children).find(cell => 
+      cell.tagName === 'jr:tableFooter' || cell.localName === 'tableFooter' || cell.tagName === 'tableFooter'
+    );
+    const columnFooterElem = Array.from(columnElem.children).find(cell => 
+      cell.tagName === 'jr:columnFooter' || cell.localName === 'columnFooter' || cell.tagName === 'columnFooter'
+    );
+    const detailCellElem = Array.from(columnElem.children).find(cell => 
+      cell.tagName === 'jr:detailCell' || cell.localName === 'detailCell' || cell.tagName === 'detailCell'
+    );
 
     const tableHeader = tableHeaderElem ? parseCellElement(tableHeaderElem) : {
       type: 'staticText',
