@@ -75,7 +75,7 @@
         >
           <div class="field-info">
             <span class="field-name">$P{ {{ param.name }} }</span>
-            <span class="field-type">({{ param.class }})</span>
+            <span class="field-type">({{ getFieldTypeName(param.class) }})</span>
           </div>
           <div class="field-actions">
             <n-button class="action-button edit-button" @click.stop="handleEditParameter(param)" type="default" quaternary circle size="small" :title="t('elementLibrary.editParameter')">✏️</n-button>
@@ -130,7 +130,7 @@
           >
           <div class="field-info" @click="selectElementsByFieldWrapper(field.name)">
             <span class="field-name">$F{ {{ field.name }} }</span>
-            <span class="field-type">({{ field.class }})</span>
+            <span class="field-type">({{ getFieldTypeName(field.class) }})</span>
           </div>
           <div class="field-actions">
             <n-button class="action-button edit-button" @click.stop="handleEditField(field)" type="default" quaternary circle size="small" :title="t('elementLibrary.editField')">✏️</n-button>
@@ -298,6 +298,25 @@ function getBandDisplayName(bandType: string): string {
   // but we can assume the key exists if it's a valid BandType.
   // Using t() is the correct way.
   return t(`bandNames.${bandType}`);
+}
+
+// 允许的字段类型列表
+const allowedFieldTypes = [
+  { label: t('fieldManagement.fieldTypes.string'), value: 'java.lang.String' },
+  { label: t('fieldManagement.fieldTypes.integer'), value: 'java.lang.Integer' },
+  { label: t('fieldManagement.fieldTypes.long'), value: 'java.lang.Long' },
+  { label: t('fieldManagement.fieldTypes.float'), value: 'java.lang.Float' },
+  { label: t('fieldManagement.fieldTypes.double'), value: 'java.lang.Double' },
+  { label: t('fieldManagement.fieldTypes.boolean'), value: 'java.lang.Boolean' },
+  { label: t('fieldManagement.fieldTypes.date'), value: 'java.util.Date' },
+  { label: t('fieldManagement.fieldTypes.timestamp'), value: 'java.sql.Timestamp' },
+  { label: t('fieldManagement.fieldTypes.byteArray'), value: 'byte[]' }
+];
+
+// 获取本地化的字段类型名称
+function getFieldTypeName(className: string): string {
+  const fieldType = allowedFieldTypes.find(type => type.value === className);
+  return fieldType ? fieldType.label : className;
 }
 
 // 处理拖拽开始

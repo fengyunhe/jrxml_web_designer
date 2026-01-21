@@ -110,7 +110,7 @@
             <tbody>
               <tr v-for="(field, index) in localDataset.fields" :key="index">
                 <td>{{ field.name }}</td>
-                <td>{{ field.class }}</td>
+                <td>{{ getFieldTypeName(field.class) }}</td>
                 <td class="actions-cell">
                   <n-button type="primary" size="small" @click="openEditFieldModal(index)">
                     {{ t('common.edit') }}
@@ -268,16 +268,22 @@ const fieldErrors = ref<{ name?: string }>({});
 
 // Allowed field types
 const allowedFieldTypes = [
-  { label: 'String', value: 'java.lang.String' },
-  { label: 'Integer', value: 'java.lang.Integer' },
-  { label: 'Long', value: 'java.lang.Long' },
-  { label: 'Float', value: 'java.lang.Float' },
-  { label: 'Double', value: 'java.lang.Double' },
-  { label: 'Boolean', value: 'java.lang.Boolean' },
-  { label: 'Date', value: 'java.util.Date' },
-  { label: 'Timestamp', value: 'java.sql.Timestamp' },
-  { label: 'Byte Array', value: 'byte[]' }
+  { label: t('fieldManagement.fieldTypes.string'), value: 'java.lang.String' },
+  { label: t('fieldManagement.fieldTypes.integer'), value: 'java.lang.Integer' },
+  { label: t('fieldManagement.fieldTypes.long'), value: 'java.lang.Long' },
+  { label: t('fieldManagement.fieldTypes.float'), value: 'java.lang.Float' },
+  { label: t('fieldManagement.fieldTypes.double'), value: 'java.lang.Double' },
+  { label: t('fieldManagement.fieldTypes.boolean'), value: 'java.lang.Boolean' },
+  { label: t('fieldManagement.fieldTypes.date'), value: 'java.util.Date' },
+  { label: t('fieldManagement.fieldTypes.timestamp'), value: 'java.sql.Timestamp' },
+  { label: t('fieldManagement.fieldTypes.byteArray'), value: 'byte[]' }
 ];
+
+// Get localized field type name
+function getFieldTypeName(className: string): string {
+  const fieldType = allowedFieldTypes.find(type => type.value === className);
+  return fieldType ? fieldType.label : className;
+}
 
 // Computed properties
 const isEditing = computed(() => !!props.dataset);
