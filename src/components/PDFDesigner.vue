@@ -51,7 +51,7 @@
         v-if="dragCoordinates.visible" 
         class="coordinates-display"
       >
-        {{ dragCoordinates.bandName }}X: {{ dragCoordinates.x }}, Y: {{ dragCoordinates.y }} (相对于Band)
+        {{ t('designer.coordinates', { bandName: dragCoordinates.bandName, x: dragCoordinates.x, y: dragCoordinates.y }) }}
       </div>
       
       <!-- Band高度调整提示 -->
@@ -424,9 +424,9 @@ function saveCurrentFileToStorage() {
 
   const ok = saveCurrentFileContent(fileData);
   if (ok) {
-    notification.success('文件保存成功');
+    notification.success(t('notifications.fileSavedSuccess'));
   } else {
-    notification.error('保存文件失败');
+    notification.error(t('notifications.fileSaveFailed'));
   }
 }
 
@@ -465,7 +465,7 @@ function loadFile(fileData: DesignerFile | any) {
     }
     
     // 更新当前文件信息
-    currentFileName.value = fileData.name || '未命名报表';
+    currentFileName.value = fileData.name || t('fileManager.untitledReport');
     currentFileId.value = fileData.id || null;
     if (fileData.id) {
       setLastFile({ id: fileData.id, name: fileData.name });
@@ -476,12 +476,12 @@ function loadFile(fileData: DesignerFile | any) {
     selectedBandIndex.value = null;
   } catch (error) {
     console.error('加载文件失败:', error);
-    notification.error('文件格式不正确，无法加载');
+    notification.error(t('fileManager.invalidFileFormat'));
   }
 }
 
 function saveAsLocalFile() {
-  const newName = prompt('请输入新的文件名:', currentFileName.value);
+  const newName = prompt(t('fileManager.enterNewFileName'), currentFileName.value);
   if (!newName) return;
   const timestamp = Date.now();
   currentFileName.value = newName;
@@ -2616,10 +2616,10 @@ watch(
 const copyJRXML = async (): Promise<void> => {
   try {
     await navigator.clipboard.writeText(jrxmlContent.value);
-    notification.success('JRXML内容已复制到剪贴板');
+    notification.success(t('notifications.jrxmlCopiedSuccess'));
   } catch (err: unknown) {
     console.error('复制失败:', err);
-    notification.error('复制失败，请手动复制');
+    notification.error(t('notifications.jrxmlCopyFailed'));
   }
 };
 
@@ -2903,10 +2903,10 @@ const saveJRXML = (): void => {
     saveToLocalStorageWrapper();
     
     // 显示成功提示
-    notification.success('JRXML编辑已保存，界面已更新');
+    notification.success(t('notifications.jrxmlEditSaved'));
   } catch (error: unknown) {
     console.error('保存JRXML失败:', error);
-    notification.error(`保存失败: ${error instanceof Error ? error.message : '未知错误'}`);
+    notification.error(t('notifications.jrxmlEditSaveFailed', { error: error instanceof Error ? error.message : 'Unknown error' }));
   }
 };
 

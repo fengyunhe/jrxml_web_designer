@@ -56,8 +56,8 @@ const emit = defineEmits<Emits>();
 // 标签页相关
 const activeTab = ref('pageSettings');
 const tabs = ref([
-  { id: 'pageSettings', name: '页面设置' },
-  { id: 'jrxml', name: 'JRXML内容' }
+  { id: 'pageSettings', name: t('bottomPanel.jrxmlTabs.pageSettings') },
+  { id: 'jrxml', name: t('bottomPanel.jrxmlContent') }
 ]);
 
 // 底部面板高度
@@ -133,7 +133,7 @@ onMounted(async () => {
 // 打开PDF预览
 const openPdfPreview = (): void => {
   if (!localJrxmlContent.value) {
-    alert('请先生成 JRXML 内容');
+    alert(t('bottomPanel.alerts.generateJrxmlFirst'));
     return;
   }
   showPdfPreview.value = true;

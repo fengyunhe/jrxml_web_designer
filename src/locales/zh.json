@@ -143,7 +143,6 @@
     "saveAsFile": "另存为文件",
     "updateJRXML": "更新JRXML",
     "saveState": "保存状态",
-    "deleteElement": "删除元素",
     "resizeEnd": "调整大小结束",
     "updateElement": "更新元素",
     "bandSelectionChange": "区域选择更改",
@@ -282,7 +281,14 @@
     "regenerate": "重新生成",
     "previewPDF": "预览PDF",
     "clickToGenerate": "点击\"生成JRXML\"按钮查看内容",
-    "generateJRXML": "生成JRXML"
+    "generateJRXML": "生成JRXML",
+    "jrxmlTabs": {
+      "pageSettings": "页面设置",
+      "jrxmlContent": "JRXML内容"
+    },
+    "alerts": {
+      "generateJrxmlFirst": "请先生成 JRXML 内容"
+    }
   },
   "zoom": {
     "zoomIn": "放大",
@@ -334,5 +340,17 @@
     "delete": "删除",
     "ok": "确定",
     "confirm": "确认"
+  },
+  "notifications": {
+    "fileSavedSuccess": "文件保存成功",
+    "fileSaveFailed": "保存文件失败",
+    "jrxmlCopiedSuccess": "JRXML内容已复制到剪贴板",
+    "jrxmlCopyFailed": "复制失败，请手动复制",
+    "jrxmlEditSaved": "JRXML编辑已保存，界面已更新",
+    "jrxmlEditSaveFailed": "保存失败: {error}"
+  },
+  "designer": {
+    "relativeToBand": "相对于Band",
+    "coordinates": "{{ bandName }}X: {{ x }}, Y: {{ y }} (相对于Band)"
   }
 }

@@ -143,7 +143,6 @@
     "saveAsFile": "Save As File",
     "updateJRXML": "Update JRXML",
     "saveState": "Save State",
-    "deleteElement": "Delete Element",
     "resizeEnd": "Resize End",
     "updateElement": "Update Element",
     "bandSelectionChange": "Band Selection Change",
@@ -282,7 +281,14 @@
     "regenerate": "Regenerate",
     "previewPDF": "Preview PDF",
     "clickToGenerate": "Click \"Generate JRXML\" to view content",
-    "generateJRXML": "Generate JRXML"
+    "generateJRXML": "Generate JRXML",
+    "jrxmlTabs": {
+      "pageSettings": "Page Settings",
+      "jrxmlContent": "JRXML Content"
+    },
+    "alerts": {
+      "generateJrxmlFirst": "Please generate JRXML content first"
+    }
   },
   "zoom": {
     "zoomIn": "Zoom In",
@@ -334,5 +340,17 @@
     "delete": "Delete",
     "ok": "OK",
     "confirm": "Confirm"
+  },
+  "notifications": {
+    "fileSavedSuccess": "File saved successfully",
+    "fileSaveFailed": "Failed to save file",
+    "jrxmlCopiedSuccess": "JRXML content copied to clipboard",
+    "jrxmlCopyFailed": "Copy failed, please copy manually",
+    "jrxmlEditSaved": "JRXML edit saved, interface updated",
+    "jrxmlEditSaveFailed": "Save failed: {error}"
+  },
+  "designer": {
+    "relativeToBand": "relative to Band",
+    "coordinates": "{{ bandName }}X: {{ x }}, Y: {{ y }} (relative to Band)"
   }
 }
