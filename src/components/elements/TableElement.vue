@@ -23,6 +23,27 @@
           :style="{ width: `${column.width}px` }"
           class="table-column table-header-cell"
         >
+          <!-- 调整列顺序的按钮 -->
+          <!-- 向左移动按钮 -->
+          <button 
+            v-if="index > 0"
+            class="order-button left-button"
+            @click="moveColumn(index, 'left')"
+            title="向左移动列"
+          >
+            ◀
+          </button>
+          
+          <!-- 向右移动按钮 -->
+          <button 
+            v-if="index < columns.length - 1"
+            class="order-button right-button"
+            @click="moveColumn(index, 'right')"
+            title="向右移动列"
+          >
+            ▶
+          </button>
+          
           <div v-if="column.tableHeader" class="cell-content">
             <!-- 渲染表头内容 -->
             <template v-if="column.tableHeader.type === 'staticText'">
@@ -160,7 +181,17 @@ const emit = defineEmits<{
   resizeStart: [event: MouseEvent, bandIndex: number, elementIndex: number, parentFrameIndex?: number];
   resizeEnd: [];
   contextmenu: [event: MouseEvent, bandIndex: number, elementIndex: number, parentFrameIndex?: number];
+  moveColumn: [elementIndex: number, fromIndex: number, toIndex: number];
 }>();
+
+// Move column left or right
+function moveColumn(index: number, direction: 'left' | 'right') {
+  const newIndex = direction === 'left' ? index - 1 : index + 1;
+  if (newIndex < 0 || newIndex >= columns.value.length) return;
+  
+  // Emit move column event to parent component
+  emit('moveColumn', props.elementIndex, index, newIndex);
+}
 
 const isResizing = ref(false);
 const tableElement = computed(() => props.element as TableElementType);
@@ -301,5 +332,64 @@ const handleResizeEnd = () => {
 .column-name {
   color: #333;
   font-weight: 500;
+}
+
+/* 列顺序控制按钮样式 */
+.table-column {
+  position: relative;
+  overflow: visible; /* Ensure buttons are not clipped */
+}
+
+.order-button {
+  width: 7px;
+  height: 7px;
+  background-color: rgba(64, 158, 255, 0.85);
+  color: white;
+  border: none;
+  border-radius: 50%;
+  font-size: 6px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  box-shadow: 0 0 2px rgba(0, 0, 0, 0.15);
+}
+
+.order-button:hover {
+  background-color: rgba(64, 158, 255, 1);
+}
+
+.order-button:active {
+  background-color: rgba(44, 138, 235, 1);
+}
+
+/* Position buttons inside the column, on opposite sides */
+.left-button {
+  position: absolute;
+  left: 1px;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+.right-button {
+  position: absolute;
+  right: 1px;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+/* Ensure cells have enough padding to accommodate the buttons */
+.cell-content {
+  padding: 0 12px;
+}
+
+/* Ensure the buttons are not clipped by parent elements */
+.design-element {
+  overflow: visible !important;
+}
+
+.table-content {
+  overflow: visible !important;
 }
 </style>

@@ -81,6 +81,7 @@
           :report-parameters="reportParameters"
           :bands="bands"
           :selected-element="selectedElement"
+          :sub-datasets="subDatasets"
           @drag-start="handleDragStart"
           @element-double-click="handleElementDoubleClick"
           @select-element="selectElement"
@@ -91,6 +92,9 @@
           @edit-parameter="handleEditParameter"
           @delete-parameter="handleDeleteParameter"
           @delete-element="deleteElement"
+          @add-sub-dataset="handleAddSubDataset"
+          @edit-sub-dataset="handleEditSubDataset"
+          @delete-sub-dataset="handleDeleteSubDataset"
         />
       </ResizablePanel>
       
@@ -134,6 +138,7 @@
         @check-fields="handleCheckFields"
         @contextmenu="handleElementContextMenu"
         @reset-zoom="resetZoom"
+        @move-column="handleMoveColumn"
       />
       
       <!-- 右侧属性面板 -->
@@ -152,6 +157,7 @@
           :selected-element="selectedElement"
           :bands="bands"
           :report-properties="reportProperties"
+          :sub-datasets="subDatasets"
           @update:bands="bands = $event"
           @delete-element="deleteElement"
           @update-jrxml="updateJRXML"
@@ -191,7 +197,8 @@
     <!-- 字段管理弹窗 -->
     <FieldManagementModal 
       v-model:visible="showFieldModal" 
-      :field="editingField" 
+      :field="isEditingParameter ? editingParameter : editingField" 
+      :is-parameter="isEditingParameter"
       @save="handleFieldSave" 
     />
     
@@ -212,6 +219,14 @@
       @update:visible="showPreviewServerSettings = $event"
       @update:url="updatePreviewServerUrl"
     />
+    
+    <!-- 子数据集管理弹窗 -->
+    <SubDatasetManagementModal
+      :visible="showSubDatasetModal"
+      :dataset="editingSubDataset"
+      @update:visible="showSubDatasetModal = $event"
+      @save="handleSubDatasetSave"
+    />
   </div>
 </template>
 
@@ -223,6 +238,7 @@ import HelpModal from './modals/HelpModal.vue';
 import FieldManagementModal from './modals/FieldManagementModal.vue';
 import PdfPreviewModal from './modals/PdfPreviewModal.vue';
 import PreviewServerSettingsModal from './modals/PreviewServerSettingsModal.vue';
+import SubDatasetManagementModal from './modals/SubDatasetManagementModal.vue';
 import BottomPanel from './panels/BottomPanel.vue';
 import ElementLibrary from './ElementLibrary.vue';
 import FileManager from './designer/controls/FileManager.vue';
@@ -230,7 +246,7 @@ import ZoomControls from './designer/controls/ZoomControls.vue';
 import ElementProperties from './designer/properties/ElementProperties.vue';
 import LanguageSwitcher from './common/LanguageSwitcher.vue';
 import SplitButton from './common/SplitButton.vue';
-import type {Band, BandType, DesignElement, ReportField, ReportParameter, SelectedElementInfo, DraggingInfo, EditingElementInfo, FrameElement} from '../types';
+import type {Band, BandType, DesignElement, ReportField, ReportParameter, SelectedElementInfo, DraggingInfo, EditingElementInfo, FrameElement, TableDataset} from '../types';
 import type { DesignerFile } from '@/types/designerFile';
 import {computed, onMounted, onUnmounted, ref, watch} from 'vue';
 import { useI18n } from 'vue-i18n';
@@ -382,6 +398,7 @@ function createNewFile() {
   
   reportFields.value = [];
   reportParameters.value = [];
+  subDatasets.value = [];
   jrxmlContent.value = '';
   
   // 清除当前选中的元素
@@ -424,6 +441,10 @@ function loadFile(fileData: DesignerFile | any) {
     
     if (fileContent.reportParameters) {
       reportParameters.value = fileContent.reportParameters;
+    }
+    
+    if (fileContent.subDatasets) {
+      subDatasets.value = fileContent.subDatasets;
     }
     
     if (fileContent.jrxmlContent) {
@@ -493,6 +514,7 @@ function saveCurrentFile() {
     bands: processedBands,
     reportFields: reportFields.value,
     reportParameters: reportParameters.value,
+    subDatasets: subDatasets.value,
     jrxmlContent: jrxmlContent.value,
     lastModified: new Date().toISOString()
   };
@@ -545,12 +567,66 @@ const reportFields = ref<ReportField[]>([
 const reportParameters = ref<ReportParameter[]>([
 ]);
 
+// 子数据集
+const subDatasets = ref<TableDataset[]>([]);
+
+// 子数据集管理弹窗状态
+const showSubDatasetModal = ref(false);
+const editingSubDataset = ref<TableDataset | undefined>(undefined);
+
+// 处理添加子数据集
+const handleAddSubDataset = () => {
+  editingSubDataset.value = undefined;
+  showSubDatasetModal.value = true;
+};
+
+// 处理编辑子数据集
+const handleEditSubDataset = (dataset: TableDataset, index: number) => {
+  editingSubDataset.value = dataset;
+  showSubDatasetModal.value = true;
+};
+
+// 处理删除子数据集
+const handleDeleteSubDataset = (index: number) => {
+  // 保存状态到历史记录
+  saveStateToHistory();
+  
+  // 删除子数据集
+  subDatasets.value.splice(index, 1);
+  
+  // 更新JRXML
+  updateJRXML();
+};
+
+// 处理子数据集保存
+const handleSubDatasetSave = (dataset: TableDataset) => {
+  // 保存状态到历史记录
+  saveStateToHistory();
+  
+  const existingIndex = subDatasets.value.findIndex((d: TableDataset) => d.uuid === dataset.uuid);
+  
+  if (existingIndex >= 0) {
+    // 更新现有子数据集
+    subDatasets.value[existingIndex] = dataset;
+  } else {
+    // 添加新子数据集
+    subDatasets.value.push(dataset);
+  }
+  
+  // 更新JRXML
+  updateJRXML();
+  
+  // 关闭模态框
+  showSubDatasetModal.value = false;
+};
+
 // 历史记录栈 - 用于撤销功能
 type HistoryState = {
   reportProperties: typeof reportProperties.value;
   bands: typeof bands.value;
   reportFields: typeof reportFields.value;
   reportParameters: typeof reportParameters.value;
+  subDatasets: typeof subDatasets.value;
 };
 
 // 超出边界的元素
@@ -586,13 +662,15 @@ const {
     reportProperties: reportProperties.value,
     bands: bands.value,
     reportFields: reportFields.value,
-    reportParameters: reportParameters.value
+    reportParameters: reportParameters.value,
+    subDatasets: subDatasets.value
   }),
   applyState: (state) => {
     reportProperties.value = state.reportProperties;
     bands.value = state.bands;
     reportFields.value = state.reportFields;
     reportParameters.value = state.reportParameters;
+    subDatasets.value = state.subDatasets;
   },
   onAfterRestore: () => {
     updateJRXML();
@@ -1890,7 +1968,7 @@ const initBox = () => {
 
 // 生成JRXML
 const generateJRXML = () => {
-  const content = generateJRXMLContent(reportProperties.value, bands.value, reportFields.value, reportParameters.value);
+  const content = generateJRXMLContent(reportProperties.value, bands.value, reportFields.value, reportParameters.value, subDatasets.value);
   jrxmlContent.value = content;
   
   // 自动切换到JRXML标签页
@@ -1957,7 +2035,7 @@ const updateJRXML = () => {
     console.log('当前reportFields数量:', reportFields.value.length);
     console.log('当前reportParameters数量:', reportParameters.value.length);
     
-    const content = generateJRXMLContent(reportProperties.value, bands.value, reportFields.value, reportParameters.value);
+    const content = generateJRXMLContent(reportProperties.value, bands.value, reportFields.value, reportParameters.value, subDatasets.value);
     console.log('生成的JRXML内容长度:', content.length);
     console.log('生成的JRXML内容预览:', content.substring(0, 200) + '...');
     
@@ -3383,12 +3461,14 @@ const isEditingParameter = ref(false);
 // 处理添加字段
 const handleAddField = (): void => {
   editingField.value = undefined;
+  isEditingParameter.value = false;
   showFieldModal.value = true;
 };
 
 // 处理编辑字段
 const handleEditField = (field: ReportField): void => {
   editingField.value = { ...field };
+  isEditingParameter.value = false;
   showFieldModal.value = true;
 };
 
@@ -3409,7 +3489,7 @@ const handleAddParameter = (): void => {
   // 使用字段管理模态框，因为参数和字段的结构相似
   editingParameter.value = undefined;
   showFieldModal.value = true;
-  isEditingParameter.value = false;
+  isEditingParameter.value = true;
 };
 
 // 处理编辑报表参数
@@ -3512,6 +3592,46 @@ const handleCheckFields = (fields: string[]): void => {
     // 更新JRXML
     updateJRXML();
   }
+};
+
+// 处理表格列移动
+const handleMoveColumn = (elementIndex: number, fromIndex: number, toIndex: number, bandIndex: number, parentFrameIndex?: number): void => {
+  // 获取当前band
+  const band = bands.value[bandIndex];
+  if (!band) return;
+  
+  // 获取要操作的元素
+  let element;
+  if (parentFrameIndex !== undefined) {
+    // 处理Frame内的元素
+    const frame = band.elements[parentFrameIndex];
+    if (frame && frame.type === 'frame' && frame.elements) {
+      element = frame.elements[elementIndex];
+    }
+  } else {
+    // 处理直接在Band中的元素
+    element = band.elements[elementIndex];
+  }
+  
+  // 确保是表格元素
+  if (!element || element.type !== 'table') return;
+  
+  const tableElement = element as any;
+  if (!tableElement.columns || !Array.isArray(tableElement.columns)) return;
+  
+  // 保存状态到历史记录
+  saveStateToHistory();
+  
+  // 执行列移动
+  const columns = [...tableElement.columns];
+  const [movedColumn] = columns.splice(fromIndex, 1);
+  columns.splice(toIndex, 0, movedColumn);
+  
+  // 更新表格的列
+  tableElement.columns = columns;
+  
+  // 更新JRXML
+  updateJRXML();
 };
 
 // 处理元素上下文菜单

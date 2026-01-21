@@ -15,7 +15,8 @@ export function generateJRXMLContent(
   properties: ReportProperties,
   bands: Band[],
   fields: Field[],
-  parameters: Parameter[] = []
+  parameters: Parameter[] = [],
+  subDatasets: any[] = []
 ): string {
   // 确保页边距有默认值，如果没有设置则使用0
   const safeProperties = {
@@ -72,6 +73,40 @@ export function generateJRXMLContent(
           jrxml += `    <defaultValueExpression><![CDATA[${param.defaultValue}]]></defaultValueExpression>\n`;
         }
         jrxml += '  </parameter>\n';
+      }
+    });
+  }
+  
+  // 添加子数据集定义
+  if (subDatasets.length > 0) {
+    jrxml += '\n  <!-- 子数据集定义 -->\n';
+    subDatasets.forEach(dataset => {
+      if (dataset.name) {
+        let subDatasetAttrs = `name="${dataset.name}" uuid="${dataset.uuid || crypto.randomUUID()}"`;
+        if (dataset.scriptletClass) {
+          subDatasetAttrs += ` scriptletClass="${dataset.scriptletClass}"`;
+        }
+        if (dataset.resourceBundle) {
+          subDatasetAttrs += ` resourceBundle="${dataset.resourceBundle}"`;
+        }
+        if (dataset.whenResourceMissingType) {
+          subDatasetAttrs += ` whenResourceMissingType="${dataset.whenResourceMissingType}"`;
+        }
+        jrxml += `  <subDataset ${subDatasetAttrs}>
+`;
+        // 添加查询语句
+        if (dataset.query && dataset.query.text) {
+          jrxml += `    <queryString language="${dataset.query.language || 'sql'}"><![CDATA[${dataset.query.text}]]></queryString>\n`;
+        }
+        // 添加字段定义
+        if (dataset.fields && dataset.fields.length > 0) {
+          dataset.fields.forEach((field: any) => {
+            if (field.name && field.class) {
+              jrxml += `    <field name="${field.name}" class="${field.class}"/>\n`;
+            }
+          });
+        }
+        jrxml += '  </subDataset>\n';
       }
     });
   }
@@ -767,7 +802,13 @@ function generateTableXML(element: any): string {
 
   xml +='</reportElement>'
   
-  xml += `        <jr:table xmlns:jr="http://jasperreports.sourceforge.net/jasperreports/components" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports/components http://jasperreports.sourceforge.net/xsd/components.xsd">
+  // 添加whenNoDataType属性
+  let whenNoDataTypeAttr = '';
+  if (element.whenNoDataType) {
+    whenNoDataTypeAttr = ` whenNoDataType="${element.whenNoDataType}"`;
+  }
+  
+  xml += `        <jr:table xmlns:jr="http://jasperreports.sourceforge.net/jasperreports/components" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports/components http://jasperreports.sourceforge.net/xsd/components.xsd"${whenNoDataTypeAttr}>
 `;
   
   // 生成datasetRun

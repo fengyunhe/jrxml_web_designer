@@ -86,6 +86,33 @@
       </div>
     </div>
     
+    <!-- 子数据集区域 -->
+    <div class="data-fields-section">
+      <div class="section-header">
+        <h4>{{ t('elementLibrary.subDatasets') }}</h4>
+        <button class="add-button" @click="handleAddSubDataset" :title="t('elementLibrary.addSubDataset')">+</button>
+      </div>
+      <div class="fields-mini-view">
+        <div 
+            v-for="(dataset, index) in subDatasets" 
+            :key="index" 
+            class="field-mini-item"
+          >
+            <div class="field-info">
+  <span class="field-name">{{ dataset.name }}</span>
+</div>
+            <div class="field-actions">
+              <button class="action-button edit-button" @click.stop="handleEditSubDataset(dataset, index)" :title="t('elementLibrary.editSubDataset')">✏️</button>
+              <button class="action-button delete-button" @click.stop="handleDeleteSubDataset(index)" :title="t('elementLibrary.deleteSubDataset')">🗑️</button>
+            </div>
+          </div>
+        <div v-if="subDatasets.length === 0" class="empty-state">
+          <p>{{ t('elementLibrary.noSubDatasets') }}</p>
+          <p class="empty-hint">{{ t('elementLibrary.clickToAddSubDataset') }}</p>
+        </div>
+      </div>
+    </div>
+    
     <!-- 数据字段区域 -->
     <div class="data-fields-section">
       <div class="section-header">
@@ -141,6 +168,12 @@ import {
 
 const { t } = useI18n();
 
+// 定义子数据集类型
+interface SubDataset {
+  name: string;
+  uuid: string;
+}
+
 // 定义组件属性
 interface Props {
   elements: Array<{ type: string; name: string }>;
@@ -148,6 +181,7 @@ interface Props {
   reportParameters: ReportParameter[];
   bands: Array<{ type: string; name?: string; elements: DesignElement[] }>;
   selectedElement: any;
+  subDatasets?: SubDataset[];
 }
 
 // 定义组件事件
@@ -161,6 +195,9 @@ interface Emits {
   (e: 'add-parameter'): void;
   (e: 'edit-parameter', parameter: ReportParameter): void;
   (e: 'delete-parameter', parameterName: string): void;
+  (e: 'add-sub-dataset'): void;
+  (e: 'edit-sub-dataset', dataset: SubDataset, index: number): void;
+  (e: 'delete-sub-dataset', index: number): void;
   (e: 'delete-element', bandIndex: number, elementIndex: number, parentFrameIndex?: number): void;
 }
 
@@ -170,7 +207,8 @@ const props = withDefaults(defineProps<Props>(), {
   reportFields: () => [],
   reportParameters: () => [],
   bands: () => [],
-  selectedElement: null
+  selectedElement: null,
+  subDatasets: () => []
 });
 
 const emit = defineEmits<Emits>();
@@ -313,12 +351,29 @@ function handleDeleteParameter(parameterName: string): void {
   emit('delete-parameter', parameterName);
 }
 
+// 处理添加子数据集
+function handleAddSubDataset(): void {
+  emit('add-sub-dataset');
+}
+
+// 处理编辑子数据集
+function handleEditSubDataset(dataset: any, index: number): void {
+  emit('edit-sub-dataset', dataset, index);
+}
+
+// 处理删除子数据集
+function handleDeleteSubDataset(index: number): void {
+  emit('delete-sub-dataset', index);
+}
+
 // 待删除的元素
 const pendingDeleteElement = ref<any>(null);
 const showConfirmModal = ref(false);
 
 // 处理删除元素
 function handleDeleteElement(element: any): void {
+  // 先选中要删除的元素
+  selectElementFromList(element, selectElement);
   pendingDeleteElement.value = element;
   showConfirmModal.value = true;
 }

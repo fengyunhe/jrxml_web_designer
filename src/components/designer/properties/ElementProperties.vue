@@ -129,14 +129,48 @@
             </div>
             
             <div class="form-group">
+              <label>{{ t('properties.whenNoDataType') }}</label>
+              <select 
+                v-model="(currentElement as any).whenNoDataType" 
+                @change="emit('update-jrxml')"
+              >
+                <option :value="undefined">{{ t('properties.default') }}</option>
+                <option value="Blank">{{ t('properties.whenNoDataTypeOptions.Blank') }}</option>
+                <option value="NoDataCell">{{ t('properties.whenNoDataTypeOptions.NoDataCell') }}</option>
+                <option value="AllSectionsNoDetail">{{ t('properties.whenNoDataTypeOptions.AllSectionsNoDetail') }}</option>
+              </select>
+            </div>
+            
+            <div class="form-group">
               <label>{{ t('properties.tableColumns') }}</label>
+              <div class="table-column-actions">
+                <button 
+                  class="add-column-btn" 
+                  @click="addTableColumn"
+                  :title="t('properties.addColumn')"
+                >
+                  + {{ t('properties.addColumn') }}
+                </button>
+                <button 
+                  class="add-column-btn" 
+                  @click="openFieldSelectionModal"
+                  :title="t('properties.addColumnFromDataset')"
+                >
+                  ↓ {{ t('properties.addColumnFromDataset') }}
+                </button>
+              </div>
               <div v-if="currentElement.columns" class="table-columns-list">
                 <div 
                   v-for="(column, index) in (currentElement as any).columns" 
                   :key="column.uuid || index" 
                   class="table-column-item"
+                  draggable="true"
+                  @dragstart="onDragStart($event, Number(index))"
+                  @dragover="onDragOver($event)"
+                  @drop="onDrop($event, Number(index))"
                 >
                   <div class="table-column-header">
+                    <span class="drag-handle">☰</span>
                     <span>{{ column.name }}</span>
                     <button 
                       class="remove-column-btn" 
@@ -155,7 +189,7 @@
                         min="10"
                         step="1"
                         class="small-input"
-                        @change="emit('update-jrxml')"
+                        @change="updateColumnWidth(column, Number(index)); emit('update-jrxml')"
                       />
                     </div>
                     <div class="form-group small">
@@ -218,13 +252,62 @@
                   </div>
                 </div>
               </div>
-              <button 
-                class="add-column-btn" 
-                @click="addTableColumn"
-                :title="t('properties.addColumn')"
-              >
-                + {{ t('properties.addColumn') }}
-              </button>
+            </div>
+            
+            <!-- 从数据集选择字段的模态框 -->
+            <div v-if="showFieldSelectionModal" class="modal-overlay">
+              <div class="modal-content">
+                <div class="modal-header">
+                  <h3>{{ t('properties.selectFieldsFromDataset') }}</h3>
+                  <button class="close-button" @click="showFieldSelectionModal = false">×</button>
+                </div>
+                <div class="modal-body">
+                  <div class="field-selection-content">
+                    <div class="available-fields">
+                      <h4>{{ t('properties.availableFields') }}</h4>
+                      <div class="fields-list">
+                        <div 
+                          v-for="(field, index) in availableFields" 
+                          :key="index"
+                          class="field-item"
+                          :class="{ selected: selectedFields.includes(field.name) }"
+                          @click="toggleFieldSelection(field.name)"
+                        >
+                          <input 
+                            type="checkbox" 
+                            v-model="selectedFields"
+                            :value="field.name"
+                          />
+                          <span class="field-name">{{ field.name }}</span>
+                          <span class="field-type">{{ field.class }}</span>
+                        </div>
+                      </div>
+                    </div>
+                    <div class="selected-fields">
+                      <h4>{{ t('properties.selectedFields') }}</h4>
+                      <div class="fields-list">
+                        <div 
+                          v-for="(fieldName, index) in selectedFields" 
+                          :key="index"
+                          class="field-item selected"
+                        >
+                          <span class="field-name">{{ fieldName }}</span>
+                          <button 
+                            class="remove-field-btn"
+                            @click="toggleFieldSelection(fieldName)"
+                          >
+                            ✕
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div class="modal-footer">
+                  <button class="btn-secondary" @click="showFieldSelectionModal = false">{{ t('common.cancel') }}</button>
+                  <button class="btn-primary" @click="addSelectedFieldsAsColumns">{{ t('common.ok') }}</button>
+                </div>
+              </div>
             </div>
           </template>
           
@@ -631,7 +714,7 @@
 <script setup lang="ts">
 import { computed, ref, onMounted, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
-import type { Band, SelectedElementInfo } from '../../../types';
+import type { Band, SelectedElementInfo, TableDataset } from '../../../types';
 import { getAvailableFonts } from '../../../utils/fontUtils';
 
 const { t } = useI18n();
@@ -641,6 +724,7 @@ interface Props {
   selectedElement: SelectedElementInfo | null;
   bands: Band[];
   reportProperties: any;
+  subDatasets?: TableDataset[];
 }
 
 interface Emits {
@@ -933,21 +1017,252 @@ function initTableCell(column: any, cellType: 'tableFooter' | 'columnFooter') {
   }
 }
 
+// 更新列宽度，同时更新所有相关单元格的宽度
+function updateColumnWidth(column: any, index: number) {
+  if (!column) return;
+  
+  const newWidth = column.width;
+  
+  // 更新所有相关单元格的宽度
+  if (column.tableHeader) {
+    column.tableHeader.width = newWidth;
+  }
+  if (column.columnHeader) {
+    column.columnHeader.width = newWidth;
+  }
+  if (column.detailCell) {
+    column.detailCell.width = newWidth;
+  }
+  if (column.columnFooter) {
+    column.columnFooter.width = newWidth;
+  }
+  if (column.tableFooter) {
+    column.tableFooter.width = newWidth;
+  }
+}
+
+// 字段选择模态框相关
+const showFieldSelectionModal = ref(false);
+const selectedFields = ref<string[]>([]);
+const availableFields = computed(() => {
+  if (!currentElement.value || currentElement.value.type !== 'table' || !props.subDatasets) return [];
+  
+  const tableElement = currentElement.value as any;
+  const datasetName = tableElement.dataset?.name;
+  
+  if (!datasetName) return [];
+  
+  // 在subDatasets中查找匹配的数据集
+  const matchingDataset = props.subDatasets.find(dataset => dataset.name === datasetName);
+  return matchingDataset?.fields || [];
+});
+
+// 打开字段选择模态框
+function openFieldSelectionModal() {
+  if (!currentElement.value || currentElement.value.type !== 'table') return;
+  
+  // Reset selected fields
+  selectedFields.value = [];
+  
+  // Get current table columns
+  const tableElement = currentElement.value as any;
+  if (tableElement.columns) {
+    // Extract field names from existing columns
+    const usedFieldNames = tableElement.columns
+      .map((column: any) => {
+        if (column.detailCell?.expression) {
+          // Match field expression pattern like $F{fieldName}
+          const match = column.detailCell.expression.match(/\$F\{([^}]+)\}/);
+          return match ? match[1] : null;
+        }
+        return null;
+      })
+      .filter((fieldName: string | null) => fieldName !== null);
+    
+    // Set selected fields to used field names
+    selectedFields.value = usedFieldNames as string[];
+  }
+  
+  showFieldSelectionModal.value = true;
+}
+
+// 切换字段选择状态
+function toggleFieldSelection(fieldName: string) {
+  const index = selectedFields.value.indexOf(fieldName);
+  if (index === -1) {
+    selectedFields.value.push(fieldName);
+  } else {
+    selectedFields.value.splice(index, 1);
+  }
+}
+
+// 将选中的字段添加为列
+function addSelectedFieldsAsColumns() {
+  if (!currentElement.value || currentElement.value.type !== 'table') return;
+  
+  emit('save-state');
+  
+  const columnWidth = 160;
+  const tableElement = currentElement.value as any;
+  
+  // Ensure columns array exists
+  if (!tableElement.columns) {
+    tableElement.columns = [];
+  }
+  
+  // Get existing columns and their field names
+  const existingColumns = [...tableElement.columns];
+  const existingFieldMap = new Map<string, any>();
+  
+  // Populate existing field map
+  existingColumns.forEach(column => {
+    if (column.detailCell?.expression) {
+      const match = column.detailCell.expression.match(/\$F\{([^}]+)\}/);
+      if (match) {
+        const fieldName = match[1];
+        existingFieldMap.set(fieldName, column);
+      }
+    }
+  });
+  
+  // Prepare new columns array
+  const newColumns: any[] = [];
+  
+  // Add columns for selected fields
+  selectedFields.value.forEach(fieldName => {
+    // Check if field already has a column
+    if (existingFieldMap.has(fieldName)) {
+      // Keep existing column
+      newColumns.push(existingFieldMap.get(fieldName));
+      // Remove from map to track which fields are still used
+      existingFieldMap.delete(fieldName);
+    } else {
+      // Create new column for new field
+      const newColumn: any = {
+        uuid: crypto.randomUUID(),
+        width: columnWidth,
+        name: fieldName,
+        tableHeader: {
+          type: 'staticText',
+          x: 0,
+          y: 0,
+          width: columnWidth,
+          height: 30,
+          text: fieldName,
+          forecolor: '#006699',
+          backcolor: '#E6E6E6',
+          fontFamily: 'SansSerif',
+          fontSize: 19,
+          isBold: true
+        },
+        columnHeader: {
+          type: 'staticText',
+          x: 0,
+          y: 0,
+          width: columnWidth,
+          height: 30,
+          text: fieldName
+        },
+        detailCell: {
+          type: 'textField',
+          x: 0,
+          y: 0,
+          width: columnWidth,
+          height: 30,
+          expression: `$F{${fieldName}}`
+        },
+        tableFooter: {
+          type: 'textField',
+          x: 0,
+          y: 0,
+          width: columnWidth,
+          height: 30,
+          expression: ''
+        },
+        columnFooter: {
+          type: 'textField',
+          x: 0,
+          y: 0,
+          width: columnWidth,
+          height: 30,
+          expression: ''
+        }
+      };
+      
+      newColumns.push(newColumn);
+    }
+  });
+  
+  // Update table columns
+  tableElement.columns = newColumns;
+  
+  showFieldSelectionModal.value = false;
+  selectedFields.value = [];
+  emit('update-jrxml');
+}
+
+// 拖拽排序相关
+let draggedIndex: number | null = null;
+
+function onDragStart(event: DragEvent, index: number) {
+  draggedIndex = index;
+  if (event.dataTransfer) {
+    event.dataTransfer.effectAllowed = 'move';
+    event.dataTransfer.setData('text/plain', index.toString());
+  }
+}
+
+function onDragOver(event: DragEvent) {
+  event.preventDefault();
+  if (event.dataTransfer) {
+    event.dataTransfer.dropEffect = 'move';
+  }
+}
+
+function onDrop(event: DragEvent, dropIndex: number) {
+  event.preventDefault();
+  if (draggedIndex === null || draggedIndex === dropIndex || !currentElement.value || currentElement.value.type !== 'table') {
+    draggedIndex = null;
+    return;
+  }
+  
+  emit('save-state');
+  
+  const tableElement = currentElement.value as any;
+  if (!tableElement.columns) {
+    draggedIndex = null;
+    return;
+  }
+  
+  // 执行拖拽排序
+  const columns = [...tableElement.columns];
+  const draggedColumn = columns[draggedIndex];
+  if (draggedColumn) {
+    columns.splice(draggedIndex, 1);
+    columns.splice(dropIndex, 0, draggedColumn);
+    tableElement.columns = columns;
+  }
+  
+  emit('update-jrxml');
+  draggedIndex = null;
+}
+
 // 表格列操作方法
 function addTableColumn() {
   if (!currentElement.value || currentElement.value.type !== 'table') return;
   
   emit('save-state');
   
+  const columnWidth = 160;
   const newColumn: any = {
     uuid: crypto.randomUUID(),
-    width: 160,
+    width: columnWidth,
     name: `Column${currentElement.value.columns.length + 1}`,
     tableHeader: {
       type: 'staticText',
       x: 0,
       y: 0,
-      width: 160,
+      width: columnWidth,
       height: 30,
       text: '',
       forecolor: '#006699',
@@ -960,7 +1275,7 @@ function addTableColumn() {
       type: 'staticText',
       x: 0,
       y: 0,
-      width: 160,
+      width: columnWidth,
       height: 30,
       text: `New Column`
     },
@@ -968,7 +1283,7 @@ function addTableColumn() {
       type: 'textField',
       x: 0,
       y: 0,
-      width: 160,
+      width: columnWidth,
       height: 30,
       expression: '$F{NEW_FIELD}'
     },
@@ -976,7 +1291,7 @@ function addTableColumn() {
       type: 'textField',
       x: 0,
       y: 0,
-      width: 160,
+      width: columnWidth,
       height: 30,
       expression: ''
     },
@@ -984,7 +1299,7 @@ function addTableColumn() {
       type: 'textField',
       x: 0,
       y: 0,
-      width: 160,
+      width: columnWidth,
       height: 30,
       expression: ''
     }
@@ -1493,6 +1808,46 @@ function setRectangleBorderColor(value: string) {
   border-radius: 3px;
 }
 
+.table-column-actions {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+/* 拖拽排序样式 */
+.table-column-item {
+  transition: all 0.2s;
+  cursor: move;
+}
+
+.table-column-item.dragging {
+  opacity: 0.5;
+}
+
+.table-column-item.drag-over {
+  border: 2px dashed #1890ff;
+}
+
+.drag-handle {
+  cursor: move;
+  color: #999;
+  margin-right: 8px;
+  user-select: none;
+  font-size: 14px;
+  font-weight: bold;
+}
+
+.drag-handle:hover {
+  color: #1890ff;
+}
+
+.table-column-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
 .add-column-btn {
   background-color: #4a90e2;
   color: white;
@@ -1506,5 +1861,204 @@ function setRectangleBorderColor(value: string) {
 
 .add-column-btn:hover {
   background-color: #3a80d2;
+}
+
+/* 字段选择模态框样式 */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.modal-content {
+  background-color: white;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  width: 800px;
+  max-width: 90vw;
+  max-height: 80vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 20px;
+  border-bottom: 1px solid #e8e8e8;
+}
+
+.modal-header h3 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.close-button {
+  background: none;
+  border: none;
+  font-size: 20px;
+  cursor: pointer;
+  color: #999;
+  padding: 0;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  transition: all 0.2s;
+}
+
+.close-button:hover {
+  background-color: #f0f0f0;
+  color: #666;
+}
+
+.modal-body {
+  padding: 20px;
+  overflow: auto;
+  flex: 1;
+}
+
+.modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  padding: 16px 20px;
+  border-top: 1px solid #e8e8e8;
+}
+
+.btn-secondary {
+  margin-right: 8px;
+}
+
+.btn-primary, .btn-secondary {
+  padding: 8px 16px;
+  border-radius: 4px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s;
+  border: 1px solid transparent;
+}
+
+.btn-primary {
+  background-color: #1890ff;
+  color: white;
+}
+
+.btn-primary:hover {
+  background-color: #40a9ff;
+}
+
+.btn-primary:active {
+  background-color: #096dd9;
+}
+
+.btn-secondary {
+  background-color: white;
+  color: rgba(0, 0, 0, 0.65);
+  border-color: #d9d9d9;
+}
+
+.btn-secondary:hover {
+  color: #1890ff;
+  border-color: #1890ff;
+}
+
+.btn-secondary:active {
+  color: #096dd9;
+  border-color: #096dd9;
+}
+
+.field-selection-content {
+  display: flex;
+  gap: 20px;
+  height: 400px;
+}
+
+.available-fields, .selected-fields {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.available-fields h4, .selected-fields h4 {
+  margin-top: 0;
+  margin-bottom: 12px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #666;
+}
+
+.fields-list {
+  flex: 1;
+  overflow-y: auto;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  background-color: #fafafa;
+  padding: 8px;
+}
+
+.field-item {
+  display: flex;
+  align-items: center;
+  padding: 8px 12px;
+  margin-bottom: 4px;
+  background-color: white;
+  border: 1px solid #e0e0e0;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.field-item:hover {
+  background-color: #f5f5f5;
+  border-color: #1890ff;
+}
+
+.field-item.selected {
+  background-color: #e6f7ff;
+  border-color: #91d5ff;
+}
+
+.field-item input[type="checkbox"] {
+  margin-right: 8px;
+}
+
+.field-name {
+  flex: 1;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.field-type {
+  font-size: 11px;
+  color: #999;
+  margin-left: 8px;
+}
+
+.remove-field-btn {
+  background: none;
+  border: none;
+  font-size: 14px;
+  cursor: pointer;
+  color: #ff4d4f;
+  padding: 2px 6px;
+  border-radius: 3px;
+  transition: all 0.2s;
+}
+
+.remove-field-btn:hover {
+  background-color: #fff1f0;
 }
 </style>

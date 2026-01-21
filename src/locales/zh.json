@@ -47,6 +47,38 @@
     "reportParameters": "报表参数",
     "dataFields": "数据字段",
     "addDataField": "添加数据字段",
+    "subDatasets": "子数据集",
+    "addSubDataset": "添加子数据集",
+    "editSubDataset": "编辑子数据集",
+    "deleteSubDataset": "删除子数据集",
+    "noSubDatasets": "无子数据集",
+    "clickToAddSubDataset": "点击+添加子数据集",
+    "subDatasetName": "数据集名称",
+    "subDatasetNamePlaceholder": "请输入数据集名称",
+    "subDatasetNameRequired": "数据集名称不能为空",
+    "connectionExpressionPlaceholder": "请输入连接表达式",
+    "connectionExpression": "连接表达式",
+    "scriptletClass": "脚本类",
+    "scriptletClassPlaceholder": "请输入脚本类",
+    "resourceBundle": "资源包",
+    "resourceBundlePlaceholder": "请输入资源包",
+    "whenResourceMissingType": "资源缺失处理方式",
+    "whenResourceMissingNull": "空值",
+    "whenResourceMissingEmpty": "空字符串",
+    "whenResourceMissingKey": "返回键名",
+    "whenResourceMissingError": "抛出错误",
+    "advancedSettings": "高级设置",
+    "queryConfiguration": "查询配置",
+    "queryLanguage": "查询语言",
+    "queryText": "查询语句",
+    "queryTextPlaceholder": "请输入SQL查询语句",
+    "fieldsManagement": "字段管理",
+    "addField": "添加字段",
+    "fieldName": "字段名称",
+    "fieldType": "字段类型",
+    "actions": "操作",
+    "noFields": "暂无字段",
+    "fieldNamePlaceholder": "请输入字段名称",
     "editField": "编辑字段",
     "deleteField": "删除字段",
     "noDataFields": "暂无数据字段",
@@ -56,8 +88,16 @@
     "deleteParameter": "删除参数",
     "noReportParameters": "暂无报表参数",
     "clickToAddParameter": "点击上方「+」按钮添加参数",
+    "parameterName": "参数名称",
+    "parameterNamePlaceholder": "请输入参数名称",
+    "parameterType": "参数类型",
+    "parameterTypePlaceholder": "请选择参数类型",
+    "defaultValue": "默认值",
+    "defaultValuePlaceholder": "请输入默认值",
     "deleteConfirm": "删除确认",
-    "deleteElementConfirm": "确定要删除该元素吗？"
+    "deleteElementConfirm": "确定要删除该元素吗？",
+    "fieldNameRequired": "字段名称不能为空",
+    "duplicateFieldName": "字段名称已存在"
   },
   "bandNames": {
     "title": "标题",
@@ -184,7 +224,18 @@
     "columnFooter": "列尾",
     "columnFooterPlaceholder": "请输入列尾表达式",
     "addColumn": "添加列",
-    "removeColumn": "删除列"
+    "addColumnFromDataset": "从数据集添加列",
+    "selectFieldsFromDataset": "从数据集选择字段",
+    "availableFields": "可用字段",
+    "selectedFields": "已选字段",
+    "removeColumn": "删除列",
+    "whenNoDataType": "无数据时的处理方式",
+    "whenNoDataTypeOptions": {
+      "Blank": "空白",
+      "NoDataCell": "无数据单元格",
+      "AllSectionsNoDetail": "显示除详细数据外的所有区域"
+    },
+    "default": "默认"
   },
   "bottomPanel": {
     "pageSettings": "页面设置",
@@ -254,6 +305,9 @@
   },
   "common": {
     "save": "保存",
-    "cancel": "取消"
+    "cancel": "取消",
+    "edit": "编辑",
+    "delete": "删除",
+    "ok": "确定"
   }
 }

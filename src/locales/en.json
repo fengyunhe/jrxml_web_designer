@@ -47,6 +47,38 @@
     "reportParameters": "Report Parameters",
     "dataFields": "Data Fields",
     "addDataField": "Add Data Field",
+    "subDatasets": "Sub Datasets",
+    "addSubDataset": "Add Sub Dataset",
+    "editSubDataset": "Edit Sub Dataset",
+    "deleteSubDataset": "Delete Sub Dataset",
+    "noSubDatasets": "No sub datasets",
+    "clickToAddSubDataset": "Click + to add a sub dataset",
+    "subDatasetName": "Dataset Name",
+    "subDatasetNamePlaceholder": "Enter dataset name",
+    "subDatasetNameRequired": "Dataset name is required",
+    "connectionExpressionPlaceholder": "Enter connection expression",
+    "connectionExpression": "Connection Expression",
+    "scriptletClass": "Scriptlet Class",
+    "scriptletClassPlaceholder": "Enter scriptlet class",
+    "resourceBundle": "Resource Bundle",
+    "resourceBundlePlaceholder": "Enter resource bundle",
+    "whenResourceMissingType": "When Resource Missing Type",
+    "whenResourceMissingNull": "Null",
+    "whenResourceMissingEmpty": "Empty",
+    "whenResourceMissingKey": "Key",
+    "whenResourceMissingError": "Error",
+    "advancedSettings": "Advanced Settings",
+    "queryConfiguration": "Query Configuration",
+    "queryLanguage": "Query Language",
+    "queryText": "Query Text",
+    "queryTextPlaceholder": "Enter SQL query",
+    "fieldsManagement": "Fields Management",
+    "addField": "Add Field",
+    "fieldName": "Field Name",
+    "fieldType": "Field Type",
+    "actions": "Actions",
+    "noFields": "No fields",
+    "fieldNamePlaceholder": "Enter field name",
     "editField": "Edit Field",
     "deleteField": "Delete Field",
     "noDataFields": "No data fields",
@@ -56,6 +88,12 @@
     "deleteParameter": "Delete Parameter",
     "noReportParameters": "No report parameters",
     "clickToAddParameter": "Click '+' above to add parameters",
+    "parameterName": "Parameter Name",
+    "parameterNamePlaceholder": "Enter parameter name",
+    "parameterType": "Parameter Type",
+    "parameterTypePlaceholder": "Select parameter type",
+    "defaultValue": "Default Value",
+    "defaultValuePlaceholder": "Enter default value",
     "deleteConfirm": "Delete Confirmation",
     "deleteElementConfirm": "Are you sure you want to delete this element?"
   },
@@ -79,7 +117,8 @@
     "rectangle": "Rectangle",
     "ellipse": "Ellipse",
     "break": "Break",
-    "frame": "Frame"
+    "frame": "Frame",
+    "table": "Table"
   },
   "properties": {
     "title": "Properties",
@@ -183,7 +222,13 @@
     "columnFooter": "Column Footer",
     "columnFooterPlaceholder": "Enter column footer expression",
     "addColumn": "Add Column",
-    "removeColumn": "Remove Column"
+    "removeColumn": "Remove Column",
+    "whenNoDataType": "When No Data Type",
+    "whenNoDataTypeOptions": {
+      "Blank": "Blank",
+      "NoDataCell": "No Data Cell",
+      "AllSectionsNoDetail": "All Sections No Detail"
+    }
   },
   "bottomPanel": {
     "pageSettings": "Page Settings",
@@ -253,6 +298,9 @@
   },
   "common": {
     "save": "Save",
-    "cancel": "Cancel"
+    "cancel": "Cancel",
+    "edit": "Edit",
+    "delete": "Delete",
+    "ok": "OK"
   }
 }

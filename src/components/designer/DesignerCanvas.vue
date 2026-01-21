@@ -121,6 +121,7 @@
             @finish-editing="finishEditing"
             @cancel-editing="cancelEditing"
             @check-fields="checkFields"
+            @move-column="handleMoveColumn"
           />
           </div>
           <!-- 区域高度调整手柄 -->
@@ -242,7 +243,8 @@ const emit = defineEmits([
   'select-elements-in-rect', // 添加框选事件
   'clear-selection', // 添加清空选择事件
   'check-fields', // 添加字段检查事件
-  'contextmenu' // 添加上下文菜单事件
+  'contextmenu', // 添加上下文菜单事件
+  'move-column' // 添加列移动事件
 ]);
 
 // 框选状态
@@ -313,6 +315,11 @@ const cancelEditing = () => {
 
 const checkFields = (fields: string[]) => {
   emit('check-fields', fields);
+};
+
+// 处理列移动事件
+const handleMoveColumn = (elementIndex: number, fromIndex: number, toIndex: number, bandIndex: number, parentFrameIndex?: number) => {
+  emit('move-column', elementIndex, fromIndex, toIndex, bandIndex, parentFrameIndex);
 };
 
 // 处理元素上下文菜单

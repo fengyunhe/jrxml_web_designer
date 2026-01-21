@@ -9,13 +9,28 @@ export interface TableColumn {
   tableHeader?: DesignElement;
   columnHeader?: DesignElement;
   detailCell?: DesignElement;
+  columnFooter?: DesignElement;
+  tableFooter?: DesignElement;
+}
+
+// 查询接口
+export interface Query {
+  language: string;
+  text: string;
 }
 
 // 表格数据集接口
 export interface TableDataset {
   uuid: string;
   name: string;
-  connectionExpression: string;
+  query?: Query;
+  fields?: Field[];
+}
+
+// 字段接口
+export interface Field {
+  name: string;
+  class: string;
 }
 
 // Band类型枚举
@@ -208,6 +223,7 @@ export interface TableElement extends DesignElementBase {
     columnHeader?: string;
     detail?: string;
   };
+  whenNoDataType?: 'Blank' | 'NoDataCell' | 'AllSectionsNoDetail';
 }
 
 // 设计元素联合类型

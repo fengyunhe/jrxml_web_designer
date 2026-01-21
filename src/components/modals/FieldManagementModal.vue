@@ -1,44 +1,64 @@
 <template>
-  <div v-if="visible" class="modal-overlay" @click.self="handleClose">
+  <div v-if="visible" class="modal-overlay">
     <div class="modal-content">
       <div class="modal-header">
-        <h3>{{ isEditing ? t('fieldManagement.editField') : t('fieldManagement.addField') }}</h3>
+        <h3>
+          {{ isEditing 
+            ? (props.isParameter ? t('elementLibrary.editParameter') : t('fieldManagement.editField')) 
+            : (props.isParameter ? t('elementLibrary.addReportParameter') : t('fieldManagement.addField')) 
+          }}
+        </h3>
         <button class="close-button" @click="handleClose">×</button>
       </div>
       <div class="modal-body">
         <form @submit.prevent="handleSubmit">
           <div class="form-group">
-            <label for="fieldName">{{ t('fieldManagement.fieldName') }} *</label>
+            <label for="fieldName">
+              {{ props.isParameter ? t('elementLibrary.parameterName') : t('fieldManagement.fieldName') }} *
+            </label>
             <input 
               type="text" 
               id="fieldName" 
               v-model="localField.name" 
               required 
-              :placeholder="t('fieldManagement.placeholderName')"
+              :placeholder="props.isParameter ? t('elementLibrary.parameterNamePlaceholder') : t('fieldManagement.placeholderName')"
               class="form-input"
             />
             <div v-if="errors.name" class="error-message">{{ errors.name }}</div>
           </div>
           <div class="form-group">
-            <label for="fieldClass">{{ t('fieldManagement.fieldClass') }} *</label>
+            <label for="fieldClass">
+              {{ props.isParameter ? t('elementLibrary.parameterType') : t('fieldManagement.fieldClass') }} *
+            </label>
             <select 
               id="fieldClass" 
               v-model="localField.class" 
               required 
               class="form-select"
             >
-              <option value="">{{ t('fieldManagement.placeholderClass') }}</option>
+              <option value="">{{ props.isParameter ? t('elementLibrary.parameterTypePlaceholder') : t('fieldManagement.placeholderClass') }}</option>
               <option v-for="type in allowedFieldTypes" :key="type.value" :value="type.value">
                 {{ type.label }}
               </option>
             </select>
             <div v-if="errors.class" class="error-message">{{ errors.class }}</div>
           </div>
+          <!-- 为报表参数添加默认值字段 -->
+          <div v-if="props.isParameter" class="form-group">
+            <label for="defaultValue">{{ t('elementLibrary.defaultValue') }}</label>
+            <input 
+              type="text" 
+              id="defaultValue" 
+              v-model="localField.defaultValue"
+              :placeholder="t('elementLibrary.defaultValuePlaceholder')"
+              class="form-input"
+            />
+          </div>
         </form>
       </div>
       <div class="modal-footer">
-        <button class="btn-secondary" @click="handleClose">{{ t('fieldManagement.cancel') }}</button>
-        <button class="btn-primary" @click="handleSubmit">{{ t('fieldManagement.save') }}</button>
+        <button class="btn-secondary" @click="handleClose">{{ t('common.cancel') }}</button>
+        <button class="btn-primary" @click="handleSubmit">{{ t('common.save') }}</button>
       </div>
     </div>
   </div>
@@ -56,19 +76,22 @@ const props = defineProps<{
   field?: {
     name: string;
     class: string;
+    defaultValue?: string;
   };
+  isParameter?: boolean;
 }>();
 
 // Emits
 const emit = defineEmits<{
   (e: 'update:visible', value: boolean): void;
-  (e: 'save', field: { name: string; class: string }): void;
+  (e: 'save', field: { name: string; class: string; defaultValue?: string }): void;
 }>();
 
 // Local state
-const localField = ref<{ name: string; class: string }>({
+const localField = ref<{ name: string; class: string; defaultValue?: string }>({
   name: '',
-  class: 'java.lang.String'
+  class: 'java.lang.String',
+  defaultValue: ''
 });
 
 const errors = ref<{ name?: string; class?: string }>({});
@@ -98,7 +121,8 @@ watch(
     } else {
       localField.value = {
         name: '',
-        class: 'java.lang.String'
+        class: 'java.lang.String',
+        defaultValue: ''
       };
     }
     // Reset errors when field changes
@@ -115,7 +139,8 @@ watch(
       // Reset form when opening for new field
       localField.value = {
         name: '',
-        class: 'java.lang.String'
+        class: 'java.lang.String',
+        defaultValue: ''
       };
       errors.value = {};
     }

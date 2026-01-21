@@ -88,6 +88,7 @@ const emit = defineEmits<{
   finishEditing: [];
   cancelEditing: [];
   checkFields: [fields: string[]];
+  moveColumn: [elementIndex: number, fromIndex: number, toIndex: number, bandIndex: number, parentFrameIndex?: number];
 }>();
 
 // 根据元素类型获取对应的组件
@@ -149,6 +150,9 @@ const commonEvents = {
   },
   checkFields: (fields: string[]) => {
     emit('checkFields', fields);
+  },
+  moveColumn: (elementIndex: number, fromIndex: number, toIndex: number) => {
+    emit('moveColumn', elementIndex, fromIndex, toIndex, props.bandIndex, props.parentFrameIndex);
   }
 };
 </script>

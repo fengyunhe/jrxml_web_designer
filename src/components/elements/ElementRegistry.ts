@@ -175,8 +175,7 @@ export class ElementRegistry {
         height: 200,
         dataset: {
           uuid: crypto.randomUUID(),
-          name: 'tableDataset',
-          connectionExpression: '$P{REPORT_CONNECTION}'
+          name: 'tableDataset'
         },
         columns: [
           {
