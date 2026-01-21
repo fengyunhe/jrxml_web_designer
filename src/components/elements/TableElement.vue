@@ -29,7 +29,7 @@
             v-if="index > 0"
             class="order-button left-button"
             @click="moveColumn(index, 'left')"
-            title="向左移动列"
+            :title="t('properties.moveColumnLeft')"
             type="default"
             quaternary
             circle
@@ -43,7 +43,7 @@
             v-if="index < columns.length - 1"
             class="order-button right-button"
             @click="moveColumn(index, 'right')"
-            title="向右移动列"
+            :title="t('properties.moveColumnRight')"
             type="default"
             quaternary
             circle
@@ -163,8 +163,11 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue';
 import { NButton } from 'naive-ui';
+import { useI18n } from 'vue-i18n';
 import BaseElement from './BaseElement.vue';
 import SelectionBox from '../designer/SelectionBox.vue';
+
+const { t } = useI18n();
 import type { 
   DesignElement, 
   SelectedElementInfo, 

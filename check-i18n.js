@@ -35,7 +35,8 @@ function hasKey(obj, keyPath) {
 // 搜索项目中使用的国际化键
 function searchI18nKeys(directory) {
   const keys = new Set();
-  const regex = /t\(['"]([^'"]+)['"]\)/g;
+  // 匹配真正的国际化翻译键：t('xxx') 或 $t('xxx')，但排除 emit('xxx') 或 on('xxx') 等事件名称
+  const regex = /\b(?:t|\$t)\(['"]([^'"]+)['"]\)/g;
   
   function searchFile(filePath) {
     if (filePath.endsWith('.vue') || filePath.endsWith('.ts') || filePath.endsWith('.js')) {

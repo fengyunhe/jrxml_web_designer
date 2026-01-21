@@ -40,6 +40,7 @@
     "invalidFileFormat": "文件格式不正确，无法加载",
     "untitledReport": "未命名报表"
   },
+
   "elementLibrary": {
     "title": "元素库",
     "reportElements": "报表元素",
@@ -129,6 +130,27 @@
     "basicProperties": "基本属性",
     "boxSettings": "Box设置",
     "styleSettings": "样式设置",
+    "close": "关闭",
+    "scroll": "滚动",
+    "setDesignAreaFocused": "设置设计区域焦点",
+    "finishEditing": "完成编辑",
+    "cancelEditing": "取消编辑",
+    "resetZoom": "重置缩放",
+    "clearSelection": "清除选择",
+    "createNewFile": "创建新文件",
+    "input": "输入",
+    "saveCurrentFile": "保存当前文件",
+    "saveAsFile": "另存为文件",
+    "updateJRXML": "更新JRXML",
+    "saveState": "保存状态",
+    "deleteElement": "删除元素",
+    "resizeEnd": "调整大小结束",
+    "updateElement": "更新元素",
+    "bandSelectionChange": "区域选择更改",
+    "copyJRXML": "复制JRXML",
+    "regenerateJRXML": "重新生成JRXML",
+    "generateJRXML": "生成JRXML",
+    "saveJRXML": "保存JRXML",
     "x": "X坐标",
     "y": "Y坐标",
     "width": "宽度",
@@ -221,6 +243,8 @@
     "tableHeaderPlaceholder": "请输入表格表头文本",
     "tableFooter": "表格表尾",
     "tableFooterPlaceholder": "请输入表格表尾表达式",
+    "moveColumnLeft": "向左移动列",
+    "moveColumnRight": "向右移动列",
     "columnFooter": "列尾",
     "columnFooterPlaceholder": "请输入列尾表达式",
     "addColumn": "添加列",
@@ -308,6 +332,7 @@
     "cancel": "取消",
     "edit": "编辑",
     "delete": "删除",
-    "ok": "确定"
+    "ok": "确定",
+    "confirm": "确认"
   }
 }

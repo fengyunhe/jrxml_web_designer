@@ -40,6 +40,7 @@
     "invalidFileFormat": "Invalid file format, cannot load",
     "untitledReport": "Untitled Report"
   },
+
   "elementLibrary": {
     "title": "Element Library",
     "reportElements": "Report Elements",
@@ -129,6 +130,27 @@
     "basicProperties": "Basic Properties",
     "boxSettings": "Box Settings",
     "styleSettings": "Style Settings",
+    "close": "Close",
+    "scroll": "Scroll",
+    "setDesignAreaFocused": "Set Design Area Focused",
+    "finishEditing": "Finish Editing",
+    "cancelEditing": "Cancel Editing",
+    "resetZoom": "Reset Zoom",
+    "clearSelection": "Clear Selection",
+    "createNewFile": "Create New File",
+    "input": "Input",
+    "saveCurrentFile": "Save Current File",
+    "saveAsFile": "Save As File",
+    "updateJRXML": "Update JRXML",
+    "saveState": "Save State",
+    "deleteElement": "Delete Element",
+    "resizeEnd": "Resize End",
+    "updateElement": "Update Element",
+    "bandSelectionChange": "Band Selection Change",
+    "copyJRXML": "Copy JRXML",
+    "regenerateJRXML": "Regenerate JRXML",
+    "generateJRXML": "Generate JRXML",
+    "saveJRXML": "Save JRXML",
     "x": "X",
     "y": "Y",
     "width": "Width",
@@ -221,6 +243,8 @@
     "tableHeaderPlaceholder": "Enter table header text",
     "tableFooter": "Table Footer",
     "tableFooterPlaceholder": "Enter table footer expression",
+    "moveColumnLeft": "Move column left",
+    "moveColumnRight": "Move column right",
     "columnFooter": "Column Footer",
     "columnFooterPlaceholder": "Enter column footer expression",
     "addColumn": "Add Column",
@@ -308,6 +332,7 @@
     "cancel": "Cancel",
     "edit": "Edit",
     "delete": "Delete",
-    "ok": "OK"
+    "ok": "OK",
+    "confirm": "Confirm"
   }
 }

@@ -25,8 +25,9 @@ function normalizeContent(content: unknown): string {
 export function useDesignerFiles(options?: {
   currentFileName?: Ref<string>;
   currentFileId?: Ref<string | null>;
+  defaultFileName?: string;
 }) {
-  const currentFileName = options?.currentFileName ?? ref('未命名报表');
+  const currentFileName = options?.currentFileName ?? ref(options?.defaultFileName ?? 'Untitled Report');
   const currentFileId = options?.currentFileId ?? ref<string | null>(null);
   const files = ref<DesignerFile[]>([]);
 
@@ -85,7 +86,7 @@ export function useDesignerFiles(options?: {
     const ok = saveFilesToStorage(nextFiles);
     if (currentFileId.value === id) {
       currentFileId.value = null;
-      currentFileName.value = '未命名报表';
+      currentFileName.value = options?.defaultFileName ?? 'Untitled Report';
     }
     return ok;
   }
@@ -140,7 +141,7 @@ export function useDesignerFiles(options?: {
       localStorage.removeItem(STORAGE_KEYS.LAST_FILE);
       files.value = [];
       currentFileId.value = null;
-      currentFileName.value = '未命名报表';
+      currentFileName.value = options?.defaultFileName ?? 'Untitled Report';
     } catch {
       return;
     }

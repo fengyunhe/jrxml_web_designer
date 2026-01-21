@@ -739,13 +739,13 @@ onBeforeUnmount(() => {
 
 .band-content {
   position: relative;
-  min-height: 30px;
+  min-height: 0;
   z-index: 1;
 }
 
 .band-resize-handle {
   position: absolute;
-  bottom: 0;
+  bottom: -2px;
   left: 0;
   right: 0;
   height: 5px;

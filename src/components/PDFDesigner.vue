@@ -54,6 +54,14 @@
         {{ dragCoordinates.bandName }}X: {{ dragCoordinates.x }}, Y: {{ dragCoordinates.y }} (相对于Band)
       </div>
       
+      <!-- Band高度调整提示 -->
+      <div 
+        v-if="resizingBandInfo.visible" 
+        class="band-height-display"
+      >
+        {{ resizingBandInfo.bandName }} Height: {{ resizingBandInfo.height }}px
+      </div>
+      
       <div class="designer-layout">
       <!-- 左侧元素库 -->
       <ResizablePanel 
@@ -183,10 +191,12 @@
     />
     
     <!-- 打赏弹窗 -->
-    <RewardModal v-model:visible="showReward" />
+    <RewardModal v-if="locale === 'zh'" v-model:visible="showReward" />
+    <RewardModalEn v-else v-model:visible="showReward" />
     
     <!-- 使用说明弹窗 -->
-    <HelpModal v-model:visible="showHelp" />
+    <HelpModal v-if="locale === 'zh'" v-model:visible="showHelp" />
+    <HelpModalEn v-else v-model:visible="showHelp" />
     
     <!-- 字段管理弹窗 -->
     <FieldManagementModal 
@@ -228,7 +238,9 @@
 import ResizablePanel from './panels/ResizablePanel.vue';
 import DesignerCanvas from './designer/DesignerCanvas.vue';
 import RewardModal from './modals/RewardModal.vue';
+import RewardModalEn from './modals/RewardModalEn.vue';
 import HelpModal from './modals/HelpModal.vue';
+import HelpModalEn from './modals/HelpModalEn.vue';
 import FieldManagementModal from './modals/FieldManagementModal.vue';
 import PdfPreviewModal from './modals/PdfPreviewModal.vue';
 import PreviewServerSettingsModal from './modals/PreviewServerSettingsModal.vue';
@@ -253,7 +265,7 @@ import type {
   TableDataset
 } from '../types';
 import type {DesignerFile} from '@/types/designerFile';
-import {computed, onMounted, onUnmounted, ref, watch} from 'vue';
+import {computed, onMounted, onUnmounted, reactive, ref, watch} from 'vue';
 import {useI18n} from 'vue-i18n';
 import {useDesignerFiles} from '@/composables/useDesignerFiles';
 import {useUndoRedo} from '@/composables/useUndoRedo';
@@ -290,7 +302,7 @@ import {generateJRXMLContent, parseJRXMLContent} from '../utils/jrxmlGenerator';
 import notification from '../utils/notification';
 import {createElement, getAllElements as getAllElementConfigs} from '@/components/elements/ElementRegistry';
 
-const { t } = useI18n();
+const { t, locale } = useI18n();
 
 // 标签页相关
 const activeTab = ref('pageSettings');
@@ -343,7 +355,9 @@ const {
   findFileById,
   saveCurrentFileContent,
   setLastFile
-} = useDesignerFiles();
+} = useDesignerFiles({
+  defaultFileName: t('fileManager.untitledReport')
+});
 
 // 更新网页标题
 watch(currentFileName, (newName) => {
@@ -361,7 +375,7 @@ watch(() => t('app.title'), () => {
 function createNewFile() {
   // 创建新文件的逻辑
   const timestamp = new Date().getTime();
-  currentFileName.value = `未命名报表${timestamp}`;
+  currentFileName.value = `${t('fileManager.untitledReport')}${timestamp}`;
   currentFileId.value = `file_${timestamp}`;
   
   // 重置报表数据
@@ -827,6 +841,10 @@ const {
 });
 // 拖动时显示的坐标信息
 const dragCoordinates = ref<{x: number, y: number, visible: boolean, bandName: string}>({ x: 0, y: 0, visible: false, bandName: '' });
+// Band调整高度时的信息
+const resizingBandInfo = reactive({ visible: false, bandName: '', height: 0 });
+// Expose it as a ref for template reactivity
+const resizingBandInfoRef = ref(resizingBandInfo);
 // 调整大小相关
 const resizingInfo = ref<{bandIndex: number, elementIndex: number, startX: number, startY: number, startWidth: number, startHeight: number, parentFrameIndex?: number} | null>(null);
 
@@ -3204,12 +3222,36 @@ const startResizingBand = (event: MouseEvent, bandIndex: number): void => {
     paperOffsetY = paperRect.top;
   }
   
+  // 显示band高度调整提示
+  const band = bands.value[bandIndex];
+  resizingBandInfo.visible = true;
+  resizingBandInfo.bandName = getBandDisplayName(band.type);
+  resizingBandInfo.height = startHeight;
+  
   const handleMouseMove = (e: MouseEvent): void => {
     if (!bands.value || !bands.value[bandIndex]) return;
     // 考虑缩放比例计算高度变化，使用paperOffsetY来更准确地计算
     const deltaY = (e.clientY - paperOffsetY) / currentZoom - (startY - paperOffsetY) / currentZoom;
     const newHeight = Math.max(BAND_CONSTANTS.MIN_HEIGHT, Math.round(startHeight + deltaY));
-    bands.value[bandIndex].height = newHeight;
+    
+    // 更新band高度
+    bands.value = bands.value.map((b, i) => {
+      if (i === bandIndex) {
+        return { ...b, height: newHeight };
+      }
+      return b;
+    });
+    
+    // 更新band高度调整提示
+    resizingBandInfo.bandName = bands.value[bandIndex] ? getBandDisplayName(bands.value[bandIndex].type) : '';
+    resizingBandInfo.height = newHeight;
+    
+    // 定位band高度显示元素，使其跟随鼠标
+    const bandHeightElement = document.querySelector('.band-height-display') as HTMLElement;
+    if (bandHeightElement) {
+      bandHeightElement.style.left = (e.clientX + 10) + 'px';
+      bandHeightElement.style.top = (e.clientY - 30) + 'px';
+    }
     
     // 调整该区域内元素的位置，确保元素不会超出区域边界
     const band = bands.value[bandIndex];
@@ -3224,6 +3266,10 @@ const startResizingBand = (event: MouseEvent, bandIndex: number): void => {
   };
   
   const handleMouseUp = (): void => {
+    // 隐藏band高度调整提示
+    resizingBandInfo.visible = false;
+    resizingBandInfo.bandName = '';
+    resizingBandInfo.height = 0;
     document.removeEventListener('mousemove', handleMouseMove);
     document.removeEventListener('mouseup', handleMouseUp);
   };
@@ -3794,7 +3840,7 @@ const handleBandSelectionChange = (): void => {
 }
 
 /* 坐标显示样式 */
-.coordinates-display {
+.coordinates-display, .band-height-display {
   position: absolute;
   background-color: rgba(0, 0, 0, 0.8);
   color: white;
