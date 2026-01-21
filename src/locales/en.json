@@ -15,6 +15,7 @@
     "snapToAlignment": "Snap to Alignment",
     "clearLocalData": "Clear Local Data",
     "generateJRXML": "Generate JRXML",
+    "downloadJRXML": "Download JRXML",
     "previewPDF": "Preview PDF",
     "setPreviewServer": "Set Preview Server",
     "donate": "Donate",
@@ -40,7 +41,6 @@
     "invalidFileFormat": "Invalid file format, cannot load",
     "untitledReport": "Untitled Report"
   },
-
   "elementLibrary": {
     "title": "Element Library",
     "reportElements": "Report Elements",
@@ -149,6 +149,7 @@
     "copyJRXML": "Copy JRXML",
     "regenerateJRXML": "Regenerate JRXML",
     "generateJRXML": "Generate JRXML",
+    "downloadJRXML": "Download JRXML",
     "saveJRXML": "Save JRXML",
     "x": "X",
     "y": "Y",
@@ -160,7 +161,7 @@
     "italic": "Italic",
     "underline": "Underline",
     "expression": "Expression",
-    "expressionHint": "e.g., {fieldHolder} or 或 \"Fixed text\"" ,
+    "expressionHint": "e.g., {fieldHolder} or 或 \"Fixed text\"",
     "defaultTextFieldExpression": "Text Field",
     "defaultStaticText": "Static Text",
     "pattern": "Pattern",
@@ -288,7 +289,8 @@
     },
     "alerts": {
       "generateJrxmlFirst": "Please generate JRXML content first"
-    }
+    },
+    "downloadJRXML": "Download JRXML"
   },
   "zoom": {
     "zoomIn": "Zoom In",

@@ -41,7 +41,7 @@ interface Emits {
   (e: 'copy-jrxml'): void;
   (e: 'save-jrxml'): void;
   (e: 'regenerate-jrxml'): void;
-  (e: 'generate-jrxml'): void;
+  (e: 'download-jrxml'): void;
   (e: 'band-selection-change'): void;
 }
 
@@ -266,11 +266,11 @@ const regenerateJRXML = (): void => {
   emit('regenerate-jrxml');
 };
 
-// 生成JRXML内容并下载
-const generateJRXML = (): void => {
+// 下载JRXML文件
+const downloadJRXML = (): void => {
   // 切换到JRXML标签页
   activeTab.value = 'jrxml';
-  emit('generate-jrxml');
+  emit('download-jrxml');
 };
 
 // 保存编辑后的JRXML内容
@@ -415,7 +415,7 @@ const saveJRXML = (): void => {
             <n-button @click="copyJRXML" type="default" size="small">{{ t('bottomPanel.copy') }}</n-button>
             <n-button @click="saveJRXML" type="primary" size="small">{{ t('bottomPanel.apply') }}</n-button>
             <n-button @click="regenerateJRXML" type="default" size="small">{{ t('bottomPanel.regenerate') }}</n-button>
-            <n-button @click="generateJRXML" type="primary" size="small">{{ t('bottomPanel.generateJRXML') }}</n-button>
+            <n-button @click="downloadJRXML" type="primary" size="small">{{ t('bottomPanel.downloadJRXML') }}</n-button>
             <n-button @click="openPdfPreview" type="info" size="small">{{ t('bottomPanel.previewPDF') }}</n-button>
           </div>
         </div>
@@ -628,7 +628,6 @@ const saveJRXML = (): void => {
 
 .jrxml-content {
   flex: 1;
-  overflow: auto;
   min-height: 0;
   border-radius: v-bind('UI_CONSTANTS.BORDER_RADIUS_SMALL + "px"');
   border: v-bind('UI_CONSTANTS.BORDER_THIN + "px"') solid #ddd;

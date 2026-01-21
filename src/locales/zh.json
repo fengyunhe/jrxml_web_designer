@@ -15,6 +15,7 @@
     "snapToAlignment": "对齐线吸附",
     "clearLocalData": "清空本地数据",
     "generateJRXML": "生成JRXML",
+    "downloadJRXML": "下载JRXML",
     "previewPDF": "预览PDF",
     "setPreviewServer": "设置预览服务器",
     "donate": "打赏",
@@ -40,7 +41,6 @@
     "invalidFileFormat": "文件格式不正确，无法加载",
     "untitledReport": "未命名报表"
   },
-
   "elementLibrary": {
     "title": "元素库",
     "reportElements": "报表元素",
@@ -149,6 +149,7 @@
     "copyJRXML": "复制JRXML",
     "regenerateJRXML": "重新生成JRXML",
     "generateJRXML": "生成JRXML",
+    "downloadJRXML": "下载JRXML",
     "saveJRXML": "保存JRXML",
     "x": "X坐标",
     "y": "Y坐标",
@@ -288,7 +289,8 @@
     },
     "alerts": {
       "generateJrxmlFirst": "请先生成 JRXML 内容"
-    }
+    },
+    "downloadJRXML": "下载JRXML"
   },
   "zoom": {
     "zoomIn": "放大",

@@ -36,7 +36,7 @@
         <SplitButton 
           :actions="[
             { label: t('actions.previewPDF'), handler: openPdfPreview, class: 'btn-primary' },
-            { label: t('actions.generateJRXML'), handler: generateJRXML, class: 'btn-primary' },
+            { label: t('actions.downloadJRXML'), handler: downloadJRXML, class: 'btn-primary' },
             { label: t('actions.setPreviewServer'), handler: openPreviewServerSettings, class: 'btn-primary' }
           ]" 
         />
@@ -186,7 +186,7 @@
       @copy-jrxml="copyJRXML"
       @save-jrxml="saveJRXML"
       @regenerate-jrxml="regenerateJRXML"
-      @generate-jrxml="generateJRXML"
+      @download-jrxml="downloadJRXML"
       @band-selection-change="handleBandSelectionChange"
     />
     
@@ -2055,8 +2055,8 @@ const initBox = () => {
   }
 };
 
-// 生成JRXML
-const generateJRXML = () => {
+// 下载JRXML文件
+const downloadJRXML = () => {
   const content = generateJRXMLContent(reportProperties.value, bands.value, reportFields.value, reportParameters.value, subDatasets.value);
   jrxmlContent.value = content;
   
