@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { getOutOfBoundsElements, validateElementBounds } from '@/utils/elementBoundsValidator'
+import { getOutOfBoundsElements, validateElementBounds, isReportDesignValid, getReportDesignValidationErrors } from '@/utils/elementBoundsValidator'
 import type { Band, ReportProperties, StaticTextElement } from '@/types'
 
 describe('elementBoundsValidator', () => {
@@ -201,6 +201,96 @@ describe('elementBoundsValidator', () => {
       
       const result = getOutOfBoundsElements(emptyBands, mockReportProperties)
       expect(result).toHaveLength(0)
+    })
+  })
+
+  describe('isReportDesignValid', () => {
+    it('should return true for valid report design', () => {
+      const validBands: Band[] = [
+        {
+          type: 'title',
+          height: 80,
+          elements: [mockStaticTextElement]
+        }
+      ]
+      
+      const result = isReportDesignValid(validBands, mockReportProperties)
+      expect(result).toBe(true)
+    })
+
+    it('should return false for invalid report design', () => {
+      const result = isReportDesignValid(mockBands, mockReportProperties)
+      expect(result).toBe(false)
+    })
+
+    it('should return true for empty bands array', () => {
+      const result = isReportDesignValid([], mockReportProperties)
+      expect(result).toBe(true)
+    })
+  })
+
+  describe('getReportDesignValidationErrors', () => {
+    it('should return empty array for valid report design', () => {
+      const validBands: Band[] = [
+        {
+          type: 'title',
+          height: 80,
+          elements: [mockStaticTextElement]
+        }
+      ]
+      
+      const result = getReportDesignValidationErrors(validBands, mockReportProperties)
+      expect(result).toHaveLength(0)
+    })
+
+    it('should return errors for invalid report design', () => {
+      const result = getReportDesignValidationErrors(mockBands, mockReportProperties)
+      expect(result).toHaveLength(1)
+      expect(result[0]).toContain('超出detail区域右边界')
+    })
+
+    it('should return error when total bands height exceeds page height', () => {
+      // 创建一个高度超出页面的bands数组，元素都在有效范围内
+      const tallBands: Band[] = [
+        {
+          type: 'title',
+          height: 800,
+          elements: [mockStaticTextElement]
+        },
+        {
+          type: 'detail',
+          height: 200,
+          elements: [mockStaticTextElement]
+        }
+      ]
+      
+      const result = getReportDesignValidationErrors(tallBands, mockReportProperties)
+      // 可能会有多个错误，只需要检查是否包含总高度超出的错误
+      const hasTotalHeightError = result.some(error => error.includes('报表设计无效'))
+      expect(hasTotalHeightError).toBe(true)
+    })
+
+    it('should return multiple errors for multiple invalid elements', () => {
+      const invalidBands: Band[] = [
+        {
+          type: 'title',
+          height: 80,
+          elements: [
+            {
+              ...mockStaticTextElement,
+              x: -10 // 超出左边界
+            },
+            {
+              ...mockStaticTextElement,
+              x: 500, // 超出右边界
+              width: 100
+            }
+          ]
+        }
+      ]
+      
+      const result = getReportDesignValidationErrors(invalidBands, mockReportProperties)
+      expect(result).toHaveLength(2)
     })
   })
 })

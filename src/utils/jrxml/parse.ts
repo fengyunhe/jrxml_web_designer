@@ -154,12 +154,14 @@ function parseBandElements(bandElem: Element): any[] {
   // 遍历直接子元素，而不是使用 querySelectorAll（避免递归查找嵌套元素）
   // 这也保留了元素的Z-order（堆叠顺序）
   Array.from(bandElem.children).forEach(child => {
-    if (validElementTypes.includes(child.tagName)) {
-      const parsedElement = parseElement(child, child.tagName);
+    const elementType = child.localName || child.tagName;
+    
+    if (validElementTypes.includes(elementType)) {
+      const parsedElement = parseElement(child, elementType);
       if (parsedElement) {
         elements.push(parsedElement);
       }
-    } else if (child.tagName === 'componentElement') {
+    } else if (elementType === 'componentElement') {
       // 处理组件元素，特别是表格
       const parsedComponent = parseComponentElement(child);
       if (parsedComponent) {
@@ -360,8 +362,16 @@ function parseCellElement(cellElem: Element): any {
   return parseElement(childElement, childElement.tagName);
 }
 
+// 辅助函数：查找元素的直接子元素，考虑命名空间
+function findChildElement(parent: Element, localName: string): Element | null {
+  return Array.from(parent.children).find(child => 
+    child.localName === localName || child.tagName === localName
+  ) || null;
+}
+
 function parseElement(element: Element, type: string): any {
-  const reportElement = element.querySelector('reportElement');
+  // 查找reportElement，考虑命名空间
+  const reportElement = findChildElement(element, 'reportElement');
   if (!reportElement) return null;
 
   const validElementTypes: Array<'staticText' | 'textField' | 'image' | 'line' | 'rectangle' | 'ellipse' | 'break' | 'frame' | 'table'> = ['staticText', 'textField', 'image', 'line', 'rectangle', 'ellipse', 'break', 'frame', 'table'];
@@ -390,7 +400,8 @@ function parseElement(element: Element, type: string): any {
     result.mode = mode as 'Opaque' | 'Transparent';
   }
 
-  const boxElement = element.querySelector('box');
+  // 查找box元素，考虑命名空间
+  const boxElement = findChildElement(element, 'box');
   if (boxElement) {
     result.box = parseBoxElement(boxElement);
   }
@@ -499,19 +510,19 @@ function parseBoxElement(boxElement: Element): any {
     box.rightPen.lineColor = boxElement.getAttribute('rightBorderColor');
   }
 
-  const topPen = boxElement.querySelector('topPen');
+  const topPen = findChildElement(boxElement, 'topPen');
   if (topPen) box.topPen = parsePenElement(topPen);
 
-  const leftPen = boxElement.querySelector('leftPen');
+  const leftPen = findChildElement(boxElement, 'leftPen');
   if (leftPen) box.leftPen = parsePenElement(leftPen);
 
-  const bottomPen = boxElement.querySelector('bottomPen');
+  const bottomPen = findChildElement(boxElement, 'bottomPen');
   if (bottomPen) box.bottomPen = parsePenElement(bottomPen);
 
-  const rightPen = boxElement.querySelector('rightPen');
+  const rightPen = findChildElement(boxElement, 'rightPen');
   if (rightPen) box.rightPen = parsePenElement(rightPen);
 
-  const pen = boxElement.querySelector('pen');
+  const pen = findChildElement(boxElement, 'pen');
   if (pen) box.pen = parsePenElement(pen);
 
   return box;
@@ -528,7 +539,7 @@ function parsePenElement(penElement: Element): any {
 }
 
 function parseStaticTextElement(element: Element, result: any): void {
-  const textElement = element.querySelector('textElement');
+  const textElement = findChildElement(element, 'textElement');
   if (textElement) {
     if (textElement.hasAttribute('textAlignment')) {
       result.textAlignment = textElement.getAttribute('textAlignment');
@@ -547,7 +558,7 @@ function parseStaticTextElement(element: Element, result: any): void {
       result.markup = textElement.getAttribute('markup');
     }
 
-    const fontElement = textElement.querySelector('font');
+    const fontElement = findChildElement(textElement, 'font');
     if (fontElement) {
       if (fontElement.hasAttribute('size')) result.fontSize = parseInt(fontElement.getAttribute('size') || '12');
       result.isBold = fontElement.getAttribute('isBold') === 'true';
@@ -557,7 +568,7 @@ function parseStaticTextElement(element: Element, result: any): void {
     }
   }
 
-  const textNode = element.querySelector('text');
+  const textNode = findChildElement(element, 'text');
   if (textNode) {
     result.text = textNode.textContent || '';
   }
@@ -583,7 +594,7 @@ function parseTextFieldElement(element: Element, result: any): void {
   if (element.hasAttribute('pattern')) result.pattern = element.getAttribute('pattern');
   result.isBlankWhenNull = element.hasAttribute('isBlankWhenNull') ? element.getAttribute('isBlankWhenNull') === 'true' : true;
 
-  const textElement = element.querySelector('textElement');
+  const textElement = findChildElement(element, 'textElement');
   if (textElement) {
     if (textElement.hasAttribute('textAlignment')) {
       result.textAlignment = textElement.getAttribute('textAlignment');
@@ -593,7 +604,7 @@ function parseTextFieldElement(element: Element, result: any): void {
       result.verticalAlignment = textElement.getAttribute('verticalAlignment');
     }
 
-    const fontElement = textElement.querySelector('font');
+    const fontElement = findChildElement(textElement, 'font');
     if (fontElement) {
       if (fontElement.hasAttribute('size')) result.fontSize = parseInt(fontElement.getAttribute('size') || '12');
       result.isBold = fontElement.getAttribute('isBold') === 'true';
@@ -603,7 +614,7 @@ function parseTextFieldElement(element: Element, result: any): void {
     }
   }
 
-  const expressionElem = element.querySelector('textFieldExpression');
+  const expressionElem = findChildElement(element, 'textFieldExpression');
   if (expressionElem) {
     result.expression = expressionElem.textContent || '';
     const fieldMatch = result.expression.match(/\\$F\\{([^}]+)\\}/);

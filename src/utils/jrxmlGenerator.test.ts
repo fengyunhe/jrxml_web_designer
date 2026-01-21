@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { generateJRXMLContent } from '@/utils/jrxmlGenerator'
-import type { Band, ReportProperties } from '@/types'
+import type { Band, ReportProperties, DesignElement } from '@/types'
 
 describe('jrxmlGenerator', () => {
   const mockReportProperties: ReportProperties = {
@@ -201,5 +201,211 @@ describe('jrxmlGenerator', () => {
     
     // Check that the document is properly closed
     expect(jrxml).toContain('</jasperReport>')
+  })
+
+  it('should automatically add missing fields from expressions', () => {
+    // Create a textField with an expression that uses a field not in the fields array
+    const bandsWithMissingField: Band[] = [
+      {
+        type: 'detail',
+        height: 100,
+        elements: [
+          {
+            type: 'textField',
+            x: 20,
+            y: 10,
+            width: 100,
+            height: 20,
+            expression: '$F{missing_field}',
+            fontFamily: 'Arial',
+            fontSize: 12,
+            isBold: false,
+            isItalic: false,
+            isUnderline: false
+          }
+        ]
+      }
+    ]
+    
+    const fields = [
+      { name: 'existing_field', class: 'java.lang.String' }
+    ]
+    
+    const jrxml = generateJRXMLContent(mockReportProperties, bandsWithMissingField, fields, [])
+    
+    // Should include both the existing field and the missing field (with default class)
+    expect(jrxml).toContain('<field name="existing_field" class="java.lang.String"/>')
+    expect(jrxml).toContain('<field name="missing_field" class="java.lang.String"/>')
+  })
+
+  it('should add default margins when not provided', () => {
+    // Create report properties with missing margins
+    const propertiesWithoutMargins: ReportProperties = {
+      ...mockReportProperties,
+      leftMargin: undefined,
+      rightMargin: undefined,
+      topMargin: undefined,
+      bottomMargin: undefined
+    }
+    
+    const jrxml = generateJRXMLContent(propertiesWithoutMargins, mockBands, [], [])
+    
+    // Should include default margins (0)
+    expect(jrxml).toContain('leftMargin="0"')
+    expect(jrxml).toContain('rightMargin="0"')
+    expect(jrxml).toContain('topMargin="0"')
+    expect(jrxml).toContain('bottomMargin="0"')
+  })
+
+  it('should handle parameters with default values', () => {
+    const parameters = [
+      {
+        name: 'paramWithDefault',
+        class: 'java.lang.String',
+        defaultValue: 'default_value'
+      },
+      {
+        name: 'paramWithoutDefault',
+        class: 'java.lang.Integer'
+      }
+    ]
+    
+    const jrxml = generateJRXMLContent(mockReportProperties, mockBands, [], parameters)
+    
+    // Both parameters should be included
+    expect(jrxml).toContain('<parameter name="paramWithDefault" class="java.lang.String">')
+    expect(jrxml).toContain('<parameter name="paramWithoutDefault" class="java.lang.Integer">')
+    
+    // Param with default should have defaultValueExpression
+    expect(jrxml).toContain('<defaultValueExpression><![CDATA[default_value]]></defaultValueExpression>')
+    
+    // Param without default should not have defaultValueExpression
+    const paramWithoutDefaultMatch = jrxml.match(/<parameter name="paramWithoutDefault" class="java.lang.Integer">(.*?)<\/parameter>/s)
+    expect(paramWithoutDefaultMatch?.[1]).not.toContain('defaultValueExpression')
+  })
+
+  it('should generate subDatasets when provided', () => {
+    const subDatasets = [
+      {
+        name: 'testDataset',
+        uuid: 'test-uuid',
+        query: {
+          text: 'SELECT * FROM test_table',
+          language: 'sql'
+        }
+      }
+    ]
+    
+    const jrxml = generateJRXMLContent(mockReportProperties, mockBands, [], [], subDatasets)
+    
+    // Should include subDataset definition
+    expect(jrxml).toContain('<subDataset name="testDataset" uuid="test-uuid">')
+    expect(jrxml).toContain('<queryString language="sql"><![CDATA[SELECT * FROM test_table]]></queryString>')
+    expect(jrxml).toContain('</subDataset>')
+  })
+
+  it('should handle multiple textField expressions with different fields', () => {
+    const complexBands: Band[] = [
+      {
+        type: 'detail',
+        height: 100,
+        elements: [
+          {
+            type: 'textField',
+            x: 20,
+            y: 10,
+            width: 100,
+            height: 20,
+            expression: '$F{field1}',
+            fontFamily: 'Arial',
+            fontSize: 12,
+            isBold: false,
+            isItalic: false,
+            isUnderline: false
+          },
+          {
+            type: 'textField',
+            x: 140,
+            y: 10,
+            width: 100,
+            height: 20,
+            expression: '$F{field2}',
+            fontFamily: 'Arial',
+            fontSize: 12,
+            isBold: false,
+            isItalic: false,
+            isUnderline: false
+          },
+          {
+            type: 'textField',
+            x: 20,
+            y: 40,
+            width: 220,
+            height: 20,
+            expression: '$F{field1} + " - " + $F{field2}',
+            fontFamily: 'Arial',
+            fontSize: 12,
+            isBold: false,
+            isItalic: false,
+            isUnderline: false
+          }
+        ]
+      }
+    ]
+    
+    const jrxml = generateJRXMLContent(mockReportProperties, complexBands, [], [])
+    
+    // Should include all field references in expressions
+    expect(jrxml).toContain('<textFieldExpression><![CDATA[$F{field1}]]></textFieldExpression>')
+    expect(jrxml).toContain('<textFieldExpression><![CDATA[$F{field2}]]></textFieldExpression>')
+    expect(jrxml).toContain('<textFieldExpression><![CDATA[$F{field1} + " - " + $F{field2}]]></textFieldExpression>')
+    
+    // Should automatically add both fields with default class
+    expect(jrxml).toContain('<field name="field1" class="java.lang.String"/>')
+    expect(jrxml).toContain('<field name="field2" class="java.lang.String"/>')
+  })
+
+  it('should handle various element types', () => {
+    // Create different types of elements (if supported)
+    const mixedElementsBands: Band[] = [
+      {
+        type: 'detail',
+        height: 150,
+        elements: [
+          {
+            type: 'staticText',
+            x: 20,
+            y: 10,
+            width: 100,
+            height: 20,
+            text: 'Static Text',
+            fontFamily: 'Arial',
+            fontSize: 12,
+            isBold: false,
+            isItalic: false,
+            isUnderline: false
+          } as DesignElement,
+          {
+            type: 'textField',
+            x: 20,
+            y: 40,
+            width: 100,
+            height: 20,
+            expression: '$F{data_field}',
+            fontFamily: 'Arial',
+            fontSize: 12,
+            isBold: false,
+            isItalic: false,
+            isUnderline: false
+          } as DesignElement
+        ]
+      }
+    ]
+    
+    const jrxml = generateJRXMLContent(mockReportProperties, mixedElementsBands, [], [])
+    
+    // Should include both element types
+    expect(jrxml).toContain('<staticText>')
+    expect(jrxml).toContain('<textField>')
   })
 })
