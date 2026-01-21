@@ -1,7 +1,7 @@
 import type { DesignElement, BandType, Band } from '@/types';
-import type { ReportProperties, Field, Parameter } from './types';
+import type { ReportProperties, Field, Parameter, SubDataset } from './types';
 
-export function parseJRXMLContent(jrxmlContent: string): { properties: ReportProperties; bands: Band[]; fields: Field[]; parameters: Parameter[] } {
+export function parseJRXMLContent(jrxmlContent: string): { properties: ReportProperties; bands: Band[]; fields: Field[]; parameters: Parameter[]; datasets: SubDataset[] } {
   const parser = new DOMParser();
   const xmlDoc = parser.parseFromString(jrxmlContent, 'text/xml');
 
@@ -22,25 +22,31 @@ export function parseJRXMLContent(jrxmlContent: string): { properties: ReportPro
   };
 
   const fields: Field[] = [];
-  xmlDoc.querySelectorAll('field').forEach(fieldElem => {
-    const name = fieldElem.getAttribute('name');
-    const className = fieldElem.getAttribute('class') || 'java.lang.String';
-    if (name) {
-      fields.push({ name, class: className });
+  // 只获取根元素直接子元素中的field元素，不包括数据集内部的字段
+  Array.from(jasperReportElem.children).forEach(child => {
+    if (child.tagName === 'field' || child.localName === 'field') {
+      const name = child.getAttribute('name');
+      const className = child.getAttribute('class') || 'java.lang.String';
+      if (name) {
+        fields.push({ name, class: className });
+      }
     }
   });
 
   const parameters: Parameter[] = [];
-  xmlDoc.querySelectorAll('parameter').forEach(paramElem => {
-    const name = paramElem.getAttribute('name');
-    const className = paramElem.getAttribute('class') || 'java.lang.String';
-    if (name) {
-      const param: Parameter = { name, class: className };
-      const defaultValueExpr = paramElem.querySelector('defaultValueExpression');
-      if (defaultValueExpr && defaultValueExpr.textContent) {
-        param.defaultValue = defaultValueExpr.textContent.trim();
+  // 只获取根元素直接子元素中的parameter元素，不包括数据集内部的参数
+  Array.from(jasperReportElem.children).forEach(child => {
+    if (child.tagName === 'parameter' || child.localName === 'parameter') {
+      const name = child.getAttribute('name');
+      const className = child.getAttribute('class') || 'java.lang.String';
+      if (name) {
+        const param: Parameter = { name, class: className };
+        const defaultValueExpr = child.querySelector('defaultValueExpression');
+        if (defaultValueExpr && defaultValueExpr.textContent) {
+          param.defaultValue = defaultValueExpr.textContent.trim();
+        }
+        parameters.push(param);
       }
-      parameters.push(param);
     }
   });
 
@@ -93,7 +99,52 @@ export function parseJRXMLContent(jrxmlContent: string): { properties: ReportPro
     bands.push(band);
   });
 
-  return { properties, bands, fields, parameters };
+  // 解析子数据集
+  const datasets: SubDataset[] = [];
+  Array.from(jasperReportElem.children).forEach(child => {
+    if (child.tagName === 'subDataset' || child.localName === 'subDataset') {
+      const dataset = parseSubDataset(child);
+      datasets.push(dataset);
+    }
+  });
+
+  return { properties, bands, fields, parameters, datasets };
+}
+
+// 解析子数据集元素
+function parseSubDataset(subDatasetElem: Element): SubDataset {
+  const name = subDatasetElem.getAttribute('name') || 'UnnamedDataset';
+  
+  // 解析数据集内部的字段
+  const fields: Field[] = [];
+  Array.from(subDatasetElem.children).forEach(child => {
+    if (child.tagName === 'field' || child.localName === 'field') {
+      const fieldName = child.getAttribute('name');
+      const className = child.getAttribute('class') || 'java.lang.String';
+      if (fieldName) {
+        fields.push({ name: fieldName, class: className });
+      }
+    }
+  });
+  
+  // 解析数据集内部的参数
+  const parameters: Parameter[] = [];
+  Array.from(subDatasetElem.children).forEach(child => {
+    if (child.tagName === 'parameter' || child.localName === 'parameter') {
+      const paramName = child.getAttribute('name');
+      const className = child.getAttribute('class') || 'java.lang.String';
+      if (paramName) {
+        const param: Parameter = { name: paramName, class: className };
+        const defaultValueExpr = child.querySelector('defaultValueExpression');
+        if (defaultValueExpr && defaultValueExpr.textContent) {
+          param.defaultValue = defaultValueExpr.textContent.trim();
+        }
+        parameters.push(param);
+      }
+    }
+  });
+  
+  return { name, fields, parameters };
 }
 
 function parseBandElements(bandElem: Element): any[] {

@@ -19,3 +19,10 @@ export interface Parameter {
   defaultValue?: string;
 }
 
+export interface SubDataset {
+  name: string;
+  fields: Field[];
+  parameters: Parameter[];
+}
+
+
