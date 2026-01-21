@@ -25,24 +25,32 @@
         >
           <!-- 调整列顺序的按钮 -->
           <!-- 向左移动按钮 -->
-          <button 
+          <n-button 
             v-if="index > 0"
             class="order-button left-button"
             @click="moveColumn(index, 'left')"
             title="向左移动列"
+            type="default"
+            quaternary
+            circle
+            size="small"
           >
             ◀
-          </button>
+          </n-button>
           
           <!-- 向右移动按钮 -->
-          <button 
+          <n-button 
             v-if="index < columns.length - 1"
             class="order-button right-button"
             @click="moveColumn(index, 'right')"
             title="向右移动列"
+            type="default"
+            quaternary
+            circle
+            size="small"
           >
             ▶
-          </button>
+          </n-button>
           
           <div v-if="column.tableHeader" class="cell-content">
             <!-- 渲染表头内容 -->
@@ -154,6 +162,7 @@
 
 <script setup lang="ts">
 import { ref, computed } from 'vue';
+import { NButton } from 'naive-ui';
 import BaseElement from './BaseElement.vue';
 import SelectionBox from '../designer/SelectionBox.vue';
 import type { 

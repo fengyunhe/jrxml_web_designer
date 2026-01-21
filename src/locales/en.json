@@ -95,7 +95,9 @@
     "defaultValue": "Default Value",
     "defaultValuePlaceholder": "Enter default value",
     "deleteConfirm": "Delete Confirmation",
-    "deleteElementConfirm": "Are you sure you want to delete this element?"
+    "deleteElementConfirm": "Are you sure you want to delete this element?",
+    "fieldNameRequired": "Field name is required",
+    "duplicateFieldName": "Field name already exists, please use another name"
   },
   "bandNames": {
     "title": "Title",
@@ -222,13 +224,18 @@
     "columnFooter": "Column Footer",
     "columnFooterPlaceholder": "Enter column footer expression",
     "addColumn": "Add Column",
+    "addColumnFromDataset": "Add Column from Dataset",
+    "selectFieldsFromDataset": "Select Fields from Dataset",
+    "availableFields": "Available Fields",
+    "selectedFields": "Selected Fields",
     "removeColumn": "Remove Column",
     "whenNoDataType": "When No Data Type",
     "whenNoDataTypeOptions": {
       "Blank": "Blank",
       "NoDataCell": "No Data Cell",
       "AllSectionsNoDetail": "All Sections No Detail"
-    }
+    },
+    "default": "Default"
   },
   "bottomPanel": {
     "pageSettings": "Page Settings",

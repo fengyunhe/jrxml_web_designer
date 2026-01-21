@@ -28,14 +28,17 @@
           :placeholder="t('elementLibrary.filterElements')" 
           class="filter-input"
         />
-        <button 
+        <n-button 
           v-if="elementFilterText" 
           @click="elementFilterText = ''" 
-          class="clear-filter-btn"
+          type="default"
+          quaternary
+          circle
+          size="small"
           :title="t('elementLibrary.filterElements')"
         >
           ✕
-        </button>
+        </n-button>
       </div>
       <div class="report-elements-list">
         <div v-for="(elements, bandName) in groupedReportElements" :key="bandName" class="band-group">
@@ -51,7 +54,7 @@
               <span class="element-icon">{{ getElementIcon(element.element.type) }}</span>
               <span class="element-info">{{ getElementDisplayInfoWithoutBand(element.element) }}</span>
             </div>
-            <button class="action-button delete-button" @click.stop="handleDeleteElement(element)" :title="t('properties.deleteElement')">🗑️</button>
+            <n-button class="action-button delete-button" @click.stop="handleDeleteElement(element)" type="error" quaternary circle size="small" :title="t('properties.deleteElement')">🗑️</n-button>
           </div>
         </div>
       </div>
@@ -61,7 +64,7 @@
     <div class="data-parameters-section">
       <div class="section-header">
         <h4>{{ t('elementLibrary.reportParameters') }}</h4>
-        <button class="add-button" @click="handleAddParameter" :title="t('elementLibrary.addReportParameter')">+</button>
+        <n-button class="add-button" @click="handleAddParameter" type="default" quaternary circle size="small" :title="t('elementLibrary.addReportParameter')">+</n-button>
       </div>
       <div class="parameters-mini-view">
         <div 
@@ -75,8 +78,8 @@
             <span class="field-type">({{ param.class }})</span>
           </div>
           <div class="field-actions">
-            <button class="action-button edit-button" @click.stop="handleEditParameter(param)" :title="t('elementLibrary.editParameter')">✏️</button>
-            <button class="action-button delete-button" @click.stop="handleDeleteParameter(param.name)" :title="t('elementLibrary.deleteParameter')">🗑️</button>
+            <n-button class="action-button edit-button" @click.stop="handleEditParameter(param)" type="default" quaternary circle size="small" :title="t('elementLibrary.editParameter')">✏️</n-button>
+            <n-button class="action-button delete-button" @click.stop="handleDeleteParameter(param.name)" type="error" quaternary circle size="small" :title="t('elementLibrary.deleteParameter')">🗑️</n-button>
           </div>
         </div>
         <div v-if="reportParameters.length === 0" class="empty-state">
@@ -90,7 +93,7 @@
     <div class="data-fields-section">
       <div class="section-header">
         <h4>{{ t('elementLibrary.subDatasets') }}</h4>
-        <button class="add-button" @click="handleAddSubDataset" :title="t('elementLibrary.addSubDataset')">+</button>
+        <n-button class="add-button" @click="handleAddSubDataset" type="default" quaternary circle size="small" :title="t('elementLibrary.addSubDataset')">+</n-button>
       </div>
       <div class="fields-mini-view">
         <div 
@@ -102,8 +105,8 @@
   <span class="field-name">{{ dataset.name }}</span>
 </div>
             <div class="field-actions">
-              <button class="action-button edit-button" @click.stop="handleEditSubDataset(dataset, index)" :title="t('elementLibrary.editSubDataset')">✏️</button>
-              <button class="action-button delete-button" @click.stop="handleDeleteSubDataset(index)" :title="t('elementLibrary.deleteSubDataset')">🗑️</button>
+              <n-button class="action-button edit-button" @click.stop="handleEditSubDataset(dataset, index)" type="default" quaternary circle size="small" :title="t('elementLibrary.editSubDataset')">✏️</n-button>
+              <n-button class="action-button delete-button" @click.stop="handleDeleteSubDataset(index)" type="error" quaternary circle size="small" :title="t('elementLibrary.deleteSubDataset')">🗑️</n-button>
             </div>
           </div>
         <div v-if="subDatasets.length === 0" class="empty-state">
@@ -117,7 +120,7 @@
     <div class="data-fields-section">
       <div class="section-header">
         <h4>{{ t('elementLibrary.dataFields') }}</h4>
-        <button class="add-button" @click="handleAddField" :title="t('elementLibrary.addDataField')">+</button>
+        <n-button class="add-button" @click="handleAddField" type="default" quaternary circle size="small" :title="t('elementLibrary.addDataField')">+</n-button>
       </div>
       <div class="fields-mini-view">
         <div 
@@ -130,8 +133,8 @@
             <span class="field-type">({{ field.class }})</span>
           </div>
           <div class="field-actions">
-            <button class="action-button edit-button" @click.stop="handleEditField(field)" :title="t('elementLibrary.editField')">✏️</button>
-            <button class="action-button delete-button" @click.stop="handleDeleteField(field.name)" :title="t('elementLibrary.deleteField')">🗑️</button>
+            <n-button class="action-button edit-button" @click.stop="handleEditField(field)" type="default" quaternary circle size="small" :title="t('elementLibrary.editField')">✏️</n-button>
+            <n-button class="action-button delete-button" @click.stop="handleDeleteField(field.name)" type="error" quaternary circle size="small" :title="t('elementLibrary.deleteField')">🗑️</n-button>
           </div>
         </div>
         <div v-if="reportFields.length === 0" class="empty-state">
@@ -154,6 +157,7 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue';
 import { useI18n } from 'vue-i18n';
+import { NButton } from 'naive-ui';
 import ConfirmModal from './modals/ConfirmModal.vue';
 import type { DesignElement, StaticTextElement, TextFieldElement, ReportField, ReportParameter } from '../types';
 import {

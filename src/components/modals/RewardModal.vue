@@ -1,15 +1,23 @@
 <template>
-  <div v-if="visible" class="reward-modal" @click.self="closeModal">
+  <BaseModal
+    :visible="visible"
+    :showHeader="false"
+    :showFooter="false"
+    @update:visible="$emit('update:visible', $event)"
+    @cancel="closeModal"
+    :contentClass="'reward-modal-content'"
+  >
     <div class="reward-content">
-      <button class="close-btn" @click="closeModal">×</button>
       <h3>您的支持是我持续更新的动力！</h3>
       <img src="/src/assets/FIREGOD_CN.jpg" alt="打赏码" class="reward-image">
       <p>使用微信扫码打赏，感谢支持！</p>
     </div>
-  </div>
+  </BaseModal>
 </template>
 
 <script setup lang="ts">
+import BaseModal from './BaseModal.vue';
+
 // 定义props
 const props = defineProps({
   visible: {
@@ -28,66 +36,33 @@ const closeModal = () => {
 </script>
 
 <style scoped>
-.reward-modal {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-color: rgba(0, 0, 0, 0.5);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1000;
-}
-
-.reward-content {
-  background-color: white;
-  border-radius: 8px;
-  padding: 20px;
+/* Reward Modal Specific Styles */
+.reward-modal-content {
   max-width: 400px;
   width: 90%;
+}
+
+:deep(.modal-body) {
+  padding: 20px;
   text-align: center;
-  position: relative;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
-.close-btn {
-  position: absolute;
-  top: 10px;
-  right: 15px;
-  font-size: 24px;
-  background: none;
-  border: none;
-  cursor: pointer;
-  color: #666;
-  width: 30px;
-  height: 30px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 50%;
-  transition: background-color 0.2s;
-}
-
-.close-btn:hover {
-  background-color: #f0f0f0;
+.reward-content h3 {
+  margin-top: 0;
+  margin-bottom: 20px;
+  color: #333;
 }
 
 .reward-image {
   max-width: 100%;
   height: auto;
   border-radius: 4px;
-  margin: 20px 0;
-}
-
-.reward-content h3 {
-  margin-top: 10px;
-  color: #333;
+  margin: 0 auto 20px;
+  display: block;
 }
 
 .reward-content p {
   color: #666;
-  margin-top: 10px;
+  margin: 0;
 }
 </style>

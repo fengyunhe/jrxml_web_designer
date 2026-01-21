@@ -32,21 +32,10 @@
     <!-- 元素属性 -->
     <div v-else-if="selectedElement && currentElement" class="property-section">
       <!-- 元素属性标签页 -->
-      <div class="element-tabs">
-        <div class="element-tab-navigation">
-          <button 
-            v-for="tab in elementTabs" 
-            :key="tab.id"
-            class="element-tab-button" 
-            :class="{ 'active': activeElementTab === tab.id }"
-            @click="activeElementTab = tab.id"
-          >
-            {{ tab.name }}
-          </button>
-        </div>
+      <n-tabs type="segment">
         
         <!-- 基本属性标签页 -->
-        <div class="element-tab-content" v-show="activeElementTab === 'basic'">
+        <n-tab-pane name="basic" :tab="t('properties.basicProperties')" >
           <h4>{{ t('properties.basicProperties') }}</h4>
           <div class="basic-properties-grid">
             <div class="form-group">
@@ -144,20 +133,22 @@
             <div class="form-group">
               <label>{{ t('properties.tableColumns') }}</label>
               <div class="table-column-actions">
-                <button 
+                <n-button 
                   class="add-column-btn" 
                   @click="addTableColumn"
                   :title="t('properties.addColumn')"
+                  type="primary"
                 >
                   + {{ t('properties.addColumn') }}
-                </button>
-                <button 
+                </n-button>
+                <n-button 
                   class="add-column-btn" 
                   @click="openFieldSelectionModal"
                   :title="t('properties.addColumnFromDataset')"
+                  type="default"
                 >
                   ↓ {{ t('properties.addColumnFromDataset') }}
-                </button>
+                </n-button>
               </div>
               <div v-if="currentElement.columns" class="table-columns-list">
                 <div 
@@ -172,13 +163,17 @@
                   <div class="table-column-header">
                     <span class="drag-handle">☰</span>
                     <span>{{ column.name }}</span>
-                    <button 
+                    <n-button 
                       class="remove-column-btn" 
                       @click="removeTableColumn(Number(index))"
                       :title="t('properties.removeColumn')"
+                      type="error"
+                      quaternary
+                      circle
+                      size="small"
                     >
                       ✕
-                    </button>
+                    </n-button>
                   </div>
                   <div class="table-column-properties">
                     <div class="form-group small">
@@ -255,60 +250,54 @@
             </div>
             
             <!-- 从数据集选择字段的模态框 -->
-            <div v-if="showFieldSelectionModal" class="modal-overlay">
-              <div class="modal-content">
-                <div class="modal-header">
-                  <h3>{{ t('properties.selectFieldsFromDataset') }}</h3>
-                  <button class="close-button" @click="showFieldSelectionModal = false">×</button>
-                </div>
-                <div class="modal-body">
-                  <div class="field-selection-content">
-                    <div class="available-fields">
-                      <h4>{{ t('properties.availableFields') }}</h4>
-                      <div class="fields-list">
-                        <div 
-                          v-for="(field, index) in availableFields" 
-                          :key="index"
-                          class="field-item"
-                          :class="{ selected: selectedFields.includes(field.name) }"
-                          @click="toggleFieldSelection(field.name)"
-                        >
-                          <input 
-                            type="checkbox" 
-                            v-model="selectedFields"
-                            :value="field.name"
-                          />
-                          <span class="field-name">{{ field.name }}</span>
-                          <span class="field-type">{{ field.class }}</span>
-                        </div>
-                      </div>
-                    </div>
-                    <div class="selected-fields">
-                      <h4>{{ t('properties.selectedFields') }}</h4>
-                      <div class="fields-list">
-                        <div 
-                          v-for="(fieldName, index) in selectedFields" 
-                          :key="index"
-                          class="field-item selected"
-                        >
-                          <span class="field-name">{{ fieldName }}</span>
-                          <button 
-                            class="remove-field-btn"
-                            @click="toggleFieldSelection(fieldName)"
-                          >
-                            ✕
-                          </button>
-                        </div>
-                      </div>
+            <BaseModal
+              :visible="showFieldSelectionModal"
+              :title="t('properties.selectFieldsFromDataset')"
+              @update:visible="showFieldSelectionModal = $event"
+              @confirm="addSelectedFieldsAsColumns"
+              @cancel="showFieldSelectionModal = false"
+            >
+              <div class="field-selection-content">
+                <div class="available-fields">
+                  <h4>{{ t('properties.availableFields') }}</h4>
+                  <div class="fields-list">
+                    <div 
+                      v-for="(field, index) in availableFields" 
+                      :key="index"
+                      class="field-item"
+                      :class="{ selected: selectedFields.includes(field.name) }"
+                      @click="toggleFieldSelection(field.name)"
+                    >
+                      <input 
+                        type="checkbox" 
+                        v-model="selectedFields"
+                        :value="field.name"
+                      />
+                      <span class="field-name">{{ field.name }}</span>
+                      <span class="field-type">{{ field.class }}</span>
                     </div>
                   </div>
                 </div>
-                <div class="modal-footer">
-                  <button class="btn-secondary" @click="showFieldSelectionModal = false">{{ t('common.cancel') }}</button>
-                  <button class="btn-primary" @click="addSelectedFieldsAsColumns">{{ t('common.ok') }}</button>
+                <div class="selected-fields">
+                  <h4>{{ t('properties.selectedFields') }}</h4>
+                  <div class="fields-list">
+                    <div 
+                      v-for="(fieldName, index) in selectedFields" 
+                      :key="index"
+                      class="field-item selected"
+                    >
+                      <span class="field-name">{{ fieldName }}</span>
+                      <button 
+                        class="remove-field-btn"
+                        @click="toggleFieldSelection(fieldName)"
+                      >
+                        ✕
+                      </button>
+                    </div>
+                  </div>
                 </div>
               </div>
-            </div>
+            </BaseModal>
           </template>
           
           <!-- 使用计算属性来简化模板中的类型检查 -->
@@ -448,10 +437,10 @@
               </div>
             </template>
           </div>
-        </div>
+        </n-tab-pane>
         
         <!-- 边框设置标签页 -->
-        <div class="element-tab-content" v-show="activeElementTab === 'box'">
+        <n-tab-pane name="box" :tab="t('properties.boxSettings')" >
           <template v-if="currentElement && currentElement.type === 'break'">
             <div class="box-section">
               <p style="font-size: 12px; color: #666;">{{ t('properties.breakNoBorder') }}</p>
@@ -495,8 +484,8 @@
               <div class="box-section">
                 <h5>{{ t('properties.quickSettings') }}</h5>
                 <div class="border-quick-actions">
-                  <button @click="removeAllBorders" class="btn-remove-border">{{ t('properties.noBorders') }}</button>
-                  <button @click="addSolidBorder" class="btn-add-border">{{ t('properties.allBorders') }}</button>
+                  <n-button @click="removeAllBorders" type="default">{{ t('properties.noBorders') }}</n-button>
+                  <n-button @click="addSolidBorder" type="primary">{{ t('properties.allBorders') }}</n-button>
                 </div>
               </div>
               
@@ -591,10 +580,10 @@
               </div>
             </template>
           </template>
-        </div>
+        </n-tab-pane>
         
         <!-- 样式设置标签页 -->
-        <div class="element-tab-content" v-show="activeElementTab === 'style'">
+        <n-tab-pane name="style" :tab="t('properties.styleSettings')" >
           <template v-if="currentElement && currentElement.type === 'break'">
             <div class="box-section">
               <p style="font-size: 12px; color: #666;">{{ t('properties.breakNoStyle') }}</p>
@@ -656,32 +645,30 @@
             <div class="form-group">
               <label>{{ t('properties.textAlignment') }}</label>
               <div class="alignment-controls">
-                <button 
+                <n-button 
                   v-for="align in ['Left', 'Center', 'Right']" 
                   :key="align"
                   @click="setHorizontalAlignment(align as 'Left' | 'Center' | 'Right')"
-                  :class="{ active: currentElement && currentElement.textAlignment === align }"
-                  class="align-button"
+                  :type="currentElement && currentElement.textAlignment === align ? 'primary' : 'default'"
                   :title="t(`properties.${align.toLowerCase()}`)"
                 >
                   {{ t(`properties.${align.toLowerCase()}`) }}
-                </button>
+                </n-button>
               </div>
             </div>
             
             <div class="form-group">
               <label>{{ t('properties.verticalAlignment') }}</label>
               <div class="alignment-controls">
-                <button 
+                <n-button 
                   v-for="align in ['Top', 'Middle', 'Bottom']" 
                   :key="align"
                   @click="setVerticalAlignment(align as 'Top' | 'Middle' | 'Bottom')"
-                  :class="{ active: currentElement && currentElement.verticalAlignment === align }"
-                  class="align-button"
+                  :type="currentElement && currentElement.verticalAlignment === align ? 'primary' : 'default'"
                   :title="t(`properties.${align.toLowerCase()}`)"
                 >
                   {{ t(`properties.${align.toLowerCase()}`) }}
-                </button>
+                </n-button>
               </div>
             </div>
             
@@ -701,11 +688,11 @@
             </div>
           </template>
           </template>
-        </div>
-      </div>
+        </n-tab-pane>
+      </n-tabs>
       
       <div class="element-actions">
-        <button @click="deleteElement" class="btn-danger">{{ t('properties.deleteElement') }}</button>
+        <n-button @click="deleteElement" type="error">{{ t('properties.deleteElement') }}</n-button>
       </div>
     </div>
   </div>
@@ -714,8 +701,10 @@
 <script setup lang="ts">
 import { computed, ref, onMounted, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
+import { NButton, NTabs, NTabPane } from 'naive-ui';
 import type { Band, SelectedElementInfo, TableDataset } from '../../../types';
 import { getAvailableFonts } from '../../../utils/fontUtils';
+import BaseModal from '../../modals/BaseModal.vue';
 
 const { t } = useI18n();
 
@@ -736,14 +725,6 @@ interface Emits {
 
 const props = defineProps<Props>();
 const emit = defineEmits<Emits>();
-
-// 标签页相关
-const activeElementTab = ref('basic');
-const elementTabs = computed(() => [
-  { id: 'basic', name: t('properties.basicProperties') },
-  { id: 'box', name: t('properties.boxSettings') },
-  { id: 'style', name: t('properties.styleSettings') }
-]);
 
 // 可用字体列表
 const availableFonts = ref<string[]>([]);
@@ -1596,33 +1577,7 @@ function setRectangleBorderColor(value: string) {
   gap: 8px;
 }
 
-.btn-remove-border,
-.btn-add-border {
-  padding: 8px 12px;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 12px;
-  transition: all 0.2s ease;
-}
 
-.btn-remove-border {
-  background-color: #ff4d4f;
-  color: white;
-}
-
-.btn-remove-border:hover {
-  background-color: #ff7875;
-}
-
-.btn-add-border {
-  background-color: #52c41a;
-  color: white;
-}
-
-.btn-add-border:hover {
-  background-color: #73d13d;
-}
 
 .border-side-group {
   display: flex;
@@ -1687,26 +1642,7 @@ function setRectangleBorderColor(value: string) {
   margin-bottom: 8px;
 }
 
-.align-button {
-  padding: 4px 8px;
-  border: 1px solid #ddd;
-  background-color: white;
-  cursor: pointer;
-  font-size: 12px;
-  border-radius: 4px;
-  transition: all 0.2s ease;
-}
 
-.align-button:hover {
-  border-color: #1890ff;
-  color: #1890ff;
-}
-
-.align-button.active {
-  background-color: #1890ff;
-  border-color: #1890ff;
-  color: white;
-}
 
 .element-actions {
   margin-top: 24px;
@@ -1714,21 +1650,7 @@ function setRectangleBorderColor(value: string) {
   border-top: 1px solid #e0e0e0;
 }
 
-.btn-danger {
-  padding: 8px 16px;
-  border: 1px solid #ff4d4f;
-  background-color: #ff4d4f;
-  color: white;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 12px;
-  transition: all 0.2s ease;
-}
 
-.btn-danger:hover {
-  background-color: #ff7875;
-  border-color: #ff7875;
-}
 
 .font-hint {
   display: block;
@@ -1762,26 +1684,7 @@ function setRectangleBorderColor(value: string) {
   font-weight: bold;
 }
 
-.remove-column-btn {
-  background: none;
-  border: none;
-  color: #e74c3c;
-  cursor: pointer;
-  font-size: 16px;
-  padding: 0;
-  width: 20px;
-  height: 20px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 50%;
-  transition: all 0.2s;
-}
 
-.remove-column-btn:hover {
-  background-color: #ffe6e6;
-  transform: scale(1.1);
-}
 
 .table-column-properties {
   display: flex;
@@ -1848,137 +1751,9 @@ function setRectangleBorderColor(value: string) {
   margin-bottom: 8px;
 }
 
-.add-column-btn {
-  background-color: #4a90e2;
-  color: white;
-  border: none;
-  padding: 6px 12px;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 12px;
-  transition: all 0.2s;
-}
 
-.add-column-btn:hover {
-  background-color: #3a80d2;
-}
 
-/* 字段选择模态框样式 */
-.modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-color: rgba(0, 0, 0, 0.5);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 1000;
-}
 
-.modal-content {
-  background-color: white;
-  border-radius: 8px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-  width: 800px;
-  max-width: 90vw;
-  max-height: 80vh;
-  display: flex;
-  flex-direction: column;
-}
-
-.modal-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 16px 20px;
-  border-bottom: 1px solid #e8e8e8;
-}
-
-.modal-header h3 {
-  margin: 0;
-  font-size: 16px;
-  font-weight: 600;
-}
-
-.close-button {
-  background: none;
-  border: none;
-  font-size: 20px;
-  cursor: pointer;
-  color: #999;
-  padding: 0;
-  width: 32px;
-  height: 32px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 4px;
-  transition: all 0.2s;
-}
-
-.close-button:hover {
-  background-color: #f0f0f0;
-  color: #666;
-}
-
-.modal-body {
-  padding: 20px;
-  overflow: auto;
-  flex: 1;
-}
-
-.modal-footer {
-  display: flex;
-  justify-content: flex-end;
-  align-items: center;
-  padding: 16px 20px;
-  border-top: 1px solid #e8e8e8;
-}
-
-.btn-secondary {
-  margin-right: 8px;
-}
-
-.btn-primary, .btn-secondary {
-  padding: 8px 16px;
-  border-radius: 4px;
-  font-size: 14px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.3s;
-  border: 1px solid transparent;
-}
-
-.btn-primary {
-  background-color: #1890ff;
-  color: white;
-}
-
-.btn-primary:hover {
-  background-color: #40a9ff;
-}
-
-.btn-primary:active {
-  background-color: #096dd9;
-}
-
-.btn-secondary {
-  background-color: white;
-  color: rgba(0, 0, 0, 0.65);
-  border-color: #d9d9d9;
-}
-
-.btn-secondary:hover {
-  color: #1890ff;
-  border-color: #1890ff;
-}
-
-.btn-secondary:active {
-  color: #096dd9;
-  border-color: #096dd9;
-}
 
 .field-selection-content {
   display: flex;
@@ -2047,18 +1822,5 @@ function setRectangleBorderColor(value: string) {
   margin-left: 8px;
 }
 
-.remove-field-btn {
-  background: none;
-  border: none;
-  font-size: 14px;
-  cursor: pointer;
-  color: #ff4d4f;
-  padding: 2px 6px;
-  border-radius: 3px;
-  transition: all 0.2s;
-}
 
-.remove-field-btn:hover {
-  background-color: #fff1f0;
-}
 </style>

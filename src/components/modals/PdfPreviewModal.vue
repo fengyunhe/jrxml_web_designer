@@ -1,23 +1,26 @@
 <template>
-  <div v-if="visible" class="pdf-preview-modal" @click.self="closeModal">
-    <div class="pdf-preview-content">
-      <div class="pdf-preview-header">
-        <h3>{{ t('pdfPreview.title') }}</h3>
-        <button class="close-btn" @click="closeModal">×</button>
-      </div>
-      <div class="pdf-preview-body">
-        <iframe
-          :src="previewUrl"
-          class="pdf-iframe"
-          :title="t('pdfPreview.title')"
-          @load="handleIframeLoad"
-        ></iframe>
-      </div>
+  <BaseModal
+    :visible="visible"
+    :title="t('pdfPreview.title')"
+    :showFooter="false"
+    @update:visible="$emit('update:visible', $event)"
+    @cancel="closeModal"
+    :contentClass="'pdf-preview-modal'"
+    :bodyHeight="'90vh'"
+  >
+    <div class="pdf-preview-body">
+      <iframe
+        :src="previewUrl"
+        class="pdf-iframe"
+        :title="t('pdfPreview.title')"
+        @load="handleIframeLoad"
+      ></iframe>
     </div>
-  </div>
+  </BaseModal>
 </template>
 
 <script setup lang="ts">
+import BaseModal from './BaseModal.vue';
 import { computed, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import type { ReportParameter, ReportField } from '../../types';
@@ -116,74 +119,41 @@ const handleIframeLoad = () => {
 </script>
 
 <style scoped>
+/* PDF Preview Modal Specific Styles */
 .pdf-preview-modal {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-color: rgba(0, 0, 0, 0.6);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 9999;
-  pointer-events: auto;
+  width: 100%;
+  height: 98%;
+  max-height: 98vh;
 }
 
-.pdf-preview-content {
-  background-color: white;
-  border-radius: 8px;
-  width: 95%;
-  height: 90%;
-  max-width: 1200px;
-  display: flex;
-  flex-direction: column;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
-  z-index: 10000;
-}
-
-.pdf-preview-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
+:deep(.modal-header) {
   padding: 15px 20px;
   border-bottom: 1px solid #e0e0e0;
 }
 
-.pdf-preview-header h3 {
+:deep(.modal-title) {
   margin: 0;
   color: #333;
   font-size: 18px;
 }
 
-.close-btn {
-  font-size: 28px;
-  background: none;
-  border: none;
-  cursor: pointer;
-  color: #666;
-  width: 36px;
-  height: 36px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 50%;
-  transition: background-color 0.2s;
-}
-
-.close-btn:hover {
-  background-color: #f0f0f0;
+:deep(.modal-body) {
+  padding: 0;
+  overflow: hidden;
+  flex: 1;
+  height: 0;
 }
 
 .pdf-preview-body {
   flex: 1;
   overflow: hidden;
   position: relative;
+  height: 100%;
 }
 
 .pdf-iframe {
   width: 100%;
-  height: 100%;
+  height: 90vh;
   border: none;
 }
 </style>

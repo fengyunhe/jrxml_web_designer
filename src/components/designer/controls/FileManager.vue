@@ -1,6 +1,6 @@
 <template>
   <div class="file-menu-container" ref="fileMenuContainer">
-    <button @click="toggleFileMenu" class="file-menu-button">{{ t('fileManager.title') }}</button>
+    <n-button @click="toggleFileMenu" type="default">{{ t('fileManager.title') }}</n-button>
     <div v-if="showFileMenu" class="file-menu-dropdown">
       <div class="menu-item" @click="createNewFile">
         <span class="menu-icon">📄</span>
@@ -34,14 +34,17 @@
                 class="filter-input"
                 @click.stop
               />
-              <button 
+              <n-button 
                 v-if="fileFilterText" 
                 @click.stop="fileFilterText = ''" 
-                class="clear-filter-btn"
+                type="default"
+                quaternary
+                circle
+                size="small"
                 :title="t('fileManager.searchFile')"
               >
                 ✕
-              </button>
+              </n-button>
             </div>
           </div>
           <div class="submenu-file-list">
@@ -57,22 +60,22 @@
                 <span class="file-date">{{ formatDate(file.lastModified) }}</span>
               </div>
               <div class="file-item-actions">
-                <button @click.stop="renameFileFromSubmenu(file)" class="btn-icon" :title="t('fileManager.rename')">
+                <n-button @click.stop="renameFileFromSubmenu(file)" type="default" quaternary circle size="small" :title="t('fileManager.rename')">
                   ✏️
-                </button>
-                <button @click.stop="deleteFileFromSubmenu(file)" class="btn-icon btn-danger" :title="t('fileManager.delete')">
+                </n-button>
+                <n-button @click.stop="deleteFileFromSubmenu(file)" type="error" quaternary circle size="small" :title="t('fileManager.delete')">
                   🗑️
-                </button>
+                </n-button>
               </div>
             </div>
             <div v-if="filteredFiles.length === 0" class="empty-state">
               <p>{{ t('fileManager.noFilesFound') }}</p>
-              <button @click.stop="createNewFile" class="btn-primary">{{ t('fileManager.createNewFile') }}</button>
+              <n-button @click.stop="createNewFile" type="primary">{{ t('fileManager.createNewFile') }}</n-button>
             </div>
           </div>
           <div class="submenu-footer">
-            <button @click.stop="createNewFile" class="btn-small btn-primary">{{ t('fileManager.newFile') }}</button>
-            <button @click.stop="openLocalFile" class="btn-small btn-secondary">{{ t('fileManager.openLocalFile') }}</button>
+            <n-button @click.stop="createNewFile" type="primary" size="small">{{ t('fileManager.newFile') }}</n-button>
+            <n-button @click.stop="openLocalFile" type="default" size="small">{{ t('fileManager.openLocalFile') }}</n-button>
           </div>
         </div>
       </div>
@@ -100,6 +103,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted } from 'vue';
 import { useI18n } from 'vue-i18n';
+import { NButton } from 'naive-ui';
 import notification from '../../../utils/notification';
 import { useDesignerFiles } from '@/composables/useDesignerFiles';
 import type { DesignerFile } from '@/types/designerFile';
@@ -474,28 +478,6 @@ onUnmounted(() => {
   gap: 4px;
 }
 
-.btn-icon {
-  width: 20px;
-  height: 20px;
-  border: none;
-  background: none;
-  cursor: pointer;
-  font-size: 12px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 2px;
-  transition: all 0.2s ease;
-}
-
-.btn-icon:hover {
-  background-color: rgba(0, 0, 0, 0.05);
-}
-
-.btn-icon.btn-danger:hover {
-  background-color: rgba(255, 77, 79, 0.1);
-}
-
 .submenu-footer {
   padding: 12px;
   border-top: 1px solid #e0e0e0;
@@ -504,41 +486,7 @@ onUnmounted(() => {
   background-color: #f9f9f9;
 }
 
-.btn-small {
-  padding: 4px 12px;
-  font-size: 12px;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.btn-primary {
-  background-color: #1890ff;
-  color: white;
-}
-
-.btn-primary:hover {
-  background-color: #40a9ff;
-}
-
-.btn-secondary {
-  background-color: #f5f5f5;
-  color: #333;
-  border: 1px solid #ddd;
-}
-
-.btn-secondary:hover {
-  background-color: #e0e0e0;
-}
-
-.empty-state {
-  text-align: center;
-  padding: 20px;
-  color: #999;
-}
-
-.empty-state .btn-primary {
+.empty-state :deep(.n-button) {
   margin-top: 8px;
 }
 </style>

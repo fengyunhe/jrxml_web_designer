@@ -1,18 +1,19 @@
 <template>
   <div class="zoom-controls">
-    <button @click="zoomOut" class="btn-zoom" :title="t('zoom.zoomOut')">-</button>
+    <n-button @click="zoomOut" type="default" quaternary circle size="small" :title="t('zoom.zoomOut')">-</n-button>
     <select v-model="localZoomLevel" @change="applyZoom" class="zoom-select">
       <option v-for="level in ZOOM_LEVELS" :key="level" :value="level">{{ Math.round(level * 100) }}%</option>
     </select>
-    <button @click="zoomIn" class="btn-zoom" :title="t('zoom.zoomIn')">+</button>
-    <button @click="resetZoom" class="btn-zoom" :title="t('zoom.resetZoom')">{{ Math.round(DEFAULT_ZOOM * 100) }}%</button>
-    <button @click="calculateOptimalZoom" class="btn-zoom" :title="t('zoom.fitWindow')">⊡</button>
+    <n-button @click="zoomIn" type="default" quaternary circle size="small" :title="t('zoom.zoomIn')">+</n-button>
+    <n-button @click="resetZoom" type="default" quaternary size="small" :title="t('zoom.resetZoom')">{{ Math.round(DEFAULT_ZOOM * 100) }}%</n-button>
+    <n-button @click="calculateOptimalZoom" type="default" quaternary circle size="small" :title="t('zoom.fitWindow')">⊡</n-button>
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
+import { NButton } from 'naive-ui';
 
 const { t } = useI18n();
 
@@ -145,25 +146,7 @@ function calculateOptimalZoom() {
   z-index: 1000;
 }
 
-.btn-zoom {
-  width: 28px;
-  height: 28px;
-  border: 1px solid #ddd;
-  background-color: #f5f5f5;
-  cursor: pointer;
-  font-size: 14px;
-  font-weight: bold;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 4px;
-  transition: all 0.2s ease;
-}
 
-.btn-zoom:hover {
-  background-color: #e0e0e0;
-  border-color: #999;
-}
 
 .zoom-select {
   width: 80px;

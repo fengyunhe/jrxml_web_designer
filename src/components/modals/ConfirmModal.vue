@@ -4,15 +4,16 @@
       <h3 class="confirm-title">{{ title }}</h3>
       <p class="confirm-message">{{ message }}</p>
       <div class="confirm-actions">
-        <button class="btn-cancel" @click="handleCancel">{{ t('modal.cancel') }}</button>
-        <button class="btn-confirm" @click="handleConfirm">{{ t('modal.confirm') }}</button>
-      </div>
+    <n-button type="default" @click="handleCancel">{{ t('modal.cancel') }}</n-button>
+    <n-button type="primary" @click="handleConfirm">{{ t('modal.confirm') }}</n-button>
+  </div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
 import { useI18n } from 'vue-i18n';
+import { NButton } from 'naive-ui';
 
 const { t } = useI18n();
 
@@ -88,31 +89,5 @@ const handleConfirm = () => {
   gap: 10px;
 }
 
-button {
-  padding: 8px 16px;
-  border-radius: 4px;
-  font-size: 14px;
-  cursor: pointer;
-  border: 1px solid transparent;
-  transition: all 0.2s;
-}
 
-.btn-cancel {
-  background-color: #f5f5f5;
-  color: #666;
-  border-color: #ddd;
-}
-
-.btn-cancel:hover {
-  background-color: #e8e8e8;
-}
-
-.btn-confirm {
-  background-color: #4a90e2;
-  color: white;
-}
-
-.btn-confirm:hover {
-  background-color: #3a80d2;
-}
 </style>

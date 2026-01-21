@@ -8,7 +8,7 @@
             : (props.isParameter ? t('elementLibrary.addReportParameter') : t('fieldManagement.addField')) 
           }}
         </h3>
-        <button class="close-button" @click="handleClose">×</button>
+        <n-button type="default" size="small" quaternary circle @click="handleClose">×</n-button>
       </div>
       <div class="modal-body">
         <form @submit.prevent="handleSubmit">
@@ -57,8 +57,8 @@
         </form>
       </div>
       <div class="modal-footer">
-        <button class="btn-secondary" @click="handleClose">{{ t('common.cancel') }}</button>
-        <button class="btn-primary" @click="handleSubmit">{{ t('common.save') }}</button>
+        <n-button type="default" @click="handleClose">{{ t('common.cancel') }}</n-button>
+        <n-button type="primary" @click="handleSubmit">{{ t('common.save') }}</n-button>
       </div>
     </div>
   </div>
@@ -67,6 +67,7 @@
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
+import { NButton } from 'naive-ui';
 
 const { t } = useI18n();
 
@@ -284,7 +285,7 @@ function handleSubmit() {
 .btn-secondary {
   padding: 8px 16px;
   border: 1px solid #ddd;
-  background-color: white;
+  background-color: #f5f5f5;
   color: #333;
   border-radius: 4px;
   cursor: pointer;
@@ -292,13 +293,13 @@ function handleSubmit() {
 }
 
 .btn-secondary:hover {
-  background-color: #f5f5f5;
+  background-color: #e0e0e0;
 }
 
 .btn-primary {
   padding: 8px 16px;
-  border: 1px solid #4a90e2;
-  background-color: #4a90e2;
+  border: 1px solid #1890ff;
+  background-color: #1890ff;
   color: white;
   border-radius: 4px;
   cursor: pointer;
@@ -306,7 +307,7 @@ function handleSubmit() {
 }
 
 .btn-primary:hover {
-  background-color: #3a80d2;
+  background-color: #40a9ff;
 }
 
 .btn-primary:disabled {

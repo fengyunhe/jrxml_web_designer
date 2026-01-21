@@ -12,8 +12,8 @@
         @keyup.esc="handleCancel"
       />
       <div class="input-actions">
-        <button class="btn-cancel" @click="handleCancel">取消</button>
-        <button class="btn-confirm" @click="handleConfirm">确定</button>
+        <n-button type="default" @click="handleCancel">取消</n-button>
+        <n-button type="primary" @click="handleConfirm">确定</n-button>
       </div>
     </div>
   </div>
@@ -21,6 +21,7 @@
 
 <script setup lang="ts">
 import { ref, watch, nextTick } from 'vue';
+import { NButton } from 'naive-ui';
 
 const props = defineProps({
   visible: {
@@ -129,31 +130,5 @@ const handleConfirm = () => {
   gap: 10px;
 }
 
-button {
-  padding: 8px 16px;
-  border-radius: 4px;
-  font-size: 14px;
-  cursor: pointer;
-  border: 1px solid transparent;
-  transition: all 0.2s;
-}
 
-.btn-cancel {
-  background-color: #f5f5f5;
-  color: #666;
-  border-color: #ddd;
-}
-
-.btn-cancel:hover {
-  background-color: #e8e8e8;
-}
-
-.btn-confirm {
-  background-color: #4a90e2;
-  color: white;
-}
-
-.btn-confirm:hover {
-  background-color: #3a80d2;
-}
 </style>

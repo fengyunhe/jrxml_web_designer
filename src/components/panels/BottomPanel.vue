@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
+import { NButton } from 'naive-ui';
 import ResizablePanel from './ResizablePanel.vue';
 import PdfPreviewModal from '../modals/PdfPreviewModal.vue';
 import {
@@ -411,11 +412,11 @@ const saveJRXML = (): void => {
       <div class="jrxml-container">
         <div class="jrxml-header">
           <div class="jrxml-actions">
-            <button @click="copyJRXML" class="btn-secondary btn-small">{{ t('bottomPanel.copy') }}</button>
-            <button @click="saveJRXML" class="btn-primary btn-small">{{ t('bottomPanel.apply') }}</button>
-            <button @click="regenerateJRXML" class="btn-secondary btn-small">{{ t('bottomPanel.regenerate') }}</button>
-            <button @click="generateJRXML" class="btn-primary btn-small">{{ t('bottomPanel.generateJRXML') }}</button>
-            <button @click="openPdfPreview" class="btn-preview btn-small">{{ t('bottomPanel.previewPDF') }}</button>
+            <n-button @click="copyJRXML" type="default" size="small">{{ t('bottomPanel.copy') }}</n-button>
+            <n-button @click="saveJRXML" type="primary" size="small">{{ t('bottomPanel.apply') }}</n-button>
+            <n-button @click="regenerateJRXML" type="default" size="small">{{ t('bottomPanel.regenerate') }}</n-button>
+            <n-button @click="generateJRXML" type="primary" size="small">{{ t('bottomPanel.generateJRXML') }}</n-button>
+            <n-button @click="openPdfPreview" type="info" size="small">{{ t('bottomPanel.previewPDF') }}</n-button>
           </div>
         </div>
         <div class="jrxml-content">
@@ -745,47 +746,5 @@ const saveJRXML = (): void => {
   outline: none;
 }
 
-.btn-small {
-  padding: 4px 8px;
-  font-size: 12px;
-}
 
-.btn-secondary {
-  background-color: #f0f0f0;
-  border: 1px solid #ddd;
-  color: #333;
-  border-radius: v-bind('UI_CONSTANTS.BORDER_RADIUS_SMALL + "px"');
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.btn-secondary:hover {
-  background-color: #e0e0e0;
-}
-
-.btn-primary {
-  background-color: #4a90e2;
-  border: 1px solid #4a90e2;
-  color: white;
-  border-radius: v-bind('UI_CONSTANTS.BORDER_RADIUS_SMALL + "px"');
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.btn-primary:hover {
-  background-color: #3a80d2;
-}
-
-.btn-preview {
-  background-color: #9b59b6;
-  border: 1px solid #9b59b6;
-  color: white;
-  border-radius: v-bind('UI_CONSTANTS.BORDER_RADIUS_SMALL + "px"');
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.btn-preview:hover {
-  background-color: #8e44ad;
-}
 </style>

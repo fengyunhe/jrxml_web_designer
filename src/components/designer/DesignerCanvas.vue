@@ -158,12 +158,34 @@
         :visible="selectionBox.visible"
       />
     </div>
-    <!-- 缩放控制组件 -->
-    <ZoomControls
-      :zoom-level="zoomLevel"
-      :paper-width="paperWidth"
-      @update:zoomLevel="emit('zoom-change', $event)"
-    />
+    <!-- 右侧控制面板容器 -->
+    <div class="right-side-controls">
+      <!-- 自动吸附开关 -->
+      <div class="snap-controls">
+        <n-space item-style="display: flex;" size="small" align="center">
+          <n-checkbox 
+            :checked="props.enableSnapToGrid" 
+            size="small"
+            @update:checked="emit('update:enableSnapToGrid', $event)"
+          >
+            {{ t('actions.snapToGrid') }}
+          </n-checkbox>
+          <n-checkbox 
+            :checked="props.enableSnapToAlignment" 
+            size="small"
+            @update:checked="emit('update:enableSnapToAlignment', $event)"
+          >
+            {{ t('actions.snapToAlignment') }}
+          </n-checkbox>
+        </n-space>
+      </div>
+      <!-- 缩放控制组件 -->
+      <ZoomControls
+        :zoom-level="zoomLevel"
+        :paper-width="paperWidth"
+        @update:zoomLevel="emit('zoom-change', $event)"
+      />
+    </div>
   </div>
 </template>
 
@@ -176,6 +198,7 @@ import { BAND_CONSTANTS } from '@/constants/constants';
 import { getBandDisplayName } from '@/utils/bandUtils';
 import type { Band } from '@/types';
 import { useI18n } from 'vue-i18n';
+import { NCheckbox, NSpace } from 'naive-ui';
 
 const { t } = useI18n();
 
@@ -200,6 +223,8 @@ interface Props {
   isDesignAreaFocused: boolean;
   uiConstants: any;
   outOfBoundsElements: Array<{bandIndex: number, elementIndex: number, element: any}>;
+  enableSnapToGrid: boolean;
+  enableSnapToAlignment: boolean;
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -221,7 +246,9 @@ const props = withDefaults(defineProps<Props>(), {
   alignmentLines: () => ({ horizontal: [], vertical: [] }),
   isDesignAreaFocused: false,
   uiConstants: () => ({}),
-  outOfBoundsElements: () => []
+  outOfBoundsElements: () => [],
+  enableSnapToGrid: false,
+  enableSnapToAlignment: false
 });
 
 // Emits
@@ -244,7 +271,9 @@ const emit = defineEmits([
   'clear-selection', // 添加清空选择事件
   'check-fields', // 添加字段检查事件
   'contextmenu', // 添加上下文菜单事件
-  'move-column' // 添加列移动事件
+  'move-column', // 添加列移动事件
+  'update:enableSnapToGrid', // 添加自动吸附到网格事件
+  'update:enableSnapToAlignment' // 添加自动吸附对齐事件
 ]);
 
 // 框选状态
@@ -797,5 +826,37 @@ onBeforeUnmount(() => {
 .vertical-ruler .label {
   left: 12px;
   transform: translateY(-50%);
+}
+
+/* 右侧控制面板容器 */
+.right-side-controls {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  background-color: white;
+  padding: 8px;
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.15);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+/* 自动吸附控制样式 */
+.snap-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* 缩放控制组件样式重置 */
+:deep(.zoom-controls) {
+  position: static !important;
+  box-shadow: none !important;
+  background-color: transparent !important;
+  border: none !important;
+  padding: 0 !important;
+  gap: 4px !important;
 }
 </style>

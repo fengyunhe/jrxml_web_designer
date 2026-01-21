@@ -4,8 +4,8 @@
       <div class="header-left">
         <h1>{{ t('app.title') }}</h1>
         <div class="header-undo-redo">
-          <button @click="undo" class="btn-secondary">{{ t('actions.undo') }}</button>
-          <button @click="redo" class="btn-secondary">{{ t('actions.redo') }}</button>
+          <n-button @click="undo" type="default">{{ t('actions.undo') }}</n-button>
+          <n-button @click="redo" type="default">{{ t('actions.redo') }}</n-button>
         </div>
       </div>
       <div class="header-actions">
@@ -21,27 +21,17 @@
           @update:currentFileId="currentFileId = $event"
         />
         
-        <button @click="toggleLeftPanel" class="btn-secondary">
+        <n-button @click="toggleLeftPanel" type="default">
           {{ showLeftPanel ? t('actions.hideLeftPanel') : t('actions.showLeftPanel') }}
-        </button>
-        <button @click="toggleRightPanel" class="btn-secondary">
+        </n-button>
+        <n-button @click="toggleRightPanel" type="default">
           {{ showRightPanel ? t('actions.hideRightPanel') : t('actions.showRightPanel') }}
-        </button>
-        <button @click="toggleBottomPanel" class="btn-secondary">
+        </n-button>
+        <n-button @click="toggleBottomPanel" type="default">
           {{ showBottomPanel ? t('actions.hideBottomPanel') : t('actions.showBottomPanel') }}
-        </button>
+        </n-button>
         
-        <!-- 自动吸附开关 -->
-        <div class="snap-toggle">
-          <label>
-            <input type="checkbox" v-model="enableSnapToGrid" />
-            {{ t('actions.snapToGrid') }}
-          </label>
-          <label>
-            <input type="checkbox" v-model="enableSnapToAlignment" />
-            {{ t('actions.snapToAlignment') }}
-          </label>
-        </div>
+
         
         <SplitButton 
           :actions="[
@@ -50,8 +40,8 @@
             { label: t('actions.setPreviewServer'), handler: openPreviewServerSettings, class: 'btn-primary' }
           ]" 
         />
-        <button @click="showReward = true" class="btn-secondary">{{ t('actions.donate') }}</button>
-        <button @click="showHelp = true" class="btn-secondary">{{ t('actions.help') }}</button>
+        <n-button @click="showReward = true" type="default">{{ t('actions.donate') }}</n-button>
+        <n-button @click="showHelp = true" type="default">{{ t('actions.help') }}</n-button>
         <LanguageSwitcher />
       </div>
     </div>
@@ -120,6 +110,8 @@
         :is-design-area-focused="isDesignAreaFocused"
         :out-of-bounds-elements="outOfBoundsElements"
         :ui-constants="UI_CONSTANTS"
+        :enable-snap-to-grid="enableSnapToGrid"
+        :enable-snap-to-alignment="enableSnapToAlignment"
         @set-design-area-focused="setDesignAreaFocused"
         @select-band="selectBand"
         @select-element="selectElement"
@@ -139,6 +131,8 @@
         @contextmenu="handleElementContextMenu"
         @reset-zoom="resetZoom"
         @move-column="handleMoveColumn"
+        @update:enable-snap-to-grid="enableSnapToGrid = $event"
+        @update:enable-snap-to-alignment="enableSnapToAlignment = $event"
       />
       
       <!-- 右侧属性面板 -->
@@ -147,7 +141,7 @@
         position="right"
         :initial-size="propertyPanelWidth"
         :min-size="200"
-        :max-size="600"
+        :max-size="700"
         :collapsible="false"
         @size-change="handlePropertyPanelSizeChange"
       >
@@ -246,6 +240,7 @@ import ZoomControls from './designer/controls/ZoomControls.vue';
 import ElementProperties from './designer/properties/ElementProperties.vue';
 import LanguageSwitcher from './common/LanguageSwitcher.vue';
 import SplitButton from './common/SplitButton.vue';
+import { NButton, NCheckbox, NSpace } from 'naive-ui';
 import type {Band, BandType, DesignElement, ReportField, ReportParameter, SelectedElementInfo, DraggingInfo, EditingElementInfo, FrameElement, TableDataset} from '../types';
 import type { DesignerFile } from '@/types/designerFile';
 import {computed, onMounted, onUnmounted, ref, watch} from 'vue';
@@ -4697,33 +4692,7 @@ const handleBandSelectionChange = (): void => {
   margin-right: 8px;
 }
 
-/* 自动吸附开关样式 */
-.snap-toggle {
-  display: flex;
-  align-items: center;
-  margin-right: 8px;
-  padding: 4px 8px;
-  background-color: #f5f5f5;
-  border-radius: 4px;
-  border: 1px solid #d9d9d9;
-}
 
-.snap-toggle label {
-  display: flex;
-  align-items: center;
-  font-size: 12px;
-  cursor: pointer;
-  margin: 0;
-  margin-right: 16px;
-}
-
-.snap-toggle label:last-child {
-  margin-right: 0;
-}
-
-.snap-toggle input[type="checkbox"] {
-  margin-right: 4px;
-}
 
 /* 缩放按钮样式 */
 .btn-zoom {
@@ -5373,3 +5342,4 @@ const handleBandSelectionChange = (): void => {
   flex-direction: column;
 }
 </style>
+  
