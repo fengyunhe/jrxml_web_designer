@@ -103,8 +103,8 @@ function parseComponentElement(componentElem: Element): any {
   const reportElement = componentElem.querySelector('reportElement');
   if (!reportElement) return null;
 
-  // 查找表格元素
-  const tableElem = componentElem.querySelector('jr\:table');
+  // 查找表格元素 - 使用tagName匹配，避免CSS选择器的命名空间问题
+  const tableElem = Array.from(componentElem.children).find(child => child.tagName === 'jr:table');
   if (!tableElem) return null;
 
   // 解析表格
@@ -134,9 +134,12 @@ function parseTableElement(tableElem: Element, reportElement: Element): any {
   const datasetRunElem = tableElem.querySelector('datasetRun');
   const subDataset = datasetRunElem?.getAttribute('subDataset') || 'tableDataset';
 
-  // 解析表格列
+  // 解析表格列 - 使用tagName匹配，避免CSS选择器的命名空间问题
   const columns: any[] = [];
-  tableElem.querySelectorAll('jr\:column').forEach((columnElem, index) => {
+  Array.from(tableElem.children).forEach((child, index) => {
+    if (child.tagName !== 'jr:column') return;
+    
+    const columnElem = child;
     const columnWidth = parseInt(columnElem.getAttribute('width') || '100');
     const columnUuid = columnElem.getAttribute('uuid') || crypto.randomUUID();
     
@@ -144,12 +147,12 @@ function parseTableElement(tableElem: Element, reportElement: Element): any {
     const columnNameProp = columnElem.querySelector('property[name="com.jaspersoft.studio.components.table.model.column.name"]');
     const columnName = columnNameProp?.getAttribute('value') || `Column${index + 1}`;
 
-    // 解析表头、列头和详情单元格
-    const tableHeaderElem = columnElem.querySelector('jr\:tableHeader');
-    const columnHeaderElem = columnElem.querySelector('jr\:columnHeader');
-    const tableFooterElem = columnElem.querySelector('jr\:tableFooter');
-    const columnFooterElem = columnElem.querySelector('jr\:columnFooter');
-    const detailCellElem = columnElem.querySelector('jr\:detailCell');
+    // 解析表头、列头和详情单元格 - 使用tagName匹配
+    const tableHeaderElem = Array.from(columnElem.children).find(cell => cell.tagName === 'jr:tableHeader');
+    const columnHeaderElem = Array.from(columnElem.children).find(cell => cell.tagName === 'jr:columnHeader');
+    const tableFooterElem = Array.from(columnElem.children).find(cell => cell.tagName === 'jr:tableFooter');
+    const columnFooterElem = Array.from(columnElem.children).find(cell => cell.tagName === 'jr:columnFooter');
+    const detailCellElem = Array.from(columnElem.children).find(cell => cell.tagName === 'jr:detailCell');
 
     const tableHeader = tableHeaderElem ? parseCellElement(tableHeaderElem) : {
       type: 'staticText',
