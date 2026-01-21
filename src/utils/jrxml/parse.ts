@@ -332,6 +332,20 @@ function parseTableElement(tableElem: Element, reportElement: Element): any {
     },
     columns
   };
+  
+  // 解析所有表格属性，保留XSD允许的所有属性
+  for (let i = 0; i < tableElem.attributes.length; i++) {
+    const attr = tableElem.attributes[i];
+    // 确保属性存在
+    if (attr) {
+      // 跳过命名空间和schemaLocation属性，因为它们在生成时会被硬编码
+      if (attr.name.startsWith('xmlns') || attr.name === 'xsi:schemaLocation') {
+        continue;
+      }
+      // 将属性添加到表格元素对象中
+      tableElement[attr.name] = attr.value;
+    }
+  }
 
   return tableElement;
 }

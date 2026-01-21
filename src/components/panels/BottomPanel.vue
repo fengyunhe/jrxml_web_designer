@@ -420,7 +420,7 @@ const saveJRXML = (): void => {
           </div>
         </div>
         <div class="jrxml-content">
-          <div v-if="localJrxmlContent" class="editor-container">
+          <div class="editor-container">
             <div class="line-numbers" ref="lineNumbersRef">{{ lineNumbers }}</div>
             <textarea 
               ref="textareaRef"
@@ -430,9 +430,10 @@ const saveJRXML = (): void => {
               @keyup.ctrl.s.prevent="saveJRXML"
               @scroll="syncScroll"
               @input="syncScroll" 
+              @contextmenu.stop="$event.stopPropagation()"
+              placeholder="{{ localJrxmlContent ? '' : t('bottomPanel.clickToGenerate') }}"
             ></textarea>
           </div>
-          <div v-else class="jrxml-placeholder">{{ t('bottomPanel.clickToGenerate') }}</div>
         </div>
       </div>
     </div>

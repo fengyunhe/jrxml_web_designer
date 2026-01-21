@@ -2652,6 +2652,16 @@ const saveJRXML = (): void => {
     // 更新参数定义
     reportParameters.value = parsedData.parameters || [];
     
+    // 更新子数据集
+    if (parsedData.datasets) {
+      subDatasets.value = parsedData.datasets.map(dataset => ({
+        uuid: crypto.randomUUID(),
+        name: dataset.name,
+        fields: dataset.fields,
+        parameters: dataset.parameters
+      }));
+    }
+    
     // 更新bands
     bands.value = parsedData.bands;
     
