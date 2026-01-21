@@ -1,73 +1,62 @@
 <template>
-  <div v-if="visible" class="modal-overlay">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h3>
-          {{ isEditing 
-            ? (props.isParameter ? t('elementLibrary.editParameter') : t('fieldManagement.editField')) 
-            : (props.isParameter ? t('elementLibrary.addReportParameter') : t('fieldManagement.addField')) 
-          }}
-        </h3>
-        <n-button type="default" size="small" quaternary circle @click="handleClose">×</n-button>
+  <BaseModal
+    :visible="visible"
+    :title="modalTitle"
+    @update:visible="handleVisibleChange"
+    @confirm="handleSubmit"
+  >
+    <form @submit.prevent="handleSubmit">
+      <div class="form-group">
+        <label for="fieldName">
+          {{ props.isParameter ? t('elementLibrary.parameterName') : t('fieldManagement.fieldName') }} *
+        </label>
+        <input 
+          type="text" 
+          id="fieldName" 
+          v-model="localField.name" 
+          required 
+          :placeholder="props.isParameter ? t('elementLibrary.parameterNamePlaceholder') : t('fieldManagement.placeholderName')"
+          class="form-input"
+        />
+        <div v-if="errors.name" class="error-message">{{ errors.name }}</div>
       </div>
-      <div class="modal-body">
-        <form @submit.prevent="handleSubmit">
-          <div class="form-group">
-            <label for="fieldName">
-              {{ props.isParameter ? t('elementLibrary.parameterName') : t('fieldManagement.fieldName') }} *
-            </label>
-            <input 
-              type="text" 
-              id="fieldName" 
-              v-model="localField.name" 
-              required 
-              :placeholder="props.isParameter ? t('elementLibrary.parameterNamePlaceholder') : t('fieldManagement.placeholderName')"
-              class="form-input"
-            />
-            <div v-if="errors.name" class="error-message">{{ errors.name }}</div>
-          </div>
-          <div class="form-group">
-            <label for="fieldClass">
-              {{ props.isParameter ? t('elementLibrary.parameterType') : t('fieldManagement.fieldClass') }} *
-            </label>
-            <select 
-              id="fieldClass" 
-              v-model="localField.class" 
-              required 
-              class="form-select"
-            >
-              <option value="">{{ props.isParameter ? t('elementLibrary.parameterTypePlaceholder') : t('fieldManagement.placeholderClass') }}</option>
-              <option v-for="type in allowedFieldTypes" :key="type.value" :value="type.value">
-                {{ type.label }}
-              </option>
-            </select>
-            <div v-if="errors.class" class="error-message">{{ errors.class }}</div>
-          </div>
-          <!-- 为报表参数添加默认值字段 -->
-          <div v-if="props.isParameter" class="form-group">
-            <label for="defaultValue">{{ t('elementLibrary.defaultValue') }}</label>
-            <input 
-              type="text" 
-              id="defaultValue" 
-              v-model="localField.defaultValue"
-              :placeholder="t('elementLibrary.defaultValuePlaceholder')"
-              class="form-input"
-            />
-          </div>
-        </form>
+      <div class="form-group">
+        <label for="fieldClass">
+          {{ props.isParameter ? t('elementLibrary.parameterType') : t('fieldManagement.fieldClass') }} *
+        </label>
+        <select 
+          id="fieldClass" 
+          v-model="localField.class" 
+          required 
+          class="form-select"
+        >
+          <option value="">{{ props.isParameter ? t('elementLibrary.parameterTypePlaceholder') : t('fieldManagement.placeholderClass') }}</option>
+          <option v-for="type in allowedFieldTypes" :key="type.value" :value="type.value">
+            {{ type.label }}
+          </option>
+        </select>
+        <div v-if="errors.class" class="error-message">{{ errors.class }}</div>
       </div>
-      <div class="modal-footer">
-        <n-button type="default" @click="handleClose">{{ t('common.cancel') }}</n-button>
-        <n-button type="primary" @click="handleSubmit">{{ t('common.save') }}</n-button>
+      <!-- 为报表参数添加默认值字段 -->
+      <div v-if="props.isParameter" class="form-group">
+        <label for="defaultValue">{{ t('elementLibrary.defaultValue') }}</label>
+        <input 
+          type="text" 
+          id="defaultValue" 
+          v-model="localField.defaultValue"
+          :placeholder="t('elementLibrary.defaultValuePlaceholder')"
+          class="form-input"
+        />
       </div>
-    </div>
-  </div>
+    </form>
+  </BaseModal>
 </template>
 
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { NButton } from 'naive-ui';
+import BaseModal from './BaseModal.vue';
 
 const { t } = useI18n();
 
@@ -99,6 +88,11 @@ const errors = ref<{ name?: string; class?: string }>({});
 
 // Computed properties
 const isEditing = computed(() => !!props.field);
+const modalTitle = computed(() => {
+  return isEditing.value 
+    ? (props.isParameter ? t('elementLibrary.editParameter') : t('fieldManagement.editField')) 
+    : (props.isParameter ? t('elementLibrary.addReportParameter') : t('fieldManagement.addField'));
+});
 
 // Allowed field types based on JRXML Schema
 const allowedFieldTypes = ref([
@@ -149,8 +143,8 @@ watch(
 );
 
 // Methods
-function handleClose() {
-  emit('update:visible', false);
+function handleVisibleChange(value: boolean) {
+  emit('update:visible', value);
 }
 
 function validateForm() {
@@ -177,68 +171,6 @@ function handleSubmit() {
 </script>
 
 <style scoped>
-.modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-color: rgba(0, 0, 0, 0.5);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1000;
-}
-
-.modal-content {
-  background-color: white;
-  border-radius: 8px;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-  width: 90%;
-  max-width: 500px;
-  max-height: 90vh;
-  overflow-y: auto;
-}
-
-.modal-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 16px 20px;
-  border-bottom: 1px solid #e0e0e0;
-}
-
-.modal-header h3 {
-  margin: 0;
-  font-size: 18px;
-  font-weight: 600;
-}
-
-.close-button {
-  background: none;
-  border: none;
-  font-size: 24px;
-  cursor: pointer;
-  color: #999;
-  padding: 0;
-  width: 30px;
-  height: 30px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 4px;
-  transition: all 0.2s;
-}
-
-.close-button:hover {
-  background-color: #f5f5f5;
-  color: #333;
-}
-
-.modal-body {
-  padding: 20px;
-}
-
 .form-group {
   margin-bottom: 20px;
 }
@@ -271,48 +203,5 @@ function handleSubmit() {
   color: #e74c3c;
   font-size: 12px;
   margin-top: 4px;
-}
-
-.modal-footer {
-  display: flex;
-  justify-content: flex-end;
-  gap: 10px;
-  padding: 16px 20px;
-  border-top: 1px solid #e0e0e0;
-  background-color: #f9f9f9;
-}
-
-.btn-secondary {
-  padding: 8px 16px;
-  border: 1px solid #ddd;
-  background-color: #f5f5f5;
-  color: #333;
-  border-radius: 4px;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.btn-secondary:hover {
-  background-color: #e0e0e0;
-}
-
-.btn-primary {
-  padding: 8px 16px;
-  border: 1px solid #1890ff;
-  background-color: #1890ff;
-  color: white;
-  border-radius: 4px;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.btn-primary:hover {
-  background-color: #40a9ff;
-}
-
-.btn-primary:disabled {
-  background-color: #a0c3f5;
-  border-color: #a0c3f5;
-  cursor: not-allowed;
 }
 </style>

@@ -173,17 +173,5 @@ const handleChildCheckFields = (fields: string[]) => {
   border-color: #a0a0a0;
 }
 
-.frame-placeholder {
-  width: 100%;
-  height: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
 
-.frame-label {
-  font-size: 10px;
-  color: #ccc;
-  user-select: none;
-}
 </style>

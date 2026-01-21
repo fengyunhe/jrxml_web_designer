@@ -302,20 +302,7 @@ onUnmounted(() => {
   display: inline-block;
 }
 
-.file-menu-button {
-  padding: 0.3rem 0.8rem;
-  background-color: #6c757d;
-  color: white;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 0.85rem;
-  transition: all 0.2s ease;
-}
 
-.file-menu-button:hover {
-  background-color: #5a6268;
-}
 
 .file-menu-dropdown {
   position: absolute;
@@ -408,27 +395,7 @@ onUnmounted(() => {
   box-sizing: border-box;
 }
 
-.clear-filter-btn {
-  position: absolute;
-  right: 4px;
-  top: 50%;
-  transform: translateY(-50%);
-  background: none;
-  border: none;
-  cursor: pointer;
-  font-size: 14px;
-  color: #999;
-  padding: 0;
-  width: 20px;
-  height: 20px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
 
-.clear-filter-btn:hover {
-  color: #333;
-}
 
 .submenu-file-list {
   max-height: 250px;

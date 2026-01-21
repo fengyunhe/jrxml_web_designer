@@ -183,13 +183,5 @@ button {
   background-color: #40a9ff;
 }
 
-.btn-secondary {
-  background-color: #f5f5f5;
-  color: #333;
-  border: 1px solid #ddd;
-}
 
-.btn-secondary:hover {
-  background-color: #e0e0e0;
-}
 </style>

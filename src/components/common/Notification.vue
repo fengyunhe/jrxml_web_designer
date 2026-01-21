@@ -105,11 +105,7 @@ onUnmounted(() => {
   color: #ff4d4f;
 }
 
-.notification.info {
-  background-color: #e6f7ff;
-  border: 1px solid #91d5ff;
-  color: #1890ff;
-}
+
 
 .notification-content {
   display: flex;

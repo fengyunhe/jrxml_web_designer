@@ -507,27 +507,7 @@ function handleConfirmDelete(): void {
   box-sizing: border-box;
 }
 
-.clear-filter-btn {
-  position: absolute;
-  right: 4px;
-  top: 50%;
-  transform: translateY(-50%);
-  background: none;
-  border: none;
-  cursor: pointer;
-  font-size: 14px;
-  color: #999;
-  padding: 0;
-  width: 20px;
-  height: 20px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
 
-.clear-filter-btn:hover {
-  color: #333;
-}
 
 .report-elements-list {
   max-height: 200px;
