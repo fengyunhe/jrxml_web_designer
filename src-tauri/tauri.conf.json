@@ -1,7 +1,7 @@
 {
   "$schema": "../node_modules/@tauri-apps/cli/config.schema.json",
   "productName": "JRXML Report Designer",
-  "version": "0.4.1",
+  "version": "0.4.2",
   "identifier": "cn.fiergod.jrxml.designer",
   "build": {
     "frontendDist": "../dist",

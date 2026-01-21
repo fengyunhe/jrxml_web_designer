@@ -29,14 +29,26 @@ const rl = readline.createInterface({
   output: process.stdout
 });
 
-rl.question('请输入新版本号 (格式: x.y.z): ', (newVersion) => {
+rl.question('请输入新版本号 (格式: x.y.z, 直接回车默认递增patch版本): ', (userInput) => {
   rl.close();
   
-  // 验证版本号格式
-  const versionRegex = /^\d+\.\d+\.\d+$/;
-  if (!versionRegex.test(newVersion)) {
-    console.error('错误: 版本号格式不正确，应为 x.y.z 格式');
-    process.exit(1);
+  let newVersion;
+  
+  // 如果用户没有输入版本号，默认递增patch版本
+  if (!userInput.trim()) {
+    console.log('未输入版本号，默认递增patch版本...');
+    const versionParts = currentVersion.split('.').map(Number);
+    versionParts[2] += 1;
+    newVersion = versionParts.join('.');
+    console.log(`默认版本号: ${newVersion}`);
+  } else {
+    // 验证用户输入的版本号格式
+    const versionRegex = /^\d+\.\d+\.\d+$/;
+    if (!versionRegex.test(userInput)) {
+      console.error('错误: 版本号格式不正确，应为 x.y.z 格式');
+      process.exit(1);
+    }
+    newVersion = userInput;
   }
   
   console.log(`\n开始发布新版本: ${newVersion}`);
