@@ -351,6 +351,6 @@
   },
   "designer": {
     "relativeToBand": "相对于Band",
-    "coordinates": "{{ bandName }}X: {{ x }}, Y: {{ y }} (相对于Band)"
+    "coordinates": "{bandName}X: {x}, Y: {y} (相对于Band)"
   }
 }
