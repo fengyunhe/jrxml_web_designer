@@ -1,7 +1,7 @@
 {
   "name": "pdf_template_designer",
   "private": true,
-  "version": "0.4.0",
+  "version": "0.4.1",
   "description": "A professional JRXML report designer.",
   "license": "MIT",
   "type": "module",
@@ -13,6 +13,7 @@
     "test:watch": "vitest",
     "test:ui": "vitest --ui",
     "update-changelog": "echo '## [Unreleased]\n\n### Added\n- ' >> CHANGELOG.md && echo '请手动编辑CHANGELOG.md文件添加具体变更内容'",
+    "release": "node scripts/release.js",
     "tauri:dev": "tauri dev",
     "tauri:build": "tauri build"
   },

@@ -1526,45 +1526,6 @@ function setRectangleBorderColor(value: string) {
   color: #999;
 }
 
-.element-tabs {
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  overflow: hidden;
-}
-
-.element-tab-navigation {
-  display: flex;
-  border-bottom: 1px solid #ddd;
-  background-color: #f9f9f9;
-}
-
-.element-tab-button {
-  padding: 8px 16px;
-  border: none;
-  background: none;
-  cursor: pointer;
-  font-size: 12px;
-  font-weight: 500;
-  color: #666;
-  border-bottom: 2px solid transparent;
-  transition: all 0.2s ease;
-}
-
-.element-tab-button:hover {
-  color: #1890ff;
-}
-
-.element-tab-button.active {
-  color: #1890ff;
-  border-bottom-color: #1890ff;
-  background-color: white;
-}
-
-.element-tab-content {
-  padding: 16px;
-  background-color: white;
-}
-
 .box-section {
   margin-bottom: 16px;
   padding: 12px;

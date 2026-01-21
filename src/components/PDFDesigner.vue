@@ -633,6 +633,67 @@ const handleSubDatasetSave = (dataset: TableDataset) => {
   showSubDatasetModal.value = false;
 };
 
+// 检查并创建默认表格数据集
+const checkAndCreateDefaultTableDataset = (datasetName: string = 'tableDataset') => {
+  // 检查是否已存在同名数据集
+  const existingDataset = subDatasets.value.find((d: TableDataset) => d.name === datasetName);
+  if (existingDataset) {
+    return;
+  }
+  
+  // 保存状态到历史记录
+  saveStateToHistory();
+  
+  // 创建默认数据集
+  const defaultDataset: TableDataset = {
+    uuid: crypto.randomUUID(),
+    name: datasetName,
+    fields: [
+      { name: 'FIELD_NAME', class: 'java.lang.String' },
+      { name: 'FIELD_NAME2', class: 'java.lang.String' },
+      { name: 'FIELD_NAME3', class: 'java.lang.String' }
+    ]
+  };
+  
+  // 添加到子数据集列表
+  subDatasets.value.push(defaultDataset);
+  
+  // 更新JRXML
+  updateJRXML();
+};
+
+// 元素创建事件处理函数
+const handleElementCreated = (element: DesignElement, bandIndex: number, elementIndex: number, parentFrameIndex?: number) => {
+  // 触发元素创建事件，提供必要的参数
+  console.log('元素已创建:', {
+    element,
+    bandIndex,
+    elementIndex,
+    parentFrameIndex,
+    position: {
+      x: element.x,
+      y: element.y,
+      width: element.width,
+      height: element.height
+    }
+  });
+  
+  // 可以在这里添加其他元素创建后的处理逻辑
+  // 例如：根据元素类型执行特定的初始化操作
+  switch (element.type) {
+    case 'table':
+      // 如果是表格元素，检查并创建默认数据集
+      const tableElement = element as any;
+      const datasetName = tableElement.dataset?.name || 'tableDataset';
+      checkAndCreateDefaultTableDataset(datasetName);
+      break;
+    case 'textField':
+      // 文本字段元素的初始化逻辑
+      break;
+    // 其他元素类型的初始化逻辑
+  }
+};
+
 // 历史记录栈 - 用于撤销功能
 type HistoryState = {
   reportProperties: typeof reportProperties.value;
@@ -907,6 +968,9 @@ const handleElementDoubleClick = (element: any) => {
   const newElementIndex = targetBand.elements.length - 1;
   selectElement(lastClickedBandIndex.value, newElementIndex);
   
+  // 触发元素创建事件
+  handleElementCreated(newElement, lastClickedBandIndex.value, newElementIndex);
+  
   // 更新JRXML
   updateJRXML();
   
@@ -1020,7 +1084,11 @@ const handleDrop = (event: DragEvent) => {
          
          frame.elements.push(newElement);
          // 选中新添加的元素，注意传递 parentFrameIndex
-         selectElement(bandIndex, frame.elements.length - 1, false, targetFrameIndex);
+         const frameElementIndex = frame.elements.length - 1;
+         selectElement(bandIndex, frameElementIndex, false, targetFrameIndex);
+         
+         // 触发元素创建事件，添加到Frame时需要传递parentFrameIndex
+         handleElementCreated(newElement, bandIndex, frameElementIndex, targetFrameIndex);
          
       } else {
         // 添加到 Band (原有逻辑)
@@ -1045,7 +1113,11 @@ const handleDrop = (event: DragEvent) => {
         targetBand.elements.push(newElement);
         
         // 选中刚添加的元素
-        selectElement(bandIndex, targetBand.elements.length - 1);
+        const newElementIndex = targetBand.elements.length - 1;
+        selectElement(bandIndex, newElementIndex);
+        
+        // 触发元素创建事件
+        handleElementCreated(newElement, bandIndex, newElementIndex);
       }
       
       // 更新JRXML
@@ -2024,6 +2096,21 @@ const toggleBottomPanel = () => {
 const handleLeftPanelSizeChange = (newSize: number) => {
   leftPanelWidth.value = newSize;
 };
+
+// 暴露给测试的属性和方法
+defineExpose({
+  bands,
+  reportProperties,
+  createNewFile,
+  loadFile,
+  loadFromLocalStorageWrapper,
+  lastClickedBandIndex,
+  handleElementDoubleClick,
+  selectElement,
+  deleteElement,
+  undo,
+  redo
+});
 
 // 处理属性面板大小变化
 const handlePropertyPanelSizeChange = (newSize: number) => {

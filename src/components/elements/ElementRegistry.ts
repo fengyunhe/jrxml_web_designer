@@ -251,7 +251,8 @@ export class ElementRegistry {
           tableHeader: 'Table_TH',
           columnHeader: 'Table_CH',
           detail: 'Table_TD'
-        }
+        },
+        whenNoDataType: 'AllSectionsNoDetail'
       }
     });
   }
