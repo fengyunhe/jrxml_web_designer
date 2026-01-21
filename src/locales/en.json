@@ -259,7 +259,17 @@
       "NoDataCell": "No Data Cell",
       "AllSectionsNoDetail": "All Sections No Detail"
     },
-    "default": "Default"
+    "default": "Default",
+    "basic": "Basic",
+    "textStyle": "Text Style",
+    "borderStyle": "Border Style",
+    "headerTextStyle": "Header Text Style",
+    "detailTextStyle": "Detail Text Style",
+    "headerBorder": "Header Border",
+    "detailBorder": "Detail Cell Border",
+    "columnHeader": "Column Header",
+    "forecolor": "Text Color",
+    "backcolor": "Background Color"
   },
   "bottomPanel": {
     "pageSettings": "Page Settings",

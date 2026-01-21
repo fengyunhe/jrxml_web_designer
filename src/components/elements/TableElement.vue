@@ -52,7 +52,7 @@
             ▶
           </n-button>
           
-          <div v-if="column.tableHeader" class="cell-content">
+          <div v-if="column.tableHeader" class="cell-content" :style="getCellStyle(column.tableHeader)">
             <!-- 渲染表头内容 -->
             <template v-if="column.tableHeader.type === 'staticText'">
               <div class="static-text">{{ column.tableHeader.text }}</div>
@@ -74,7 +74,7 @@
           :style="{ width: `${column.width}px` }"
           class="table-column column-header-cell"
         >
-          <div class="cell-content">
+          <div class="cell-content" :style="getColumnHeaderStyle(column)">
             <!-- 渲染列头内容，优先显示column.name -->
             <div class="column-name">{{ column.name }}</div>
           </div>
@@ -88,7 +88,7 @@
           :style="{ width: `${column.width}px` }"
           class="table-column detail-cell"
         >
-          <div v-if="column.detailCell" class="cell-content">
+          <div v-if="column.detailCell" class="cell-content" :style="getCellStyle(column.detailCell)">
             <!-- 渲染详情内容 -->
             <template v-if="column.detailCell.type === 'staticText'">
               <div class="static-text">{{ column.detailCell.text }}</div>
@@ -250,6 +250,61 @@ const handleResizeEnd = () => {
   isResizing.value = false;
   emit('resizeEnd');
 };
+
+// 获取单元格样式
+function getCellStyle(cell: any) {
+  if (!cell) return {};
+  
+  const styles: any = {};
+  
+  // 文本样式
+  if (cell.fontSize) {
+    styles.fontSize = `${cell.fontSize}px`;
+  }
+  if (cell.forecolor) {
+    styles.color = cell.forecolor;
+  }
+  if (cell.isBold) {
+    styles.fontWeight = 'bold';
+  }
+  if (cell.isItalic) {
+    styles.fontStyle = 'italic';
+  }
+  if (cell.isUnderline) {
+    styles.textDecoration = 'underline';
+  }
+  if (cell.backcolor) {
+    styles.backgroundColor = cell.backcolor;
+  }
+  
+  // 边框样式
+  const borderWidth = cell.borderWidth || 0;
+  const borderStyle = cell.borderStyle || 'solid';
+  const borderColor = cell.borderColor || '#000000';
+  
+  if (borderWidth > 0) {
+    styles.border = `${borderWidth}px ${borderStyle} ${borderColor}`;
+  }
+  
+  return styles;
+};
+
+// 获取列头样式
+function getColumnHeaderStyle(column: any) {
+  if (!column) return {};
+  
+  // 如果column.header有样式属性，使用它
+  if (column.columnHeader) {
+    return getCellStyle(column.columnHeader);
+  }
+  
+  // 否则返回默认样式
+  return {
+    backgroundColor: '#e6e6e6',
+    fontWeight: '500',
+    color: '#333'
+  };
+};
 </script>
 
 <style scoped>
@@ -275,43 +330,20 @@ const handleResizeEnd = () => {
   border-bottom: 1px solid #ccc;
 }
 
-.table-header {
-  background-color: #f0f0f0;
-}
-
-.column-header {
-  background-color: #e6e6e6;
-}
-
-.detail-row {
-  background-color: #ffffff;
-}
-
-.column-footer {
-  background-color: #e6e6e6;
-  font-style: italic;
-}
-
+.table-header,
+.column-header,
+.detail-row,
+.column-footer,
 .table-footer {
-  background-color: #f0f0f0;
-  font-weight: bold;
+  display: flex;
+  height: 30px;
 }
 
 .table-column {
   display: flex;
   align-items: center;
   justify-content: center;
-  border-right: 1px solid #ccc;
   box-sizing: border-box;
-}
-
-.table-column:last-child {
-  border-right: none;
-}
-
-.table-header-cell {
-  font-weight: bold;
-  color: #006699;
 }
 
 .cell-content {
@@ -325,6 +357,12 @@ const handleResizeEnd = () => {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  font-family: inherit;
+  font-size: inherit;
+  font-weight: inherit;
+  font-style: inherit;
+  color: inherit;
+  background-color: transparent;
 }
 
 .cell-content.empty {
@@ -332,18 +370,18 @@ const handleResizeEnd = () => {
   font-style: italic;
 }
 
-.static-text {
-  color: #333;
+.static-text,
+.text-field,
+.column-name {
+  font-family: inherit;
+  font-size: inherit;
+  font-weight: inherit;
+  font-style: inherit;
+  color: inherit;
 }
 
 .text-field {
-  color: #0066cc;
   font-family: monospace;
-}
-
-.column-name {
-  color: #333;
-  font-weight: 500;
 }
 
 /* 列顺序控制按钮样式 */

@@ -392,6 +392,7 @@ function generateStaticTextXML(element: any): string {
     xml += ` backcolor="${element.backcolor}"`;
   }
   
+  // 使用元素设置的模式，不再自动覆盖
   if (element.mode) {
     xml += ` mode="${element.mode}"`;
   }
@@ -500,10 +501,15 @@ function generateTextFieldXML(element: any): string {
     xml += ` uuid="${element.uuid}"`;
   }
   
+  if (element.forecolor) {
+    xml += ` forecolor="${element.forecolor}"`;
+  }
+  
   if (element.backcolor) {
     xml += ` backcolor="${element.backcolor}"`;
   }
   
+  // 使用元素设置的模式，不再自动覆盖
   if (element.mode) {
     xml += ` mode="${element.mode}"`;
   }
@@ -636,6 +642,7 @@ function generateRectangleXML(element: any): string {
     xml += ` backcolor="${element.backcolor}"`;
   }
   
+  // 使用元素设置的模式，不再自动覆盖
   if (element.mode) {
     xml += ` mode="${element.mode}"`;
   }
@@ -686,6 +693,7 @@ function generateEllipseXML(element: any): string {
     xml += ` backcolor="${element.backcolor}"`;
   }
   
+  // 使用元素设置的模式，不再自动覆盖
   if (element.mode) {
     xml += ` mode="${element.mode}"`;
   }
@@ -735,6 +743,7 @@ function generateFrameXML(element: any): string {
     xml += ` backcolor="${element.backcolor}"`;
   }
   
+  // 使用元素设置的模式，不再自动覆盖
   if (element.mode) {
     xml += ` mode="${element.mode}"`;
   }

@@ -175,76 +175,389 @@
                       ✕
                     </n-button>
                   </div>
-                  <div class="table-column-properties">
-                    <div class="form-group small">
-                      <label>{{ t('properties.columnWidth') }}</label>
-                      <input 
-                        v-model.number="column.width" 
-                        type="number" 
-                        min="10"
-                        step="1"
-                        class="small-input"
-                        @change="updateColumnWidth(column, Number(index)); emit('update-jrxml')"
-                      />
+                  <n-tabs type="card" size="small" style="font-size: 11px;">
+                  <!-- 基本属性标签页 -->
+                  <n-tab-pane name="basic" :tab="t('properties.basic')">
+                    <div class="table-column-properties">
+                      <div class="form-group small full-width">
+                        <label>{{ t('properties.tableHeader') }}</label>
+                        <input 
+                          v-model="column.tableHeader.text" 
+                          type="text" 
+                          class="small-input"
+                          :placeholder="t('properties.tableHeaderPlaceholder')"
+                          @change="emit('update-jrxml')"
+                        />
+                      </div>
+                      <div class="form-group small">
+                        <label>{{ t('properties.columnName') }}</label>
+                        <input 
+                          v-model="column.name" 
+                          type="text" 
+                          class="small-input"
+                          @change="emit('update-jrxml')"
+                        />
+                      </div>
+                      <div class="form-group small">
+                        <label>{{ t('properties.columnWidth') }}</label>
+                        <input 
+                          v-model.number="column.width" 
+                          type="number" 
+                          min="10"
+                          step="1"
+                          class="small-input"
+                          @change="updateColumnWidth(column, Number(index)); emit('update-jrxml')"
+                        />
+                      </div>
+                      <div class="form-group small full-width">
+                        <label>{{ t('properties.fieldExpression') }}</label>
+                        <input 
+                          v-model="column.detailCell.expression" 
+                          type="text" 
+                          class="small-input"
+                          :placeholder="t('properties.expressionHint', { fieldHolder: '$F{fieldName}' })"
+                          @change="emit('update-jrxml')"
+                        />
+                      </div>
+                      
+                      <div class="form-group small full-width">
+                        <label>{{ t('properties.tableFooter') }}</label>
+                        <input 
+                          :value="column.tableFooter?.expression || ''"
+                          @input="(e) => {
+                            initTableCell(column, 'tableFooter');
+                            column.tableFooter.expression = (e.target as HTMLInputElement).value;
+                            emit('update-jrxml');
+                          }"
+                          type="text" 
+                          class="small-input"
+                          :placeholder="t('properties.tableFooterPlaceholder')"
+                        />
+                      </div>
+                      <div class="form-group small full-width">
+                        <label>{{ t('properties.columnFooter') }}</label>
+                        <input 
+                          :value="column.columnFooter?.expression || ''"
+                          @input="(e) => {
+                            initTableCell(column, 'columnFooter');
+                            column.columnFooter.expression = (e.target as HTMLInputElement).value;
+                            emit('update-jrxml');
+                          }"
+                          type="text" 
+                          class="small-input"
+                          :placeholder="t('properties.columnFooterPlaceholder')"
+                        />
+                      </div>
                     </div>
-                    <div class="form-group small">
-                      <label>{{ t('properties.columnName') }}</label>
-                      <input 
-                        v-model="column.name" 
-                        type="text" 
-                        class="small-input"
-                        @change="emit('update-jrxml')"
-                      />
+                  </n-tab-pane>
+                  
+                  <!-- 文本样式标签页 -->
+                  <n-tab-pane name="textStyle" :tab="t('properties.textStyle')">
+                    <div class="table-column-properties">
+                      <!-- 表头文本样式 -->
+                      <div class="form-group small full-width">
+                        <label>{{ t('properties.headerTextStyle') }}</label>
+                        <div class="text-style-controls">
+                          <div class="form-group small" style="flex: 1;">
+                            <label style="font-size: 10px;">{{ t('properties.fontSize') }}</label>
+                            <input 
+                              v-model.number="column.tableHeader.fontSize" 
+                              type="number" 
+                              min="6"
+                              max="72"
+                              step="1"
+                              class="small-input"
+                              @change="emit('update-jrxml')"
+                            />
+                          </div>
+                          <div class="form-group small" style="flex: 1;">
+                            <label style="font-size: 10px;">{{ t('properties.forecolor') }}</label>
+                            <input 
+                              v-model="column.tableHeader.forecolor" 
+                              type="color" 
+                              class="small-input color-picker"
+                              @change="emit('update-jrxml')"
+                              style="height: 20px; padding: 0;"
+                            />
+                          </div>
+                        </div>
+                      </div>
+                      
+                      <!-- 表头背景色 -->
+                      <div class="form-group small full-width">
+                        <label style="font-size: 10px;">{{ t('properties.backgroundColor') }}</label>
+                        <ColorPickerWithOpacity 
+                          v-model="column.tableHeader.backcolor"
+                          v-model:mode="column.tableHeader.mode"
+                          @update:modelValue="emit('update-jrxml')"
+                          @update:mode="emit('update-jrxml')"
+                        />
+                      </div>
+                       
+                      <div class="checkbox-group" style="gap: 12px; margin-bottom: 6px;">
+                        <label style="font-size: 11px;">
+                          <input v-model="column.tableHeader.isBold" type="checkbox" @change="emit('update-jrxml')" />{{ t('properties.bold') }}
+                        </label>
+                        <label style="font-size: 11px;">
+                          <input v-model="column.tableHeader.isItalic" type="checkbox" @change="emit('update-jrxml')" />{{ t('properties.italic') }}
+                        </label>
+                        <label style="font-size: 11px;">
+                          <input v-model="column.tableHeader.isUnderline" type="checkbox" @change="emit('update-jrxml')" />{{ t('properties.underline') }}
+                        </label>
+                        <label style="font-size: 11px;">
+                          <input v-model="column.tableHeader.mode" type="checkbox" true-value="Opaque" false-value="Transparent" @change="emit('update-jrxml')" />{{ t('properties.opaque') }}
+                        </label>
+                      </div>
+                      
+                      <!-- 列头文本样式 -->
+                      <div class="form-group small full-width">
+                        <label>{{ t('properties.columnHeader') }}</label>
+                        <div class="text-style-controls">
+                          <div class="form-group small" style="flex: 1;">
+                            <label style="font-size: 10px;">{{ t('properties.fontSize') }}</label>
+                            <input 
+                              v-model.number="column.columnHeader.fontSize" 
+                              type="number" 
+                              min="6"
+                              max="72"
+                              step="1"
+                              class="small-input"
+                              @change="emit('update-jrxml')"
+                            />
+                          </div>
+                          <div class="form-group small" style="flex: 1;">
+                            <label style="font-size: 10px;">{{ t('properties.forecolor') }}</label>
+                            <input 
+                              v-model="column.columnHeader.forecolor" 
+                              type="color" 
+                              class="small-input color-picker"
+                              @change="emit('update-jrxml')"
+                              style="height: 20px; padding: 0;"
+                            />
+                          </div>
+                        </div>
+                      </div>
+                      
+                      <!-- 列头背景色 -->
+                      <div class="form-group small full-width">
+                        <label style="font-size: 10px;">{{ t('properties.backgroundColor') }}</label>
+                        <ColorPickerWithOpacity 
+                          v-model="column.columnHeader.backcolor"
+                          v-model:mode="column.columnHeader.mode"
+                          @update:modelValue="emit('update-jrxml')"
+                          @update:mode="emit('update-jrxml')"
+                        />
+                      </div>
+                       
+                      <div class="checkbox-group" style="gap: 12px; margin-bottom: 6px;">
+                        <label style="font-size: 11px;">
+                          <input v-model="column.columnHeader.isBold" type="checkbox" @change="emit('update-jrxml')" />{{ t('properties.bold') }}
+                        </label>
+                        <label style="font-size: 11px;">
+                          <input v-model="column.columnHeader.isItalic" type="checkbox" @change="emit('update-jrxml')" />{{ t('properties.italic') }}
+                        </label>
+                        <label style="font-size: 11px;">
+                          <input v-model="column.columnHeader.isUnderline" type="checkbox" @change="emit('update-jrxml')" />{{ t('properties.underline') }}
+                        </label>
+                        <label style="font-size: 11px;">
+                          <input v-model="column.columnHeader.mode" type="checkbox" true-value="Opaque" false-value="Transparent" @change="emit('update-jrxml')" />{{ t('properties.opaque') }}
+                        </label>
+                      </div>
+                      
+                      <!-- 详情单元格文本样式 -->
+                      <div class="form-group small full-width">
+                        <label>{{ t('properties.detailTextStyle') }}</label>
+                        <div class="text-style-controls">
+                          <div class="form-group small" style="flex: 1;">
+                            <label style="font-size: 10px;">{{ t('properties.fontSize') }}</label>
+                            <input 
+                              v-model.number="column.detailCell.fontSize" 
+                              type="number" 
+                              min="6"
+                              max="72"
+                              step="1"
+                              class="small-input"
+                              @change="emit('update-jrxml')"
+                            />
+                          </div>
+                          <div class="form-group small" style="flex: 1;">
+                            <label style="font-size: 10px;">{{ t('properties.forecolor') }}</label>
+                            <input 
+                              v-model="column.detailCell.forecolor" 
+                              type="color" 
+                              class="small-input color-picker"
+                              @change="emit('update-jrxml')"
+                              style="height: 20px; padding: 0;"
+                            />
+                          </div>
+                        </div>
+                      </div>
+                      
+                      <!-- 详情单元格背景色 -->
+                      <div class="form-group small full-width">
+                        <label style="font-size: 10px;">{{ t('properties.backgroundColor') }}</label>
+                        <ColorPickerWithOpacity 
+                          v-model="column.detailCell.backcolor"
+                          v-model:mode="column.detailCell.mode"
+                          @update:modelValue="emit('update-jrxml')"
+                          @update:mode="emit('update-jrxml')"
+                        />
+                      </div>
+                       
+                      <div class="checkbox-group" style="gap: 12px; margin-bottom: 6px;">
+                        <label style="font-size: 11px;">
+                          <input v-model="column.detailCell.isBold" type="checkbox" @change="emit('update-jrxml')" />{{ t('properties.bold') }}
+                        </label>
+                        <label style="font-size: 11px;">
+                          <input v-model="column.detailCell.isItalic" type="checkbox" @change="emit('update-jrxml')" />{{ t('properties.italic') }}
+                        </label>
+                        <label style="font-size: 11px;">
+                          <input v-model="column.detailCell.isUnderline" type="checkbox" @change="emit('update-jrxml')" />{{ t('properties.underline') }}
+                        </label>
+                        <label style="font-size: 11px;">
+                          <input v-model="column.detailCell.mode" type="checkbox" true-value="Opaque" false-value="Transparent" @change="emit('update-jrxml')" />{{ t('properties.opaque') }}
+                        </label>
+                      </div>
                     </div>
-                    <div class="form-group small full-width">
-                      <label>{{ t('properties.fieldExpression') }}</label>
-                      <input 
-                        v-model="column.detailCell.expression" 
-                        type="text" 
-                        class="small-input"
-                        :placeholder="t('properties.expressionHint', { fieldHolder: '$F{fieldName}' })"
-                        @change="emit('update-jrxml')"
-                      />
+                  </n-tab-pane>
+                  
+                  <!-- 边框样式标签页 -->
+                  <n-tab-pane name="borderStyle" :tab="t('properties.borderStyle')">
+                    <div class="table-column-properties">
+                      <!-- 表头边框样式 -->
+                      <div class="form-group small full-width">
+                        <label>{{ t('properties.headerBorder') }}</label>
+                        <div class="border-controls">
+                          <div class="form-group small" style="flex: 1;">
+                            <label style="font-size: 10px;">{{ t('properties.style') }}</label>
+                            <select 
+                              v-model="column.tableHeader.borderStyle" 
+                              class="small-input"
+                              @change="emit('update-jrxml')"
+                              style="height: 20px; padding: 0 4px;"
+                            >
+                              <option value="">{{ t('properties.none') }}</option>
+                              <option value="Solid">{{ t('properties.solid') }}</option>
+                              <option value="Dashed">{{ t('properties.dashed') }}</option>
+                              <option value="Dotted">{{ t('properties.dotted') }}</option>
+                              <option value="Double">{{ t('properties.double') }}</option>
+                            </select>
+                          </div>
+                          <div class="form-group small" style="flex: 0 0 60px;">
+                            <label style="font-size: 10px;">{{ t('properties.width') }}</label>
+                            <input 
+                              v-model.number="column.tableHeader.borderWidth" 
+                              type="number" 
+                              min="0"
+                              max="10"
+                              step="0.5"
+                              class="small-input"
+                              @change="emit('update-jrxml')"
+                            />
+                          </div>
+                          <div class="form-group small" style="flex: 0 0 60px;">
+                            <label style="font-size: 10px;">{{ t('properties.color') }}</label>
+                            <input 
+                              v-model="column.tableHeader.borderColor" 
+                              type="color" 
+                              class="small-input color-picker"
+                              @change="emit('update-jrxml')"
+                              style="height: 20px; padding: 0;"
+                            />
+                          </div>
+                        </div>
+                      </div>
+                      
+                      <!-- 列头边框样式 -->
+                      <div class="form-group small full-width">
+                        <label>{{ t('properties.columnHeader') }}</label>
+                        <div class="border-controls">
+                          <div class="form-group small" style="flex: 1;">
+                            <label style="font-size: 10px;">{{ t('properties.style') }}</label>
+                            <select 
+                              v-model="column.columnHeader.borderStyle" 
+                              class="small-input"
+                              @change="emit('update-jrxml')"
+                              style="height: 20px; padding: 0 4px;"
+                            >
+                              <option value="">{{ t('properties.none') }}</option>
+                              <option value="Solid">{{ t('properties.solid') }}</option>
+                              <option value="Dashed">{{ t('properties.dashed') }}</option>
+                              <option value="Dotted">{{ t('properties.dotted') }}</option>
+                              <option value="Double">{{ t('properties.double') }}</option>
+                            </select>
+                          </div>
+                          <div class="form-group small" style="flex: 0 0 60px;">
+                            <label style="font-size: 10px;">{{ t('properties.width') }}</label>
+                            <input 
+                              v-model.number="column.columnHeader.borderWidth" 
+                              type="number" 
+                              min="0"
+                              max="10"
+                              step="0.5"
+                              class="small-input"
+                              @change="emit('update-jrxml')"
+                            />
+                          </div>
+                          <div class="form-group small" style="flex: 0 0 60px;">
+                            <label style="font-size: 10px;">{{ t('properties.color') }}</label>
+                            <input 
+                              v-model="column.columnHeader.borderColor" 
+                              type="color" 
+                              class="small-input color-picker"
+                              @change="emit('update-jrxml')"
+                              style="height: 20px; padding: 0;"
+                            />
+                          </div>
+                        </div>
+                      </div>
+                      
+                      <!-- 详情单元格边框样式 -->
+                      <div class="form-group small full-width">
+                        <label>{{ t('properties.detailBorder') }}</label>
+                        <div class="border-controls">
+                          <div class="form-group small" style="flex: 1;">
+                            <label style="font-size: 10px;">{{ t('properties.style') }}</label>
+                            <select 
+                              v-model="column.detailCell.borderStyle" 
+                              class="small-input"
+                              @change="emit('update-jrxml')"
+                              style="height: 20px; padding: 0 4px;"
+                            >
+                              <option value="">{{ t('properties.none') }}</option>
+                              <option value="Solid">{{ t('properties.solid') }}</option>
+                              <option value="Dashed">{{ t('properties.dashed') }}</option>
+                              <option value="Dotted">{{ t('properties.dotted') }}</option>
+                              <option value="Double">{{ t('properties.double') }}</option>
+                            </select>
+                          </div>
+                          <div class="form-group small" style="flex: 0 0 60px;">
+                            <label style="font-size: 10px;">{{ t('properties.width') }}</label>
+                            <input 
+                              v-model.number="column.detailCell.borderWidth" 
+                              type="number" 
+                              min="0"
+                              max="10"
+                              step="0.5"
+                              class="small-input"
+                              @change="emit('update-jrxml')"
+                            />
+                          </div>
+                          <div class="form-group small" style="flex: 0 0 60px;">
+                            <label style="font-size: 10px;">{{ t('properties.color') }}</label>
+                            <input 
+                              v-model="column.detailCell.borderColor" 
+                              type="color" 
+                              class="small-input color-picker"
+                              @change="emit('update-jrxml')"
+                              style="height: 20px; padding: 0;"
+                            />
+                          </div>
+                        </div>
+                      </div>
                     </div>
-                    <div class="form-group small full-width">
-                      <label>{{ t('properties.tableHeader') }}</label>
-                      <input 
-                        v-model="column.tableHeader.text" 
-                        type="text" 
-                        class="small-input"
-                        :placeholder="t('properties.tableHeaderPlaceholder')"
-                        @change="emit('update-jrxml')"
-                      />
-                    </div>
-                    <div class="form-group small full-width">
-                      <label>{{ t('properties.tableFooter') }}</label>
-                      <input 
-                        :value="column.tableFooter?.expression || ''"
-                        @input="(e) => {
-                          initTableCell(column, 'tableFooter');
-                          column.tableFooter.expression = (e.target as HTMLInputElement).value;
-                          emit('update-jrxml');
-                        }"
-                        type="text" 
-                        class="small-input"
-                        :placeholder="t('properties.tableFooterPlaceholder')"
-                      />
-                    </div>
-                    <div class="form-group small full-width">
-                      <label>{{ t('properties.columnFooter') }}</label>
-                      <input 
-                        :value="column.columnFooter?.expression || ''"
-                        @input="(e) => {
-                          initTableCell(column, 'columnFooter');
-                          column.columnFooter.expression = (e.target as HTMLInputElement).value;
-                          emit('update-jrxml');
-                        }"
-                        type="text" 
-                        class="small-input"
-                        :placeholder="t('properties.columnFooterPlaceholder')"
-                      />
-                    </div>
-                  </div>
+                  </n-tab-pane>
+                </n-tabs>
                 </div>
               </div>
             </div>
@@ -287,12 +600,16 @@
                       class="field-item selected"
                     >
                       <span class="field-name">{{ fieldName }}</span>
-                      <button 
+                      <n-button
                         class="remove-field-btn"
                         @click="toggleFieldSelection(fieldName)"
+                        type="error"
+                        quaternary
+                        circle
+                        size="small"
                       >
                         ✕
-                      </button>
+                      </n-button>
                     </div>
                   </div>
                 </div>
@@ -705,6 +1022,7 @@ import { NButton, NTabs, NTabPane } from 'naive-ui';
 import type { Band, SelectedElementInfo, TableDataset } from '../../../types';
 import { getAvailableFonts } from '../../../utils/fontUtils';
 import BaseModal from '../../modals/BaseModal.vue';
+import ColorPickerWithOpacity from './ColorPickerWithOpacity.vue';
 
 const { t } = useI18n();
 
@@ -993,7 +1311,9 @@ function initTableCell(column: any, cellType: 'tableFooter' | 'columnFooter') {
       y: 0,
       width: column.width,
       height: 30,
-      expression: ''
+      expression: '',
+      backcolor: '',
+      mode: 'Transparent'
     };
   }
 }
@@ -1316,39 +1636,45 @@ function updateBackcolorFromControls() {
     tempColor.value = '#ffffff';
   }
   
-  if (tempOpacity.value >= 1) {
-    // 完全不透明，使用 hex
-    currentElement.value.backcolor = tempColor.value;
+  // 根据透明度设置背景色和模式
+  if (tempOpacity.value === 0) {
+    // 完全透明，清除背景色，模式设为Transparent
+    currentElement.value.backcolor = undefined;
+    currentElement.value.mode = 'Transparent';
   } else {
-    // 半透明，使用 rgba
-    // Hex 转 RGB
-    let hex = tempColor.value;
-    if (hex.startsWith('#')) hex = hex.slice(1);
-    
-    // 处理简写 hex (e.g. #fff)
-    if (hex.length === 3) {
-      hex = hex[0]! + hex[0]! + hex[1]! + hex[1]! + hex[2]! + hex[2]!;
+    // 不透明或半透明，设置背景色和Opaque模式
+    if (tempOpacity.value >= 1) {
+      // 完全不透明，使用 hex
+      currentElement.value.backcolor = tempColor.value;
+    } else {
+      // 半透明，使用 rgba
+      // Hex 转 RGB
+      let hex = tempColor.value;
+      if (hex.startsWith('#')) hex = hex.slice(1);
+      
+      // 处理简写 hex (e.g. #fff)
+      if (hex.length === 3) {
+        hex = hex[0]! + hex[0]! + hex[1]! + hex[1]! + hex[2]! + hex[2]!;
+      }
+      
+      const r = parseInt(hex.slice(0, 2), 16);
+      const g = parseInt(hex.slice(2, 4), 16);
+      const b = parseInt(hex.slice(4, 6), 16);
+      
+      // 保留4位小数
+      const alpha = Math.round(tempOpacity.value * 10000) / 10000;
+      currentElement.value.backcolor = `rgba(${r}, ${g}, ${b}, ${alpha})`;
     }
-    
-    const r = parseInt(hex.slice(0, 2), 16);
-    const g = parseInt(hex.slice(2, 4), 16);
-    const b = parseInt(hex.slice(4, 6), 16);
-    
-    // 保留4位小数
-    const alpha = Math.round(tempOpacity.value * 10000) / 10000;
-    currentElement.value.backcolor = `rgba(${r}, ${g}, ${b}, ${alpha})`;
+    currentElement.value.mode = 'Opaque';
   }
   
-  onBackcolorChange();
+  emit('save-state');
+  emit('update-jrxml');
 }
 
-// 背景颜色变更处理
+// 背景颜色变更处理 - 移除自动模式设置，由updateBackcolorFromControls处理
 function onBackcolorChange() {
   if (currentElement.value) {
-    // 如果设置了背景色，自动设置为不透明，确保颜色可见
-    if (!currentElement.value.mode || currentElement.value.mode === 'Transparent') {
-      currentElement.value.mode = 'Opaque';
-    }
     emit('save-state');
     emit('update-jrxml');
   }
@@ -1625,13 +1951,13 @@ function setRectangleBorderColor(value: string) {
   margin: 8px 0;
   border: 1px solid #ddd;
   border-radius: 4px;
-  padding: 8px;
+  padding: 4px;
   background-color: #f9f9f9;
 }
 
 .table-column-item {
-  margin-bottom: 8px;
-  padding: 8px;
+  margin-bottom: 6px;
+  padding: 6px;
   background-color: #fff;
   border: 1px solid #e0e0e0;
   border-radius: 4px;
@@ -1641,41 +1967,63 @@ function setRectangleBorderColor(value: string) {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 8px;
+  margin-bottom: 6px;
   font-weight: bold;
+  font-size: 12px;
 }
 
 
 
 .table-column-properties {
   display: flex;
-  gap: 16px;
+  gap: 8px;
   flex-wrap: wrap;
 }
 
 .form-group.small {
   flex: 1;
-  min-width: 120px;
+  min-width: 100px;
+  margin-bottom: 6px;
 }
 
 .form-group.small.full-width {
   width: 100%;
   flex-basis: 100%;
-  margin-top: 8px;
+  margin-top: 4px;
+}
+
+.form-group.small label {
+  margin-bottom: 2px;
+  font-size: 11px;
 }
 
 .small-input {
   width: 100%;
-  padding: 4px 8px;
-  font-size: 12px;
+  padding: 2px 6px;
+  font-size: 11px;
   border: 1px solid #ddd;
   border-radius: 3px;
 }
 
-.table-column-actions {
+.text-style-controls,
+.border-controls {
   display: flex;
   gap: 8px;
-  margin-bottom: 12px;
+  flex-wrap: wrap;
+}
+
+.color-picker {
+  height: 20px;
+  padding: 0;
+  border: 1px solid #ddd;
+  border-radius: 3px;
+  cursor: pointer;
+}
+
+.table-column-actions {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 8px;
 }
 
 /* 拖拽排序样式 */

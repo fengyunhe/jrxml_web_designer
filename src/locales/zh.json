@@ -259,7 +259,17 @@
       "NoDataCell": "无数据单元格",
       "AllSectionsNoDetail": "显示除详细数据外的所有区域"
     },
-    "default": "默认"
+    "default": "默认",
+    "basic": "基本",
+    "textStyle": "文本样式",
+    "borderStyle": "边框样式",
+    "headerTextStyle": "表头文本样式",
+    "detailTextStyle": "详情文本样式",
+    "headerBorder": "表头边框",
+    "detailBorder": "详情单元格边框",
+    "columnHeader": "列头",
+    "forecolor": "文本颜色",
+    "backcolor": "背景色"
   },
   "bottomPanel": {
     "pageSettings": "页面设置",

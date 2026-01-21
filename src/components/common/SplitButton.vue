@@ -74,12 +74,6 @@ function toggleDropdown() {
 }
 
 function handleItemClick(item: ActionItem) {
-  // Find the original index of the clicked item
-  const newIndex = props.actions.indexOf(item);
-  if (newIndex !== -1) {
-    currentIndex.value = newIndex;
-  }
-  
   isOpen.value = false;
   item.handler();
 }
