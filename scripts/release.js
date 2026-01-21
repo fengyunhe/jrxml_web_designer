@@ -63,8 +63,27 @@ rl.question('请输入新版本号 (格式: x.y.z): ', (newVersion) => {
     // 4. 提交代码
     console.log('4. 提交代码...');
     execSync('git add .', { cwd: projectRoot, stdio: 'inherit' });
-    execSync(`git commit -m "chore(release): v${newVersion}"`, { cwd: projectRoot, stdio: 'inherit' });
-    console.log('✓ 代码已提交');
+    
+    // 检查是否有需要提交的文件
+    let hasChanges = false;
+    try {
+      execSync('git diff --staged --exit-code', { cwd: projectRoot, stdio: 'ignore' });
+    } catch (error) {
+      // 退出码为1表示有需要提交的文件
+      if (error.status === 1) {
+        hasChanges = true;
+      } else {
+        // 其他错误，抛出异常
+        throw error;
+      }
+    }
+    
+    if (hasChanges) {
+      execSync(`git commit -m "chore(release): v${newVersion}"`, { cwd: projectRoot, stdio: 'inherit' });
+      console.log('✓ 代码已提交');
+    } else {
+      console.log('✓ 没有需要提交的文件，跳过提交');
+    }
     
     // 5. 打tag
     console.log('5. 打tag...');
