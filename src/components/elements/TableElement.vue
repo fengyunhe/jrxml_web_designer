@@ -31,186 +31,204 @@
     >
     <!-- 表格内容 -->
     <div class="table-content">
-      <!-- 表格头部 -->
-      <div v-if="hasTableHeader" class="table-header">
-        <template v-if="hasColumnGroups">
-          <render-column-group 
-            :group="rootGroup" 
-            :level="0" 
-            :type="'tableHeader'"
-          />
-        </template>
-        <template v-else>
-          <div 
-            v-for="(column, index) in columns" 
-            :key="column.uuid"
-            :style="{ width: `${column.width}px` }"
-            class="table-column table-header-cell"
-            :class="{ 'column-selected': isColumnSelected(index) }"
-            @click.stop="handleColumnClick(index, $event)"
-            @contextmenu.stop="handleColumnContextMenu(index, $event)"
-          >
-            <!-- 调整列顺序的按钮 -->
-            <!-- 向左移动按钮 -->
-            <n-button 
-              v-if="index > 0"
-              class="order-button left-button"
-              @click="moveColumn(index, 'left')"
-              :title="t('properties.moveColumnLeft')"
-              type="default"
-              quaternary
-              circle
-              size="small"
+      <table class="designer-table">
+        <!-- 表格头部区域 -->
+        <thead>
+          <!-- 表格头部 -->
+          <template v-if="hasTableHeader">
+            <template v-if="hasColumnGroups">
+              <!-- 直接渲染分组生成的行，不添加外层tr -->
+              <render-column-group 
+                :group="rootGroup" 
+                :level="0" 
+                :type="'tableHeader'"
+              />
+            </template>
+            <template v-else>
+              <!-- 普通列的表头 -->
+              <tr class="table-header">
+                <th 
+                  v-for="(column, index) in columns" 
+                  :key="column.uuid"
+                  :style="{ width: `${column.width}px` }"
+                  class="table-column table-header-cell"
+                  :class="{ 'column-selected': isColumnSelected(index) }"
+                  @click.stop="handleColumnClick(index, $event)"
+                  @contextmenu.stop="handleColumnContextMenu(index, $event)"
+                >
+                  <!-- 调整列顺序的按钮 -->
+                  <!-- 向左移动按钮 -->
+                  <n-button 
+                    v-if="index > 0"
+                    class="order-button left-button"
+                    @click="moveColumn(index, 'left')"
+                    :title="t('properties.moveColumnLeft')"
+                    type="default"
+                    quaternary
+                    circle
+                    size="small"
+                  >
+                    ◀
+                  </n-button>
+                  
+                  <!-- 向右移动按钮 -->
+                  <n-button 
+                    v-if="index < columns.length - 1"
+                    class="order-button right-button"
+                    @click="moveColumn(index, 'right')"
+                    :title="t('properties.moveColumnRight')"
+                    type="default"
+                    quaternary
+                    circle
+                    size="small"
+                  >
+                    ▶
+                  </n-button>
+                  
+                  <div v-if="column.hasTableHeader && column.tableHeader" class="cell-content" :style="getCellStyle(column.tableHeader)">
+                    <!-- 渲染表头内容 -->
+                    <template v-if="column.tableHeader.type === 'staticText'">
+                      <div class="static-text">{{ column.tableHeader.text }}</div>
+                    </template>
+                    <template v-else-if="column.tableHeader.type === 'textField'">
+                      <div class="text-field">{{ column.tableHeader.expression }}</div>
+                    </template>
+                  </div>
+                  <div v-else-if="column.hasTableHeader" class="cell-content empty">
+                    Table Header
+                  </div>
+                  <div v-else class="cell-content empty">
+                    - 
+                  </div>
+                </th>
+              </tr>
+            </template>
+          </template>
+          <!-- 列头部 -->
+          <template v-if="hasColumnHeaderGroups">
+            <!-- 直接渲染分组生成的行，不添加外层tr -->
+            <render-column-group 
+              :group="rootGroup" 
+              :level="0" 
+              :type="'columnHeader'"
+            />
+          </template>
+          <template v-else>
+            <!-- 普通列的列头 -->
+            <tr class="column-header">
+              <th 
+                v-for="(column, index) in columns" 
+                :key="column.uuid"
+                :style="{ width: `${column.width}px` }"
+                class="table-column column-header-cell"
+                :class="{ 'column-selected': isColumnSelected(index) }"
+                @click.stop="handleColumnClick(index, $event)"
+                @contextmenu.stop="handleColumnContextMenu(index, $event)"
+              >
+                <div class="cell-content" :style="getColumnHeaderStyle(column)">
+                  <!-- 渲染列头内容，从columnHeader获取实际的静态文本或动态文本表达式 -->
+                  <template v-if="column.columnHeader">
+                    <template v-if="column.columnHeader.type === 'staticText'">
+                      <div class="static-text">{{ column.columnHeader.text || '' }}</div>
+                    </template>
+                    <template v-else-if="column.columnHeader.type === 'textField'">
+                      <div class="text-field">{{ column.columnHeader.expression || '' }}</div>
+                    </template>
+                    <template v-else>
+                      <div class="column-name">{{ column.name }}</div>
+                    </template>
+                  </template>
+                  <template v-else>
+                    <div class="column-name">{{ column.name }}</div>
+                  </template>
+                </div>
+              </th>
+            </tr>
+          </template>
+          
+        </thead>
+        <!-- 表格主体区域 -->
+        <tbody>
+          <!-- 详情行 -->
+          <tr class="detail-row">
+            <td 
+              v-for="(column, index) in columns" 
+              :key="column.uuid"
+              :style="{ width: `${column.width}px` }"
+              class="table-column detail-cell"
+              :class="{ 'column-selected': isColumnSelected(index) }"
+              @click.stop="handleColumnClick(index, $event)"
+              @contextmenu.stop="handleColumnContextMenu(index, $event)"
             >
-              ◀
-            </n-button>
-            
-            <!-- 向右移动按钮 -->
-            <n-button 
-              v-if="index < columns.length - 1"
-              class="order-button right-button"
-              @click="moveColumn(index, 'right')"
-              :title="t('properties.moveColumnRight')"
-              type="default"
-              quaternary
-              circle
-              size="small"
+              <div v-if="column.detailCell" class="cell-content" :style="getCellStyle(column.detailCell)">
+                <!-- 渲染详情内容 -->
+                <template v-if="column.detailCell.type === 'staticText'">
+                  <div class="static-text">{{ column.detailCell.text }}</div>
+                </template>
+                <template v-else-if="column.detailCell.type === 'textField'">
+                  <div class="text-field">{{ column.detailCell.expression }}</div>
+                </template>
+              </div>
+              <div v-else class="cell-content empty">
+                Detail Cell
+              </div>
+            </td>
+          </tr>
+        </tbody>
+        <!-- 表格尾部区域 -->
+        <tfoot>
+          <!-- 列尾 -->
+          <tr v-if="columns.some(column => column.columnFooter && (column.columnFooter.type === 'textField' && (column.columnFooter as TextFieldElement).expression || column.columnFooter.type === 'staticText'))" class="column-footer">
+            <td 
+              v-for="(column, index) in columns" 
+              :key="column.uuid"
+              :style="{ width: `${column.width}px` }"
+              class="table-column column-footer-cell"
+              :class="{ 'column-selected': isColumnSelected(index) }"
+              @click.stop="handleColumnClick(index, $event)"
+              @contextmenu.stop="handleColumnContextMenu(index, $event)"
             >
-              ▶
-            </n-button>
-            
-            <div v-if="column.hasTableHeader && column.tableHeader" class="cell-content" :style="getCellStyle(column.tableHeader)">
-              <!-- 渲染表头内容 -->
-              <template v-if="column.tableHeader.type === 'staticText'">
-                <div class="static-text">{{ column.tableHeader.text }}</div>
-              </template>
-              <template v-else-if="column.tableHeader.type === 'textField'">
-                <div class="text-field">{{ column.tableHeader.expression }}</div>
-              </template>
-            </div>
-            <div v-else-if="column.hasTableHeader" class="cell-content empty">
-              Table Header
-            </div>
-            <div v-else class="cell-content empty">
-              - 
-            </div>
-          </div>
-        </template>
-      </div>
-      <!-- 列头部 -->
-      <div class="column-header">
-        <template v-if="hasColumnHeaderGroups">
-          <render-column-group 
-            :group="rootGroup" 
-            :level="0" 
-            :type="'columnHeader'"
-          />
-        </template>
-        <template v-else>
-          <div 
-            v-for="(column, index) in columns" 
-            :key="column.uuid"
-            :style="{ width: `${column.width}px` }"
-            class="table-column column-header-cell"
-            :class="{ 'column-selected': isColumnSelected(index) }"
-            @click.stop="handleColumnClick(index, $event)"
-            @contextmenu.stop="handleColumnContextMenu(index, $event)"
-          >
-            <div class="cell-content" :style="getColumnHeaderStyle(column)">
-              <!-- 渲染列头内容，从columnHeader获取实际的静态文本或动态文本表达式 -->
-              <template v-if="column.columnHeader">
-                <template v-if="column.columnHeader.type === 'staticText'">
-                  <div class="static-text">{{ column.columnHeader.text || '' }}</div>
+              <div v-if="column.columnFooter" class="cell-content">
+                <!-- 渲染列尾内容 -->
+                <template v-if="column.columnFooter.type === 'staticText'">
+                  <div class="static-text">{{ (column.columnFooter as StaticTextElement).text || '' }}</div>
                 </template>
-                <template v-else-if="column.columnHeader.type === 'textField'">
-                  <div class="text-field">{{ column.columnHeader.expression || '' }}</div>
+                <template v-else-if="column.columnFooter.type === 'textField'">
+                  <div class="text-field">{{ (column.columnFooter as TextFieldElement).expression || '' }}</div>
                 </template>
-                <template v-else>
-                  <div class="column-name">{{ column.name }}</div>
+              </div>
+              <div v-else class="cell-content empty">
+                Column Footer
+              </div>
+            </td>
+          </tr>
+          <!-- 表格表尾 -->
+          <tr v-if="columns.some(column => column.tableFooter && (column.tableFooter.type === 'textField' && (column.tableFooter as TextFieldElement).expression || column.tableFooter.type === 'staticText'))" class="table-footer">
+            <td 
+              v-for="(column, index) in columns" 
+              :key="column.uuid"
+              :style="{ width: `${column.width}px` }"
+              class="table-column table-footer-cell"
+              :class="{ 'column-selected': isColumnSelected(index) }"
+              @click.stop="handleColumnClick(index, $event)"
+              @contextmenu.stop="handleColumnContextMenu(index, $event)"
+            >
+              <div v-if="column.tableFooter" class="cell-content">
+                <!-- 渲染表格表尾内容 -->
+                <template v-if="column.tableFooter.type === 'staticText'">
+                  <div class="static-text">{{ (column.tableFooter as StaticTextElement).text || '' }}</div>
                 </template>
-              </template>
-              <template v-else>
-                <div class="column-name">{{ column.name }}</div>
-              </template>
-            </div>
-          </div>
-        </template>
-      </div>
-      <!-- 详情行 -->
-      <div class="detail-row">
-        <div 
-          v-for="(column, index) in columns" 
-          :key="column.uuid"
-          :style="{ width: `${column.width}px` }"
-          class="table-column detail-cell"
-          :class="{ 'column-selected': isColumnSelected(index) }"
-          @click.stop="handleColumnClick(index, $event)"
-          @contextmenu.stop="handleColumnContextMenu(index, $event)"
-        >
-          <div v-if="column.detailCell" class="cell-content" :style="getCellStyle(column.detailCell)">
-            <!-- 渲染详情内容 -->
-            <template v-if="column.detailCell.type === 'staticText'">
-              <div class="static-text">{{ column.detailCell.text }}</div>
-            </template>
-            <template v-else-if="column.detailCell.type === 'textField'">
-              <div class="text-field">{{ column.detailCell.expression }}</div>
-            </template>
-          </div>
-          <div v-else class="cell-content empty">
-            Detail Cell
-          </div>
-        </div>
-      </div>
-      <!-- 列尾 -->
-      <div v-if="columns.some(column => column.columnFooter && (column.columnFooter.type === 'textField' && (column.columnFooter as TextFieldElement).expression || column.columnFooter.type === 'staticText'))" class="column-footer">
-        <div 
-          v-for="(column, index) in columns" 
-          :key="column.uuid"
-          :style="{ width: `${column.width}px` }"
-          class="table-column column-footer-cell"
-          :class="{ 'column-selected': isColumnSelected(index) }"
-          @click.stop="handleColumnClick(index, $event)"
-          @contextmenu.stop="handleColumnContextMenu(index, $event)"
-        >
-          <div v-if="column.columnFooter" class="cell-content">
-            <!-- 渲染列尾内容 -->
-            <template v-if="column.columnFooter.type === 'staticText'">
-              <div class="static-text">{{ (column.columnFooter as StaticTextElement).text || '' }}</div>
-            </template>
-            <template v-else-if="column.columnFooter.type === 'textField'">
-              <div class="text-field">{{ (column.columnFooter as TextFieldElement).expression || '' }}</div>
-            </template>
-          </div>
-          <div v-else class="cell-content empty">
-            Column Footer
-          </div>
-        </div>
-      </div>
-      <!-- 表格表尾 -->
-      <div v-if="columns.some(column => column.tableFooter && (column.tableFooter.type === 'textField' && (column.tableFooter as TextFieldElement).expression || column.tableFooter.type === 'staticText'))" class="table-footer">
-        <div 
-          v-for="(column, index) in columns" 
-          :key="column.uuid"
-          :style="{ width: `${column.width}px` }"
-          class="table-column table-footer-cell"
-          :class="{ 'column-selected': isColumnSelected(index) }"
-          @click.stop="handleColumnClick(index, $event)"
-          @contextmenu.stop="handleColumnContextMenu(index, $event)"
-        >
-          <div v-if="column.tableFooter" class="cell-content">
-            <!-- 渲染表格表尾内容 -->
-            <template v-if="column.tableFooter.type === 'staticText'">
-              <div class="static-text">{{ (column.tableFooter as StaticTextElement).text || '' }}</div>
-            </template>
-            <template v-else-if="column.tableFooter.type === 'textField'">
-              <div class="text-field">{{ (column.tableFooter as TextFieldElement).expression || '' }}</div>
-            </template>
-          </div>
-          <div v-else class="cell-content empty">
-            Table Footer
-          </div>
-        </div>
-      </div>
+                <template v-else-if="column.tableFooter.type === 'textField'">
+                  <div class="text-field">{{ (column.tableFooter as TextFieldElement).expression || '' }}</div>
+                </template>
+              </div>
+              <div v-else class="cell-content empty">
+                Table Footer
+              </div>
+            </td>
+          </tr>
+        </tfoot>
+      </table>
     </div>
     
     <!-- 选择边框 -->
@@ -588,26 +606,19 @@ function getCellContentStyle(column: any, type: string) {
   height: 100%;
   display: flex;
   flex-direction: column;
+}
+
+.designer-table {
+  width: 100%;
   border-collapse: collapse;
+  table-layout: fixed;
 }
 
 .table-header,
-.column-header {
-  display: block;
-}
-
+.column-header,
 .detail-row,
 .column-footer,
 .table-footer {
-  display: flex;
-  height: 30px;
-  border-bottom: 1px solid #ccc;
-}
-
-.detail-row,
-.column-footer,
-.table-footer {
-  display: flex;
   height: 30px;
 }
 
@@ -618,6 +629,25 @@ function getCellContentStyle(column: any, type: string) {
   box-sizing: border-box;
   cursor: pointer;
   user-select: none;
+  padding: 0;
+  margin: 0;
+  border: 1px solid transparent;
+}
+
+.table-column.th,
+.table-column.td {
+  padding: 0;
+  margin: 0;
+  border: 1px solid transparent;
+}
+
+.designer-table th,
+.designer-table td {
+  padding: 0;
+  margin: 0;
+  border: 1px solid transparent;
+  box-sizing: border-box;
+  overflow: visible;
 }
 
 /* 列选中样式 */

@@ -155,6 +155,7 @@ export interface DesignElementBase {
   width: number;
   height: number;
   forecolor?: string; // 添加forecolor属性
+  forecolorMode?: 'Opaque' | 'Transparent'; // 添加forecolorMode属性
   backcolor?: string;
   mode?: 'Opaque' | 'Transparent';
   fill?: 'Solid' | 'None'; // 添加fill属性

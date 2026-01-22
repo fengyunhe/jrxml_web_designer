@@ -291,6 +291,11 @@ const handleSelect = (event: MouseEvent) => {
 
 // 处理鼠标按下（拖拽）
 const handleMouseDown = (event: MouseEvent) => {
+  // 只允许左键触发拖动
+  if (event.button !== 0) {
+    return;
+  }
+  
   // 记录鼠标按下的初始位置和时间
   const startX = event.clientX;
   const startY = event.clientY;
@@ -340,7 +345,7 @@ const handleMouseDown = (event: MouseEvent) => {
 const handleResize = (_direction: string, event?: MouseEvent) => {
   // 获取当前事件对象
   const resizeEvent = event || window.event as MouseEvent;
-  if (resizeEvent) {
+  if (resizeEvent && resizeEvent.button === 0) {
     emit('resizeStart', resizeEvent, props.bandIndex, props.elementIndex, props.parentFrameIndex);
   }
 };

@@ -1,47 +1,55 @@
 <template>
-  <table class="column-group-table">
-    <tbody>
-      <!-- 渲染所有分组行 -->
-      <template v-for="(row, rowIndex) in groupRows" :key="rowIndex">
-        <tr class="column-group-row" :style="{ height: '30px' }">
-          <template v-for="(cell, cellIndex) in row" :key="cell.key">
-            <td 
-              :class="['column-group-cell', { 'column-selected': isCellSelected(cell) }]"
-              :colspan="cell.colspan"
-              :rowspan="cell.rowspan"
-              :style="getCellStyle(cell, type)"
-              @click.stop="handleCellClick(cell, $event)"
-              @contextmenu.stop="handleCellContextMenu(cell, $event)"
-            >
-              <div class="cell-content">
-                <template v-if="type === 'tableHeader'">
-                  <div class="static-text">
-                    {{ cell.content.tableHeader?.text || '' }}
-                  </div>
-                </template>
-                <template v-else-if="type === 'columnHeader'">
-                  <template v-if="cell.content.columnHeader">
-                    <template v-if="cell.content.columnHeader.type === 'staticText'">
-                      <div class="static-text">{{ cell.content.columnHeader.text || '' }}</div>
-                    </template>
-                    <template v-else-if="cell.content.columnHeader.type === 'textField'">
-                      <div class="text-field">{{ cell.content.columnHeader.expression || '' }}</div>
-                    </template>
-                    <template v-else>
-                      <div class="column-name">{{ cell.content.name || '' }}</div>
-                    </template>
-                  </template>
-                  <template v-else>
-                    <div class="column-name">{{ cell.content.name || '' }}</div>
-                  </template>
-                </template>
+  <!-- 渲染所有分组行 -->
+  <template v-for="(row, rowIndex) in groupRows" :key="rowIndex">
+    <tr class="column-group-row" :style="{ height: '30px' }">
+      <template v-for="(cell, cellIndex) in row" :key="cell.key">
+        <!-- 根据类型选择使用th还是td -->
+        <template v-if="type === 'tableHeader'">
+          <th 
+            :class="['column-group-cell', { 'column-selected': isCellSelected(cell) }]"
+            :colspan="cell.colspan"
+            :rowspan="cell.rowspan"
+            :style="getCellStyle(cell, type)"
+            @click.stop="handleCellClick(cell, $event)"
+            @contextmenu.stop="handleCellContextMenu(cell, $event)"
+          >
+            <div class="cell-content">
+              <div class="static-text">
+                {{ cell.content.tableHeader?.text || '' }}
               </div>
-            </td>
-          </template>
-        </tr>
+            </div>
+          </th>
+        </template>
+        <template v-else>
+          <th 
+            :class="['column-group-cell', { 'column-selected': isCellSelected(cell) }]"
+            :colspan="cell.colspan"
+            :rowspan="cell.rowspan"
+            :style="getCellStyle(cell, type)"
+            @click.stop="handleCellClick(cell, $event)"
+            @contextmenu.stop="handleCellContextMenu(cell, $event)"
+          >
+            <div class="cell-content">
+              <template v-if="cell.content.columnHeader">
+                <template v-if="cell.content.columnHeader.type === 'staticText'">
+                  <div class="static-text">{{ cell.content.columnHeader.text || '' }}</div>
+                </template>
+                <template v-else-if="cell.content.columnHeader.type === 'textField'">
+                  <div class="text-field">{{ cell.content.columnHeader.expression || '' }}</div>
+                </template>
+                <template v-else>
+                  <div class="column-name">{{ cell.content.name || '' }}</div>
+                </template>
+              </template>
+              <template v-else>
+                <div class="column-name">{{ cell.content.name || '' }}</div>
+              </template>
+            </div>
+          </th>
+        </template>
       </template>
-    </tbody>
-  </table>
+    </tr>
+  </template>
 </template>
 
 
@@ -277,14 +285,8 @@ function handleCellContextMenu(cell: any, event: MouseEvent) {
 
 
 <style scoped>
-.column-group-table {
-  width: 100%;
-  border-collapse: collapse;
-  table-layout: fixed;
-}
-
 .column-group-row {
-  border-bottom: 1px solid #ccc;
+  height: 30px;
 }
 
 .column-group-cell {
@@ -292,6 +294,9 @@ function handleCellContextMenu(cell: any, event: MouseEvent) {
   cursor: pointer;
   user-select: none;
   overflow: hidden;
+  padding: 0;
+  margin: 0;
+  border: 1px solid transparent;
 }
 
 .column-group-cell:hover {
@@ -317,6 +322,7 @@ function handleCellContextMenu(cell: any, event: MouseEvent) {
   font-weight: inherit;
   font-style: inherit;
   color: inherit;
+  padding: 0 5px;
 }
 
 .cell-content.empty {

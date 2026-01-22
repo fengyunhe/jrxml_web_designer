@@ -71,12 +71,15 @@
         >
         <!-- 报表边距容器 -->
         <div class="pager"
-             :style="{ 
+             :style="{
                padding: reportProperties.topMargin + 'px ' + reportProperties.rightMargin + 'px ' + reportProperties.bottomMargin + 'px ' + reportProperties.leftMargin + 'px',
                width: '100%',
                height: '100%',
                position: 'relative',
-               backgroundSize: uiConstants.GRID_SIZE + 'px ' + uiConstants.GRID_SIZE + 'px'
+               backgroundImage: showGrid ? 
+                 'linear-gradient(to right, #e0e0e0 1px, transparent 1px), linear-gradient(to bottom, #e0e0e0 1px, transparent 1px)' : 'none',
+               backgroundSize: showGrid ? 
+                 (uiConstants.GRID_SIZE + 'px ' + uiConstants.GRID_SIZE + 'px') : 'auto'
              }"
         >
         
@@ -179,6 +182,13 @@
           >
             {{ t('actions.snapToAlignment') }}
           </n-checkbox>
+          <n-checkbox 
+            :checked="props.showGrid" 
+            size="small"
+            @update:checked="emit('update:showGrid', $event)"
+          >
+            {{ t('actions.showGrid') }}
+          </n-checkbox>
         </n-space>
       </div>
       <!-- 缩放控制组件 -->
@@ -227,6 +237,7 @@ interface Props {
   outOfBoundsElements: Array<{bandIndex: number, elementIndex: number, element: any}>;
   enableSnapToGrid: boolean;
   enableSnapToAlignment: boolean;
+  showGrid: boolean;
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -250,7 +261,8 @@ const props = withDefaults(defineProps<Props>(), {
   uiConstants: () => ({}),
   outOfBoundsElements: () => [],
   enableSnapToGrid: false,
-  enableSnapToAlignment: false
+  enableSnapToAlignment: false,
+  showGrid: true
 });
 
 // Emits
@@ -276,7 +288,8 @@ const emit = defineEmits([
   'move-column', // 添加列移动事件
   'add-columns-to-group', // 添加列分组事件
   'update:enableSnapToGrid', // 添加自动吸附到网格事件
-  'update:enableSnapToAlignment' // 添加自动吸附对齐事件
+  'update:enableSnapToAlignment', // 添加自动吸附对齐事件
+  'update:showGrid' // 添加显示/隐藏网格事件
 ]);
 
 // 框选状态
@@ -396,6 +409,11 @@ const handleWheel = (event: WheelEvent) => {
 
 // 框选功能
 const startSelection = (event: MouseEvent) => {
+  // 只允许左键触发框选
+  if (event.button !== 0) {
+    return;
+  }
+  
   // 只有点击空白区域才开始框选
   if (event.target === event.currentTarget || (event.target as HTMLElement).classList.contains('pager')) {
     isSelecting.value = true;

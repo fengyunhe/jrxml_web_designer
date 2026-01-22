@@ -284,6 +284,8 @@
     "addColumnsToGroup": "Add Columns to Group",
     "columnGroups": "Column Groups",
     "addColumnGroup": "Add Column Group",
+    "maxWidthHint": "Maximum allowed width: {maxWidth}",
+    "autoCalculated": "Auto Calculated",
     "all": "All",
     "fontStyle": "Font Style"
   },

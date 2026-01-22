@@ -899,7 +899,20 @@ function generateColumnGroupXML(group: any): string {
   // 更新group的uuid，确保被保存
   group.uuid = groupUuid;
   
-  let xml = `          <jr:columnGroup width="${toInt(group.width)}" uuid="${groupUuid}">
+  // 自动计算组合列宽度
+  function calculateGroupWidth(node: any): number {
+    if (node.children && node.children.length > 0) {
+      return node.children.reduce((sum: number, child: any) => {
+        return sum + calculateGroupWidth(child);
+      }, 0);
+    }
+    return node.width || 0;
+  }
+  
+  const groupWidth = calculateGroupWidth(group);
+  group.width = groupWidth; // 更新group的width属性，确保一致性
+  
+  let xml = `          <jr:columnGroup width="${toInt(groupWidth)}" uuid="${groupUuid}">
 `;
   xml += `            <property name="com.jaspersoft.studio.components.table.model.column.name" value="${group.name || `Group`}"/>
 `;
@@ -969,8 +982,113 @@ function generateColumnGroupXML(group: any): string {
   return xml;
 }
 
+// 预处理表格元素，确保多列组合的单元格中的元素宽度不超过聚合列的总宽度
+function preprocessTableElements(element: any) {
+  // 处理列分组
+  function processColumnGroup(group: any) {
+    // 计算聚合列的总宽度
+    const totalWidth = group.width;
+    
+    // 检查并调整group的tableHeader宽度
+    if (group.tableHeader) {
+      if (group.tableHeader.width > totalWidth) {
+        group.tableHeader.width = totalWidth;
+      }
+    }
+    
+    // 检查并调整group的columnHeader宽度
+    if (group.columnHeader) {
+      if (group.columnHeader.width > totalWidth) {
+        group.columnHeader.width = totalWidth;
+      }
+    }
+    
+    // 检查并调整group的columnFooter宽度
+    if (group.columnFooter) {
+      if (group.columnFooter.width > totalWidth) {
+        group.columnFooter.width = totalWidth;
+      }
+    }
+    
+    // 检查并调整group的tableFooter宽度
+    if (group.tableFooter) {
+      if (group.tableFooter.width > totalWidth) {
+        group.tableFooter.width = totalWidth;
+      }
+    }
+    
+    // 递归处理子分组或列
+    if (group.children) {
+      group.children.forEach((child: any) => {
+        if (child.children) {
+          // 子分组
+          processColumnGroup(child);
+        } else {
+          // 普通列，检查并调整列中的单元格元素
+          processColumn(child);
+        }
+      });
+    }
+  }
+  
+  // 处理普通列
+  function processColumn(column: any) {
+    const columnWidth = column.width;
+    
+    // 检查并调整column的tableHeader宽度
+    if (column.tableHeader) {
+      if (column.tableHeader.width > columnWidth) {
+        column.tableHeader.width = columnWidth;
+      }
+    }
+    
+    // 检查并调整column的columnHeader宽度
+    if (column.columnHeader) {
+      if (column.columnHeader.width > columnWidth) {
+        column.columnHeader.width = columnWidth;
+      }
+    }
+    
+    // 检查并调整column的detailCell宽度
+    if (column.detailCell) {
+      if (column.detailCell.width > columnWidth) {
+        column.detailCell.width = columnWidth;
+      }
+    }
+    
+    // 检查并调整column的columnFooter宽度
+    if (column.columnFooter) {
+      if (column.columnFooter.width > columnWidth) {
+        column.columnFooter.width = columnWidth;
+      }
+    }
+    
+    // 检查并调整column的tableFooter宽度
+    if (column.tableFooter) {
+      if (column.tableFooter.width > columnWidth) {
+        column.tableFooter.width = columnWidth;
+      }
+    }
+  }
+  
+  // 开始处理
+  const children = element.children || element.columns || [];
+  children.forEach((child: any) => {
+    if (child.children) {
+      // 处理列分组
+      processColumnGroup(child);
+    } else {
+      // 处理普通列
+      processColumn(child);
+    }
+  });
+}
+
 // 生成表格XML
 function generateTableXML(element: any): string {
+  // 预处理表格元素，确保多列组合的单元格中的元素宽度不超过聚合列的总宽度
+  preprocessTableElements(element);
+  
   let xml = `    <componentElement>
       <reportElement x="${toInt(element.x)}" y="${toInt(element.y)}" width="${toInt(element.width)}" height="${toInt(element.height)}"`;
   

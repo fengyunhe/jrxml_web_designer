@@ -176,6 +176,15 @@
                               />
                             </div>
                           </div>
+                          
+                          <!-- 组合列宽度显示 -->
+                          <div class="form-group small" style="flex: 0 0 120px;">
+                            <label style="font-size: 10px;">{{ t('properties.width') }}</label>
+                            <div class="inline-input">
+                              <span class="small-input readonly-input">{{ calculateMaxGroupWidth(groupInfo) }}</span>
+                            </div>
+                            <div class="width-hint">{{ t('properties.autoCalculated') }}</div>
+                          </div>
                         </div>
                       </n-tab-pane>
                       
@@ -1419,7 +1428,7 @@
                 <label>{{ t('properties.forecolor') }}</label>
                 <ColorPickerWithOpacity 
                   v-model="currentElement.forecolor"
-                  v-model:mode="currentElement.mode"
+                  v-model:mode="currentElement.forecolorMode"
                   @update:modelValue="emit('update-jrxml')"
                   @update:mode="emit('update-jrxml')"
                 />
@@ -2143,7 +2152,9 @@ function getAllColumnGroups(groups: any[]): any[] {
   const result: any[] = [];
   
   function traverse(group: any, path: number[] = []) {
-    result.push({ ...group, path });
+    // 直接修改原始对象，添加path属性
+    group.path = path;
+    result.push(group);
     if (group.children && group.children.length > 0) {
       group.children.forEach((child: any, index: number) => {
         traverse(child, [...path, index]);
@@ -2155,6 +2166,22 @@ function getAllColumnGroups(groups: any[]): any[] {
   return result;
 }
 
+// 计算组合列的最大允许宽度（所有子列和子组合列宽度之和）
+function calculateMaxGroupWidth(groupInfo: any): number {
+  // 递归计算所有叶子节点（普通列）的宽度之和
+  function calculateLeafColumnsWidth(node: any): number {
+    // 如果节点有children，递归计算所有子节点
+    if (node.children && node.children.length > 0) {
+      return node.children.reduce((sum: number, child: any) => {
+        return sum + calculateLeafColumnsWidth(child);
+      }, 0);
+    }
+    // 如果节点没有children，说明是普通列，返回其宽度
+    return node.width || 0;
+  }
+  
+  return calculateLeafColumnsWidth(groupInfo);
+}
 
 // 删除元素
 function deleteElement() {
@@ -2747,6 +2774,31 @@ function setRectangleBorderColor(value: string) {
 
 .field-item input[type="checkbox"] {
   margin-right: 8px;
+}
+
+/* 无效宽度样式 */
+.invalid-width {
+  border-color: red !important;
+  background-color: #fff0f0;
+}
+
+/* 只读输入框样式 */
+.readonly-input {
+  display: block;
+  padding: 1px 4px;
+  font-size: 10px;
+  border: 1px solid #ddd;
+  border-radius: 2px;
+  background-color: #f5f5f5;
+  color: #666;
+  cursor: default;
+}
+
+/* 宽度提示样式 */
+.width-hint {
+  font-size: 8px;
+  color: #999;
+  margin-top: 2px;
 }
 
 .field-name {

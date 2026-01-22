@@ -284,6 +284,8 @@
     "addColumnsToGroup": "将列加入组",
     "columnGroups": "组合列表头",
     "addColumnGroup": "添加列组",
+    "maxWidthHint": "最大允许宽度：{maxWidth}",
+    "autoCalculated": "自动计算",
     "all": "全部",
     "fontStyle": "字体样式"
   },

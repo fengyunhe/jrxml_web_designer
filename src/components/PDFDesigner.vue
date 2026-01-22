@@ -4,8 +4,8 @@
       <div class="header-left">
         <h1>{{ t('app.title') }}</h1>
         <div class="header-undo-redo">
-          <n-button @click="undo" type="default">{{ t('actions.undo') }}</n-button>
-          <n-button @click="redo" type="default">{{ t('actions.redo') }}</n-button>
+          <n-button @click="undo" type="default" quaternary circle :title="t('actions.undo')">↩️</n-button>
+          <n-button @click="redo" type="default" quaternary circle :title="t('actions.redo')">↪️</n-button>
         </div>
       </div>
       <div class="header-actions">
@@ -120,6 +120,7 @@
         :ui-constants="UI_CONSTANTS"
         :enable-snap-to-grid="enableSnapToGrid"
         :enable-snap-to-alignment="enableSnapToAlignment"
+        :show-grid="showGrid"
         @set-design-area-focused="setDesignAreaFocused"
         @select-band="selectBand"
         @select-element="selectElement"
@@ -142,6 +143,7 @@
         @add-columns-to-group="handleAddColumnsToGroup"
         @update:enable-snap-to-grid="enableSnapToGrid = $event"
         @update:enable-snap-to-alignment="enableSnapToAlignment = $event"
+        @update:show-grid="showGrid = $event"
       />
       
       <!-- 右侧属性面板 -->
@@ -904,6 +906,9 @@ const {
   highlightedBandIndex,
   bandSpacing: BAND_CONSTANTS.SPACING
 });
+
+// 控制网格显示/隐藏
+const showGrid = ref(true);
 // 拖动时显示的坐标信息
 const dragCoordinates = ref<{x: number, y: number, visible: boolean, bandName: string}>({ x: 0, y: 0, visible: false, bandName: '' });
 // Band调整高度时的信息
@@ -3518,6 +3523,88 @@ const startResizingElement = (event: MouseEvent, bandIndex: number, elementIndex
           // 先应用基本的大小调整，确保尺寸为整数
           element.width = Math.round(newWidth);
           element.height = Math.round(newHeight);
+          
+          // 特殊处理表格元素：调整表格宽度时自动调整列宽
+          if (element.type === 'table') {
+            // 计算表格宽度变化
+            const widthChange = element.width - resizingInfo.value.startWidth;
+            
+            if (widthChange !== 0 && element.columns && element.columns.length > 0) {
+              // 获取所有列的当前宽度
+              const columnWidths = element.columns.map(col => col.width || 0);
+              const totalColumnWidth = columnWidths.reduce((sum, width) => sum + width, 0);
+              
+              if (totalColumnWidth > 0) {
+                // 计算每列应分配的宽度变化
+                const newColumnWidths = columnWidths.map(width => {
+                  // 保持相对比例分配宽度变化
+                  const ratio = width / totalColumnWidth;
+                  const newWidth = width + (widthChange * ratio);
+                  // 确保每列至少有一个最小宽度
+                  return Math.max(10, Math.round(newWidth));
+                });
+                
+                // 更新所有列的宽度
+                element.columns.forEach((col, index) => {
+                  const newWidth = newColumnWidths[index]!; // 非空断言，因为我们知道index是有效的
+                  col.width = newWidth;
+                  
+                  // 同时更新列中所有单元格的宽度
+                  if (col.tableHeader) {
+                    col.tableHeader.width = newWidth;
+                  }
+                  if (col.columnHeader) {
+                    col.columnHeader.width = newWidth;
+                  }
+                  if (col.detailCell) {
+                    col.detailCell.width = newWidth;
+                  }
+                  if (col.columnFooter) {
+                    col.columnFooter.width = newWidth;
+                  }
+                  if (col.tableFooter) {
+                    col.tableFooter.width = newWidth;
+                  }
+                });
+              }
+            }
+          } 
+          // 特殊处理表格单元格内的元素：确保元素宽度不超过所在列的宽度
+          else {
+            // 检查当前元素是否是表格单元格内的元素
+            let parentColumn: any = null;
+            
+            // 遍历当前band的所有元素，查找包含当前元素的表格列
+            for (const bandElement of currentBand.elements) {
+              if (bandElement.type === 'table' && bandElement.columns) {
+                // 遍历表格的所有列，查找包含当前元素的列
+                for (const column of bandElement.columns) {
+                  if (column.tableHeader === element || 
+                      column.columnHeader === element || 
+                      column.detailCell === element || 
+                      column.columnFooter === element || 
+                      column.tableFooter === element) {
+                    parentColumn = column;
+                    break;
+                  }
+                }
+                if (parentColumn) break;
+              }
+            }
+            
+            // 如果找到父列，限制元素宽度不超过列宽度
+            if (parentColumn) {
+              const columnWidth = parentColumn.width || 0;
+              // 元素宽度不能超过列宽度
+              if (element.width > columnWidth) {
+                element.width = columnWidth;
+              }
+              // 元素的x坐标加上宽度不能超过列宽度
+              if (element.x + element.width > columnWidth) {
+                element.x = columnWidth - element.width;
+              }
+            }
+          }
           
           // 然后应用对齐线吸附功能（如果启用）
           if (enableSnapToAlignment.value) {
