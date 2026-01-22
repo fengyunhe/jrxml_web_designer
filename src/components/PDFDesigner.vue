@@ -3482,6 +3482,29 @@ const startResizingElement = (event: MouseEvent, bandIndex: number, elementIndex
           newWidth = Math.min(newWidth, maxElementWidth);
           newHeight = Math.min(newHeight, availableHeight);
           
+          // 如果按下SHIFT键，保持原始宽高比
+          if (e.shiftKey) {
+            // 计算原始宽高比
+            const aspectRatio = resizingInfo.value.startWidth / resizingInfo.value.startHeight;
+            
+            // 计算基于宽度的高度和基于高度的宽度
+            const heightBasedOnWidth = newWidth / aspectRatio;
+            const widthBasedOnHeight = newHeight * aspectRatio;
+            
+            // 选择更接近原始比例的尺寸，避免超出边界后比例失真
+            if (Math.abs(newHeight - heightBasedOnWidth) < Math.abs(newWidth - widthBasedOnHeight)) {
+              // 以宽度为基准，调整高度
+              newHeight = heightBasedOnWidth;
+            } else {
+              // 以高度为基准，调整宽度
+              newWidth = widthBasedOnHeight;
+            }
+            
+            // 再次限制尺寸，确保不超出边界
+            newWidth = Math.max(20, Math.min(newWidth, maxElementWidth));
+            newHeight = Math.max(20, Math.min(newHeight, availableHeight));
+          }
+          
           // 先应用基本的大小调整，确保尺寸为整数
           element.width = Math.round(newWidth);
           element.height = Math.round(newHeight);
