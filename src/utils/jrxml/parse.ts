@@ -322,6 +322,11 @@ function parseColumnElement(columnElem: Element, index: number): any {
     uuid: columnUuid || crypto.randomUUID(),
     width: columnWidth,
     name: columnName,
+    hasTableHeader: !!tableHeaderElem,
+    hasColumnHeader: !!columnHeaderElem,
+    hasTableFooter: !!tableFooterElem,
+    hasColumnFooter: !!columnFooterElem,
+    hasDetailCell: !!detailCellElem,
     tableHeader,
     columnHeader,
     tableFooter,
@@ -343,8 +348,8 @@ function parseColumnGroupElement(groupElem: Element, index: number): any {
   const tableHeaderElem = Array.from(groupElem.children).find(cell => 
     cell.tagName === 'jr:tableHeader' || cell.localName === 'tableHeader' || cell.tagName === 'tableHeader'
   );
+  group.hasTableHeader = !!tableHeaderElem;
   if (tableHeaderElem) {
-    group.hasTableHeader = true;
     group.tableHeader = parseCellContent(tableHeaderElem);
   }
   
@@ -352,6 +357,7 @@ function parseColumnGroupElement(groupElem: Element, index: number): any {
   const tableFooterElem = Array.from(groupElem.children).find(cell => 
     cell.tagName === 'jr:tableFooter' || cell.localName === 'tableFooter' || cell.tagName === 'tableFooter'
   );
+  group.hasTableFooter = !!tableFooterElem;
   if (tableFooterElem) {
     group.tableFooter = parseCellContent(tableFooterElem);
   }
@@ -360,6 +366,7 @@ function parseColumnGroupElement(groupElem: Element, index: number): any {
   const columnHeaderElem = Array.from(groupElem.children).find(cell => 
     cell.tagName === 'jr:columnHeader' || cell.localName === 'columnHeader' || cell.tagName === 'columnHeader'
   );
+  group.hasColumnHeader = !!columnHeaderElem;
   if (columnHeaderElem) {
     group.columnHeader = parseCellContent(columnHeaderElem);
   }
@@ -368,6 +375,7 @@ function parseColumnGroupElement(groupElem: Element, index: number): any {
   const columnFooterElem = Array.from(groupElem.children).find(cell => 
     cell.tagName === 'jr:columnFooter' || cell.localName === 'columnFooter' || cell.tagName === 'columnFooter'
   );
+  group.hasColumnFooter = !!columnFooterElem;
   if (columnFooterElem) {
     group.columnFooter = parseCellContent(columnFooterElem);
   }

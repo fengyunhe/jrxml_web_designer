@@ -280,7 +280,8 @@
     "leftBorder": "左边框",
     "rightBorder": "右边框",
     "dashedAll": "全虚线边框",
-    "dottedAll": "全点线边框"
+    "dottedAll": "全点线边框",
+    "addColumnsToGroup": "将列加入组"
   },
   "bottomPanel": {
     "pageSettings": "页面设置",

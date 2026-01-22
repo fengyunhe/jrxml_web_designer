@@ -113,6 +113,7 @@
             :report-is-italic="reportProperties.defaultFont.isItalic"
             :report-is-underline="reportProperties.defaultFont.isUnderline"
             :is-out-of-bounds="isElementOutOfBounds(bandIndex, index)"
+            :zoom-level="zoomLevel"
             @select="selectElement"
             @drag-start="startDragging"
             @resize-start="startResizingElement"
@@ -122,6 +123,7 @@
             @cancel-editing="cancelEditing"
             @check-fields="checkFields"
             @move-column="handleMoveColumn"
+            @add-columns-to-group="handleAddColumnsToGroup"
           />
           </div>
           <!-- 区域高度调整手柄 -->
@@ -272,6 +274,7 @@ const emit = defineEmits([
   'check-fields', // 添加字段检查事件
   'contextmenu', // 添加上下文菜单事件
   'move-column', // 添加列移动事件
+  'add-columns-to-group', // 添加列分组事件
   'update:enableSnapToGrid', // 添加自动吸附到网格事件
   'update:enableSnapToAlignment' // 添加自动吸附对齐事件
 ]);
@@ -349,6 +352,11 @@ const checkFields = (fields: string[]) => {
 // 处理列移动事件
 const handleMoveColumn = (elementIndex: number, fromIndex: number, toIndex: number, bandIndex: number, parentFrameIndex?: number) => {
   emit('move-column', elementIndex, fromIndex, toIndex, bandIndex, parentFrameIndex);
+};
+
+// 处理将选中的列加入组
+const handleAddColumnsToGroup = (elementIndex: number, columnIndices: number[], bandIndex: number, parentFrameIndex?: number) => {
+  emit('add-columns-to-group', elementIndex, columnIndices, bandIndex, parentFrameIndex);
 };
 
 // 处理元素上下文菜单

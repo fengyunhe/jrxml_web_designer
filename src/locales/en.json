@@ -280,7 +280,8 @@
     "leftBorder": "Left Border",
     "rightBorder": "Right Border",
     "dashedAll": "All Dashed Borders",
-    "dottedAll": "All Dotted Borders"
+    "dottedAll": "All Dotted Borders",
+    "addColumnsToGroup": "Add Columns to Group"
   },
   "bottomPanel": {
     "pageSettings": "Page Settings",

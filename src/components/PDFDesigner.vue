@@ -139,6 +139,7 @@
         @contextmenu="handleElementContextMenu"
         @reset-zoom="resetZoom"
         @move-column="handleMoveColumn"
+        @add-columns-to-group="handleAddColumnsToGroup"
         @update:enable-snap-to-grid="enableSnapToGrid = $event"
         @update:enable-snap-to-alignment="enableSnapToAlignment = $event"
       />
@@ -3794,6 +3795,83 @@ const handleMoveColumn = (elementIndex: number, fromIndex: number, toIndex: numb
   
   // 更新表格的列
   tableElement.columns = columns;
+  
+  // 更新JRXML
+  updateJRXML();
+};
+
+// 处理将选中的列加入组
+const handleAddColumnsToGroup = (elementIndex: number, columnIndices: number[], bandIndex: number, parentFrameIndex?: number): void => {
+  // 获取当前band
+  const band = bands.value[bandIndex];
+  if (!band) return;
+  
+  // 获取要操作的元素
+  let element;
+  if (parentFrameIndex !== undefined) {
+    // 处理Frame内的元素
+    const frame = band.elements[parentFrameIndex];
+    if (frame && frame.type === 'frame' && frame.elements) {
+      element = frame.elements[elementIndex];
+    }
+  } else {
+    // 处理直接在Band中的元素
+    element = band.elements[elementIndex];
+  }
+  
+  // 确保是表格元素
+  if (!element || element.type !== 'table') return;
+  
+  const tableElement = element as any;
+  if (!tableElement.columns || !Array.isArray(tableElement.columns)) return;
+  
+  // 确保至少选择了2列
+  if (columnIndices.length < 2) return;
+  
+  // 保存状态到历史记录
+  saveStateToHistory();
+  
+  // 排序选中的列索引，确保从左到右处理
+  const sortedIndices = [...columnIndices].sort((a, b) => a - b);
+  
+  // 确保sortedIndices不为空
+  if (sortedIndices.length === 0) return;
+  
+  // 获取选中的列
+  const selectedColumns = sortedIndices.map(index => tableElement.columns[index]);
+  
+  // 计算分组宽度
+  const groupWidth = selectedColumns.reduce((sum, column) => sum + column.width, 0);
+  
+  // 创建新的列分组
+  const newGroup = {
+    uuid: crypto.randomUUID(),
+    name: `Group_${Date.now()}`,
+    width: groupWidth,
+    hasTableHeader: true,
+    children: selectedColumns
+  };
+  
+  // 初始化children属性（如果不存在）
+  if (!tableElement.children) {
+    tableElement.children = [...tableElement.columns];
+  }
+  
+  // 更新children数组，移除选中的列并添加新分组
+  const newChildren = [...tableElement.children];
+  
+  // 从后往前移除选中的列，避免索引偏移
+  for (let i = sortedIndices.length - 1; i >= 0; i--) {
+    const index = sortedIndices[i] as number;
+    newChildren.splice(index, 1);
+  }
+  
+  // 在第一个选中列的位置插入新分组
+  const firstIndex = sortedIndices[0] as number;
+  newChildren.splice(firstIndex, 0, newGroup);
+  
+  // 更新表格元素
+  tableElement.children = newChildren;
   
   // 更新JRXML
   updateJRXML();

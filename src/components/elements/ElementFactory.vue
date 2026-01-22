@@ -76,6 +76,7 @@ const props = defineProps<{
   reportIsUnderline?: boolean;
   isOutOfBounds?: boolean;
   parentFrameIndex?: number;
+  zoomLevel?: number;
 }>();
 
 // Emits
@@ -89,6 +90,7 @@ const emit = defineEmits<{
   cancelEditing: [];
   checkFields: [fields: string[]];
   moveColumn: [elementIndex: number, fromIndex: number, toIndex: number, bandIndex: number, parentFrameIndex?: number];
+  addColumnsToGroup: [elementIndex: number, columnIndices: number[], bandIndex: number, parentFrameIndex?: number];
 }>();
 
 // 根据元素类型获取对应的组件
@@ -122,7 +124,8 @@ const commonProps = computed(() => ({
   reportIsItalic: props.reportIsItalic,
   reportIsUnderline: props.reportIsUnderline,
   isOutOfBounds: props.isOutOfBounds,
-  parentFrameIndex: props.parentFrameIndex
+  parentFrameIndex: props.parentFrameIndex,
+  zoomLevel: props.zoomLevel
 }));
 
 // 通用事件
@@ -153,6 +156,9 @@ const commonEvents = {
   },
   moveColumn: (elementIndex: number, fromIndex: number, toIndex: number) => {
     emit('moveColumn', elementIndex, fromIndex, toIndex, props.bandIndex, props.parentFrameIndex);
+  },
+  addColumnsToGroup: (elementIndex: number, columnIndices: number[]) => {
+    emit('addColumnsToGroup', elementIndex, columnIndices, props.bandIndex, props.parentFrameIndex);
   }
 };
 </script>
