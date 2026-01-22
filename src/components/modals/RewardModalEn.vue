@@ -11,12 +11,18 @@
       <h3>Your support keeps this project going!</h3>
       <img src="/src/assets/FIREGOD_CN.jpg" alt="Donation QR Code" class="reward-image">
       <p>Scan with WeChat to donate, thank you for your support!</p>
+      
+      <div class="paypal-section">
+        <h4>Or donate with PayPal</h4>
+        <div style="width:50%;margin:auto;" id="paypal-button-container-P-19G51974NJ968551RNFYXP3A"></div>
+      </div>
     </div>
   </BaseModal>
 </template>
 
 <script setup lang="ts">
 import BaseModal from './BaseModal.vue';
+import { onMounted, watch } from 'vue';
 
 // Define props
 const props = defineProps({
@@ -33,6 +39,70 @@ const emit = defineEmits(['update:visible']);
 const closeModal = () => {
   emit('update:visible', false);
 };
+
+// Load PayPal SDK and initialize buttons
+const initPayPalButtons = () => {
+  // Check if PayPal SDK is already loaded
+  if (window.paypal) {
+    renderPayPalButtons();
+    return;
+  }
+  
+  // Load PayPal SDK
+  const script = document.createElement('script');
+  script.src = 'https://www.paypal.com/sdk/js?client-id=AVZB1IzcDRiJe7LZ-fScuoAUwJvN0nEwx1s845snzslzGK-1oOMiNS37Urw76p_xyeNhKhAPQp_BBVNu&vault=true&intent=subscription';
+  script.setAttribute('data-sdk-integration-source', 'button-factory');
+  script.onload = renderPayPalButtons;
+  document.body.appendChild(script);
+};
+
+// Render PayPal buttons
+const renderPayPalButtons = () => {
+  if (window.paypal) {
+    window.paypal.Buttons({
+      style: {
+        shape: 'pill',
+        color: 'silver',
+        layout: 'horizontal',
+        label: 'paypal'
+      },
+      createSubscription: function(data: any, actions: any) {
+        return actions.subscription.create({
+          /* Creates the subscription */
+          plan_id: 'P-19G51974NJ968551RNFYXP3A'
+        });
+      },
+      onApprove: function(data: any, actions: any) {
+        alert(data.subscriptionID); // You can add optional success message for the subscriber here
+      }
+    }).render('#paypal-button-container-P-19G51974NJ968551RNFYXP3A'); // Renders the PayPal button
+  }
+};
+
+// Watch for modal visibility changes
+watch(
+  () => props.visible,
+  (newVal) => {
+    if (newVal) {
+      // Modal is opening, initialize PayPal buttons
+      initPayPalButtons();
+    }
+  }
+);
+
+// Ensure PayPal buttons are initialized when component mounts if modal is visible
+onMounted(() => {
+  if (props.visible) {
+    initPayPalButtons();
+  }
+});
+
+// Extend window interface to include paypal
+declare global {
+  interface Window {
+    paypal: any;
+  }
+}
 </script>
 
 <style scoped>
@@ -63,6 +133,22 @@ const closeModal = () => {
 
 .reward-content p {
   color: #666;
-  margin: 0;
+  margin: 0 0 20px;
+}
+
+.paypal-section {
+  margin-top: 20px;
+  padding-top: 20px;
+  border-top: 1px solid #eee;
+}
+
+.paypal-section h4 {
+  margin-bottom: 15px;
+  color: #333;
+  font-size: 16px;
+}
+
+#paypal-button-container-P-19G51974NJ968551RNFYXP3A {
+  margin: 0 auto;
 }
 </style>
