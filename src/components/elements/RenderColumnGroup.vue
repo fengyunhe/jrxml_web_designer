@@ -1,76 +1,38 @@
 <template>
-  <!-- 渲染当前级别的分组行 -->
-  <div class="column-group-row">
-    <template v-for="(child, index) in group.children" :key="child.uuid || index">
-      <!-- 分组 -->
-      <div 
-        v-if="child.children && child.children.length > 0"
-        class="column-group-cell"
-        :style="{ width: `${Number(child.width) || 0}px` }"
-        :class="{ 'column-selected': isGroupSelected(child) }"
-      >
-        <div 
-          class="cell-content group-content"
-          :style="getGroupCellStyle(child, type)"
-        >
-          <!-- 渲染分组表头 -->
-          <template v-if="type === 'tableHeader' && child.hasTableHeader && child.tableHeader">
-            <div class="static-text">{{ child.tableHeader.text || '' }}</div>
+  <table class="column-group-table">
+    <tbody>
+      <!-- 渲染所有分组行 -->
+      <template v-for="(row, rowIndex) in groupRows" :key="rowIndex">
+        <tr class="column-group-row" :style="{ height: '30px' }">
+          <template v-for="(cell, cellIndex) in row" :key="cell.key">
+            <td 
+              :class="['column-group-cell', { 'column-selected': isCellSelected(cell) }]"
+              :colspan="cell.colspan"
+              :rowspan="cell.rowspan"
+              :style="getCellStyle(cell, type)"
+              @click.stop="handleCellClick(cell, $event)"
+              @contextmenu.stop="handleCellContextMenu(cell, $event)"
+            >
+              <div class="cell-content">
+                <template v-if="type === 'tableHeader'">
+                  <div class="static-text">
+                    {{ cell.content.tableHeader?.text || '' }}
+                  </div>
+                </template>
+                <template v-else-if="type === 'columnHeader'">
+                  <div class="column-name">
+                    {{ cell.content.name || '' }}
+                  </div>
+                </template>
+              </div>
+            </td>
           </template>
-          <!-- 渲染分组列头 -->
-          <template v-else-if="type === 'columnHeader' && child.hasColumnHeader && child.columnHeader">
-            <div class="column-name">{{ child.name }}</div>
-          </template>
-        </div>
-      </div>
-      <!-- 普通列 -->
-      <div 
-        v-else
-        class="column-cell"
-        :style="{ width: `${Number(child.width) || 0}px` }"
-        :class="{ 'column-selected': isColumnSelectedInGroup(child, index as number) }"
-        @click.stop="handleColumnClick(child, $event, index as number)"
-        @contextmenu.stop="handleColumnContextMenu(child, $event, index as number)"
-      >
-        <div 
-          class="cell-content"
-          :style="getCellStyle(child, type)"
-        >
-          <!-- 渲染列头内容 -->
-          <template v-if="type === 'tableHeader'">
-            <template v-if="child.hasTableHeader && child.tableHeader">
-              <template v-if="child.tableHeader.type === 'staticText'">
-                <div class="static-text">{{ child.tableHeader.text || '' }}</div>
-              </template>
-              <template v-else-if="child.tableHeader.type === 'textField'">
-                <div class="text-field">{{ child.tableHeader.expression || '' }}</div>
-              </template>
-            </template>
-            <div v-else class="cell-content empty">
-              Table Header
-            </div>
-          </template>
-          <template v-else-if="type === 'columnHeader'">
-            <div class="column-name">{{ child.name }}</div>
-          </template>
-        </div>
-      </div>
-    </template>
-  </div>
-  
-  <!-- 递归渲染所有子分组的行 -->
-  <template v-for="(child, index) in group.children" :key="`child-${child.uuid || index}`">
-    <render-column-group 
-      v-if="child.children && child.children.length > 0"
-      :group="child" 
-      :level="level + 1" 
-      :type="type"
-      :columns="columns"
-      @column-click="handleColumnClick"
-      @column-context-menu="handleColumnContextMenu"
-    />
-  </template>
+        </tr>
+      </template>
+    </tbody>
+  </table>
 </template>
+
 
 <script setup lang="ts">
 import { computed } from 'vue';
@@ -87,42 +49,172 @@ const emit = defineEmits<{
   columnContextMenu: [column: any, event: MouseEvent, index?: number];
 }>();
 
-function getGroupCellStyle(group: any, type: string) {
-  if (group[type]) {
-    return getCellStyle(group[type], type);
+// 计算每个分组包含的叶子节点数量（用于计算colspan）
+function countLeafColumns(node: any): number {
+  if (!node.children || node.children.length === 0) {
+    return 1;
   }
+  return node.children.reduce((sum: number, child: any) => sum + countLeafColumns(child), 0);
+}
+
+// 计算节点的深度
+function calculateNodeDepth(node: any, depth: number = 0): number {
+  if (!node.children || node.children.length === 0) {
+    return depth;
+  }
+  let maxDepth = depth;
+  for (const child of node.children) {
+    const childDepth = calculateNodeDepth(child, depth + 1);
+    if (childDepth > maxDepth) {
+      maxDepth = childDepth;
+    }
+  }
+  return maxDepth;
+}
+
+// 获取所有叶子节点
+function getLeafNodes(node: any): any[] {
+  const leaves: any[] = [];
+  if (!node.children || node.children.length === 0) {
+    leaves.push(node);
+  } else {
+    for (const child of node.children) {
+      leaves.push(...getLeafNodes(child));
+    }
+  }
+  return leaves;
+}
+
+// 构建分组行数据，正确处理colspan和rowspan
+function buildGroupRows(group: any): any[][] {
+  // 获取所有叶子节点
+  const allLeaves = getLeafNodes(group);
+  const totalColumns = allLeaves.length;
+  
+  // 计算所有节点的最大深度
+  function getMaxDepth(nodes: any[]): number {
+    let max = 0;
+    for (const node of nodes) {
+      const depth = calculateNodeDepth(node);
+      if (depth > max) {
+        max = depth;
+      }
+    }
+    return max;
+  }
+  
+  const maxDepth = getMaxDepth(group.children);
+  
+  // 创建行数组
+  const rows: any[][] = [];
+  for (let i = 0; i <= maxDepth; i++) {
+    rows[i] = [];
+  }
+  
+  // 递归构建表格
+  function buildTable(node: any, startColumn: number, depth: number) {
+    // 计算该节点应该跨越的列数（colspan）
+    const colspan = countLeafColumns(node);
+    
+    // 计算该节点应该跨越的行数（rowspan）
+    let rowspan: number;
+    if (node.children && node.children.length > 0) {
+      // 有子节点的分组单元格，rowspan始终为1
+      rowspan = 1;
+    } else {
+      // 叶子节点，rowspan为从当前深度到最大深度的行数
+      rowspan = maxDepth - depth + 1;
+    }
+    
+    // 创建单元格
+    const cell = {
+      key: `${node.uuid || Math.random()}-${depth}-${startColumn}`,
+      content: node,
+      colspan,
+      rowspan
+    };
+    
+    // 确保当前行存在
+    if (!rows[depth]) {
+      rows[depth] = [];
+    }
+    
+    // 添加到当前行
+    rows[depth].push(cell);
+    
+    // 如果有子节点，继续递归构建
+    if (node.children && node.children.length > 0) {
+      let currentColumn = startColumn;
+      for (const child of node.children) {
+        buildTable(child, currentColumn, depth + 1);
+        currentColumn += countLeafColumns(child);
+      }
+    }
+  }
+  
+  // 开始构建表格，处理根分组的所有子节点
+  for (const child of group.children) {
+    buildTable(child, 0, 0);
+  }
+  
+  // 移除空行
+  return rows.filter(row => row.length > 0);
+}
+
+// 计算所有分组行
+const groupRows = computed(() => buildGroupRows(props.group));
+
+// 获取单元格样式
+function getCellStyle(cell: any, type: string) {
+  const content = cell.content;
+  if (content[type]) {
+    return getElementStyle(content[type]);
+  }
+  // 默认样式
   return {
     backgroundColor: type === 'tableHeader' ? '#f0f0f0' : '#e6e6e6',
     fontWeight: '600',
-    color: '#333'
+    color: '#333',
+    border: '1px solid #ccc',
+    textAlign: 'center',
+    verticalAlign: 'middle',
+    padding: '0 5px',
+    boxSizing: 'border-box'
   };
 }
 
-function getCellStyle(cell: any, type: string) {
-  if (!cell) return {};
+// 获取元素样式
+function getElementStyle(element: any) {
+  if (!element) return {};
   
-  const styles: any = {};
+  const styles: any = {
+    textAlign: 'center',
+    verticalAlign: 'middle',
+    padding: '0 5px',
+    boxSizing: 'border-box',
+    border: '1px solid #ccc'
+  };
   
-  if (cell.fontSize) {
-    styles.fontSize = `${cell.fontSize}px`;
+  if (element.fontSize) {
+    styles.fontSize = `${element.fontSize}px`;
   }
-  if (cell.forecolor) {
-    styles.color = cell.forecolor;
+  if (element.forecolor) {
+    styles.color = element.forecolor;
   }
-  if (cell.isBold) {
+  if (element.isBold) {
     styles.fontWeight = 'bold';
   }
-  if (cell.isItalic) {
+  if (element.isItalic) {
     styles.fontStyle = 'italic';
   }
-  if (cell.isUnderline) {
+  if (element.isUnderline) {
     styles.textDecoration = 'underline';
   }
-  if (cell.backcolor) {
-    styles.backgroundColor = cell.backcolor;
+  if (element.backcolor) {
+    styles.backgroundColor = element.backcolor;
   }
   
-  const borderWidth = cell.borderWidth || 0;
+  const borderWidth = element.borderWidth || 0;
   if (borderWidth > 0) {
     styles.border = `${borderWidth}px solid #000000`;
   }
@@ -130,50 +222,43 @@ function getCellStyle(cell: any, type: string) {
   return styles;
 }
 
-function isGroupSelected(group: any): boolean {
+function isCellSelected(cell: any): boolean {
   return false;
 }
 
-function isColumnSelectedInGroup(column: any, index: number): boolean {
-  return false;
+function handleCellClick(cell: any, event: MouseEvent) {
+  if (!cell.content.children) {
+    emit('columnClick', cell.content, event);
+  }
 }
 
-function handleColumnClick(column: any, event: MouseEvent, index?: number) {
-  emit('columnClick', column, event, index);
-}
-
-function handleColumnContextMenu(column: any, event: MouseEvent, index?: number) {
-  emit('columnContextMenu', column, event, index);
+function handleCellContextMenu(cell: any, event: MouseEvent) {
+  if (!cell.content.children) {
+    emit('columnContextMenu', cell.content, event);
+  }
 }
 </script>
 
+
 <style scoped>
-.column-group-row {
-  display: flex;
+.column-group-table {
   width: 100%;
-  height: 30px;
+  border-collapse: collapse;
+  table-layout: fixed;
+}
+
+.column-group-row {
   border-bottom: 1px solid #ccc;
 }
 
-.column-group-cell,
-.column-cell {
-  display: flex;
-  align-items: center;
-  justify-content: center;
+.column-group-cell {
   box-sizing: border-box;
   cursor: pointer;
   user-select: none;
-  border-right: 1px solid #ccc;
-  height: 100%;
+  overflow: hidden;
 }
 
-.column-group-cell:last-child,
-.column-cell:last-child {
-  border-right: none;
-}
-
-.column-group-cell:hover,
-.column-cell:hover {
+.column-group-cell:hover {
   background-color: rgba(64, 158, 255, 0.1);
 }
 
@@ -188,8 +273,6 @@ function handleColumnContextMenu(column: any, event: MouseEvent, index?: number)
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 0 5px;
-  box-sizing: border-box;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -203,11 +286,6 @@ function handleColumnContextMenu(column: any, event: MouseEvent, index?: number)
 .cell-content.empty {
   color: #999;
   font-style: italic;
-}
-
-.group-content {
-  width: 100%;
-  height: 100%;
 }
 
 .static-text,
