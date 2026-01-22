@@ -835,17 +835,33 @@ function generateColumnXML(column: any, index: number): string {
   }
   
   // 生成columnHeader
-  if (column.columnHeader) {
-    xml += `            <jr:columnHeader height="${toInt(column.columnHeader.height)}" rowSpan="${column.columnHeader.rowSpan || 1}">
-`;
-    xml += generateElementXML(column.columnHeader).replace(/^    /gm, '                ');
-    xml += `            </jr:columnHeader>
-`;
+  let columnHeader = column.columnHeader;
+  if (!columnHeader) {
+    // 如果没有columnHeader，创建一个默认的
+    columnHeader = {
+      type: 'staticText',
+      x: 0,
+      y: 0,
+      width: column.width,
+      height: 30,
+      text: column.name || `Column${index + 1}`,
+      textAlignment: 'Center',
+      verticalAlignment: 'Middle'
+    };
   } else {
-    xml += `            <jr:columnHeader height="30" rowSpan="1">
-            </jr:columnHeader>
-`;
+    // 更新columnHeader的内容，使其与column.name保持一致
+    if (columnHeader.type === 'staticText') {
+      columnHeader.text = column.name;
+    } else if (columnHeader.type === 'textField') {
+      columnHeader.expression = column.name;
+    }
   }
+  
+  xml += `            <jr:columnHeader height="${toInt(columnHeader.height)}" rowSpan="${columnHeader.rowSpan || 1}">
+`;
+  xml += generateElementXML(columnHeader).replace(/^    /gm, '                ');
+  xml += `            </jr:columnHeader>
+`;
   
   // 生成columnFooter - 只要存在就生成，即使是空的
   if (column.hasColumnFooter) {
@@ -909,10 +925,18 @@ function generateColumnGroupXML(group: any): string {
   }
   
   // 生成columnHeader
-  if (group.columnHeader) {
-    xml += `            <jr:columnHeader height="${toInt(group.columnHeader.height)}" rowSpan="${group.columnHeader.rowSpan || 1}">
+  let columnHeader = group.columnHeader;
+  if (columnHeader) {
+    // 更新columnHeader的内容，使其与group.name保持一致
+    if (columnHeader.type === 'staticText') {
+      columnHeader.text = group.name;
+    } else if (columnHeader.type === 'textField') {
+      columnHeader.expression = group.name;
+    }
+    
+    xml += `            <jr:columnHeader height="${toInt(columnHeader.height)}" rowSpan="${columnHeader.rowSpan || 1}">
 `;
-    xml += generateElementXML(group.columnHeader).replace(/^    /gm, '                ');
+    xml += generateElementXML(columnHeader).replace(/^    /gm, '                ');
     xml += `            </jr:columnHeader>
 `;
   }

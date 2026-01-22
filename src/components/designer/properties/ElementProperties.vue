@@ -131,6 +131,260 @@
               <option value="AllSectionsNoDetail">{{ t('properties.whenNoDataTypeOptions.AllSectionsNoDetail') }}</option>
             </select>
           </div>
+
+                      <!-- 组合列设置 -->
+            <div class="form-group">
+              <label>{{ t('properties.columnGroups') }}</label>
+              <div class="table-column-actions">
+                <n-button 
+                  class="add-column-btn" 
+                  :title="t('properties.addColumnGroup')"
+                  type="primary"
+                >
+                  + {{ t('properties.addColumnGroup') }}
+                </n-button>
+              </div>
+              
+              <!-- 渲染所有组合列，包括子级组 -->
+              <div class="table-column-groups" v-if="allColumnGroups.length > 0">
+                <div 
+                  v-for="(groupInfo, groupIndex) in allColumnGroups" 
+                  :key="groupInfo.uuid || groupIndex" 
+                  class="column-group-item"
+                >
+                  <div class="column-group-header">
+                    <span class="column-group-name">
+                      <!-- 显示组合列路径 -->
+                      {{ `第${groupInfo.path.length + 1}行，第${groupInfo.path[groupInfo.path.length - 1] + 1}格`  }} 
+                    </span>
+                  </div>
+                  <div class="column-group-properties">
+                    <n-tabs type="card" size="small" style="font-size: 11px;">
+                      <!-- 组合列基本属性标签页 -->
+                      <n-tab-pane name="groupBasic" :tab="t('properties.basicProperties')">
+                        <div class="table-column-properties">
+                          <!-- 表格头部设置 -->
+                          <div class="form-group small full-width">
+                            <div v-if="groupInfo.hasTableHeader && groupInfo.tableHeader" class="inline-input">
+                              <label>{{ t('properties.tableHeader') }}</label>
+                              <input 
+                                v-model="(groupInfo.tableHeader as any).text" 
+                                type="text" 
+                                class="small-input"
+                                :placeholder="t('properties.tableHeaderPlaceholder')"
+                                @change="emit('update-jrxml')"
+                              />
+                            </div>
+                          </div>
+                        </div>
+                      </n-tab-pane>
+                      
+                      <!-- 组合列文本样式标签页 -->
+                      <n-tab-pane name="groupTextStyle" :tab="t('properties.textStyle')">
+                        <div class="table-column-properties">
+                          <!-- 表格头部文本样式 -->
+                          <div v-if="groupInfo.hasTableHeader && groupInfo.tableHeader" class="form-group small full-width">
+                            <label>{{ t('properties.headerTextStyle') }}</label>
+                            <div class="text-style-controls">
+                              <div class="form-group small" style="flex: 0 0 40px;">
+                                <label style="font-size: 10px;">{{ t('properties.fontSize') }}</label>
+                                <input 
+                                  v-model.number="(groupInfo.tableHeader as any).fontSize" 
+                                  type="number" 
+                                  min="6"
+                                  max="72"
+                                  step="1"
+                                  class="small-input"
+                                  @change="emit('update-jrxml')"
+                                />
+                              </div>
+                              <div class="form-group small" style="flex: 1;">
+                                <label style="font-size: 10px;">{{ t('properties.forecolor') }}</label>
+                                <ColorPickerWithOpacity 
+                                  v-model="(groupInfo.tableHeader as any).forecolor"
+                                  v-model:mode="(groupInfo.tableHeader as any).forecolorMode"
+                                  @update:modelValue="emit('update-jrxml')"
+                                  @update:mode="emit('update-jrxml')"
+                                />
+                              </div>
+                              <div class="form-group small" style="flex: 1;">
+                                <label style="font-size: 10px;">{{ t('properties.backgroundColor') }}</label>
+                                <ColorPickerWithOpacity 
+                                  v-model="(groupInfo.tableHeader as any).backcolor"
+                                  v-model:mode="(groupInfo.tableHeader as any).mode"
+                                  @update:modelValue="emit('update-jrxml')"
+                                  @update:mode="emit('update-jrxml')"
+                                  style="height: 20px;"
+                                />
+                              </div>
+                            </div>
+                            <div class="checkbox-group" style="gap: 12px; margin-bottom: 6px;">
+                              <label style="font-size: 11px;">
+                                <input v-model="(groupInfo.tableHeader as any).isBold" type="checkbox" @change="emit('update-jrxml')" />{{ t('properties.bold') }}
+                              </label>
+                              <label style="font-size: 11px;">
+                                <input v-model="(groupInfo.tableHeader as any).isItalic" type="checkbox" @change="emit('update-jrxml')" />{{ t('properties.italic') }}
+                              </label>
+                              <label style="font-size: 11px;">
+                                <input v-model="(groupInfo.tableHeader as any).isUnderline" type="checkbox" @change="emit('update-jrxml')" />{{ t('properties.underline') }}
+                              </label>
+                              <label style="font-size: 11px;">
+                                <input v-model="(groupInfo.tableHeader as any).mode" type="checkbox" true-value="Opaque" false-value="Transparent" @change="emit('update-jrxml')" />{{ t('properties.opaque') }}
+                              </label>
+                            </div>
+                          </div>
+                          
+                          <!-- 列头部文本样式 -->
+                          <div class="form-group small full-width" v-if="groupInfo.columnHeader">
+                            <label>{{ t('properties.columnHeader') }}</label>
+                            <div class="text-style-controls">
+                              <div class="form-group small" style="flex: 0 0 40px;">
+                                <label style="font-size: 10px;">{{ t('properties.fontSize') }}</label>
+                                <input 
+                                  v-model.number="(groupInfo.columnHeader as any).fontSize" 
+                                  type="number" 
+                                  min="6"
+                                  max="72"
+                                  step="1"
+                                  class="small-input"
+                                  @change="emit('update-jrxml')"
+                                />
+                              </div>
+                              <div class="form-group small" style="flex: 1;">
+                                <label style="font-size: 10px;">{{ t('properties.forecolor') }}</label>
+                                <ColorPickerWithOpacity 
+                                  v-model="(groupInfo.columnHeader as any).forecolor"
+                                  v-model:mode="(groupInfo.columnHeader as any).forecolorMode"
+                                  @update:modelValue="emit('update-jrxml')"
+                                  @update:mode="emit('update-jrxml')"
+                                />
+                              </div>
+                              <div class="form-group small" style="flex: 1;">
+                                <label style="font-size: 10px;">{{ t('properties.backgroundColor') }}</label>
+                                <ColorPickerWithOpacity 
+                                  v-model="(groupInfo.columnHeader as any).backcolor"
+                                  v-model:mode="(groupInfo.columnHeader as any).mode"
+                                  @update:modelValue="emit('update-jrxml')"
+                                  @update:mode="emit('update-jrxml')"
+                                  style="height: 20px;"
+                                />
+                              </div>
+                            </div>
+                            <div class="checkbox-group" style="gap: 12px; margin-bottom: 6px;">
+                              <label style="font-size: 11px;">
+                                <input v-model="(groupInfo.columnHeader as any).isBold" type="checkbox" @change="emit('update-jrxml')" />{{ t('properties.bold') }}
+                              </label>
+                              <label style="font-size: 11px;">
+                                <input v-model="(groupInfo.columnHeader as any).isItalic" type="checkbox" @change="emit('update-jrxml')" />{{ t('properties.italic') }}
+                              </label>
+                              <label style="font-size: 11px;">
+                                <input v-model="(groupInfo.columnHeader as any).isUnderline" type="checkbox" @change="emit('update-jrxml')" />{{ t('properties.underline') }}
+                              </label>
+                              <label style="font-size: 11px;">
+                                <input v-model="(groupInfo.columnHeader as any).mode" type="checkbox" true-value="Opaque" false-value="Transparent" @change="emit('update-jrxml')" />{{ t('properties.opaque') }}
+                              </label>
+                            </div>
+                          </div>
+                        </div>
+                      </n-tab-pane>
+                      
+                      <!-- 组合列边框样式标签页 -->
+                      <n-tab-pane name="groupBorderStyle" :tab="t('properties.borderStyle')">
+                        <div class="table-column-properties">
+                          <!-- 表格头部边框样式 -->
+                          <div v-if="groupInfo.hasTableHeader && groupInfo.tableHeader" class="form-group small full-width">
+                            <label>{{ t('properties.headerBorder') }}</label>
+                            <div class="border-controls">
+                              <div class="form-group small" style="flex: 1;">
+                                <label style="font-size: 10px;">{{ t('properties.style') }}</label>
+                                <select 
+                                  v-model="(groupInfo.tableHeader as any).borderStyle" 
+                                  class="small-input"
+                                  @change="emit('update-jrxml')"
+                                  style="height: 20px; padding: 0 4px;"
+                                >
+                                  <option value="">{{ t('properties.none') }}</option>
+                                  <option value="Solid">{{ t('properties.solid') }}</option>
+                                  <option value="Dashed">{{ t('properties.dashed') }}</option>
+                                  <option value="Dotted">{{ t('properties.dotted') }}</option>
+                                  <option value="Double">{{ t('properties.double') }}</option>
+                                </select>
+                              </div>
+                              <div class="form-group small" style="flex: 0 0 60px;">
+                                <label style="font-size: 10px;">{{ t('properties.width') }}</label>
+                                <input 
+                                  v-model.number="(groupInfo.tableHeader as any).borderWidth" 
+                                  type="number" 
+                                  min="0"
+                                  max="10"
+                                  step="0.5"
+                                  class="small-input"
+                                  @change="emit('update-jrxml')"
+                                />
+                              </div>
+                              <div class="form-group small" style="flex: 0 0 60px;">
+                                <label style="font-size: 10px;">{{ t('properties.color') }}</label>
+                                <input 
+                                  v-model="(groupInfo.tableHeader as any).borderColor" 
+                                  type="color" 
+                                  class="small-input color-picker"
+                                  @change="emit('update-jrxml')"
+                                  style="height: 20px; padding: 0;"
+                                />
+                              </div>
+                            </div>
+                          </div>
+                          
+                          <!-- 列头部边框样式 -->
+                          <div class="form-group small full-width" v-if="groupInfo.columnHeader">
+                            <label>{{ t('properties.columnHeader') }}</label>
+                            <div class="border-controls">
+                              <div class="form-group small" style="flex: 1;">
+                                <label style="font-size: 10px;">{{ t('properties.style') }}</label>
+                                <select 
+                                  v-model="(groupInfo.columnHeader as any).borderStyle" 
+                                  class="small-input"
+                                  @change="emit('update-jrxml')"
+                                  style="height: 20px; padding: 0 4px;"
+                                >
+                                  <option value="">{{ t('properties.none') }}</option>
+                                  <option value="Solid">{{ t('properties.solid') }}</option>
+                                  <option value="Dashed">{{ t('properties.dashed') }}</option>
+                                  <option value="Dotted">{{ t('properties.dotted') }}</option>
+                                  <option value="Double">{{ t('properties.double') }}</option>
+                                </select>
+                              </div>
+                              <div class="form-group small" style="flex: 0 0 60px;">
+                                <label style="font-size: 10px;">{{ t('properties.width') }}</label>
+                                <input 
+                                  v-model.number="(groupInfo.columnHeader as any).borderWidth" 
+                                  type="number" 
+                                  min="0"
+                                  max="10"
+                                  step="0.5"
+                                  class="small-input"
+                                  @change="emit('update-jrxml')"
+                                />
+                              </div>
+                              <div class="form-group small" style="flex: 0 0 60px;">
+                                <label style="font-size: 10px;">{{ t('properties.color') }}</label>
+                                <input 
+                                  v-model="(groupInfo.columnHeader as any).borderColor" 
+                                  type="color" 
+                                  class="small-input color-picker"
+                                  @change="emit('update-jrxml')"
+                                  style="height: 20px; padding: 0;"
+                                />
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </n-tab-pane>
+                    </n-tabs>
+                  </div>
+                </div>
+              </div>
+            </div>
           
           <div class="form-group">
             <label>{{ t('properties.tableColumns') }}</label>
@@ -756,7 +1010,6 @@
                 </div>
               </div>
             </div>
-            
             <!-- 从数据集选择字段的模态框 -->
             <BaseModal
               :visible="showFieldSelectionModal"
@@ -1650,6 +1903,14 @@ const availableFields = computed(() => {
   return matchingDataset?.fields || [];
 });
 
+// 计算属性：获取所有组合列，包括子级组，返回扁平化的列表
+const allColumnGroups = computed(() => {
+  if (!currentElement.value || currentElement.value.type !== 'table' || !currentElement.value.children) {
+    return [];
+  }
+  return getAllColumnGroups(currentElement.value.children);
+});
+
 // 打开字段选择模态框
 function openFieldSelectionModal() {
   if (!currentElement.value || currentElement.value.type !== 'table') return;
@@ -1877,6 +2138,22 @@ function removeTableColumn(index: number) {
   emit('update-jrxml');
 }
 
+// 获取所有组合列，包括子级组，返回扁平化的列表
+function getAllColumnGroups(groups: any[]): any[] {
+  const result: any[] = [];
+  
+  function traverse(group: any, path: number[] = []) {
+    result.push({ ...group, path });
+    if (group.children && group.children.length > 0) {
+      group.children.forEach((child: any, index: number) => {
+        traverse(child, [...path, index]);
+      });
+    }
+  }
+  
+  groups.forEach(group => traverse(group));
+  return result;
+}
 
 
 // 删除元素
@@ -2485,4 +2762,57 @@ function setRectangleBorderColor(value: string) {
 }
 
 
+/* 组合列样式 */
+.table-column-groups {
+  margin-top: 10px;
+  background-color: #f8f9fa;
+  border-radius: 4px;
+  padding: 10px;
+  border: 1px solid #e0e0e0;
+}
+
+.column-group-item {
+  margin-bottom: 15px;
+  background-color: #ffffff;
+  border: 1px solid #e0e0e0;
+  border-radius: 4px;
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.column-group-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 15px;
+  background-color: #f0f4f8;
+  border-bottom: 1px solid #e0e0e0;
+  font-weight: 600;
+  color: #333;
+}
+
+.column-group-name {
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.group-path {
+  font-size: 12px;
+  color: #666;
+  font-weight: normal;
+  background-color: #e6f0fa;
+  padding: 2px 6px;
+  border-radius: 10px;
+}
+
+.column-group-properties {
+  padding: 10px;
+}
+
+.group-action-buttons {
+  display: flex;
+  gap: 5px;
+}
 </style>

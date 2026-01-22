@@ -37,11 +37,6 @@ const props = defineProps<{
 
 const emit = defineEmits(['update:visible']);
 
-// 监听visible变化
-watch(() => props.visible, (newVisible) => {
-  console.log('PdfPreviewModal visible变化:', newVisible);
-});
-
 // 生成MOCK值的函数
 const generateMockValue = (className: string): any => {
   switch (className) {
@@ -62,8 +57,11 @@ const generateMockValue = (className: string): any => {
   }
 };
 
-// 计算预览URL
-const previewUrl = computed(() => {
+// 预览URL，改为响应式变量
+const previewUrl = ref<string>('about:blank');
+
+// 生成预览URL的函数
+const generatePreviewUrl = () => {
   console.log('生成预览URL，jrxml长度:', props.jrxmlContent.length);
   
   // 使用传入的预览服务器地址或默认地址
@@ -106,6 +104,18 @@ const previewUrl = computed(() => {
     </html>
   `;
   return `data:text/html;charset=utf-8,${encodeURIComponent(formHtml)}`;
+};
+
+// 监听visible变化，只在变为true时生成预览URL
+watch(() => props.visible, (newVisible) => {
+  console.log('PdfPreviewModal visible变化:', newVisible);
+  if (newVisible) {
+    // 只有在组件可见时才生成预览URL
+    previewUrl.value = generatePreviewUrl();
+  } else {
+    // 组件不可见时重置预览URL
+    previewUrl.value = 'about:blank';
+  }
 });
 
 const closeModal = () => {

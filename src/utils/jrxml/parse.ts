@@ -367,10 +367,6 @@ function parseColumnElement(columnElem: Element, index: number): any {
   const columnWidth = parseInt(columnElem.getAttribute('width') || '100');
   const columnUuid = columnElem.getAttribute('uuid') || crypto.randomUUID();
   
-  // 获取列名
-  const columnNameProp = columnElem.querySelector('property[name="com.jaspersoft.studio.components.table.model.column.name"]');
-  const columnName = columnNameProp?.getAttribute('value') || `Column${index + 1}`;
-
   // 解析表头、列头和详情单元格 - 支持带命名空间和不带命名空间的单元格元素
   const tableHeaderElem = Array.from(columnElem.children).find(cell => 
     cell.tagName === 'jr:tableHeader' || cell.localName === 'tableHeader' || cell.tagName === 'tableHeader'
@@ -387,7 +383,7 @@ function parseColumnElement(columnElem: Element, index: number): any {
   const detailCellElem = Array.from(columnElem.children).find(cell => 
     cell.tagName === 'jr:detailCell' || cell.localName === 'detailCell' || cell.tagName === 'detailCell'
   );
-
+  
   // 解析rowSpan属性
   const parseCellWithRowSpan = (cellElem: Element | undefined) => {
     if (!cellElem) return null;
@@ -396,51 +392,100 @@ function parseColumnElement(columnElem: Element, index: number): any {
     cellContent.rowSpan = parseInt(cellElem.getAttribute('rowSpan') || '1');
     return cellContent;
   };
+  
+  const tableHeader = tableHeaderElem ? parseCellWithRowSpan(tableHeaderElem) : null;
+  const columnHeader = columnHeaderElem ? parseCellWithRowSpan(columnHeaderElem) : null;
+  const tableFooter = tableFooterElem ? parseCellWithRowSpan(tableFooterElem) : null;
+  const columnFooter = columnFooterElem ? parseCellWithRowSpan(columnFooterElem) : null;
+  const detailCell = detailCellElem ? parseCellWithRowSpan(detailCellElem) : null;
+  
+  // 获取列名 - 从columnHeader中的文本元素获取
+  let columnName = '';
+  
+  // 先尝试从columnHeader中获取列名
+  if (columnHeader) {
+    if (columnHeader.type === 'staticText') {
+      columnName = columnHeader.text || '';
+    } else if (columnHeader.type === 'textField') {
+      columnName = columnHeader.expression || '';
+    }
+  }
+  
+  // 如果columnHeader中没有获取到列名，则从property元素获取
+  if (!columnName) {
+    const columnNameProp = columnElem.querySelector('property[name="com.jaspersoft.studio.components.table.model.column.name"]');
+    columnName = columnNameProp?.getAttribute('value') || '';
+  }
+  
+  // 如果仍然没有获取到列名，则使用默认列名
+  if (!columnName) {
+    columnName = `Column${index + 1}`;
+  }
 
-  const tableHeader = tableHeaderElem ? parseCellWithRowSpan(tableHeaderElem) : {
-    type: 'staticText',
-    x: 0,
-    y: 0,
-    width: columnWidth,
-    height: 30,
-    text: '',
-    rowSpan: 1
-  };
-  const columnHeader = columnHeaderElem ? parseCellWithRowSpan(columnHeaderElem) : {
-    type: 'staticText',
-    x: 0,
-    y: 0,
-    width: columnWidth,
-    height: 30,
-    text: '',
-    rowSpan: 1
-  };
-  const tableFooter = tableFooterElem ? parseCellWithRowSpan(tableFooterElem) : {
-    type: 'textField',
-    x: 0,
-    y: 0,
-    width: columnWidth,
-    height: 30,
-    expression: '',
-    rowSpan: 1
-  };
-  const columnFooter = columnFooterElem ? parseCellWithRowSpan(columnFooterElem) : {
-    type: 'textField',
-    x: 0,
-    y: 0,
-    width: columnWidth,
-    height: 30,
-    expression: '',
-    rowSpan: 1
-  };
-  const detailCell = detailCellElem ? parseCellWithRowSpan(detailCellElem) : {
-    type: 'textField',
-    x: 0,
-    y: 0,
-    width: columnWidth,
-    height: 30,
-    expression: '',
-    rowSpan: 1
+  // 为没有内容的单元格设置默认值
+  let tableHeaderWithDefaults = tableHeader;
+  if (!tableHeaderWithDefaults) {
+    tableHeaderWithDefaults = {
+      type: 'staticText',
+      x: 0,
+      y: 0,
+      width: columnWidth,
+      height: 30,
+      text: '',
+      rowSpan: 1
+    };
+  }
+  
+  let columnHeaderWithDefaults = columnHeader;
+  if (!columnHeaderWithDefaults) {
+    columnHeaderWithDefaults = {
+      type: 'staticText',
+      x: 0,
+      y: 0,
+      width: columnWidth,
+      height: 30,
+      text: columnName,
+      rowSpan: 1
+    };
+  }
+  
+  let tableFooterWithDefaults = tableFooter;
+  if (!tableFooterWithDefaults) {
+    tableFooterWithDefaults = {
+      type: 'textField',
+      x: 0,
+      y: 0,
+      width: columnWidth,
+      height: 30,
+      expression: '',
+      rowSpan: 1
+    };
+  }
+  
+  let columnFooterWithDefaults = columnFooter;
+  if (!columnFooterWithDefaults) {
+    columnFooterWithDefaults = {
+      type: 'textField',
+      x: 0,
+      y: 0,
+      width: columnWidth,
+      height: 30,
+      expression: '',
+      rowSpan: 1
+    };
+  }
+  
+  let detailCellWithDefaults = detailCell;
+  if (!detailCellWithDefaults) {
+    detailCellWithDefaults = {
+      type: 'textField',
+      x: 0,
+      y: 0,
+      width: columnWidth,
+      height: 30,
+      expression: '',
+      rowSpan: 1
+    };
   };
 
   return {
@@ -452,22 +497,23 @@ function parseColumnElement(columnElem: Element, index: number): any {
     hasTableFooter: !!tableFooterElem,
     hasColumnFooter: !!columnFooterElem,
     hasDetailCell: !!detailCellElem,
-    tableHeader,
-    columnHeader,
-    tableFooter,
-    columnFooter,
-    detailCell
+    tableHeader: tableHeaderWithDefaults,
+    columnHeader: columnHeaderWithDefaults,
+    tableFooter: tableFooterWithDefaults,
+    columnFooter: columnFooterWithDefaults,
+    detailCell: detailCellWithDefaults
   };
 }
 
 // 解析列分组元素
 function parseColumnGroupElement(groupElem: Element, index: number): any {
-  const group: any = {
-    uuid: groupElem.getAttribute('uuid') || crypto.randomUUID(),
-    width: parseInt(groupElem.getAttribute('width') || '0'),
-    name: groupElem.querySelector('property[name="com.jaspersoft.studio.components.table.model.column.name"]')?.getAttribute('value') || `Group${index + 1}`,
-    children: []
-  };
+  const groupUuid = groupElem.getAttribute('uuid') || crypto.randomUUID();
+  const groupWidth = parseInt(groupElem.getAttribute('width') || '0');
+  
+  // 先解析columnHeader元素
+  const columnHeaderElem = Array.from(groupElem.children).find(cell => 
+    cell.tagName === 'jr:columnHeader' || cell.localName === 'columnHeader' || cell.tagName === 'columnHeader'
+  );
   
   // 解析rowSpan属性的辅助函数
   const parseCellWithRowSpan = (cellElem: Element | undefined) => {
@@ -476,6 +522,37 @@ function parseColumnGroupElement(groupElem: Element, index: number): any {
     // 捕获rowSpan属性，默认值为1
     cellContent.rowSpan = parseInt(cellElem.getAttribute('rowSpan') || '1');
     return cellContent;
+  };
+  
+  // 获取列名 - 从columnHeader中的文本元素获取
+  let groupName = '';
+  const columnHeader = columnHeaderElem ? parseCellWithRowSpan(columnHeaderElem) : undefined;
+  
+  // 先尝试从columnHeader中获取列名
+  if (columnHeader) {
+    if (columnHeader.type === 'staticText') {
+      groupName = columnHeader.text || '';
+    } else if (columnHeader.type === 'textField') {
+      groupName = columnHeader.expression || '';
+    }
+  }
+  
+  // 如果columnHeader中没有获取到列名，则从property元素获取
+  if (!groupName) {
+    const groupNameProp = groupElem.querySelector('property[name="com.jaspersoft.studio.components.table.model.column.name"]');
+    groupName = groupNameProp?.getAttribute('value') || '';
+  }
+  
+  // 如果仍然没有获取到列名，则使用默认列名
+  if (!groupName) {
+    groupName = `Group${index + 1}`;
+  }
+  
+  const group: any = {
+    uuid: groupUuid,
+    width: groupWidth,
+    name: groupName,
+    children: []
   };
   
   // 解析tableHeader
@@ -497,12 +574,9 @@ function parseColumnGroupElement(groupElem: Element, index: number): any {
   }
   
   // 解析columnHeader
-  const columnHeaderElem = Array.from(groupElem.children).find(cell => 
-    cell.tagName === 'jr:columnHeader' || cell.localName === 'columnHeader' || cell.tagName === 'columnHeader'
-  );
   group.hasColumnHeader = !!columnHeaderElem;
-  if (columnHeaderElem) {
-    group.columnHeader = parseCellWithRowSpan(columnHeaderElem);
+  if (columnHeader) {
+    group.columnHeader = columnHeader;
   }
   
   // 解析columnFooter

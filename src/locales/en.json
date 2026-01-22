@@ -281,7 +281,11 @@
     "rightBorder": "Right Border",
     "dashedAll": "All Dashed Borders",
     "dottedAll": "All Dotted Borders",
-    "addColumnsToGroup": "Add Columns to Group"
+    "addColumnsToGroup": "Add Columns to Group",
+    "columnGroups": "Column Groups",
+    "addColumnGroup": "Add Column Group",
+    "all": "All",
+    "fontStyle": "Font Style"
   },
   "bottomPanel": {
     "pageSettings": "Page Settings",

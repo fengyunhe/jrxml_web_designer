@@ -281,7 +281,11 @@
     "rightBorder": "右边框",
     "dashedAll": "全虚线边框",
     "dottedAll": "全点线边框",
-    "addColumnsToGroup": "将列加入组"
+    "addColumnsToGroup": "将列加入组",
+    "columnGroups": "组合列表头",
+    "addColumnGroup": "添加列组",
+    "all": "全部",
+    "fontStyle": "字体样式"
   },
   "bottomPanel": {
     "pageSettings": "页面设置",
