@@ -6,6 +6,7 @@
     @update:visible="$emit('update:visible', $event)"
     @cancel="closeModal"
     :contentClass="'reward-modal-content'"
+    :useVShow="true"
   >
     <div class="reward-content">
       <h3>Your support keeps this project going!</h3>
@@ -22,7 +23,7 @@
 
 <script setup lang="ts">
 import BaseModal from './BaseModal.vue';
-import { onMounted, watch } from 'vue';
+import { onMounted, ref } from 'vue';
 
 // Define props
 const props = defineProps({
@@ -35,6 +36,9 @@ const props = defineProps({
 // Define emits
 const emit = defineEmits(['update:visible']);
 
+// PayPal SDK loaded flag
+const paypalInitialized = ref(false);
+
 // Close modal
 const closeModal = () => {
   emit('update:visible', false);
@@ -42,9 +46,8 @@ const closeModal = () => {
 
 // Load PayPal SDK and initialize buttons
 const initPayPalButtons = () => {
-  // Check if PayPal SDK is already loaded
-  if (window.paypal) {
-    renderPayPalButtons();
+  // Only initialize once
+  if (paypalInitialized.value) {
     return;
   }
   
@@ -52,49 +55,35 @@ const initPayPalButtons = () => {
   const script = document.createElement('script');
   script.src = 'https://www.paypal.com/sdk/js?client-id=AVZB1IzcDRiJe7LZ-fScuoAUwJvN0nEwx1s845snzslzGK-1oOMiNS37Urw76p_xyeNhKhAPQp_BBVNu&vault=true&intent=subscription';
   script.setAttribute('data-sdk-integration-source', 'button-factory');
-  script.onload = renderPayPalButtons;
+  script.onload = () => {
+    if (window.paypal) {
+      window.paypal.Buttons({
+        style: {
+          shape: 'pill',
+          color: 'silver',
+          layout: 'horizontal',
+          label: 'paypal'
+        },
+        createSubscription: function(data: any, actions: any) {
+          return actions.subscription.create({
+            /* Creates the subscription */
+            plan_id: 'P-19G51974NJ968551RNFYXP3A'
+          });
+        },
+        onApprove: function(data: any, actions: any) {
+          alert(data.subscriptionID); // You can add optional success message for the subscriber here
+        }
+      }).render('#paypal-button-container-P-19G51974NJ968551RNFYXP3A');
+      
+      paypalInitialized.value = true;
+    }
+  };
   document.body.appendChild(script);
 };
 
-// Render PayPal buttons
-const renderPayPalButtons = () => {
-  if (window.paypal) {
-    window.paypal.Buttons({
-      style: {
-        shape: 'pill',
-        color: 'silver',
-        layout: 'horizontal',
-        label: 'paypal'
-      },
-      createSubscription: function(data: any, actions: any) {
-        return actions.subscription.create({
-          /* Creates the subscription */
-          plan_id: 'P-19G51974NJ968551RNFYXP3A'
-        });
-      },
-      onApprove: function(data: any, actions: any) {
-        alert(data.subscriptionID); // You can add optional success message for the subscriber here
-      }
-    }).render('#paypal-button-container-P-19G51974NJ968551RNFYXP3A'); // Renders the PayPal button
-  }
-};
-
-// Watch for modal visibility changes
-watch(
-  () => props.visible,
-  (newVal) => {
-    if (newVal) {
-      // Modal is opening, initialize PayPal buttons
-      initPayPalButtons();
-    }
-  }
-);
-
-// Ensure PayPal buttons are initialized when component mounts if modal is visible
+// Initialize PayPal buttons when component mounts
 onMounted(() => {
-  if (props.visible) {
-    initPayPalButtons();
-  }
+  initPayPalButtons();
 });
 
 // Extend window interface to include paypal

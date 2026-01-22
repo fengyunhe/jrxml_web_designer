@@ -1,5 +1,31 @@
 <template>
-  <div v-if="visible" class="modal-overlay" @click.self="handleClose">
+  <div 
+    :key="keyForRecreation"
+    v-if="!useVShow && visible" 
+    class="modal-overlay" 
+    @click.self="handleClose"
+  >
+    <div class="modal-content" :class="contentClass">
+      <div class="modal-header" v-if="showHeader">
+        <h3 class="modal-title">{{ title }}</h3>
+        <n-button type="default" size="small" quaternary circle @click="handleClose" v-if="showCloseButton">×</n-button>
+      </div>
+      <div class="modal-body" :style="{ height: bodyHeight }">
+        <slot></slot>
+      </div>
+      <div class="modal-footer" v-if="showFooter">
+        <slot name="footer">
+          <n-button type="default" @click="handleClose">{{ t('common.cancel') }}</n-button>
+          <n-button type="primary" @click="handleConfirm">{{ t('common.confirm') }}</n-button>
+        </slot>
+      </div>
+    </div>
+  </div>
+  <div 
+    v-show="useVShow && visible" 
+    class="modal-overlay" 
+    @click.self="handleClose"
+  >
     <div class="modal-content" :class="contentClass">
       <div class="modal-header" v-if="showHeader">
         <h3 class="modal-title">{{ title }}</h3>
@@ -21,6 +47,7 @@
 <script setup lang="ts">
 import { useI18n } from 'vue-i18n';
 import { NButton } from 'naive-ui';
+import { ref, watch } from 'vue';
 
 const { t } = useI18n();
 
@@ -52,8 +79,23 @@ const props = defineProps({
   bodyHeight: {
     type: String,
     default: ''
+  },
+  useVShow: {
+    type: Boolean,
+    default: false
   }
 });
+
+// Key for recreating the modal when using v-if
+const keyForRecreation = ref(0);
+
+// When useVShow changes, recreate the modal for v-if case
+watch(
+  () => props.useVShow,
+  () => {
+    keyForRecreation.value++;
+  }
+);
 
 const emit = defineEmits(['update:visible', 'confirm', 'cancel']);
 
