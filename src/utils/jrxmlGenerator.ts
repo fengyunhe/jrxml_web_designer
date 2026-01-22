@@ -781,6 +781,140 @@ function generateBreakXML(element: any): string {
   return xml;
 }
 
+// 生成列XML
+function generateColumnXML(column: any, index: number): string {
+  // 确保column有uuid，如果没有则生成一个
+  const columnUuid = column.uuid || crypto.randomUUID();
+  // 更新column的uuid，确保被保存
+  column.uuid = columnUuid;
+  let xml = `          <jr:column width="${toInt(column.width)}" uuid="${columnUuid}">
+`;
+  xml += `            <property name="com.jaspersoft.studio.components.table.model.column.name" value="${column.name || `Column${index + 1}`}"/>
+`;
+  
+  // 生成tableHeader
+  if (column.hasTableHeader && column.tableHeader) {
+    xml += `            <jr:tableHeader height="${toInt(column.tableHeader.height)}" rowSpan="1">
+`;
+    xml += generateElementXML(column.tableHeader).replace(/^    /gm, '                ');
+    xml += `            </jr:tableHeader>
+`;
+  }
+  
+  // 生成tableFooter - 只有当表达式不为空时才生成
+  if (column.tableFooter && column.tableFooter.expression) {
+    xml += `            <jr:tableFooter height="${toInt(column.tableFooter.height)}" rowSpan="1">
+`;
+    xml += generateElementXML(column.tableFooter).replace(/^    /gm, '                ');
+    xml += `            </jr:tableFooter>
+`;
+  }
+  
+  // 生成columnHeader
+  if (column.columnHeader) {
+    xml += `            <jr:columnHeader height="${toInt(column.columnHeader.height)}" rowSpan="1">
+`;
+    xml += generateElementXML(column.columnHeader).replace(/^    /gm, '                ');
+    xml += `            </jr:columnHeader>
+`;
+  } else {
+    xml += `            <jr:columnHeader height="30" rowSpan="1">
+            </jr:columnHeader>
+`;
+  }
+  
+  // 生成columnFooter - 只有当表达式不为空时才生成
+  if (column.columnFooter && column.columnFooter.expression) {
+    xml += `            <jr:columnFooter height="${toInt(column.columnFooter.height)}" rowSpan="1">
+`;
+    xml += generateElementXML(column.columnFooter).replace(/^    /gm, '                ');
+    xml += `            </jr:columnFooter>
+`;
+  }
+  
+  // 生成detailCell
+  if (column.detailCell) {
+    xml += `            <jr:detailCell height="${toInt(column.detailCell.height)}">
+`;
+    xml += generateElementXML(column.detailCell).replace(/^    /gm, '                ');
+    xml += `            </jr:detailCell>
+`;
+  } else {
+    xml += `            <jr:detailCell height="30">
+            </jr:detailCell>
+`;
+  }
+  
+  xml += `          </jr:column>
+`;
+  return xml;
+}
+
+// 生成列分组XML
+function generateColumnGroupXML(group: any): string {
+  // 确保group有uuid，如果没有则生成一个
+  const groupUuid = group.uuid || crypto.randomUUID();
+  // 更新group的uuid，确保被保存
+  group.uuid = groupUuid;
+  
+  let xml = `          <jr:columnGroup width="${toInt(group.width)}" uuid="${groupUuid}">
+`;
+  xml += `            <property name="com.jaspersoft.studio.components.table.model.column.name" value="${group.name || `Group`}"/>
+`;
+  
+  // 生成tableHeader
+  if (group.hasTableHeader && group.tableHeader) {
+    xml += `            <jr:tableHeader height="${toInt(group.tableHeader.height)}" rowSpan="1">
+`;
+    xml += generateElementXML(group.tableHeader).replace(/^    /gm, '                ');
+    xml += `            </jr:tableHeader>
+`;
+  }
+  
+  // 生成tableFooter - 只有当表达式不为空时才生成
+  if (group.tableFooter && group.tableFooter.expression) {
+    xml += `            <jr:tableFooter height="${toInt(group.tableFooter.height)}" rowSpan="1">
+`;
+    xml += generateElementXML(group.tableFooter).replace(/^    /gm, '                ');
+    xml += `            </jr:tableFooter>
+`;
+  }
+  
+  // 生成columnHeader
+  if (group.columnHeader) {
+    xml += `            <jr:columnHeader height="${toInt(group.columnHeader.height)}" rowSpan="1">
+`;
+    xml += generateElementXML(group.columnHeader).replace(/^    /gm, '                ');
+    xml += `            </jr:columnHeader>
+`;
+  }
+  
+  // 生成columnFooter - 只有当表达式不为空时才生成
+  if (group.columnFooter && group.columnFooter.expression) {
+    xml += `            <jr:columnFooter height="${toInt(group.columnFooter.height)}" rowSpan="1">
+`;
+    xml += generateElementXML(group.columnFooter).replace(/^    /gm, '                ');
+    xml += `            </jr:columnFooter>
+`;
+  }
+  
+  // 生成子分组或列
+  const children = group.children || [];
+  children.forEach((child: any, index: number) => {
+    if (child.children) {
+      // 递归生成子分组
+      xml += generateColumnGroupXML(child);
+    } else {
+      // 生成普通列
+      xml += generateColumnXML(child, index);
+    }
+  });
+  
+  xml += `          </jr:columnGroup>
+`;
+  return xml;
+}
+
 // 生成表格XML
 function generateTableXML(element: any): string {
   let xml = `    <componentElement>
@@ -849,73 +983,16 @@ function generateTableXML(element: any): string {
   xml += `          </datasetRun>
 `;
   
-  // 生成列
-  const columns = element.columns || [];
-  columns.forEach((column: any, index: number) => {
-    // 确保column有uuid，如果没有则生成一个
-    const columnUuid = column.uuid || crypto.randomUUID();
-    // 更新column的uuid，确保被保存
-    column.uuid = columnUuid;
-    xml += `          <jr:column width="${toInt(column.width)}" uuid="${columnUuid}">
-`;
-    xml += `            <property name="com.jaspersoft.studio.components.table.model.column.name" value="${column.name || `Column${index + 1}`}"/>
-`;
-    
-    // 生成tableHeader
-    if (column.hasTableHeader && column.tableHeader) {
-      xml += `            <jr:tableHeader height="${toInt(column.tableHeader.height)}" rowSpan="1">
-`;
-      xml += generateElementXML(column.tableHeader).replace(/^    /gm, '                ');
-      xml += `            </jr:tableHeader>
-`;
-    }
-    
-    // 生成tableFooter - 只有当表达式不为空时才生成
-    if (column.tableFooter && column.tableFooter.expression) {
-      xml += `            <jr:tableFooter height="${toInt(column.tableFooter.height)}" rowSpan="1">
-`;
-      xml += generateElementXML(column.tableFooter).replace(/^    /gm, '                ');
-      xml += `            </jr:tableFooter>
-`;
-    }
-    
-    // 生成columnHeader
-    if (column.columnHeader) {
-      xml += `            <jr:columnHeader height="${toInt(column.columnHeader.height)}" rowSpan="1">
-`;
-      xml += generateElementXML(column.columnHeader).replace(/^    /gm, '                ');
-      xml += `            </jr:columnHeader>
-`;
+  // 生成列和列分组
+  const children = element.children || element.columns || [];
+  children.forEach((child: any, index: number) => {
+    if (child.children) {
+      // 列分组
+      xml += generateColumnGroupXML(child);
     } else {
-      xml += `            <jr:columnHeader height="30" rowSpan="1">
-            </jr:columnHeader>
-`;
+      // 普通列
+      xml += generateColumnXML(child, index);
     }
-    
-    // 生成columnFooter - 只有当表达式不为空时才生成
-    if (column.columnFooter && column.columnFooter.expression) {
-      xml += `            <jr:columnFooter height="${toInt(column.columnFooter.height)}" rowSpan="1">
-`;
-      xml += generateElementXML(column.columnFooter).replace(/^    /gm, '                ');
-      xml += `            </jr:columnFooter>
-`;
-    }
-    
-    // 生成detailCell
-    if (column.detailCell) {
-      xml += `            <jr:detailCell height="${toInt(column.detailCell.height)}">
-`;
-      xml += generateElementXML(column.detailCell).replace(/^    /gm, '                ');
-      xml += `            </jr:detailCell>
-`;
-    } else {
-      xml += `            <jr:detailCell height="30">
-            </jr:detailCell>
-`;
-    }
-    
-    xml += `          </jr:column>
-`;
   });
   
   xml += `        </jr:table>

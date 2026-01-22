@@ -1,6 +1,20 @@
 // 元素类型枚举
 export type ElementType = 'staticText' | 'textField' | 'image' | 'line' | 'rectangle' | 'ellipse' | 'break' | 'frame' | 'table';
 
+// 列分组接口
+export interface ColumnGroup {
+  uuid: string;
+  name: string;
+  width: number;
+  hasTableHeader?: boolean;
+  tableHeader?: DesignElement;
+  columnHeader?: DesignElement;
+  columnFooter?: DesignElement;
+  tableFooter?: DesignElement;
+  // 子分组或列
+  children: (ColumnGroup | TableColumn)[];
+}
+
 // 表格列接口
 export interface TableColumn {
   uuid: string;
@@ -218,6 +232,9 @@ export interface FrameElement extends DesignElementBase {
 export interface TableElement extends DesignElementBase {
   type: 'table';
   dataset: TableDataset;
+  // 支持分组和列的混合结构
+  children?: (ColumnGroup | TableColumn)[];
+  // 保持向后兼容，支持传统的columns数组
   columns: TableColumn[];
   styles?: {
     tableHeader?: string;

@@ -211,6 +211,183 @@ function parseComponentElement(componentElem: Element): any {
   return parseTableElement(tableElem, reportElement);
 }
 
+// 解析表格单元格内容
+function parseCellContent(cellElem: Element): any {
+  // 解析单元格高度
+  const height = parseInt(cellElem.getAttribute('height') || '30');
+  
+  // 解析单元格内的元素
+  const elements: any[] = [];
+  const validElementTypes = ['staticText', 'textField', 'image', 'line', 'rectangle', 'ellipse', 'break', 'frame'];
+  
+  Array.from(cellElem.children).forEach(child => {
+    const elementType = child.localName || child.tagName;
+    if (validElementTypes.includes(elementType)) {
+      const parsedElement = parseElement(child, elementType);
+      if (parsedElement) {
+        elements.push(parsedElement);
+      }
+    }
+  });
+  
+  // 返回第一个元素或创建默认元素
+  if (elements.length > 0) {
+    return {
+      ...elements[0],
+      height
+    };
+  }
+  
+  // 默认静态文本元素
+  return {
+    type: 'staticText',
+    x: 0,
+    y: 0,
+    width: 100,
+    height,
+    text: '',
+    textAlignment: 'Left',
+    verticalAlignment: 'Middle'
+  };
+}
+
+// 解析表格列元素
+function parseColumnElement(columnElem: Element, index: number): any {
+  const columnWidth = parseInt(columnElem.getAttribute('width') || '100');
+  const columnUuid = columnElem.getAttribute('uuid') || crypto.randomUUID();
+  
+  // 获取列名
+  const columnNameProp = columnElem.querySelector('property[name="com.jaspersoft.studio.components.table.model.column.name"]');
+  const columnName = columnNameProp?.getAttribute('value') || `Column${index + 1}`;
+
+  // 解析表头、列头和详情单元格 - 支持带命名空间和不带命名空间的单元格元素
+  const tableHeaderElem = Array.from(columnElem.children).find(cell => 
+    cell.tagName === 'jr:tableHeader' || cell.localName === 'tableHeader' || cell.tagName === 'tableHeader'
+  );
+  const columnHeaderElem = Array.from(columnElem.children).find(cell => 
+    cell.tagName === 'jr:columnHeader' || cell.localName === 'columnHeader' || cell.tagName === 'columnHeader'
+  );
+  const tableFooterElem = Array.from(columnElem.children).find(cell => 
+    cell.tagName === 'jr:tableFooter' || cell.localName === 'tableFooter' || cell.tagName === 'tableFooter'
+  );
+  const columnFooterElem = Array.from(columnElem.children).find(cell => 
+    cell.tagName === 'jr:columnFooter' || cell.localName === 'columnFooter' || cell.tagName === 'columnFooter'
+  );
+  const detailCellElem = Array.from(columnElem.children).find(cell => 
+    cell.tagName === 'jr:detailCell' || cell.localName === 'detailCell' || cell.tagName === 'detailCell'
+  );
+
+  const tableHeader = tableHeaderElem ? parseCellContent(tableHeaderElem) : {
+    type: 'staticText',
+    x: 0,
+    y: 0,
+    width: columnWidth,
+    height: 30,
+    text: ''
+  };
+  const columnHeader = columnHeaderElem ? parseCellContent(columnHeaderElem) : {
+    type: 'staticText',
+    x: 0,
+    y: 0,
+    width: columnWidth,
+    height: 30,
+    text: ''
+  };
+  const tableFooter = tableFooterElem ? parseCellContent(tableFooterElem) : {
+    type: 'textField',
+    x: 0,
+    y: 0,
+    width: columnWidth,
+    height: 30,
+    expression: ''
+  };
+  const columnFooter = columnFooterElem ? parseCellContent(columnFooterElem) : {
+    type: 'textField',
+    x: 0,
+    y: 0,
+    width: columnWidth,
+    height: 30,
+    expression: ''
+  };
+  const detailCell = detailCellElem ? parseCellContent(detailCellElem) : {
+    type: 'textField',
+    x: 0,
+    y: 0,
+    width: columnWidth,
+    height: 30,
+    expression: ''
+  };
+
+  return {
+    uuid: columnUuid || crypto.randomUUID(),
+    width: columnWidth,
+    name: columnName,
+    tableHeader,
+    columnHeader,
+    tableFooter,
+    columnFooter,
+    detailCell
+  };
+}
+
+// 解析列分组元素
+function parseColumnGroupElement(groupElem: Element, index: number): any {
+  const group: any = {
+    uuid: groupElem.getAttribute('uuid') || crypto.randomUUID(),
+    width: parseInt(groupElem.getAttribute('width') || '0'),
+    name: groupElem.querySelector('property[name="com.jaspersoft.studio.components.table.model.column.name"]')?.getAttribute('value') || `Group${index + 1}`,
+    children: []
+  };
+  
+  // 解析tableHeader
+  const tableHeaderElem = Array.from(groupElem.children).find(cell => 
+    cell.tagName === 'jr:tableHeader' || cell.localName === 'tableHeader' || cell.tagName === 'tableHeader'
+  );
+  if (tableHeaderElem) {
+    group.hasTableHeader = true;
+    group.tableHeader = parseCellContent(tableHeaderElem);
+  }
+  
+  // 解析tableFooter
+  const tableFooterElem = Array.from(groupElem.children).find(cell => 
+    cell.tagName === 'jr:tableFooter' || cell.localName === 'tableFooter' || cell.tagName === 'tableFooter'
+  );
+  if (tableFooterElem) {
+    group.tableFooter = parseCellContent(tableFooterElem);
+  }
+  
+  // 解析columnHeader
+  const columnHeaderElem = Array.from(groupElem.children).find(cell => 
+    cell.tagName === 'jr:columnHeader' || cell.localName === 'columnHeader' || cell.tagName === 'columnHeader'
+  );
+  if (columnHeaderElem) {
+    group.columnHeader = parseCellContent(columnHeaderElem);
+  }
+  
+  // 解析columnFooter
+  const columnFooterElem = Array.from(groupElem.children).find(cell => 
+    cell.tagName === 'jr:columnFooter' || cell.localName === 'columnFooter' || cell.tagName === 'columnFooter'
+  );
+  if (columnFooterElem) {
+    group.columnFooter = parseCellContent(columnFooterElem);
+  }
+  
+  // 解析子分组和子列
+  let childIndex = 0;
+  Array.from(groupElem.children).forEach(child => {
+    // 检查是否为列元素
+    if (child.tagName === 'jr:column' || child.localName === 'column' || child.tagName === 'column') {
+      group.children.push(parseColumnElement(child, childIndex++));
+    } 
+    // 检查是否为列分组元素
+    else if (child.tagName === 'jr:columnGroup' || child.localName === 'columnGroup' || child.tagName === 'columnGroup') {
+      group.children.push(parseColumnGroupElement(child, childIndex++));
+    }
+  });
+  
+  return group;
+}
+
 // 解析表格元素
 function parseTableElement(tableElem: Element, reportElement: Element): any {
   // 获取基本属性
@@ -234,88 +411,35 @@ function parseTableElement(tableElem: Element, reportElement: Element): any {
   const datasetRunElem = tableElem.querySelector('datasetRun');
   const subDataset = datasetRunElem?.getAttribute('subDataset') || 'tableDataset';
 
-  // 解析表格列 - 支持带命名空间和不带命名空间的列元素
+  // 解析表格列和列分组 - 支持带命名空间和不带命名空间的列元素
+  const children: any[] = [];
   const columns: any[] = [];
-  Array.from(tableElem.children).forEach((child, index) => {
-    // 检查是否为列元素，支持带命名空间和不带命名空间的column元素
-    if (child.tagName !== 'jr:column' && child.localName !== 'column' && child.tagName !== 'column') return;
-    
-    const columnElem = child;
-    const columnWidth = parseInt(columnElem.getAttribute('width') || '100');
-    const columnUuid = columnElem.getAttribute('uuid') || crypto.randomUUID();
-    
-    // 获取列名
-    const columnNameProp = columnElem.querySelector('property[name="com.jaspersoft.studio.components.table.model.column.name"]');
-    const columnName = columnNameProp?.getAttribute('value') || `Column${index + 1}`;
-
-    // 解析表头、列头和详情单元格 - 支持带命名空间和不带命名空间的单元格元素
-    const tableHeaderElem = Array.from(columnElem.children).find(cell => 
-      cell.tagName === 'jr:tableHeader' || cell.localName === 'tableHeader' || cell.tagName === 'tableHeader'
-    );
-    const columnHeaderElem = Array.from(columnElem.children).find(cell => 
-      cell.tagName === 'jr:columnHeader' || cell.localName === 'columnHeader' || cell.tagName === 'columnHeader'
-    );
-    const tableFooterElem = Array.from(columnElem.children).find(cell => 
-      cell.tagName === 'jr:tableFooter' || cell.localName === 'tableFooter' || cell.tagName === 'tableFooter'
-    );
-    const columnFooterElem = Array.from(columnElem.children).find(cell => 
-      cell.tagName === 'jr:columnFooter' || cell.localName === 'columnFooter' || cell.tagName === 'columnFooter'
-    );
-    const detailCellElem = Array.from(columnElem.children).find(cell => 
-      cell.tagName === 'jr:detailCell' || cell.localName === 'detailCell' || cell.tagName === 'detailCell'
-    );
-
-    const tableHeader = tableHeaderElem ? parseCellElement(tableHeaderElem) : {
-      type: 'staticText',
-      x: 0,
-      y: 0,
-      width: columnWidth,
-      height: 30,
-      text: ''
-    };
-    const columnHeader = columnHeaderElem ? parseCellElement(columnHeaderElem) : {
-      type: 'staticText',
-      x: 0,
-      y: 0,
-      width: columnWidth,
-      height: 30,
-      text: ''
-    };
-    const tableFooter = tableFooterElem ? parseCellElement(tableFooterElem) : {
-      type: 'textField',
-      x: 0,
-      y: 0,
-      width: columnWidth,
-      height: 30,
-      expression: ''
-    };
-    const columnFooter = columnFooterElem ? parseCellElement(columnFooterElem) : {
-      type: 'textField',
-      x: 0,
-      y: 0,
-      width: columnWidth,
-      height: 30,
-      expression: ''
-    };
-    const detailCell = detailCellElem ? parseCellElement(detailCellElem) : {
-      type: 'textField',
-      x: 0,
-      y: 0,
-      width: columnWidth,
-      height: 30,
-      expression: ''
-    };
-
-    columns.push({
-      uuid: columnUuid || crypto.randomUUID(),
-      width: columnWidth,
-      name: columnName,
-      tableHeader,
-      columnHeader,
-      tableFooter,
-      columnFooter,
-      detailCell
-    });
+  let childIndex = 0;
+  
+  Array.from(tableElem.children).forEach(child => {
+    // 检查是否为列元素
+    if (child.tagName === 'jr:column' || child.localName === 'column' || child.tagName === 'column') {
+      const column = parseColumnElement(child, childIndex++);
+      children.push(column);
+      columns.push(column);
+    } 
+    // 检查是否为列分组元素
+    else if (child.tagName === 'jr:columnGroup' || child.localName === 'columnGroup' || child.tagName === 'columnGroup') {
+      children.push(parseColumnGroupElement(child, childIndex++));
+      // 同时收集所有普通列到columns数组，保持向后兼容
+      const collectColumns = (group: any) => {
+        group.children.forEach((child: any) => {
+          if (child.detailCell) {
+            // 普通列
+            columns.push(child);
+          } else {
+            // 子分组
+            collectColumns(child);
+          }
+        });
+      };
+      collectColumns(parseColumnGroupElement(child, childIndex++));
+    }
   });
 
   // 构建表格元素
@@ -332,7 +456,8 @@ function parseTableElement(tableElem: Element, reportElement: Element): any {
       name: subDataset,
       type: 'table'
     },
-    columns
+    children, // 支持分组和列的混合结构
+    columns // 保持向后兼容，支持传统的columns数组
   };
   
   // 解析所有表格属性，保留XSD允许的所有属性
