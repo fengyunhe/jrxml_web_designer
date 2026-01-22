@@ -11,6 +11,47 @@ export function parseJRXMLContent(jrxmlContent: string): { properties: ReportPro
     throw new Error('Invalid JRXML: Missing root element');
   }
 
+  // 解析主报表查询字符串 - 只查找直接子元素
+  let query: { language: string; text: string } | undefined;
+  let queryStringElem = null;
+  
+  // 1. 先查找直接子元素中的queryString（不带命名空间）
+  for (const child of Array.from(jasperReportElem.children)) {
+    if (child.tagName === 'queryString') {
+      queryStringElem = child;
+      break;
+    }
+  }
+  
+  // 2. 如果没找到，尝试查找带命名空间的直接子元素
+  if (!queryStringElem) {
+    // 尝试使用getElementsByTagNameNS查找直接子元素
+    const nsChildren = jasperReportElem.getElementsByTagNameNS('http://jasperreports.sourceforge.net/jasperreports', 'queryString');
+    if (nsChildren.length > 0) {
+      // 确保是直接子元素
+      for (let i = 0; i < nsChildren.length; i++) {
+        const child = nsChildren[i];
+        if (child) {
+          const parent = child.parentNode;
+          if (parent === jasperReportElem) {
+            queryStringElem = child;
+            break;
+          }
+        }
+      }
+    }
+  }
+  
+  // 3. 如果没找到，尝试通过localName匹配直接子元素
+  if (!queryStringElem) {
+    queryStringElem = Array.from(jasperReportElem.children).find(child => child.localName === 'queryString') || null;
+  }
+  if (queryStringElem) {
+    const language = queryStringElem.getAttribute('language') || 'sql';
+    const text = queryStringElem.textContent?.trim() || '';
+    query = { language, text };
+  }
+
   const properties: ReportProperties = {
     name: jasperReportElem.getAttribute('name') || 'Unnamed Report',
     pageWidth: parseInt(jasperReportElem.getAttribute('pageWidth') || '595'),
@@ -18,7 +59,8 @@ export function parseJRXMLContent(jrxmlContent: string): { properties: ReportPro
     leftMargin: parseInt(jasperReportElem.getAttribute('leftMargin') || '20'),
     rightMargin: parseInt(jasperReportElem.getAttribute('rightMargin') || '20'),
     topMargin: parseInt(jasperReportElem.getAttribute('topMargin') || '30'),
-    bottomMargin: parseInt(jasperReportElem.getAttribute('bottomMargin') || '30')
+    bottomMargin: parseInt(jasperReportElem.getAttribute('bottomMargin') || '30'),
+    query
   };
 
   const fields: Field[] = [];
@@ -115,6 +157,59 @@ export function parseJRXMLContent(jrxmlContent: string): { properties: ReportPro
 function parseSubDataset(subDatasetElem: Element): SubDataset {
   const name = subDatasetElem.getAttribute('name') || 'UnnamedDataset';
   
+  // 解析数据集属性
+  const properties: Record<string, string> = {};
+  Array.from(subDatasetElem.children).forEach(child => {
+    if (child.tagName === 'property' || child.localName === 'property') {
+      const propertyName = child.getAttribute('name');
+      const propertyValue = child.getAttribute('value');
+      if (propertyName && propertyValue) {
+        properties[propertyName] = propertyValue;
+      }
+    }
+  });
+  
+  // 解析查询字符串 - 只查找直接子元素
+  let query: { language: string; text: string } | undefined;
+  let queryStringElem = null;
+  
+  // 1. 先查找直接子元素中的queryString（不带命名空间）
+  for (const child of Array.from(subDatasetElem.children)) {
+    if (child.tagName === 'queryString') {
+      queryStringElem = child;
+      break;
+    }
+  }
+  
+  // 2. 如果没找到，尝试查找带命名空间的直接子元素
+  if (!queryStringElem) {
+    // 尝试使用getElementsByTagNameNS查找直接子元素
+    const nsChildren = subDatasetElem.getElementsByTagNameNS('http://jasperreports.sourceforge.net/jasperreports', 'queryString');
+    if (nsChildren.length > 0) {
+      // 确保是直接子元素
+      for (let i = 0; i < nsChildren.length; i++) {
+        const child = nsChildren[i];
+        if (child) {
+          const parent = child.parentNode;
+          if (parent === subDatasetElem) {
+            queryStringElem = child;
+            break;
+          }
+        }
+      }
+    }
+  }
+  
+  // 3. 如果没找到，尝试通过localName匹配直接子元素
+  if (!queryStringElem) {
+    queryStringElem = Array.from(subDatasetElem.children).find(child => child.localName === 'queryString') || null;
+  }
+  if (queryStringElem) {
+    const language = queryStringElem.getAttribute('language') || 'sql';
+    const text = queryStringElem.textContent?.trim() || '';
+    query = { language, text };
+  }
+  
   // 解析数据集内部的字段
   const fields: Field[] = [];
   Array.from(subDatasetElem.children).forEach(child => {
@@ -122,7 +217,23 @@ function parseSubDataset(subDatasetElem: Element): SubDataset {
       const fieldName = child.getAttribute('name');
       const className = child.getAttribute('class') || 'java.lang.String';
       if (fieldName) {
-        fields.push({ name: fieldName, class: className });
+        // 解析字段属性
+        const fieldProperties: Record<string, string> = {};
+        Array.from(child.children).forEach(fieldChild => {
+          if (fieldChild.tagName === 'property' || fieldChild.localName === 'property') {
+            const propName = fieldChild.getAttribute('name');
+            const propValue = fieldChild.getAttribute('value');
+            if (propName && propValue) {
+              fieldProperties[propName] = propValue;
+            }
+          }
+        });
+        
+        fields.push({ 
+          name: fieldName, 
+          class: className,
+          properties: fieldProperties
+        });
       }
     }
   });
@@ -144,7 +255,7 @@ function parseSubDataset(subDatasetElem: Element): SubDataset {
     }
   });
   
-  return { name, fields, parameters };
+  return { name, fields, parameters, properties, query };
 }
 
 function parseBandElements(bandElem: Element): any[] {
@@ -277,45 +388,59 @@ function parseColumnElement(columnElem: Element, index: number): any {
     cell.tagName === 'jr:detailCell' || cell.localName === 'detailCell' || cell.tagName === 'detailCell'
   );
 
-  const tableHeader = tableHeaderElem ? parseCellContent(tableHeaderElem) : {
+  // 解析rowSpan属性
+  const parseCellWithRowSpan = (cellElem: Element | undefined) => {
+    if (!cellElem) return null;
+    const cellContent = parseCellContent(cellElem);
+    // 捕获rowSpan属性，默认值为1
+    cellContent.rowSpan = parseInt(cellElem.getAttribute('rowSpan') || '1');
+    return cellContent;
+  };
+
+  const tableHeader = tableHeaderElem ? parseCellWithRowSpan(tableHeaderElem) : {
     type: 'staticText',
     x: 0,
     y: 0,
     width: columnWidth,
     height: 30,
-    text: ''
+    text: '',
+    rowSpan: 1
   };
-  const columnHeader = columnHeaderElem ? parseCellContent(columnHeaderElem) : {
+  const columnHeader = columnHeaderElem ? parseCellWithRowSpan(columnHeaderElem) : {
     type: 'staticText',
     x: 0,
     y: 0,
     width: columnWidth,
     height: 30,
-    text: ''
+    text: '',
+    rowSpan: 1
   };
-  const tableFooter = tableFooterElem ? parseCellContent(tableFooterElem) : {
+  const tableFooter = tableFooterElem ? parseCellWithRowSpan(tableFooterElem) : {
     type: 'textField',
     x: 0,
     y: 0,
     width: columnWidth,
     height: 30,
-    expression: ''
+    expression: '',
+    rowSpan: 1
   };
-  const columnFooter = columnFooterElem ? parseCellContent(columnFooterElem) : {
+  const columnFooter = columnFooterElem ? parseCellWithRowSpan(columnFooterElem) : {
     type: 'textField',
     x: 0,
     y: 0,
     width: columnWidth,
     height: 30,
-    expression: ''
+    expression: '',
+    rowSpan: 1
   };
-  const detailCell = detailCellElem ? parseCellContent(detailCellElem) : {
+  const detailCell = detailCellElem ? parseCellWithRowSpan(detailCellElem) : {
     type: 'textField',
     x: 0,
     y: 0,
     width: columnWidth,
     height: 30,
-    expression: ''
+    expression: '',
+    rowSpan: 1
   };
 
   return {
@@ -344,13 +469,22 @@ function parseColumnGroupElement(groupElem: Element, index: number): any {
     children: []
   };
   
+  // 解析rowSpan属性的辅助函数
+  const parseCellWithRowSpan = (cellElem: Element | undefined) => {
+    if (!cellElem) return undefined;
+    const cellContent = parseCellContent(cellElem);
+    // 捕获rowSpan属性，默认值为1
+    cellContent.rowSpan = parseInt(cellElem.getAttribute('rowSpan') || '1');
+    return cellContent;
+  };
+  
   // 解析tableHeader
   const tableHeaderElem = Array.from(groupElem.children).find(cell => 
     cell.tagName === 'jr:tableHeader' || cell.localName === 'tableHeader' || cell.tagName === 'tableHeader'
   );
   group.hasTableHeader = !!tableHeaderElem;
   if (tableHeaderElem) {
-    group.tableHeader = parseCellContent(tableHeaderElem);
+    group.tableHeader = parseCellWithRowSpan(tableHeaderElem);
   }
   
   // 解析tableFooter
@@ -359,7 +493,7 @@ function parseColumnGroupElement(groupElem: Element, index: number): any {
   );
   group.hasTableFooter = !!tableFooterElem;
   if (tableFooterElem) {
-    group.tableFooter = parseCellContent(tableFooterElem);
+    group.tableFooter = parseCellWithRowSpan(tableFooterElem);
   }
   
   // 解析columnHeader
@@ -368,7 +502,7 @@ function parseColumnGroupElement(groupElem: Element, index: number): any {
   );
   group.hasColumnHeader = !!columnHeaderElem;
   if (columnHeaderElem) {
-    group.columnHeader = parseCellContent(columnHeaderElem);
+    group.columnHeader = parseCellWithRowSpan(columnHeaderElem);
   }
   
   // 解析columnFooter
@@ -377,7 +511,7 @@ function parseColumnGroupElement(groupElem: Element, index: number): any {
   );
   group.hasColumnFooter = !!columnFooterElem;
   if (columnFooterElem) {
-    group.columnFooter = parseCellContent(columnFooterElem);
+    group.columnFooter = parseCellWithRowSpan(columnFooterElem);
   }
   
   // 解析子分组和子列
@@ -404,6 +538,11 @@ function parseTableElement(tableElem: Element, reportElement: Element): any {
   const width = parseInt(reportElement.getAttribute('width') || '555');
   const height = parseInt(reportElement.getAttribute('height') || '200');
   const uuid = reportElement.getAttribute('uuid') || crypto.randomUUID();
+  
+  // 解析颜色和模式属性
+  const forecolor = reportElement.hasAttribute('forecolor') ? reportElement.getAttribute('forecolor') : undefined;
+  const backcolor = reportElement.hasAttribute('backcolor') ? reportElement.getAttribute('backcolor') : undefined;
+  const mode = reportElement.hasAttribute('mode') ? reportElement.getAttribute('mode') : undefined;
 
   // 解析表格样式
   const styles: any = {};
@@ -419,6 +558,25 @@ function parseTableElement(tableElem: Element, reportElement: Element): any {
   const datasetRunElem = tableElem.querySelector('datasetRun');
   const subDataset = datasetRunElem?.getAttribute('subDataset') || 'tableDataset';
 
+  // 解析表格属性 - 捕获所有XSD允许的属性
+  const tableAttributes: any = {};
+  for (let i = 0; i < tableElem.attributes.length; i++) {
+    const attr = tableElem.attributes[i];
+    // 确保attr不是undefined
+    if (attr) {
+      // 跳过命名空间和schemaLocation属性，因为它们在生成时会被硬编码
+      if (attr.name.startsWith('xmlns') || attr.name === 'xsi:schemaLocation') {
+        continue;
+      }
+      // 将属性添加到表格元素对象中
+      tableAttributes[attr.name] = attr.value;
+    }
+  }
+
+  // 解析表格连接表达式
+  const connectionExprElem = datasetRunElem?.querySelector('connectionExpression');
+  const connectionExpression = connectionExprElem?.textContent?.trim() || '$P{REPORT_CONNECTION}';
+
   // 解析表格列和列分组 - 支持带命名空间和不带命名空间的列元素
   const children: any[] = [];
   const columns: any[] = [];
@@ -433,7 +591,8 @@ function parseTableElement(tableElem: Element, reportElement: Element): any {
     } 
     // 检查是否为列分组元素
     else if (child.tagName === 'jr:columnGroup' || child.localName === 'columnGroup' || child.tagName === 'columnGroup') {
-      children.push(parseColumnGroupElement(child, childIndex++));
+      const group = parseColumnGroupElement(child, childIndex++);
+      children.push(group);
       // 同时收集所有普通列到columns数组，保持向后兼容
       const collectColumns = (group: any) => {
         group.children.forEach((child: any) => {
@@ -446,7 +605,7 @@ function parseTableElement(tableElem: Element, reportElement: Element): any {
           }
         });
       };
-      collectColumns(parseColumnGroupElement(child, childIndex++));
+      collectColumns(group);
     }
   });
 
@@ -460,27 +619,18 @@ function parseTableElement(tableElem: Element, reportElement: Element): any {
     height,
     styles,
     dataset: {
-      uuid: crypto.randomUUID(),
+      uuid: datasetRunElem?.getAttribute('uuid') || crypto.randomUUID(),
       name: subDataset,
-      type: 'table'
+      type: 'table',
+      connectionExpression
     },
     children, // 支持分组和列的混合结构
-    columns // 保持向后兼容，支持传统的columns数组
+    columns, // 保持向后兼容，支持传统的columns数组
+    ...tableAttributes, // 包含所有表格属性
+    forecolor,
+    backcolor,
+    mode
   };
-  
-  // 解析所有表格属性，保留XSD允许的所有属性
-  for (let i = 0; i < tableElem.attributes.length; i++) {
-    const attr = tableElem.attributes[i];
-    // 确保属性存在
-    if (attr) {
-      // 跳过命名空间和schemaLocation属性，因为它们在生成时会被硬编码
-      if (attr.name.startsWith('xmlns') || attr.name === 'xsi:schemaLocation') {
-        continue;
-      }
-      // 将属性添加到表格元素对象中
-      tableElement[attr.name] = attr.value;
-    }
-  }
 
   return tableElement;
 }

@@ -7,7 +7,7 @@ export type { ReportProperties, Field, Parameter } from './jrxml/types';
 
 // 辅助函数：确保坐标值为整数
 function toInt(value: any): number {
-  return Math.round(Number(value) || 0);
+  return parseInt(value as string) || 0;
 }
 
 // 生成JRXML内容
@@ -77,6 +77,11 @@ export function generateJRXMLContent(
     });
   }
   
+  // 添加主报表查询语句
+  if (properties.query && properties.query.text) {
+    jrxml += `\n  <queryString language="${properties.query.language || 'sql'}"><![CDATA[${properties.query.text}]]></queryString>\n`;
+  }
+  
   // 添加子数据集定义
   if (subDatasets.length > 0) {
     jrxml += '\n  <!-- 子数据集定义 -->\n';
@@ -94,15 +99,32 @@ export function generateJRXMLContent(
         }
         jrxml += `  <subDataset ${subDatasetAttrs}>
 `;
+        // 添加数据集属性
+        if (dataset.properties) {
+          Object.entries(dataset.properties).forEach(([key, value]) => {
+            jrxml += `    <property name="${key}" value="${value}"/>\n`;
+          });
+        }
+        
         // 添加查询语句
         if (dataset.query && dataset.query.text) {
           jrxml += `    <queryString language="${dataset.query.language || 'sql'}"><![CDATA[${dataset.query.text}]]></queryString>\n`;
         }
+        
         // 添加字段定义
         if (dataset.fields && dataset.fields.length > 0) {
           dataset.fields.forEach((field: any) => {
             if (field.name && field.class) {
-              jrxml += `    <field name="${field.name}" class="${field.class}"/>\n`;
+              jrxml += `    <field name="${field.name}" class="${field.class}">\n`;
+              
+              // 添加字段属性
+              if (field.properties) {
+                Object.entries(field.properties).forEach(([key, value]) => {
+                  jrxml += `        <property name="${key}" value="${value}"/>\n`;
+                });
+              }
+              
+              jrxml += `    </field>\n`;
             }
           });
         }
@@ -794,25 +816,27 @@ function generateColumnXML(column: any, index: number): string {
   
   // 生成tableHeader
   if (column.hasTableHeader && column.tableHeader) {
-    xml += `            <jr:tableHeader height="${toInt(column.tableHeader.height)}" rowSpan="1">
+    xml += `            <jr:tableHeader height="${toInt(column.tableHeader.height)}" rowSpan="${column.tableHeader.rowSpan || 1}">
 `;
     xml += generateElementXML(column.tableHeader).replace(/^    /gm, '                ');
     xml += `            </jr:tableHeader>
 `;
   }
   
-  // 生成tableFooter - 只有当表达式不为空时才生成
-  if (column.tableFooter && column.tableFooter.expression) {
-    xml += `            <jr:tableFooter height="${toInt(column.tableFooter.height)}" rowSpan="1">
+  // 生成tableFooter - 只要存在就生成，即使是空的
+  if (column.hasTableFooter) {
+    xml += `            <jr:tableFooter height="${toInt(column.tableFooter?.height || 30)}" rowSpan="${column.tableFooter?.rowSpan || 1}">
 `;
-    xml += generateElementXML(column.tableFooter).replace(/^    /gm, '                ');
+    if (column.tableFooter && column.tableFooter.expression) {
+      xml += generateElementXML(column.tableFooter).replace(/^    /gm, '                ');
+    }
     xml += `            </jr:tableFooter>
 `;
   }
   
   // 生成columnHeader
   if (column.columnHeader) {
-    xml += `            <jr:columnHeader height="${toInt(column.columnHeader.height)}" rowSpan="1">
+    xml += `            <jr:columnHeader height="${toInt(column.columnHeader.height)}" rowSpan="${column.columnHeader.rowSpan || 1}">
 `;
     xml += generateElementXML(column.columnHeader).replace(/^    /gm, '                ');
     xml += `            </jr:columnHeader>
@@ -823,11 +847,13 @@ function generateColumnXML(column: any, index: number): string {
 `;
   }
   
-  // 生成columnFooter - 只有当表达式不为空时才生成
-  if (column.columnFooter && column.columnFooter.expression) {
-    xml += `            <jr:columnFooter height="${toInt(column.columnFooter.height)}" rowSpan="1">
+  // 生成columnFooter - 只要存在就生成，即使是空的
+  if (column.hasColumnFooter) {
+    xml += `            <jr:columnFooter height="${toInt(column.columnFooter?.height || 30)}" rowSpan="${column.columnFooter?.rowSpan || 1}">
 `;
-    xml += generateElementXML(column.columnFooter).replace(/^    /gm, '                ');
+    if (column.columnFooter && column.columnFooter.expression) {
+      xml += generateElementXML(column.columnFooter).replace(/^    /gm, '                ');
+    }
     xml += `            </jr:columnFooter>
 `;
   }
@@ -864,36 +890,40 @@ function generateColumnGroupXML(group: any): string {
   
   // 生成tableHeader
   if (group.hasTableHeader && group.tableHeader) {
-    xml += `            <jr:tableHeader height="${toInt(group.tableHeader.height)}" rowSpan="1">
+    xml += `            <jr:tableHeader height="${toInt(group.tableHeader.height)}" rowSpan="${group.tableHeader.rowSpan || 1}">
 `;
     xml += generateElementXML(group.tableHeader).replace(/^    /gm, '                ');
     xml += `            </jr:tableHeader>
 `;
   }
   
-  // 生成tableFooter - 只有当表达式不为空时才生成
-  if (group.tableFooter && group.tableFooter.expression) {
-    xml += `            <jr:tableFooter height="${toInt(group.tableFooter.height)}" rowSpan="1">
+  // 生成tableFooter - 只要存在就生成，即使是空的
+  if (group.hasTableFooter) {
+    xml += `            <jr:tableFooter height="${toInt(group.tableFooter?.height || 30)}" rowSpan="${group.tableFooter?.rowSpan || 1}">
 `;
-    xml += generateElementXML(group.tableFooter).replace(/^    /gm, '                ');
+    if (group.tableFooter && group.tableFooter.expression) {
+      xml += generateElementXML(group.tableFooter).replace(/^    /gm, '                ');
+    }
     xml += `            </jr:tableFooter>
 `;
   }
   
   // 生成columnHeader
   if (group.columnHeader) {
-    xml += `            <jr:columnHeader height="${toInt(group.columnHeader.height)}" rowSpan="1">
+    xml += `            <jr:columnHeader height="${toInt(group.columnHeader.height)}" rowSpan="${group.columnHeader.rowSpan || 1}">
 `;
     xml += generateElementXML(group.columnHeader).replace(/^    /gm, '                ');
     xml += `            </jr:columnHeader>
 `;
   }
   
-  // 生成columnFooter - 只有当表达式不为空时才生成
-  if (group.columnFooter && group.columnFooter.expression) {
-    xml += `            <jr:columnFooter height="${toInt(group.columnFooter.height)}" rowSpan="1">
+  // 生成columnFooter - 只要存在就生成，即使是空的
+  if (group.hasColumnFooter) {
+    xml += `            <jr:columnFooter height="${toInt(group.columnFooter?.height || 30)}" rowSpan="${group.columnFooter?.rowSpan || 1}">
 `;
-    xml += generateElementXML(group.columnFooter).replace(/^    /gm, '                ');
+    if (group.columnFooter && group.columnFooter.expression) {
+      xml += generateElementXML(group.columnFooter).replace(/^    /gm, '                ');
+    }
     xml += `            </jr:columnFooter>
 `;
   }
@@ -958,24 +988,31 @@ function generateTableXML(element: any): string {
 
   xml +='</reportElement>'
   
-  // 添加whenNoDataType属性
-  let whenNoDataTypeAttr = '';
+  // 添加表格属性 - 包含所有XSD允许的属性
+  let tableAttrs = '';
   if (element.whenNoDataType) {
-    whenNoDataTypeAttr = ` whenNoDataType="${element.whenNoDataType}"`;
+    tableAttrs += ` whenNoDataType="${element.whenNoDataType}"`;
+  }
+  if (element.horizontalPosition) {
+    tableAttrs += ` horizontalPosition="${element.horizontalPosition}"`;
+  }
+  if (element.shrinkWidth) {
+    tableAttrs += ` shrinkWidth="${element.shrinkWidth}"`;
+  }
+  if (element.printOrder) {
+    tableAttrs += ` printOrder="${element.printOrder}"`;
+  }
+  if (element.ignoreWidth) {
+    tableAttrs += ` ignoreWidth="${element.ignoreWidth}"`;
   }
   
-  xml += `        <jr:table xmlns:jr="http://jasperreports.sourceforge.net/jasperreports/components" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports/components http://jasperreports.sourceforge.net/xsd/components.xsd"${whenNoDataTypeAttr}>
+  xml += `        <jr:table xmlns:jr="http://jasperreports.sourceforge.net/jasperreports/components" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports/components http://jasperreports.sourceforge.net/xsd/components.xsd"${tableAttrs}>
 `;
   
   // 生成datasetRun
   const dataset = element.dataset || {};
-  // 确保dataset有uuid，如果没有则生成一个
+  // 使用元素中已经存在的uuid，如果没有则生成一个新的
   const datasetUuid = dataset.uuid || crypto.randomUUID();
-  // 更新element的dataset，确保uuid被保存
-  if (!element.dataset) {
-    element.dataset = {};
-  }
-  element.dataset.uuid = datasetUuid;
   xml += `          <datasetRun subDataset="${dataset.name || 'tableDataset'}" uuid="${datasetUuid}">
 `;
   xml += `            <connectionExpression><![CDATA[${dataset.connectionExpression || '$P{REPORT_CONNECTION}'}]]></connectionExpression>

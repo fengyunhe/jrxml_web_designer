@@ -6,11 +6,13 @@ export interface ReportProperties {
   rightMargin: number;
   topMargin: number;
   bottomMargin: number;
+  query?: { language: string; text: string };
 }
 
 export interface Field {
   name: string;
   class: string;
+  properties?: Record<string, string>;
 }
 
 export interface Parameter {
@@ -23,6 +25,8 @@ export interface SubDataset {
   name: string;
   fields: Field[];
   parameters: Parameter[];
+  properties?: Record<string, string>;
+  query?: { language: string; text: string };
 }
 
 

@@ -303,6 +303,9 @@ import {generateJRXMLContent, parseJRXMLContent} from '../utils/jrxmlGenerator';
 import notification from '../utils/notification';
 import {createElement, getAllElements as getAllElementConfigs} from '@/components/elements/ElementRegistry';
 
+// 导入默认JRXML示例文件
+import defaultJrxmlContent from '../../tests/build_by_jasper_studio_jrxml/grouped_header_column_table_example.jrxml?raw';
+
 const { t, locale } = useI18n();
 
 // 标签页相关
@@ -2014,6 +2017,63 @@ const loadFromLocalStorageWrapper = () => {
     } else {
       selectedBandTypes.value = [];
     }
+    return true;
+  }
+  return false;
+};
+
+// 加载默认JRXML示例内容
+const loadDefaultJRXML = () => {
+  console.log('加载默认JRXML示例文件...');
+  try {
+    // 使用parseJRXMLContent解析默认JRXML内容
+    const parsedData = parseJRXMLContent(defaultJrxmlContent);
+    
+    // 更新报表属性
+    reportProperties.value = {
+      ...parsedData.properties,
+      defaultFont: {
+        name: FONT_CONSTANTS.DEFAULT_FONT_FAMILY,
+        size: REPORT_CONSTANTS.DEFAULT_FONT_SIZE,
+        isBold: false,
+        isItalic: false,
+        isUnderline: false
+      }
+    };
+    
+    // 更新字段定义
+    reportFields.value = parsedData.fields;
+    
+    // 更新参数定义
+    reportParameters.value = parsedData.parameters || [];
+    
+    // 更新子数据集
+    if (parsedData.datasets) {
+      subDatasets.value = parsedData.datasets.map(dataset => ({
+        uuid: crypto.randomUUID(),
+        name: dataset.name,
+        fields: dataset.fields,
+        parameters: dataset.parameters,
+        query: dataset.query
+      }));
+    }
+    
+    // 更新带区
+    bands.value = parsedData.bands;
+    selectedBandTypes.value = parsedData.bands.map((band: Band) => band.type);
+    
+    // 更新JRXML内容
+    jrxmlContent.value = defaultJrxmlContent;
+    
+    // 设置文件名
+    currentFileName.value = '分组表头表格示例';
+    currentFileId.value = 'default_example';
+    
+    console.log('默认JRXML示例加载完成');
+    return true;
+  } catch (error) {
+    console.error('加载默认JRXML失败:', error);
+    return false;
   }
 };
 
@@ -2587,17 +2647,25 @@ const handlePaperClick = () => {
 // 组件挂载时加载数据
 onMounted(() => {
   console.log('组件挂载开始...');
-  loadFromLocalStorageWrapper();
+  const hasLocalData = loadFromLocalStorageWrapper();
   console.log('本地数据加载完成');
   
   // 尝试加载最后编辑的文件
   loadFilesFromStorage();
   const lastFile = loadLastFile();
+  let hasFileData = false;
   if (lastFile) {
     const lastFileInList = findFileById(lastFile.id);
     if (lastFileInList) {
       loadFile(lastFileInList);
+      hasFileData = true;
     }
+  }
+  
+  // 如果没有本地数据且没有加载到文件，则加载默认JRXML示例
+  if (!hasLocalData && !hasFileData) {
+    console.log('没有找到本地数据或历史文件，加载默认JRXML示例...');
+    loadDefaultJRXML();
   }
   
   // 初始加载后更新JRXML，使用setTimeout确保所有数据都已加载
@@ -2723,7 +2791,7 @@ const openPdfPreview = (): void => {
   try {
     if (!jrxmlContent.value) {
       // 直接生成JRXML内容，不下载
-      const content = generateJRXMLContent(reportProperties.value, bands.value, reportFields.value, reportParameters.value);
+      const content = generateJRXMLContent(reportProperties.value, bands.value, reportFields.value, reportParameters.value, subDatasets.value);
       jrxmlContent.value = content;
     }
     showPdfPreview.value = true;
@@ -2764,7 +2832,8 @@ const saveJRXML = (): void => {
         uuid: crypto.randomUUID(),
         name: dataset.name,
         fields: dataset.fields,
-        parameters: dataset.parameters
+        parameters: dataset.parameters,
+        query: dataset.query
       }));
     }
     

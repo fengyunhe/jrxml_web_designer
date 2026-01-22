@@ -309,5 +309,111 @@ describe('parseJRXMLContent', () => {
     expect(result.bands).toHaveLength(1)
     expect(result.bands[0].splitType).toBe('Stretch')
   })
+
+  it('should parse subDataset with queryString', () => {
+    const jrxmlContent = `
+      <jasperReport name="TestReport" pageWidth="595" pageHeight="842">
+        <subDataset name="tableDataset">
+          <queryString language="sql">
+            SELECT * FROM test_table
+          </queryString>
+          <field name="field1" class="java.lang.String"/>
+          <field name="field2" class="java.lang.Integer"/>
+        </subDataset>
+        <detail>
+          <band height="100">
+          </band>
+        </detail>
+      </jasperReport>
+    `
+    
+    const result = parseJRXMLContent(jrxmlContent)
+    
+    expect(result.datasets).toHaveLength(1)
+    expect(result.datasets[0].name).toBe('tableDataset')
+    expect(result.datasets[0].query).toBeDefined()
+    expect(result.datasets[0].query?.language).toBe('sql')
+    expect(result.datasets[0].query?.text).toBe('SELECT * FROM test_table')
+    expect(result.datasets[0].fields).toHaveLength(2)
+  })
+
+  it('should parse subDataset with namespace-prefixed queryString', () => {
+    const jrxmlContent = `
+      <jr:jasperReport 
+        xmlns:jr="http://jasperreports.sourceforge.net/jasperreports"
+        name="TestReport" 
+        pageWidth="595" 
+        pageHeight="842"
+      >
+        <jr:subDataset name="tableDataset">
+          <jr:queryString language="sql">
+            SELECT * FROM test_table
+          </jr:queryString>
+          <jr:field name="field1" class="java.lang.String"/>
+        </jr:subDataset>
+        <jr:detail>
+          <jr:band height="100">
+          </jr:band>
+        </jr:detail>
+      </jr:jasperReport>
+    `
+    
+    const result = parseJRXMLContent(jrxmlContent)
+    
+    expect(result.datasets).toHaveLength(1)
+    expect(result.datasets[0].name).toBe('tableDataset')
+    expect(result.datasets[0].query).toBeDefined()
+    expect(result.datasets[0].query?.language).toBe('sql')
+    expect(result.datasets[0].query?.text).toBe('SELECT * FROM test_table')
+  })
+
+  it('should parse main report queryString', () => {
+    const jrxmlContent = `
+      <jasperReport name="TestReport" pageWidth="595" pageHeight="842">
+        <queryString language="sql">
+          SELECT * FROM main_table
+        </queryString>
+        <field name="field1" class="java.lang.String"/>
+        <field name="field2" class="java.lang.Integer"/>
+        <detail>
+          <band height="100">
+          </band>
+        </detail>
+      </jasperReport>
+    `
+    
+    const result = parseJRXMLContent(jrxmlContent)
+    
+    expect(result.properties.query).toBeDefined()
+    expect(result.properties.query?.language).toBe('sql')
+    expect(result.properties.query?.text).toBe('SELECT * FROM main_table')
+    expect(result.fields).toHaveLength(2)
+  })
+
+  it('should parse main report with namespace-prefixed queryString', () => {
+    const jrxmlContent = `
+      <jr:jasperReport 
+        xmlns:jr="http://jasperreports.sourceforge.net/jasperreports"
+        name="TestReport" 
+        pageWidth="595" 
+        pageHeight="842"
+      >
+        <jr:queryString language="sql">
+          SELECT * FROM main_table
+        </jr:queryString>
+        <jr:field name="field1" class="java.lang.String"/>
+        <jr:detail>
+          <jr:band height="100">
+          </jr:band>
+        </jr:detail>
+      </jr:jasperReport>
+    `
+    
+    const result = parseJRXMLContent(jrxmlContent)
+    
+    expect(result.properties.query).toBeDefined()
+    expect(result.properties.query?.language).toBe('sql')
+    expect(result.properties.query?.text).toBe('SELECT * FROM main_table')
+  })
 })
 

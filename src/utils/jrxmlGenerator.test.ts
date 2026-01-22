@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { generateJRXMLContent } from '@/utils/jrxmlGenerator'
+import { parseJRXMLContent } from '@/utils/jrxml/parse'
 import type { Band, ReportProperties, DesignElement } from '@/types'
 
 describe('jrxmlGenerator', () => {
@@ -302,6 +303,67 @@ describe('jrxmlGenerator', () => {
     expect(jrxml).toContain('<subDataset name="testDataset" uuid="test-uuid">')
     expect(jrxml).toContain('<queryString language="sql"><![CDATA[SELECT * FROM test_table]]></queryString>')
     expect(jrxml).toContain('</subDataset>')
+  })
+
+  it('should generate main report queryString when provided', () => {
+    const propertiesWithQuery = {
+      ...mockReportProperties,
+      query: {
+        language: 'sql',
+        text: 'SELECT * FROM main_table'
+      }
+    }
+    
+    const jrxml = generateJRXMLContent(propertiesWithQuery, mockBands, [], [])
+    
+    // Should include main report queryString
+    expect(jrxml).toContain('<queryString language="sql"><![CDATA[SELECT * FROM main_table]]></queryString>')
+  })
+
+  it('should preserve subDataset queryString through parse-generate cycle', () => {
+    // 1. Create test JRXML with subDataset containing queryString
+    const testJRXML = `<?xml version="1.0" encoding="UTF-8"?>
+<jasperReport name="TestReport" pageWidth="595" pageHeight="842" leftMargin="20" rightMargin="20" topMargin="30" bottomMargin="30">
+  <subDataset name="testDataset">
+    <queryString language="sql">
+      SELECT * FROM test_table WHERE status = 'active'
+    </queryString>
+    <field name="field1" class="java.lang.String"/>
+    <field name="field2" class="java.lang.Integer"/>
+  </subDataset>
+  <detail>
+    <band height="100">
+    </band>
+  </detail>
+</jasperReport>`
+    
+    // 2. Parse the JRXML
+    const parsedData = parseJRXMLContent(testJRXML)
+    
+    // 3. Verify subDataset query was parsed correctly
+    expect(parsedData.datasets).toHaveLength(1)
+    expect(parsedData.datasets[0].query).toBeDefined()
+    expect(parsedData.datasets[0].query?.language).toBe('sql')
+    expect(parsedData.datasets[0].query?.text).toBe('SELECT * FROM test_table WHERE status = \'active\'')
+    
+    // 4. Generate JRXML from parsed data
+    const generatedJRXML = generateJRXMLContent(
+      parsedData.properties,
+      parsedData.bands,
+      parsedData.fields,
+      parsedData.parameters,
+      parsedData.datasets
+    )
+    
+    // 5. Verify queryString is preserved in generated JRXML
+    expect(generatedJRXML).toContain('<subDataset name="testDataset"')
+    expect(generatedJRXML).toContain('<queryString language="sql"><![CDATA[SELECT * FROM test_table WHERE status = \'active\']]></queryString>')
+    
+    // 6. Parse generated JRXML again to verify round-trip preservation
+    const reparsedData = parseJRXMLContent(generatedJRXML)
+    expect(reparsedData.datasets).toHaveLength(1)
+    expect(reparsedData.datasets[0].query).toBeDefined()
+    expect(reparsedData.datasets[0].query?.text).toBe('SELECT * FROM test_table WHERE status = \'active\'')
   })
 
   it('should handle multiple textField expressions with different fields', () => {
