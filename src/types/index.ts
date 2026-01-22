@@ -6,6 +6,7 @@ export interface TableColumn {
   uuid: string;
   width: number;
   name: string;
+  hasTableHeader?: boolean;
   tableHeader?: DesignElement;
   columnHeader?: DesignElement;
   detailCell?: DesignElement;

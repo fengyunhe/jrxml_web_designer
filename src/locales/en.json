@@ -241,6 +241,8 @@
     "fieldExpression": "Field Expression",
     "tableHeader": "Table Header",
     "tableHeaderPlaceholder": "Enter table header text",
+    "includeTableHeader": "Include Table Header",
+    "tableProperties": "Table Properties",
     "tableFooter": "Table Footer",
     "tableFooterPlaceholder": "Enter table footer expression",
     "moveColumnLeft": "Move column left",
@@ -269,7 +271,16 @@
     "detailBorder": "Detail Cell Border",
     "columnHeader": "Column Header",
     "forecolor": "Text Color",
-    "backcolor": "Background Color"
+    "backcolor": "Background Color",
+    "quickBorderStyles": "Quick Border Styles",
+    "horizontalBorders": "Horizontal Borders",
+    "verticalBorders": "Vertical Borders",
+    "topBorder": "Top Border",
+    "bottomBorder": "Bottom Border",
+    "leftBorder": "Left Border",
+    "rightBorder": "Right Border",
+    "dashedAll": "All Dashed Borders",
+    "dottedAll": "All Dotted Borders"
   },
   "bottomPanel": {
     "pageSettings": "Page Settings",

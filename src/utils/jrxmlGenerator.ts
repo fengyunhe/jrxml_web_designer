@@ -790,6 +790,19 @@ function generateTableXML(element: any): string {
     xml += ` uuid="${element.uuid}"`;
   }
   
+  if (element.forecolor) {
+    xml += ` forecolor="${element.forecolor}"`;
+  }
+  
+  if (element.backcolor) {
+    xml += ` backcolor="${element.backcolor}"`;
+  }
+  
+  // 使用元素设置的模式，不再自动覆盖
+  if (element.mode) {
+    xml += ` mode="${element.mode}"`;
+  }
+  
   xml += `>
 `;
   
@@ -849,22 +862,22 @@ function generateTableXML(element: any): string {
 `;
     
     // 生成tableHeader
-    if (column.tableHeader) {
+    if (column.hasTableHeader && column.tableHeader) {
       xml += `            <jr:tableHeader height="${toInt(column.tableHeader.height)}" rowSpan="1">
 `;
       xml += generateElementXML(column.tableHeader).replace(/^    /gm, '                ');
       xml += `            </jr:tableHeader>
 `;
-    } else {
-      xml += `            <jr:tableHeader height="30" rowSpan="1">
-            </jr:tableHeader>
-`;
     }
     
-    // 生成tableFooter
-    xml += `            <jr:tableFooter height="30" rowSpan="1">
-            </jr:tableFooter>
+    // 生成tableFooter - 只有当表达式不为空时才生成
+    if (column.tableFooter && column.tableFooter.expression) {
+      xml += `            <jr:tableFooter height="${toInt(column.tableFooter.height)}" rowSpan="1">
 `;
+      xml += generateElementXML(column.tableFooter).replace(/^    /gm, '                ');
+      xml += `            </jr:tableFooter>
+`;
+    }
     
     // 生成columnHeader
     if (column.columnHeader) {
@@ -879,10 +892,14 @@ function generateTableXML(element: any): string {
 `;
     }
     
-    // 生成columnFooter
-    xml += `            <jr:columnFooter height="30" rowSpan="1">
-            </jr:columnFooter>
+    // 生成columnFooter - 只有当表达式不为空时才生成
+    if (column.columnFooter && column.columnFooter.expression) {
+      xml += `            <jr:columnFooter height="${toInt(column.columnFooter.height)}" rowSpan="1">
 `;
+      xml += generateElementXML(column.columnFooter).replace(/^    /gm, '                ');
+      xml += `            </jr:columnFooter>
+`;
+    }
     
     // 生成detailCell
     if (column.detailCell) {

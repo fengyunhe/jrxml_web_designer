@@ -16,7 +16,7 @@
     <!-- 表格内容 -->
     <div class="table-content">
       <!-- 表格头部 -->
-      <div class="table-header">
+      <div v-if="columns.some(column => column.hasTableHeader)" class="table-header">
         <div 
           v-for="(column, index) in columns" 
           :key="column.uuid"
@@ -52,7 +52,7 @@
             ▶
           </n-button>
           
-          <div v-if="column.tableHeader" class="cell-content" :style="getCellStyle(column.tableHeader)">
+          <div v-if="column.hasTableHeader && column.tableHeader" class="cell-content" :style="getCellStyle(column.tableHeader)">
             <!-- 渲染表头内容 -->
             <template v-if="column.tableHeader.type === 'staticText'">
               <div class="static-text">{{ column.tableHeader.text }}</div>
@@ -61,8 +61,11 @@
               <div class="text-field">{{ column.tableHeader.expression }}</div>
             </template>
           </div>
-          <div v-else class="cell-content empty">
+          <div v-else-if="column.hasTableHeader" class="cell-content empty">
             Table Header
+          </div>
+          <div v-else class="cell-content empty">
+            - 
           </div>
         </div>
       </div>
@@ -103,7 +106,7 @@
         </div>
       </div>
       <!-- 列尾 -->
-      <div class="column-footer">
+      <div v-if="columns.some(column => column.columnFooter && (column.columnFooter.type === 'textField' && (column.columnFooter as TextFieldElement).expression || column.columnFooter.type === 'staticText'))" class="column-footer">
         <div 
           v-for="(column, index) in columns" 
           :key="column.uuid"
@@ -113,10 +116,10 @@
           <div v-if="column.columnFooter" class="cell-content">
             <!-- 渲染列尾内容 -->
             <template v-if="column.columnFooter.type === 'staticText'">
-              <div class="static-text">{{ column.columnFooter.text }}</div>
+              <div class="static-text">{{ (column.columnFooter as StaticTextElement).text || '' }}</div>
             </template>
             <template v-else-if="column.columnFooter.type === 'textField'">
-              <div class="text-field">{{ column.columnFooter.expression || '' }}</div>
+              <div class="text-field">{{ (column.columnFooter as TextFieldElement).expression || '' }}</div>
             </template>
           </div>
           <div v-else class="cell-content empty">
@@ -125,7 +128,7 @@
         </div>
       </div>
       <!-- 表格表尾 -->
-      <div class="table-footer">
+      <div v-if="columns.some(column => column.tableFooter && (column.tableFooter.type === 'textField' && (column.tableFooter as TextFieldElement).expression || column.tableFooter.type === 'staticText'))" class="table-footer">
         <div 
           v-for="(column, index) in columns" 
           :key="column.uuid"
@@ -135,10 +138,10 @@
           <div v-if="column.tableFooter" class="cell-content">
             <!-- 渲染表格表尾内容 -->
             <template v-if="column.tableFooter.type === 'staticText'">
-              <div class="static-text">{{ column.tableFooter.text }}</div>
+              <div class="static-text">{{ (column.tableFooter as StaticTextElement).text || '' }}</div>
             </template>
             <template v-else-if="column.tableFooter.type === 'textField'">
-              <div class="text-field">{{ column.tableFooter.expression || '' }}</div>
+              <div class="text-field">{{ (column.tableFooter as TextFieldElement).expression || '' }}</div>
             </template>
           </div>
           <div v-else class="cell-content empty">
@@ -172,7 +175,9 @@ import type {
   DesignElement, 
   SelectedElementInfo, 
   EditingElementInfo, 
-  TableElement as TableElementType
+  TableElement as TableElementType,
+  StaticTextElement,
+  TextFieldElement
 } from '../../types';
 
 const props = defineProps<{
