@@ -131,7 +131,7 @@ const elementStyle = computed(() => {
     width: `${props.element.width}px`,
     height: `${props.element.height}px`,
     backgroundColor: (props.element.mode === 'Opaque' && props.element.backcolor) ? props.element.backcolor : 'transparent',
-    color: props.element.forecolor,
+    color: props.element.type !== 'table' ? props.element.forecolor : undefined,
     paddingTop: props.element.box?.topPadding ? `${props.element.box.topPadding}px` : (props.element.box?.padding ? `${props.element.box.padding}px` : undefined),
     paddingLeft: props.element.box?.leftPadding ? `${props.element.box.leftPadding}px` : (props.element.box?.padding ? `${props.element.box.padding}px` : undefined),
     paddingBottom: props.element.box?.bottomPadding ? `${props.element.box.bottomPadding}px` : (props.element.box?.padding ? `${props.element.box.padding}px` : undefined),

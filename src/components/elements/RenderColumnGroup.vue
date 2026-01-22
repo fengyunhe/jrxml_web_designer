@@ -246,7 +246,7 @@ function getElementStyle(element: any) {
   if (element.isUnderline) {
     styles.textDecoration = 'underline';
   }
-  if (element.backcolor) {
+  if (element.mode === 'Opaque' && element.backcolor) {
     styles.backgroundColor = element.backcolor;
   }
   

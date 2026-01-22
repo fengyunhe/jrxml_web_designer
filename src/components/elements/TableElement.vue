@@ -433,7 +433,7 @@ function getCellStyle(cell: any) {
   if (cell.isUnderline) {
     styles.textDecoration = 'underline';
   }
-  if (cell.backcolor) {
+  if (cell.mode === 'Opaque' && cell.backcolor) {
     styles.backgroundColor = cell.backcolor;
   }
   
