@@ -541,7 +541,10 @@ function getCellContentStyle(column: any, type: string) {
 }
 
 .table-header,
-.column-header,
+.column-header {
+  display: block;
+}
+
 .detail-row,
 .column-footer,
 .table-footer {
@@ -550,8 +553,6 @@ function getCellContentStyle(column: any, type: string) {
   border-bottom: 1px solid #ccc;
 }
 
-.table-header,
-.column-header,
 .detail-row,
 .column-footer,
 .table-footer {

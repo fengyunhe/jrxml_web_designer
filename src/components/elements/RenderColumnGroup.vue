@@ -1,4 +1,5 @@
 <template>
+  <!-- 渲染当前级别的分组行 -->
   <div class="column-group-row">
     <template v-for="(child, index) in group.children" :key="child.uuid || index">
       <!-- 分组 -->
@@ -21,15 +22,6 @@
             <div class="column-name">{{ child.name }}</div>
           </template>
         </div>
-        <!-- 递归渲染子分组 -->
-        <render-column-group 
-          :group="child" 
-          :level="level + 1" 
-          :type="type"
-          :columns="columns"
-          @column-click="handleColumnClick"
-          @column-context-menu="handleColumnContextMenu"
-        />
       </div>
       <!-- 普通列 -->
       <div 
@@ -65,6 +57,19 @@
       </div>
     </template>
   </div>
+  
+  <!-- 递归渲染所有子分组的行 -->
+  <template v-for="(child, index) in group.children" :key="`child-${child.uuid || index}`">
+    <render-column-group 
+      v-if="child.children && child.children.length > 0"
+      :group="child" 
+      :level="level + 1" 
+      :type="type"
+      :columns="columns"
+      @column-click="handleColumnClick"
+      @column-context-menu="handleColumnContextMenu"
+    />
+  </template>
 </template>
 
 <script setup lang="ts">
@@ -146,6 +151,8 @@ function handleColumnContextMenu(column: any, event: MouseEvent, index?: number)
 .column-group-row {
   display: flex;
   width: 100%;
+  height: 30px;
+  border-bottom: 1px solid #ccc;
 }
 
 .column-group-cell,
@@ -157,6 +164,7 @@ function handleColumnContextMenu(column: any, event: MouseEvent, index?: number)
   cursor: pointer;
   user-select: none;
   border-right: 1px solid #ccc;
+  height: 100%;
 }
 
 .column-group-cell:last-child,
@@ -198,7 +206,8 @@ function handleColumnContextMenu(column: any, event: MouseEvent, index?: number)
 }
 
 .group-content {
-  min-height: 30px;
+  width: 100%;
+  height: 100%;
 }
 
 .static-text,
