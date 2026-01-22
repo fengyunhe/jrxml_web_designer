@@ -20,9 +20,20 @@
                   </div>
                 </template>
                 <template v-else-if="type === 'columnHeader'">
-                  <div class="column-name">
-                    {{ cell.content.name || '' }}
-                  </div>
+                  <template v-if="cell.content.columnHeader">
+                    <template v-if="cell.content.columnHeader.type === 'staticText'">
+                      <div class="static-text">{{ cell.content.columnHeader.text || '' }}</div>
+                    </template>
+                    <template v-else-if="cell.content.columnHeader.type === 'textField'">
+                      <div class="text-field">{{ cell.content.columnHeader.expression || '' }}</div>
+                    </template>
+                    <template v-else>
+                      <div class="column-name">{{ cell.content.name || '' }}</div>
+                    </template>
+                  </template>
+                  <template v-else>
+                    <div class="column-name">{{ cell.content.name || '' }}</div>
+                  </template>
                 </template>
               </div>
             </td>
@@ -118,12 +129,37 @@ function buildGroupRows(group: any): any[][] {
     
     // 计算该节点应该跨越的行数（rowspan）
     let rowspan: number;
-    if (node.children && node.children.length > 0) {
-      // 有子节点的分组单元格，rowspan始终为1
-      rowspan = 1;
+    
+    // 根据类型调整渲染逻辑
+    if (props.type === 'columnHeader') {
+      // 对于Column Header，检查是否实际定义了columnHeader
+      if (node.children && node.children.length > 0) {
+        // 有子节点的分组单元格
+        // 只有当分组实际定义了columnHeader时，才渲染为组合单元格
+        if (node.columnHeader) {
+          rowspan = 1;
+        } else {
+          // 没有定义columnHeader，递归渲染子节点
+          let currentColumn = startColumn;
+          for (const child of node.children) {
+            buildTable(child, currentColumn, depth);
+            currentColumn += countLeafColumns(child);
+          }
+          return; // 跳过当前节点的渲染
+        }
+      } else {
+        // 叶子节点，rowspan为从当前深度到最大深度的行数
+        rowspan = maxDepth - depth + 1;
+      }
     } else {
-      // 叶子节点，rowspan为从当前深度到最大深度的行数
-      rowspan = maxDepth - depth + 1;
+      // 对于Table Header，使用原有逻辑
+      if (node.children && node.children.length > 0) {
+        // 有子节点的分组单元格，rowspan始终为1
+        rowspan = 1;
+      } else {
+        // 叶子节点，rowspan为从当前深度到最大深度的行数
+        rowspan = maxDepth - depth + 1;
+      }
     }
     
     // 创建单元格

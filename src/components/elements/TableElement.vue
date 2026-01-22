@@ -99,7 +99,7 @@
       </div>
       <!-- 列头部 -->
       <div class="column-header">
-        <template v-if="hasColumnGroups">
+        <template v-if="hasColumnHeaderGroups">
           <render-column-group 
             :group="rootGroup" 
             :level="0" 
@@ -117,8 +117,21 @@
             @contextmenu.stop="handleColumnContextMenu(index, $event)"
           >
             <div class="cell-content" :style="getColumnHeaderStyle(column)">
-              <!-- 渲染列头内容，优先显示column.name -->
-              <div class="column-name">{{ column.name }}</div>
+              <!-- 渲染列头内容，从columnHeader获取实际的静态文本或动态文本表达式 -->
+              <template v-if="column.columnHeader">
+                <template v-if="column.columnHeader.type === 'staticText'">
+                  <div class="static-text">{{ column.columnHeader.text || '' }}</div>
+                </template>
+                <template v-else-if="column.columnHeader.type === 'textField'">
+                  <div class="text-field">{{ column.columnHeader.expression || '' }}</div>
+                </template>
+                <template v-else>
+                  <div class="column-name">{{ column.name }}</div>
+                </template>
+              </template>
+              <template v-else>
+                <div class="column-name">{{ column.name }}</div>
+              </template>
             </div>
           </div>
         </template>
@@ -455,11 +468,49 @@ function getColumnHeaderStyle(column: any) {
 
 // ===== 列分组相关功能 =====
 
-// 检查是否有列分组
-const hasColumnGroups = computed(() => {
+// 检查是否有列分组（用于Table Header）
+const hasTableHeaderGroups = computed(() => {
   return tableElement.value.children && 
          tableElement.value.children.length > 0 &&
          tableElement.value.children.some(child => (child as any).children && (child as any).children.length > 0);
+});
+
+// 检查是否有列分组（用于Column Header）
+const hasColumnHeaderGroups = computed(() => {
+  // 只有当列分组实际定义了columnHeader时，才渲染为分组
+  const hasGroups = tableElement.value.children && 
+                   tableElement.value.children.length > 0 &&
+                   tableElement.value.children.some(child => (child as any).children && (child as any).children.length > 0);
+  
+  if (!hasGroups) return false;
+  
+  // 检查是否有任何列分组实际定义了columnHeader
+  const checkHasColumnHeader = (group: any): boolean => {
+    if (group.columnHeader) return true;
+    if (group.children) {
+      return group.children.some((child: any) => {
+        if (child.children) {
+          return checkHasColumnHeader(child);
+        } else {
+          return child.columnHeader;
+        }
+      });
+    }
+    return false;
+  };
+  
+  return tableElement.value.children!.some((child: any) => {
+    if (child.children) {
+      return checkHasColumnHeader(child);
+    }
+    return child.columnHeader;
+  });
+});
+
+// 统一的列分组检查，根据上下文使用不同的判断
+const hasColumnGroups = computed(() => {
+  // 默认使用Table Header的判断，实际使用时根据上下文决定
+  return hasTableHeaderGroups.value;
 });
 
 // 创建一个虚拟根分组，包含所有children
