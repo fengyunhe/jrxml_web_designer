@@ -270,136 +270,18 @@
                         </div>
                       </n-tab-pane>
                       
-                      <!-- 组合列文本样式标签页 -->
-                      <n-tab-pane name="groupTextStyle" :tab="t('properties.textStyle')">
-                        <div class="table-column-properties">
-                          <!-- 表格头部文本样式 -->
-                          <div v-if="groupInfo.hasTableHeader && groupInfo.tableHeader" class="form-group small full-width">
-                            <label>{{ t('properties.headerTextStyle') }}</label>
-                            <div class="text-style-controls">
-                              <div class="form-group small" style="flex: 0 0 40px;">
-                                <label style="font-size: 10px;">{{ t('properties.fontSize') }}</label>
-                                <input 
-                                  v-model.number="(groupInfo.tableHeader as any).fontSize" 
-                                  type="number" 
-                                  min="6"
-                                  max="72"
-                                  step="1"
-                                  class="small-input"
-                                  @change="emit('update-jrxml')"
-                                />
-                              </div>
-                              <div class="form-group small" style="flex: 1;">
-                                <label style="font-size: 10px;">{{ t('properties.forecolor') }}</label>
-                                <ColorPickerWithOpacity 
-                                  v-model="(groupInfo.tableHeader as any).forecolor"
-                                  v-model:mode="(groupInfo.tableHeader as any).forecolorMode"
-                                  @update:modelValue="emit('update-jrxml')"
-                                  @update:mode="emit('update-jrxml')"
-                                />
-                              </div>
-                              <div class="form-group small" style="flex: 1;">
-                                <label style="font-size: 10px;">{{ t('properties.backgroundColor') }}</label>
-                                <ColorPickerWithOpacity 
-                                  v-model="(groupInfo.tableHeader as any).backcolor"
-                                  v-model:mode="(groupInfo.tableHeader as any).mode"
-                                  @update:modelValue="emit('update-jrxml')"
-                                  @update:mode="emit('update-jrxml')"
-                                  style="height: 20px;"
-                                />
-                              </div>
-                            </div>
-                            <div class="checkbox-group" style="gap: 12px; margin-bottom: 6px;">
-                              <label style="font-size: 11px;">
-                                <input v-model="(groupInfo.tableHeader as any).isBold" type="checkbox" @change="emit('update-jrxml')" />{{ t('properties.bold') }}
-                              </label>
-                              <label style="font-size: 11px;">
-                                <input v-model="(groupInfo.tableHeader as any).isItalic" type="checkbox" @change="emit('update-jrxml')" />{{ t('properties.italic') }}
-                              </label>
-                              <label style="font-size: 11px;">
-                                <input v-model="(groupInfo.tableHeader as any).isUnderline" type="checkbox" @change="emit('update-jrxml')" />{{ t('properties.underline') }}
-                              </label>
-                              <label style="font-size: 11px;">
-                                <input v-model="(groupInfo.tableHeader as any).mode" type="checkbox" true-value="Opaque" false-value="Transparent" @change="emit('update-jrxml')" />{{ t('properties.opaque') }}
-                              </label>
-                            </div>
-                          </div>
-                          
-                          <!-- 列头部文本样式 -->
-                          <div class="form-group small full-width" v-if="groupInfo.columnHeader">
-                            <label>{{ t('properties.columnHeader') }}</label>
-                            <div class="text-style-controls">
-                              <div class="form-group small" style="flex: 0 0 40px;">
-                                <label style="font-size: 10px;">{{ t('properties.fontSize') }}</label>
-                                <input 
-                                  v-model.number="(groupInfo.columnHeader as any).fontSize" 
-                                  type="number" 
-                                  min="6"
-                                  max="72"
-                                  step="1"
-                                  class="small-input"
-                                  @change="emit('update-jrxml')"
-                                />
-                              </div>
-                              <div class="form-group small" style="flex: 1;">
-                                <label style="font-size: 10px;">{{ t('properties.forecolor') }}</label>
-                                <ColorPickerWithOpacity 
-                                  v-model="(groupInfo.columnHeader as any).forecolor"
-                                  v-model:mode="(groupInfo.columnHeader as any).forecolorMode"
-                                  @update:modelValue="emit('update-jrxml')"
-                                  @update:mode="emit('update-jrxml')"
-                                />
-                              </div>
-                              <div class="form-group small" style="flex: 1;">
-                                <label style="font-size: 10px;">{{ t('properties.backgroundColor') }}</label>
-                                <ColorPickerWithOpacity 
-                                  v-model="(groupInfo.columnHeader as any).backcolor"
-                                  v-model:mode="(groupInfo.columnHeader as any).mode"
-                                  @update:modelValue="emit('update-jrxml')"
-                                  @update:mode="emit('update-jrxml')"
-                                  style="height: 20px;"
-                                />
-                              </div>
-                            </div>
-                            <div class="checkbox-group" style="gap: 12px; margin-bottom: 6px;">
-                              <label style="font-size: 11px;">
-                                <input v-model="(groupInfo.columnHeader as any).isBold" type="checkbox" @change="emit('update-jrxml')" />{{ t('properties.bold') }}
-                              </label>
-                              <label style="font-size: 11px;">
-                                <input v-model="(groupInfo.columnHeader as any).isItalic" type="checkbox" @change="emit('update-jrxml')" />{{ t('properties.italic') }}
-                              </label>
-                              <label style="font-size: 11px;">
-                                <input v-model="(groupInfo.columnHeader as any).isUnderline" type="checkbox" @change="emit('update-jrxml')" />{{ t('properties.underline') }}
-                              </label>
-                              <label style="font-size: 11px;">
-                                <input v-model="(groupInfo.columnHeader as any).mode" type="checkbox" true-value="Opaque" false-value="Transparent" @change="emit('update-jrxml')" />{{ t('properties.opaque') }}
-                              </label>
-                            </div>
-                          </div>
-                        </div>
-                      </n-tab-pane>
-                      
-                      <!-- 组合列边框样式标签页 -->
-                      <n-tab-pane name="groupBorderStyle" :tab="t('properties.borderStyle')">
-                        <div class="table-column-properties">
-                          <!-- 表格头部边框样式 -->
-                          <div v-if="groupInfo.hasTableHeader && groupInfo.tableHeader" class="form-group small full-width">
-                            <BorderStyleSettings 
-                              v-model="(groupInfo.tableHeader as any)" 
-                              :label="t('properties.headerBorder')"
-                              @change="emit('update-jrxml')"
-                            />
-                          </div>
-                          
-                          <!-- 列头部边框样式 -->
-                          <div class="form-group small full-width" v-if="groupInfo.columnHeader">
-                            <BorderStyleSettings 
-                              v-model="(groupInfo.columnHeader as any)" 
-                              :label="t('properties.columnHeader')"
-                              @change="emit('update-jrxml')"
-                            />
-                          </div>
-                        </div>
+                      <!-- 组合列表头设置标签页 -->
+                      <n-tab-pane v-if="groupInfo.hasTableHeader && groupInfo.tableHeader" name="groupTableHeader" :tab="t('properties.styleSettings')">
+                        <FontStyleSettings 
+                          v-model="groupInfo.tableHeader"
+                          @update:modelValue="emit('update-jrxml')"
+                        />
+
+                        <BorderStyleSettings 
+                          v-model="groupInfo.tableHeader" 
+                          :label="t('properties.borderStyle')"
+                          @change="emit('update-jrxml')"
+                        />
                       </n-tab-pane>
                     </n-tabs>
                   </div>

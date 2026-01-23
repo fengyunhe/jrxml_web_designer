@@ -897,8 +897,8 @@ function generateColumnXML(column: any, index: number): string {
   return xml;
 }
 
-// 生成列分组XML
-function generateColumnGroupXML(group: any): string {
+// 生成列分组XML，同时收集处理过的列的UUID
+function generateColumnGroupXML(group: any, processedColumnUuids?: Set<string>): string {
   // 确保group有uuid，如果没有则生成一个
   const groupUuid = group.uuid || crypto.randomUUID();
   // 更新group的uuid，确保被保存
@@ -975,10 +975,14 @@ function generateColumnGroupXML(group: any): string {
   children.forEach((child: any, index: number) => {
     if (child.children) {
       // 递归生成子分组
-      xml += generateColumnGroupXML(child);
+      xml += generateColumnGroupXML(child, processedColumnUuids);
     } else {
       // 生成普通列
       xml += generateColumnXML(child, index);
+      // 收集处理过的列的UUID
+      if (processedColumnUuids) {
+        processedColumnUuids.add(child.uuid);
+      }
     }
   });
   
@@ -1178,21 +1182,30 @@ function generateTableXML(element: any): string {
 `;
   
   // 生成列和列分组
-  // 首先处理列分组
-  const groupChildren = element.children || [];
-  groupChildren.forEach((child: any) => {
+  
+  // 1. 收集已经处理过的列的UUID
+  const processedColumnUuids = new Set<string>();
+  
+  // 2. 处理element.children（包含列分组和直接列）
+  const children = element.children || [];
+  children.forEach((child: any, index: number) => {
     if (child.children) {
-      // 列分组
-      xml += generateColumnGroupXML(child);
+      // 列分组，传递processedColumnUuids集合
+      xml += generateColumnGroupXML(child, processedColumnUuids);
+    } else {
+      // 直接列
+      xml += generateColumnXML(child, index);
+      processedColumnUuids.add(child.uuid);
     }
   });
   
-  // 然后处理普通列
+  // 3. 处理element.columns，跳过已经在children中处理过的列
   const normalColumns = element.columns || [];
   normalColumns.forEach((child: any, index: number) => {
-    if (!child.children) {
-      // 普通列
+    if (!child.children && !processedColumnUuids.has(child.uuid)) {
+      // 普通列且未被处理过
       xml += generateColumnXML(child, index);
+      processedColumnUuids.add(child.uuid);
     }
   });
   

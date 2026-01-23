@@ -782,4 +782,175 @@ describe('jrxmlGenerator', () => {
     expect(jrxml).toContain('Text inside Frame')
     expect(jrxml).toContain('</frame>')
   })
+
+  it('should not generate duplicate columns when both children and columns properties exist', () => {
+    // 创建一个包含列分组的表格元素，同时包含children和columns属性
+    const tableElement: any = {
+      type: 'table',
+      x: 0,
+      y: 0,
+      width: 500,
+      height: 300,
+      uuid: 'test-table-uuid',
+      dataset: {
+        name: 'testDataset',
+        uuid: 'test-dataset-uuid'
+      },
+      children: [
+        {
+          // 列分组
+          name: 'Group1',
+          uuid: 'group1-uuid',
+          width: 200,
+          hasTableHeader: true,
+          tableHeader: {
+            type: 'staticText',
+            text: 'Group Header',
+            x: 0,
+            y: 0,
+            width: 200,
+            height: 30
+          },
+          columnHeader: {
+            type: 'staticText',
+            text: 'Group1',
+            x: 0,
+            y: 0,
+            width: 200,
+            height: 30
+          },
+          children: [
+            {
+              // 子列1
+              name: 'Column1',
+              uuid: 'column1-uuid',
+              width: 100,
+              hasTableHeader: false,
+              columnHeader: {
+                type: 'staticText',
+                text: 'Column1',
+                x: 0,
+                y: 0,
+                width: 100,
+                height: 30
+              },
+              detailCell: {
+                type: 'textField',
+                expression: '$F{field1}',
+                x: 0,
+                y: 0,
+                width: 100,
+                height: 30
+              }
+            },
+            {
+              // 子列2
+              name: 'Column2',
+              uuid: 'column2-uuid',
+              width: 100,
+              hasTableHeader: false,
+              columnHeader: {
+                type: 'staticText',
+                text: 'Column2',
+                x: 0,
+                y: 0,
+                width: 100,
+                height: 30
+              },
+              detailCell: {
+                type: 'textField',
+                expression: '$F{field2}',
+                x: 0,
+                y: 0,
+                width: 100,
+                height: 30
+              }
+            }
+          ]
+        },
+        {
+          // 普通列
+          name: 'Column3',
+          uuid: 'column3-uuid',
+          width: 100,
+          hasTableHeader: false,
+          columnHeader: {
+            type: 'staticText',
+            text: 'Column3',
+            x: 0,
+            y: 0,
+            width: 100,
+            height: 30
+          },
+          detailCell: {
+            type: 'textField',
+            expression: '$F{field3}',
+            x: 0,
+            y: 0,
+            width: 100,
+            height: 30
+          }
+        }
+      ],
+      // 同时添加columns属性，模拟原始问题
+      columns: [
+        {
+          name: 'Column1',
+          uuid: 'column1-uuid',
+          width: 100
+        },
+        {
+          name: 'Column2',
+          uuid: 'column2-uuid',
+          width: 100
+        },
+        {
+          name: 'Column3',
+          uuid: 'column3-uuid',
+          width: 100
+        }
+      ]
+    }
+
+    const bands: Band[] = [
+      {
+        type: 'detail',
+        height: 300,
+        elements: [tableElement as DesignElement]
+      }
+    ]
+
+    const fields = [
+      { name: 'field1', class: 'java.lang.String' },
+      { name: 'field2', class: 'java.lang.String' },
+      { name: 'field3', class: 'java.lang.String' }
+    ]
+
+    const generatedJRXML = generateJRXMLContent(mockReportProperties, bands, fields)
+
+    // 验证生成的JRXML中没有重复的列
+    
+    // 1. 提取所有列的UUID（只匹配 <jr:column> 元素，不匹配 <jr:columnGroup> 元素）
+    const columnUuids = [...generatedJRXML.matchAll(/<jr:column(?!Group)[^>]*uuid="([^"]+)"/g)]
+      .map(match => match[1]);
+    
+    // 添加调试信息
+    console.log('Generated column UUIDs:', columnUuids);
+    
+    // 2. 检查UUID是否唯一
+    const uniqueColumnUuids = new Set(columnUuids);
+    expect(uniqueColumnUuids.size).toBe(columnUuids.length);
+    
+    // 3. 验证只生成了3列
+    expect(columnUuids.length).toBe(3);
+    
+    // 4. 验证生成了1个列分组
+    const columnGroupMatches = generatedJRXML.match(/<jr:columnGroup/g);
+    expect(columnGroupMatches).toHaveLength(1);
+    
+    // 5. 验证所有预期的列UUID都存在
+    expect(columnUuids).toContain('column1-uuid');
+    expect(columnUuids).toContain('column2-uuid');
+    expect(columnUuids).toContain('column3-uuid');
+  })
 })
