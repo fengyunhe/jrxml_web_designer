@@ -3521,269 +3521,199 @@ const startResizingElement = (event: MouseEvent, bandIndex: number, elementIndex
     isDraggingOrResizing.value = true;
     
     const handleMouseMove = (e: MouseEvent) => {
-      if (resizingInfo.value) {
-        const currentBand = bands.value[resizingInfo.value.bandIndex];
-        if (!currentBand) return;
+      if (!resizingInfo.value) return;
+      
+      const currentBand = bands.value[resizingInfo.value.bandIndex];
+      if (!currentBand) return;
 
-        let element;
-        let containerWidth = (paperWidth.value - (reportProperties.value?.leftMargin || 0) - (reportProperties.value?.rightMargin || 0));
-        let containerHeight = currentBand.height;
+      let element: DesignElement | undefined;
+      let containerWidth = (paperWidth.value - (reportProperties.value?.leftMargin || 0) - (reportProperties.value?.rightMargin || 0));
+      let containerHeight = currentBand.height;
 
-        if (resizingInfo.value.parentFrameIndex !== undefined) {
-            const frame = currentBand?.elements[resizingInfo.value.parentFrameIndex];
-            if (frame && frame.type === 'frame' && frame.elements) {
-            element = frame.elements[resizingInfo.value.elementIndex];
-            containerWidth = frame.width;
-            containerHeight = frame.height;
-            }
+      if (resizingInfo.value.parentFrameIndex !== undefined) {
+        const frame = currentBand.elements[resizingInfo.value.parentFrameIndex];
+        if (frame && frame.type === 'frame' && frame.elements) {
+          element = frame.elements[resizingInfo.value.elementIndex];
+          containerWidth = frame.width;
+          containerHeight = frame.height;
+        }
+      } else {
+        element = currentBand.elements[resizingInfo.value.elementIndex];
+      }
+      
+      if (!element) return;
+      
+      // 获取当前缩放比例
+      const currentZoom = zoomLevel.value;
+      
+      // 获取paper元素的当前位置信息，用于更准确的坐标计算
+      const paperEl = document.querySelector('.paper') as HTMLElement;
+      let currentPaperOffsetX = 0;
+      let currentPaperOffsetY = 0;
+      
+      if (paperEl) {
+        const paperRect = paperEl.getBoundingClientRect();
+        // 考虑缩放比例的偏移量
+        currentPaperOffsetX = paperRect.left;
+        currentPaperOffsetY = paperRect.top;
+      }
+      
+      // 计算新的宽度和高度，考虑缩放比例
+      let newWidth = resizingInfo.value.startWidth + ((e.clientX - currentPaperOffsetX) / currentZoom - resizingInfo.value.startX);
+      let newHeight = resizingInfo.value.startHeight + ((e.clientY - currentPaperOffsetY) / currentZoom - resizingInfo.value.startY);
+      
+      // 限制最小尺寸
+      newWidth = Math.max(20, newWidth);
+      newHeight = Math.max(20, newHeight);
+      
+      // 获取报表边距设置
+      const { leftMargin = 0, rightMargin = 0 } = reportProperties.value;
+      // 限制不能超出纸张右边界和band底部边界
+      let maxElementWidth;
+      if (resizingInfo.value.parentFrameIndex !== undefined) {
+         maxElementWidth = containerWidth - element.x;
+      } else {
+         maxElementWidth = paperWidth.value - leftMargin - rightMargin - element.x;
+      }
+      
+      const availableHeight = (containerHeight - element.y);
+      newWidth = Math.min(newWidth, maxElementWidth);
+      newHeight = Math.min(newHeight, availableHeight);
+      
+      // 如果按下SHIFT键，保持原始宽高比
+      if (e.shiftKey) {
+        // 计算原始宽高比
+        const aspectRatio = resizingInfo.value.startWidth / resizingInfo.value.startHeight;
+        
+        // 计算基于宽度的高度和基于高度的宽度
+        const heightBasedOnWidth = newWidth / aspectRatio;
+        const widthBasedOnHeight = newHeight * aspectRatio;
+        
+        // 选择更接近原始比例的尺寸
+        if (Math.abs(newHeight - heightBasedOnWidth) < Math.abs(newWidth - widthBasedOnHeight)) {
+          // 以宽度为基准，调整高度
+          newHeight = heightBasedOnWidth;
         } else {
-            element = currentBand?.elements[resizingInfo.value.elementIndex];
+          // 以高度为基准，调整宽度
+          newWidth = widthBasedOnHeight;
         }
         
-        if (currentBand && element) {
-          // 获取当前缩放比例
-          const currentZoom = zoomLevel.value;
-          
-          // 获取paper元素的当前位置信息，用于更准确的坐标计算
-          const paperEl = document.querySelector('.paper') as HTMLElement;
-          let currentPaperOffsetX = 0;
-          let currentPaperOffsetY = 0;
-          
-          if (paperEl) {
-            const paperRect = paperEl.getBoundingClientRect();
-            // 考虑缩放比例的偏移量
-            currentPaperOffsetX = paperRect.left;
-            currentPaperOffsetY = paperRect.top;
-          }
-          
-          // 计算新的宽度和高度，考虑缩放比例
-          let newWidth = resizingInfo.value.startWidth + ((e.clientX - currentPaperOffsetX) / currentZoom - resizingInfo.value.startX);
-          let newHeight = resizingInfo.value.startHeight + ((e.clientY - currentPaperOffsetY) / currentZoom - resizingInfo.value.startY);
-          
-          // 限制最小尺寸
-          newWidth = Math.max(20, newWidth);
-          newHeight = Math.max(20, newHeight);
-          
-          // 获取报表边距设置
-          // 注意：由于现在使用padding，元素坐标是相对于内容区域的
-          const { leftMargin = 0, rightMargin = 0 } = reportProperties.value;
-          // 限制不能超出纸张右边界（考虑右边距）和band底部边界
-          // 修正计算：使用正确的缩放比例计算
-          // 元素的x坐标是相对于内容区域的，所以最大宽度应该是页面宽度减去左右边距再减去元素的x坐标
-          let maxElementWidth;
-          if (resizingInfo.value.parentFrameIndex !== undefined) {
-             maxElementWidth = containerWidth - element.x;
-          } else {
-             maxElementWidth = paperWidth.value - leftMargin - rightMargin - element.x;
-          }
-          
-          const availableHeight = (containerHeight - element.y);
-          newWidth = Math.min(newWidth, maxElementWidth);
-          newHeight = Math.min(newHeight, availableHeight);
-          
-          // 如果按下SHIFT键，保持原始宽高比
-          if (e.shiftKey) {
-            // 计算原始宽高比
-            const aspectRatio = resizingInfo.value.startWidth / resizingInfo.value.startHeight;
-            
-            // 计算基于宽度的高度和基于高度的宽度
-            const heightBasedOnWidth = newWidth / aspectRatio;
-            const widthBasedOnHeight = newHeight * aspectRatio;
-            
-            // 选择更接近原始比例的尺寸，避免超出边界后比例失真
-            if (Math.abs(newHeight - heightBasedOnWidth) < Math.abs(newWidth - widthBasedOnHeight)) {
-              // 以宽度为基准，调整高度
-              newHeight = heightBasedOnWidth;
-            } else {
-              // 以高度为基准，调整宽度
-              newWidth = widthBasedOnHeight;
+        // 再次限制尺寸，确保不超出边界
+        newWidth = Math.max(20, Math.min(newWidth, maxElementWidth));
+        newHeight = Math.max(20, Math.min(newHeight, availableHeight));
+      }
+      
+      // 先保存临时尺寸
+      const tempWidth = Math.round(newWidth);
+      const tempHeight = Math.round(newHeight);
+      
+      // 特殊处理表格元素：调整表格宽度时自动调整列宽
+      if (element.type === 'table') {
+        // 在children数组中查找对应的列（递归查找）
+        const findColumnInChildren = (children: any[], targetColumn: any): any | null => {
+          for (const child of children) {
+            if (child.uuid === targetColumn.uuid) {
+              return child;
             }
-            
-            // 再次限制尺寸，确保不超出边界
-            newWidth = Math.max(20, Math.min(newWidth, maxElementWidth));
-            newHeight = Math.max(20, Math.min(newHeight, availableHeight));
-          }
-          
-          // 先应用基本的大小调整，确保尺寸为整数
-          element.width = Math.round(newWidth);
-          element.height = Math.round(newHeight);
-          
-          // 特殊处理表格元素：调整表格宽度时自动调整列宽
-          if (element.type === 'table') {
-            // 在children数组中查找对应的列（递归查找）
-            function findColumnInChildren(children: any[], targetColumn: any): any | null {
-              for (const child of children) {
-                if (child.uuid === targetColumn.uuid) {
-                  return child;
-                }
-                if (child.children) {
-                  const found = findColumnInChildren(child.children, targetColumn);
-                  if (found) {
-                    return found;
-                  }
-                }
+            if (child.children) {
+              const found = findColumnInChildren(child.children, targetColumn);
+              if (found) {
+                return found;
               }
-              return null;
+            }
+          }
+          return null;
+        };
+        
+        if (element.columns && element.columns.length > 0) {
+          // 获取所有列的当前宽度
+          const columnWidths = element.columns.map(col => col.width || 0);
+          const totalColumnWidth = columnWidths.reduce((sum, width) => sum + width, 0);
+          
+          if (totalColumnWidth > 0) {
+            // 计算每列应分配的宽度比例
+            const ratios = columnWidths.map(width => width / totalColumnWidth);
+            
+            // 根据新的表格宽度按比例分配列宽
+            const newColumnWidths = ratios.map(ratio => {
+              // 按比例分配新宽度
+              const newColWidth = tempWidth * ratio;
+              // 确保每列至少有一个最小宽度
+              return Math.max(10, Math.round(newColWidth));
+            });
+            
+            // 调整最后一列宽度，确保总和等于表格宽度
+            const sumNewWidths = newColumnWidths.reduce((sum, width) => sum + width, 0);
+            if (sumNewWidths !== tempWidth && newColumnWidths.length > 0) {
+              const diff = tempWidth - sumNewWidths;
+              const lastIndex = newColumnWidths.length - 1;
+              // 确保newColumnWidths[lastIndex]不是undefined
+              newColumnWidths[lastIndex] = (newColumnWidths[lastIndex] || 0) + diff;
             }
             
-            // 计算表格宽度变化
-            const widthChange = element.width - resizingInfo.value.startWidth;
-            
-            if (widthChange !== 0 && element.columns && element.columns.length > 0) {
-              // 获取所有列的当前宽度
-              const columnWidths = element.columns.map(col => col.width || 0);
-              const totalColumnWidth = columnWidths.reduce((sum, width) => sum + width, 0);
+            // 更新所有列的宽度
+            element.columns.forEach((col, index) => {
+              const newColWidth = newColumnWidths[index]!;
+              col.width = newColWidth;
               
-              if (totalColumnWidth > 0) {
-                // 计算每列应分配的宽度变化
-                const newColumnWidths = columnWidths.map(width => {
-                  // 保持相对比例分配宽度变化
-                  const ratio = width / totalColumnWidth;
-                  const newWidth = width + (widthChange * ratio);
-                  // 确保每列至少有一个最小宽度
-                  return Math.max(10, Math.round(newWidth));
-                });
-                
-                // 更新所有列的宽度
-                element.columns.forEach((col, index) => {
-                  const newWidth = newColumnWidths[index]!; // 非空断言，因为我们知道index是有效的
-                  col.width = newWidth;
+              // 同时更新列中所有单元格的宽度
+              if (col.tableHeader) {
+                col.tableHeader.width = newColWidth;
+              }
+              if (col.columnHeader) {
+                col.columnHeader.width = newColWidth;
+              }
+              if (col.detailCell) {
+                col.detailCell.width = newColWidth;
+              }
+              if (col.columnFooter) {
+                col.columnFooter.width = newColWidth;
+              }
+              if (col.tableFooter) {
+                col.tableFooter.width = newColWidth;
+              }
+              
+              // 如果表格有children属性，同时更新children属性中对应列的宽度
+              if (element.children) {
+                const childColumn = findColumnInChildren(element.children, col);
+                if (childColumn) {
+                  childColumn.width = newColWidth;
                   
-                  // 同时更新列中所有单元格的宽度
-                  if (col.tableHeader) {
-                    col.tableHeader.width = newWidth;
+                  // 同时更新childColumn中所有相关单元格的宽度
+                  if (childColumn.tableHeader) {
+                    childColumn.tableHeader.width = newColWidth;
                   }
-                  if (col.columnHeader) {
-                    col.columnHeader.width = newWidth;
+                  if (childColumn.columnHeader) {
+                    childColumn.columnHeader.width = newColWidth;
                   }
-                  if (col.detailCell) {
-                    col.detailCell.width = newWidth;
+                  if (childColumn.detailCell) {
+                    childColumn.detailCell.width = newColWidth;
                   }
-                  if (col.columnFooter) {
-                    col.columnFooter.width = newWidth;
+                  if (childColumn.columnFooter) {
+                    childColumn.columnFooter.width = newColWidth;
                   }
-                  if (col.tableFooter) {
-                    col.tableFooter.width = newWidth;
-                  }
-                  
-                  // 如果表格有children属性，同时更新children属性中对应列的宽度
-                  if (element.children) {
-                    // 查找children中对应的列（通过uuid）
-                    const childColumn = findColumnInChildren(element.children, col);
-                    if (childColumn) {
-                      // 更新childColumn的宽度
-                      childColumn.width = newWidth;
-                      
-                      // 同时更新childColumn中所有相关单元格的宽度
-                      if (childColumn.tableHeader) {
-                        childColumn.tableHeader.width = newWidth;
-                      }
-                      if (childColumn.columnHeader) {
-                        childColumn.columnHeader.width = newWidth;
-                      }
-                      if (childColumn.detailCell) {
-                        childColumn.detailCell.width = newWidth;
-                      }
-                      if (childColumn.columnFooter) {
-                        childColumn.columnFooter.width = newWidth;
-                      }
-                      if (childColumn.tableFooter) {
-                        childColumn.tableFooter.width = newWidth;
-                      }
-                    }
-                  }
-                });
-              }
-            }
-          }
-          // 特殊处理表格单元格内的元素：确保元素宽度不超过所在列的宽度
-          else {
-            // 检查当前元素是否是表格单元格内的元素
-            let parentColumn: any = null;
-            
-            // 遍历当前band的所有元素，查找包含当前元素的表格列
-            for (const bandElement of currentBand.elements) {
-              if (bandElement.type === 'table' && bandElement.columns) {
-                // 遍历表格的所有列，查找包含当前元素的列
-                for (const column of bandElement.columns) {
-                  if (column.tableHeader === element || 
-                      column.columnHeader === element || 
-                      column.detailCell === element || 
-                      column.columnFooter === element || 
-                      column.tableFooter === element) {
-                    parentColumn = column;
-                    break;
+                  if (childColumn.tableFooter) {
+                    childColumn.tableFooter.width = newColWidth;
                   }
                 }
-                if (parentColumn) break;
               }
-            }
-            
-            // 如果找到父列，限制元素宽度不超过列宽度
-            if (parentColumn) {
-              const columnWidth = parentColumn.width || 0;
-              // 元素宽度不能超过列宽度
-              if (element.width > columnWidth) {
-                element.width = columnWidth;
-              }
-              // 元素的x坐标加上宽度不能超过列宽度
-              if (element.x + element.width > columnWidth) {
-                element.x = columnWidth - element.width;
-              }
-            }
-          }
-          
-          // 然后应用对齐线吸附功能（如果启用）
-          if (enableSnapToAlignment.value) {
-            // 创建临时元素对象用于检测对齐线
-            const tempElement = { ...element, width: newWidth, height: newHeight };
-            const snapInfo = detectAlignmentLines(tempElement, resizingInfo.value.bandIndex, true); // 更新对齐线状态
-            
-            // 应用水平吸附（调整宽度）- 只在接近对齐线时才吸附
-            if (snapInfo.horizontal && Math.abs(snapInfo.horizontal.offset) < 3) {
-              // 根据对齐线位置计算新的宽度
-              // 注意：snapInfo.horizontal.position已经包含了leftMargin
-              const targetPosition = snapInfo.horizontal.position - (reportProperties.value?.leftMargin || 0);
-              
-              // 判断是左边对齐还是右边对齐
-              if (Math.abs(element.x - targetPosition) < 3) {
-                // 左边对齐，保持x不变，调整宽度
-                element.width = Math.round(element.width + (element.x - targetPosition));
-              } else if (Math.abs((element.x + newWidth) - targetPosition) < 3) {
-                // 右边对齐，调整宽度
-                element.width = Math.round(targetPosition - element.x);
-              } else if (Math.abs((element.x + newWidth/2) - targetPosition) < 3) {
-                // 中心对齐，调整宽度
-                element.width = Math.round((targetPosition - element.x) * 2);
-              }
-            }
-            
-            // 应用垂直吸附（调整高度）- 只在接近对齐线时才吸附
-            if (snapInfo.vertical && Math.abs(snapInfo.vertical.offset) < 3) {
-              // 根据对齐线位置计算新的高度
-              // 注意：snapInfo.vertical.position已经包含了topMargin和band偏移
-              const bandOffsetY = getBandOffsetY(resizingInfo.value.bandIndex);
-              const targetPosition = snapInfo.vertical.position - (reportProperties.value?.topMargin || 0) - bandOffsetY;
-              
-              // 判断是顶部对齐还是底部对齐
-              if (Math.abs(element.y - targetPosition) < 3) {
-                // 顶部对齐，保持y不变，调整高度
-                element.height = Math.round(element.height + (element.y - targetPosition));
-              } else if (Math.abs((element.y + newHeight) - targetPosition) < 3) {
-                // 底部对齐，调整高度
-                element.height = Math.round(targetPosition - element.y);
-              } else if (Math.abs((element.y + newHeight/2) - targetPosition) < 3) {
-                // 中心对齐，调整高度
-                element.height = Math.round((targetPosition - element.y) * 2);
-              }
-            }
-          }
-          
-          // 使用最终尺寸再次检测对齐线（确保对齐线正确显示）
-          if (enableSnapToAlignment.value) {
-            detectAlignmentLines(element, resizingInfo.value.bandIndex);
+            });
           }
         }
+        
+        // 设置表格最终宽度和高度
+        element.width = tempWidth;
+      } else {
+        // 非表格元素，直接应用大小调整
+        element.width = tempWidth;
+      }
+      
+      // 应用高度调整
+      element.height = tempHeight;
+      
+      // 使用最终尺寸再次检测对齐线（确保对齐线正确显示）
+      if (enableSnapToAlignment.value) {
+        detectAlignmentLines(element, resizingInfo.value.bandIndex);
       }
     };
     
@@ -3807,7 +3737,7 @@ const startResizingElement = (event: MouseEvent, bandIndex: number, elementIndex
     document.addEventListener('mousemove', handleMouseMove);
     document.addEventListener('mouseup', handleMouseUp);
   }
-};
+}
 
 // 组件卸载时清理事件监听器
 onUnmounted(() => {
