@@ -455,7 +455,7 @@
                             type="text" 
                             class="small-input"
                             :placeholder="t('properties.tableHeaderPlaceholder')"
-                            @change="emit('update-jrxml')"
+                            @change="updateTableHeaderText(column, Number(index)); emit('update-jrxml')"
                           />
                         </div>
                       </div>
@@ -465,7 +465,7 @@
                           v-model="column.name" 
                           type="text" 
                           class="small-input"
-                          @change="emit('update-jrxml')"
+                          @change="updateColumnName(column, Number(index)); emit('update-jrxml')"
                         />
                       </div>
                       <div class="form-group small">
@@ -486,7 +486,7 @@
                           type="text" 
                           class="small-input"
                           :placeholder="t('properties.expressionHint', { fieldHolder: '$F{fieldName}' })"
-                          @change="emit('update-jrxml')"
+                          @change="updateFieldExpression(column, Number(index)); emit('update-jrxml')"
                         />
                       </div>
                       
@@ -1913,6 +1913,62 @@ function findColumnInChildren(children: any[], targetColumn: any): any | null {
     }
   }
   return null;
+}
+
+// 更新列名，同时更新children属性中对应列的名称
+function updateColumnName(column: any, index: number) {
+  if (!column || !currentElement) return;
+  
+  const newName = column.name;
+  
+  // 如果表格有children属性，同时更新children属性中对应列的名称
+  if (currentElement.value && currentElement.value.type === 'table' && currentElement.value.children) {
+    // 查找children中对应的列（通过uuid或索引）
+    const childColumn = findColumnInChildren(currentElement.value.children, column);
+    if (childColumn) {
+      // 更新childColumn的名称
+      childColumn.name = newName;
+      
+      // 如果childColumn有columnHeader且是staticText类型，同时更新其文本内容
+      if (childColumn.columnHeader && childColumn.columnHeader.type === 'staticText') {
+        childColumn.columnHeader.text = newName;
+      }
+    }
+  }
+}
+
+// 更新表格表头文本，同时更新children属性中对应列的表格表头文本
+function updateTableHeaderText(column: any, index: number) {
+  if (!column || !currentElement || !column.hasTableHeader || !column.tableHeader) return;
+  
+  const newText = column.tableHeader.text;
+  
+  // 如果表格有children属性，同时更新children属性中对应列的表格表头文本
+  if (currentElement.value && currentElement.value.type === 'table' && currentElement.value.children) {
+    // 查找children中对应的列（通过uuid或索引）
+    const childColumn = findColumnInChildren(currentElement.value.children, column);
+    if (childColumn && childColumn.hasTableHeader && childColumn.tableHeader) {
+      // 更新childColumn的表格表头文本
+      childColumn.tableHeader.text = newText;
+    }
+  }
+}
+
+// 更新字段表达式，同时更新children属性中对应列的字段表达式
+function updateFieldExpression(column: any, index: number) {
+  if (!column || !currentElement || !column.detailCell) return;
+  
+  const newExpression = column.detailCell.expression;
+  
+  // 如果表格有children属性，同时更新children属性中对应列的字段表达式
+  if (currentElement.value && currentElement.value.type === 'table' && currentElement.value.children) {
+    // 查找children中对应的列（通过uuid或索引）
+    const childColumn = findColumnInChildren(currentElement.value.children, column);
+    if (childColumn && childColumn.detailCell) {
+      // 更新childColumn的字段表达式
+      childColumn.detailCell.expression = newExpression;
+    }
+  }
 }
 
 // 切换是否包含Table Header
