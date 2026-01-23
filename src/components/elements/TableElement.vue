@@ -35,7 +35,7 @@
         <!-- 表格头部区域 -->
         <thead>
           <!-- 表格头部 -->
-          <template v-if="hasTableHeader">
+          <template v-if="hasTableHeader && tableHeaderHeight > 0">
             <template v-if="hasColumnGroups">
               <!-- 直接渲染分组生成的行，不添加外层tr -->
               <render-column-group 
@@ -47,7 +47,7 @@
             </template>
             <template v-else>
               <!-- 普通列的表头 -->
-              <tr class="table-header">
+              <tr class="table-header" :style="{ height: `${tableHeaderHeight}px` }">
                 <n-tooltip 
                   v-for="(column, index) in columns" 
                   :key="column.uuid"
@@ -116,7 +116,7 @@
             </template>
           </template>
           <!-- 列头部 -->
-          <template v-if="hasColumnHeaderGroups">
+          <template v-if="hasColumnHeaderGroups && columnHeaderHeight > 0">
             <!-- 直接渲染分组生成的行，不添加外层tr -->
             <render-column-group 
             :group="rootGroup" 
@@ -125,9 +125,9 @@
             @column-click="handleRenderColumnClick"
           />
           </template>
-          <template v-else>
+          <template v-else-if="columnHeaderHeight > 0">
             <!-- 普通列的列头 -->
-            <tr class="column-header">
+            <tr class="column-header" :style="{ height: `${columnHeaderHeight}px` }">
               <n-tooltip 
                   v-for="(column, index) in columns" 
                   :key="column.uuid"
@@ -172,7 +172,7 @@
         <!-- 表格主体区域 -->
         <tbody>
           <!-- 详情行 -->
-          <tr class="detail-row">
+          <tr v-if="detailCellHeight > 0" class="detail-row" :style="{ height: `${detailCellHeight}px` }">
             <n-tooltip 
               v-for="(column, index) in columns" 
               :key="column.uuid"
@@ -210,7 +210,7 @@
         <!-- 表格尾部区域 -->
         <tfoot>
           <!-- 列尾 -->
-          <tr v-if="columns.some(column => column.columnFooter && (column.columnFooter.type === 'textField' && (column.columnFooter as TextFieldElement).expression || column.columnFooter.type === 'staticText'))" class="column-footer">
+          <tr v-if="columnFooterHeight > 0 && columns.some(column => column.columnFooter && (column.columnFooter.type === 'textField' && (column.columnFooter as TextFieldElement).expression || column.columnFooter.type === 'staticText'))" class="column-footer" :style="{ height: `${columnFooterHeight}px` }">
             <n-tooltip 
               v-for="(column, index) in columns" 
               :key="column.uuid"
@@ -245,7 +245,7 @@
             </n-tooltip>
           </tr>
           <!-- 表格表尾 -->
-          <tr v-if="columns.some(column => column.tableFooter && (column.tableFooter.type === 'textField' && (column.tableFooter as TextFieldElement).expression || column.tableFooter.type === 'staticText'))" class="table-footer">
+          <tr v-if="tableFooterHeight > 0 && columns.some(column => column.tableFooter && (column.tableFooter.type === 'textField' && (column.tableFooter as TextFieldElement).expression || column.tableFooter.type === 'staticText'))" class="table-footer" :style="{ height: `${tableFooterHeight}px` }">
             <n-tooltip 
               v-for="(column, index) in columns" 
               :key="column.uuid"
@@ -685,6 +685,42 @@ const hasTableHeader = computed(() => {
   } else {
     return columns.value.some(column => column.hasTableHeader);
   }
+});
+
+// 计算行高
+const tableHeaderHeight = computed(() => {
+  if (columns.value.length === 0) return 30;
+  const firstColumn = columns.value[0];
+  if (!firstColumn) return 30;
+  return firstColumn.tableHeader?.height || 30;
+});
+
+const columnHeaderHeight = computed(() => {
+  if (columns.value.length === 0) return 30;
+  const firstColumn = columns.value[0];
+  if (!firstColumn) return 30;
+  return firstColumn.columnHeader?.height || 30;
+});
+
+const detailCellHeight = computed(() => {
+  if (columns.value.length === 0) return 30;
+  const firstColumn = columns.value[0];
+  if (!firstColumn) return 30;
+  return firstColumn.detailCell?.height || 30;
+});
+
+const columnFooterHeight = computed(() => {
+  if (columns.value.length === 0) return 30;
+  const firstColumn = columns.value[0];
+  if (!firstColumn) return 30;
+  return firstColumn.columnFooter?.height || 30;
+});
+
+const tableFooterHeight = computed(() => {
+  if (columns.value.length === 0) return 30;
+  const firstColumn = columns.value[0];
+  if (!firstColumn) return 30;
+  return firstColumn.tableFooter?.height || 30;
 });
 
 // 根据列UUID获取列索引

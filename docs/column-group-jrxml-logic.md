@@ -232,10 +232,7 @@ function generateColumnXML(column: any, index: number): string {
     xml += `            <jr:detailCell height="${toInt(column.detailCell.height)}">\n`;
     xml += generateElementXML(column.detailCell).replace(/^    /gm, '                ');
     xml += `            </jr:detailCell>\n`;
-  } else {
-    xml += `            <jr:detailCell height="30">\n`;
-    xml += `            </jr:detailCell>\n`;
-  }
+  } 
   
   xml += `          </jr:column>\n`;
   return xml;

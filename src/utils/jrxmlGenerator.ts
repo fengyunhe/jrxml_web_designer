@@ -835,7 +835,7 @@ function generateColumnXML(column: any, index: number): string {
   
   // 生成tableFooter - 只要存在就生成，即使是空的
   if (column.hasTableFooter) {
-    xml += `            <jr:tableFooter height="${toInt(column.tableFooter?.height || 30)}" rowSpan="${column.tableFooter?.rowSpan || 1}">
+    xml += `            <jr:tableFooter height="${toInt(column.tableFooter?.height ?? 30)}" rowSpan="${column.tableFooter?.rowSpan || 1}">
 `;
     if (column.tableFooter && column.tableFooter.expression) {
       xml += generateElementXML(column.tableFooter).replace(/^    /gm, '                ');
@@ -875,7 +875,7 @@ function generateColumnXML(column: any, index: number): string {
   
   // 生成columnFooter - 只要存在就生成，即使是空的
   if (column.hasColumnFooter) {
-    xml += `            <jr:columnFooter height="${toInt(column.columnFooter?.height || 30)}" rowSpan="${column.columnFooter?.rowSpan || 1}">
+    xml += `            <jr:columnFooter height="${toInt(column.columnFooter?.height ?? 30)}" rowSpan="${column.columnFooter?.rowSpan || 1}">
 `;
     if (column.columnFooter && column.columnFooter.expression) {
       xml += generateElementXML(column.columnFooter).replace(/^    /gm, '                ');
@@ -891,12 +891,7 @@ function generateColumnXML(column: any, index: number): string {
     xml += generateElementXML(column.detailCell).replace(/^    /gm, '                ');
     xml += `            </jr:detailCell>
 `;
-  } else {
-    xml += `            <jr:detailCell height="30">
-            </jr:detailCell>
-`;
-  }
-  
+  } 
   xml += `          </jr:column>
 `;
   return xml;
@@ -938,7 +933,7 @@ function generateColumnGroupXML(group: any): string {
   
   // 生成tableFooter - 只要存在就生成，即使是空的
   if (group.hasTableFooter) {
-    xml += `            <jr:tableFooter height="${toInt(group.tableFooter?.height || 30)}" rowSpan="${group.tableFooter?.rowSpan || 1}">
+    xml += `            <jr:tableFooter height="${toInt(group.tableFooter?.height ?? 30)}" rowSpan="${group.tableFooter?.rowSpan || 1}">
 `;
     if (group.tableFooter && group.tableFooter.expression) {
       xml += generateElementXML(group.tableFooter).replace(/^    /gm, '                ');
@@ -966,7 +961,7 @@ function generateColumnGroupXML(group: any): string {
   
   // 生成columnFooter - 只要存在就生成，即使是空的
   if (group.hasColumnFooter) {
-    xml += `            <jr:columnFooter height="${toInt(group.columnFooter?.height || 30)}" rowSpan="${group.columnFooter?.rowSpan || 1}">
+    xml += `            <jr:columnFooter height="${toInt(group.columnFooter?.height ?? 30)}" rowSpan="${group.columnFooter?.rowSpan || 1}">
 `;
     if (group.columnFooter && group.columnFooter.expression) {
       xml += generateElementXML(group.columnFooter).replace(/^    /gm, '                ');
@@ -1085,12 +1080,19 @@ function preprocessTableElements(element: any) {
   }
   
   // 开始处理
-  const children = element.children || element.columns || [];
-  children.forEach((child: any) => {
+  // 首先处理列分组
+  const groupChildren = element.children || [];
+  groupChildren.forEach((child: any) => {
     if (child.children) {
       // 处理列分组
       processColumnGroup(child);
-    } else {
+    }
+  });
+  
+  // 然后处理普通列
+  const normalColumns = element.columns || [];
+  normalColumns.forEach((child: any) => {
+    if (!child.children) {
       // 处理普通列
       processColumn(child);
     }
@@ -1176,12 +1178,19 @@ function generateTableXML(element: any): string {
 `;
   
   // 生成列和列分组
-  const children = element.children || element.columns || [];
-  children.forEach((child: any, index: number) => {
+  // 首先处理列分组
+  const groupChildren = element.children || [];
+  groupChildren.forEach((child: any) => {
     if (child.children) {
       // 列分组
       xml += generateColumnGroupXML(child);
-    } else {
+    }
+  });
+  
+  // 然后处理普通列
+  const normalColumns = element.columns || [];
+  normalColumns.forEach((child: any, index: number) => {
+    if (!child.children) {
       // 普通列
       xml += generateColumnXML(child, index);
     }

@@ -168,6 +168,36 @@
                   <span class="band-height-unit">px</span>
                 </div>
               </div>
+              <div class="band-height-item">
+                <label>{{ t('properties.columnFooter') }}</label>
+                <div class="band-height-control">
+                  <input 
+                    v-model.number="tableRowHeights.columnFooter" 
+                    type="number" 
+                    min="0"
+                    step="1"
+                    class="band-height-input"
+                    @change="ensureIntegerValue(tableRowHeights, 'columnFooter'); updateAllColumnRowHeights(); emit('update-jrxml')"
+                    @blur="ensureIntegerValue(tableRowHeights, 'columnFooter'); updateAllColumnRowHeights(); emit('update-jrxml')"
+                  />
+                  <span class="band-height-unit">px</span>
+                </div>
+              </div>
+              <div class="band-height-item">
+                <label>{{ t('properties.tableFooter') }}</label>
+                <div class="band-height-control">
+                  <input 
+                    v-model.number="tableRowHeights.tableFooter" 
+                    type="number" 
+                    min="0"
+                    step="1"
+                    class="band-height-input"
+                    @change="ensureIntegerValue(tableRowHeights, 'tableFooter'); updateAllColumnRowHeights(); emit('update-jrxml')"
+                    @blur="ensureIntegerValue(tableRowHeights, 'tableFooter'); updateAllColumnRowHeights(); emit('update-jrxml')"
+                  />
+                  <span class="band-height-unit">px</span>
+                </div>
+              </div>
             </div>
           </div>
           
@@ -1151,7 +1181,9 @@ const elementType = computed(() => {
 const tableRowHeights = ref({
   tableHeader: 30,
   columnHeader: 30,
-  detailCell: 30
+  detailCell: 30,
+  columnFooter: 30,
+  tableFooter: 30
 });
 
 // 当表格元素变化时，更新行高设置
@@ -1160,35 +1192,294 @@ watch(() => currentElement.value, (newElement) => {
     // 从第一列获取当前行高值
     const firstColumn = newElement.columns[0];
     if (firstColumn) {
-      tableRowHeights.value.tableHeader = firstColumn.tableHeader?.height || 30;
-      tableRowHeights.value.columnHeader = firstColumn.columnHeader?.height || 30;
-      tableRowHeights.value.detailCell = firstColumn.detailCell?.height || 30;
+      tableRowHeights.value.tableHeader = firstColumn.tableHeader?.height ?? 30;
+      tableRowHeights.value.columnHeader = firstColumn.columnHeader?.height ?? 30;
+      tableRowHeights.value.detailCell = firstColumn.detailCell?.height ?? 30;
+      tableRowHeights.value.columnFooter = firstColumn.columnFooter?.height ?? 30;
+      tableRowHeights.value.tableFooter = firstColumn.tableFooter?.height ?? 30;
     }
   }
 }, { deep: true, immediate: true });
 
 // 更新所有列的行高
 function updateAllColumnRowHeights() {
-  if (!currentElement.value || currentElement.value.type !== 'table' || !currentElement.value.columns) return;
+  if (!currentElement.value || currentElement.value.type !== 'table') return;
   
-  currentElement.value.columns.forEach(column => {
-    if (column.tableHeader) {
-      column.tableHeader.height = tableRowHeights.value.tableHeader;
+  // 处理普通列
+  if (currentElement.value.columns) {
+    currentElement.value.columns.forEach(column => {
+      updateColumnRowHeights(column);
+    });
+  }
+  
+  // 处理分组列
+  if (currentElement.value.children) {
+    currentElement.value.children.forEach(group => {
+      updateGroupRowHeights(group);
+    });
+  }
+}
+
+// 更新单个列的行高
+function updateColumnRowHeights(column: any) {
+  if (column.tableHeader) {
+    // 更新tableHeader本身的高度
+    const tableHeaderHeight = tableRowHeights.value.tableHeader;
+    column.tableHeader.height = tableHeaderHeight;
+    
+    // 直接更新内部元素的高度，因为这些元素直接包含textField或staticText，而不是通过elements数组
+    // 检查并更新reportElement的高度
+    if (column.tableHeader.reportElement) {
+      column.tableHeader.reportElement.height = tableHeaderHeight;
+    } else {
+      // 如果没有reportElement，直接更新元素的height属性
+      column.tableHeader.height = tableHeaderHeight;
     }
-    if (column.columnHeader) {
-      column.columnHeader.height = tableRowHeights.value.columnHeader;
+    
+    // 如果是合并列，更新高度为行高乘以行跨度
+    if (column.tableHeader.rowSpan && column.tableHeader.rowSpan > 1) {
+      const mergedHeight = tableHeaderHeight * column.tableHeader.rowSpan;
+      column.tableHeader.height = mergedHeight;
+      
+      // 内部元素高度也需要相应调整
+      if (column.tableHeader.reportElement) {
+        column.tableHeader.reportElement.height = mergedHeight;
+      } else {
+        column.tableHeader.height = mergedHeight;
+      }
     }
-    if (column.detailCell) {
+  }
+  
+  if (column.columnHeader) {
+    // 更新columnHeader本身的高度
+    const columnHeaderHeight = tableRowHeights.value.columnHeader;
+    column.columnHeader.height = columnHeaderHeight;
+    
+    // 直接更新内部元素的高度，因为这些元素直接包含textField或staticText，而不是通过elements数组
+    // 检查并更新reportElement的高度
+    if (column.columnHeader.reportElement) {
+      column.columnHeader.reportElement.height = columnHeaderHeight;
+    } else {
+      // 如果没有reportElement，直接更新元素的height属性
+      column.columnHeader.height = columnHeaderHeight;
+    }
+    
+    // 如果是合并列，更新高度为行高乘以行跨度
+    if (column.columnHeader.rowSpan && column.columnHeader.rowSpan > 1) {
+      const mergedHeight = columnHeaderHeight * column.columnHeader.rowSpan;
+      column.columnHeader.height = mergedHeight;
+      
+      // 内部元素高度也需要相应调整
+      if (column.columnHeader.reportElement) {
+        column.columnHeader.reportElement.height = mergedHeight;
+      } else {
+        column.columnHeader.height = mergedHeight;
+      }
+    }
+  }
+  
+  if (column.detailCell) {
+    // 更新detailCell本身的高度
+    column.detailCell.height = tableRowHeights.value.detailCell;
+    // 直接更新内部元素的高度，因为detailCell直接包含textField或staticText，而不是通过elements数组
+    // 检查并更新reportElement的高度
+    if (column.detailCell.reportElement) {
+      column.detailCell.reportElement.height = tableRowHeights.value.detailCell;
+    } else {
+      // 如果没有reportElement，直接更新元素的height属性
       column.detailCell.height = tableRowHeights.value.detailCell;
     }
-    // 也更新footer行高，保持一致性
-    if (column.columnFooter) {
-      column.columnFooter.height = tableRowHeights.value.detailCell;
+  }
+  
+  // 更新columnFooter的高度
+  if (column.columnFooter) {
+    // 更新columnFooter本身的高度
+    const columnFooterHeight = tableRowHeights.value.columnFooter;
+    column.columnFooter.height = columnFooterHeight;
+    
+    // 直接更新内部元素的高度，因为这些元素直接包含textField或staticText，而不是通过elements数组
+    // 检查并更新reportElement的高度
+    if (column.columnFooter.reportElement) {
+      column.columnFooter.reportElement.height = columnFooterHeight;
+    } else {
+      // 如果没有reportElement，直接更新元素的height属性
+      column.columnFooter.height = columnFooterHeight;
     }
-    if (column.tableFooter) {
-      column.tableFooter.height = tableRowHeights.value.detailCell;
+    
+    // 如果是合并列，更新高度为行高乘以行跨度
+    if (column.columnFooter.rowSpan && column.columnFooter.rowSpan > 1) {
+      const mergedHeight = columnFooterHeight * column.columnFooter.rowSpan;
+      column.columnFooter.height = mergedHeight;
+      
+      // 内部元素高度也需要相应调整
+      if (column.columnFooter.reportElement) {
+        column.columnFooter.reportElement.height = mergedHeight;
+      } else {
+        column.columnFooter.height = mergedHeight;
+      }
     }
-  });
+  }
+  
+  // 更新tableFooter的高度
+  if (column.tableFooter) {
+    // 更新tableFooter本身的高度
+    const tableFooterHeight = tableRowHeights.value.tableFooter;
+    column.tableFooter.height = tableFooterHeight;
+    
+    // 直接更新内部元素的高度，因为这些元素直接包含textField或staticText，而不是通过elements数组
+    // 检查并更新reportElement的高度
+    if (column.tableFooter.reportElement) {
+      column.tableFooter.reportElement.height = tableFooterHeight;
+    } else {
+      // 如果没有reportElement，直接更新元素的height属性
+      column.tableFooter.height = tableFooterHeight;
+    }
+    
+    // 如果是合并列，更新高度为行高乘以行跨度
+    if (column.tableFooter.rowSpan && column.tableFooter.rowSpan > 1) {
+      const mergedHeight = tableFooterHeight * column.tableFooter.rowSpan;
+      column.tableFooter.height = mergedHeight;
+      
+      // 内部元素高度也需要相应调整
+      if (column.tableFooter.reportElement) {
+        column.tableFooter.reportElement.height = mergedHeight;
+      } else {
+        column.tableFooter.height = mergedHeight;
+      }
+    }
+  }
+}
+
+// 递归更新分组的行高
+function updateGroupRowHeights(group: any) {
+  // 更新分组的tableHeader高度
+  if (group.tableHeader) {
+    // 更新tableHeader本身的高度
+    const tableHeaderHeight = tableRowHeights.value.tableHeader;
+    group.tableHeader.height = tableHeaderHeight;
+    
+    // 直接更新内部元素的高度，因为这些元素直接包含textField或staticText，而不是通过elements数组
+    // 检查并更新reportElement的高度
+    if (group.tableHeader.reportElement) {
+      group.tableHeader.reportElement.height = tableHeaderHeight;
+    } else {
+      // 如果没有reportElement，直接更新元素的height属性
+      group.tableHeader.height = tableHeaderHeight;
+    }
+    
+    // 如果是合并列，更新高度为行高乘以行跨度
+    if (group.tableHeader.rowSpan && group.tableHeader.rowSpan > 1) {
+      const mergedHeight = tableHeaderHeight * group.tableHeader.rowSpan;
+      group.tableHeader.height = mergedHeight;
+      
+      // 内部元素高度也需要相应调整
+      if (group.tableHeader.reportElement) {
+        group.tableHeader.reportElement.height = mergedHeight;
+      } else {
+        group.tableHeader.height = mergedHeight;
+      }
+    }
+  }
+  
+  // 更新分组的columnHeader高度
+  if (group.columnHeader) {
+    // 更新columnHeader本身的高度
+    const columnHeaderHeight = tableRowHeights.value.columnHeader;
+    group.columnHeader.height = columnHeaderHeight;
+    
+    // 直接更新内部元素的高度，因为这些元素直接包含textField或staticText，而不是通过elements数组
+    // 检查并更新reportElement的高度
+    if (group.columnHeader.reportElement) {
+      group.columnHeader.reportElement.height = columnHeaderHeight;
+    } else {
+      // 如果没有reportElement，直接更新元素的height属性
+      group.columnHeader.height = columnHeaderHeight;
+    }
+    
+    // 如果是合并列，更新高度为行高乘以行跨度
+    if (group.columnHeader.rowSpan && group.columnHeader.rowSpan > 1) {
+      const mergedHeight = columnHeaderHeight * group.columnHeader.rowSpan;
+      group.columnHeader.height = mergedHeight;
+      
+      // 内部元素高度也需要相应调整
+      if (group.columnHeader.reportElement) {
+        group.columnHeader.reportElement.height = mergedHeight;
+      } else {
+        group.columnHeader.height = mergedHeight;
+      }
+    }
+  }
+  
+  // 更新分组的columnFooter高度
+  if (group.columnFooter) {
+    // 更新columnFooter本身的高度
+    const columnFooterHeight = tableRowHeights.value.columnFooter;
+    group.columnFooter.height = columnFooterHeight;
+    
+    // 直接更新内部元素的高度，因为这些元素直接包含textField或staticText，而不是通过elements数组
+    // 检查并更新reportElement的高度
+    if (group.columnFooter.reportElement) {
+      group.columnFooter.reportElement.height = columnFooterHeight;
+    } else {
+      // 如果没有reportElement，直接更新元素的height属性
+      group.columnFooter.height = columnFooterHeight;
+    }
+    
+    // 如果是合并列，更新高度为行高乘以行跨度
+    if (group.columnFooter.rowSpan && group.columnFooter.rowSpan > 1) {
+      const mergedHeight = columnFooterHeight * group.columnFooter.rowSpan;
+      group.columnFooter.height = mergedHeight;
+      
+      // 内部元素高度也需要相应调整
+      if (group.columnFooter.reportElement) {
+        group.columnFooter.reportElement.height = mergedHeight;
+      } else {
+        group.columnFooter.height = mergedHeight;
+      }
+    }
+  }
+  
+  // 更新分组的tableFooter高度
+  if (group.tableFooter) {
+    // 更新tableFooter本身的高度
+    const tableFooterHeight = tableRowHeights.value.tableFooter;
+    group.tableFooter.height = tableFooterHeight;
+    
+    // 直接更新内部元素的高度，因为这些元素直接包含textField或staticText，而不是通过elements数组
+    // 检查并更新reportElement的高度
+    if (group.tableFooter.reportElement) {
+      group.tableFooter.reportElement.height = tableFooterHeight;
+    } else {
+      // 如果没有reportElement，直接更新元素的height属性
+      group.tableFooter.height = tableFooterHeight;
+    }
+    
+    // 如果是合并列，更新高度为行高乘以行跨度
+    if (group.tableFooter.rowSpan && group.tableFooter.rowSpan > 1) {
+      const mergedHeight = tableFooterHeight * group.tableFooter.rowSpan;
+      group.tableFooter.height = mergedHeight;
+      
+      // 内部元素高度也需要相应调整
+      if (group.tableFooter.reportElement) {
+        group.tableFooter.reportElement.height = mergedHeight;
+      } else {
+        group.tableFooter.height = mergedHeight;
+      }
+    }
+  }
+  
+  // 递归更新子分组或列
+  if (group.children) {
+    group.children.forEach((child: any) => {
+      if (child.children) {
+        // 子分组
+        updateGroupRowHeights(child);
+      } else {
+        // 普通列
+        updateColumnRowHeights(child);
+      }
+    });
+  }
 }
 
 // 矩形边框样式计算属性

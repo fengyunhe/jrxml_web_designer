@@ -1,54 +1,57 @@
 <template>
   <!-- 渲染所有分组行 -->
   <template v-for="(row, rowIndex) in groupRows" :key="rowIndex">
-    <tr class="column-group-row" :style="{ height: '30px' }">
-      <template v-for="(cell, cellIndex) in row" :key="cell.key">
-        <!-- 根据类型选择使用th还是td -->
-        <template v-if="type === 'tableHeader'">
-          <th 
-            :class="['column-group-cell', { 'column-selected': isCellSelected(cell) }]"
-            :colspan="cell.colspan"
-            :rowspan="cell.rowspan"
-            :style="getCellStyle(cell, type)"
-            @click="handleCellClick(cell, $event)"
-            @contextmenu.stop="handleCellContextMenu(cell, $event)"
-          >
-            <div class="cell-content">
-              <div class="static-text">
-                {{ cell.content.tableHeader?.text || '' }}
+    <!-- 只有当行高大于0时才渲染该行 -->
+    <template v-if="calculateRowHeight(row) > 0">
+      <tr class="column-group-row" :style="{ height: `${calculateRowHeight(row)}px` }">
+        <template v-for="(cell, cellIndex) in row" :key="cell.key">
+          <!-- 根据类型选择使用th还是td -->
+          <template v-if="type === 'tableHeader'">
+            <th 
+              :class="['column-group-cell', { 'column-selected': isCellSelected(cell) }]"
+              :colspan="cell.colspan"
+              :rowspan="cell.rowspan"
+              :style="getCellStyle(cell, type)"
+              @click="handleCellClick(cell, $event)"
+              @contextmenu.stop="handleCellContextMenu(cell, $event)"
+            >
+              <div class="cell-content">
+                <div class="static-text">
+                  {{ cell.content.tableHeader?.text || '' }}
+                </div>
               </div>
-            </div>
-          </th>
-        </template>
-        <template v-else>
-          <th 
-            :class="['column-group-cell', { 'column-selected': isCellSelected(cell) }]"
-            :colspan="cell.colspan"
-            :rowspan="cell.rowspan"
-            :style="getCellStyle(cell, type)"
-            @click="handleCellClick(cell, $event)"
-            @contextmenu.stop="handleCellContextMenu(cell, $event)"
-          >
-            <div class="cell-content">
-              <template v-if="cell.content.columnHeader">
-                <template v-if="cell.content.columnHeader.type === 'staticText'">
-                  <div class="static-text">{{ cell.content.columnHeader.text || '' }}</div>
-                </template>
-                <template v-else-if="cell.content.columnHeader.type === 'textField'">
-                  <div class="text-field">{{ cell.content.columnHeader.expression || '' }}</div>
+            </th>
+          </template>
+          <template v-else>
+            <th 
+              :class="['column-group-cell', { 'column-selected': isCellSelected(cell) }]"
+              :colspan="cell.colspan"
+              :rowspan="cell.rowspan"
+              :style="getCellStyle(cell, type)"
+              @click="handleCellClick(cell, $event)"
+              @contextmenu.stop="handleCellContextMenu(cell, $event)"
+            >
+              <div class="cell-content">
+                <template v-if="cell.content.columnHeader">
+                  <template v-if="cell.content.columnHeader.type === 'staticText'">
+                    <div class="static-text">{{ cell.content.columnHeader.text || '' }}</div>
+                  </template>
+                  <template v-else-if="cell.content.columnHeader.type === 'textField'">
+                    <div class="text-field">{{ cell.content.columnHeader.expression || '' }}</div>
+                  </template>
+                  <template v-else>
+                    <div class="column-name">{{ cell.content.name || '' }}</div>
+                  </template>
                 </template>
                 <template v-else>
                   <div class="column-name">{{ cell.content.name || '' }}</div>
                 </template>
-              </template>
-              <template v-else>
-                <div class="column-name">{{ cell.content.name || '' }}</div>
-              </template>
-            </div>
-          </th>
+              </div>
+            </th>
+          </template>
         </template>
-      </template>
-    </tr>
+      </tr>
+    </template>
   </template>
 </template>
 
@@ -208,6 +211,31 @@ function buildGroupRows(group: any): any[][] {
 // 计算所有分组行
 const groupRows = computed(() => buildGroupRows(props.group));
 
+// 计算行高
+function calculateRowHeight(row: any[]) {
+  // 默认行高
+  let defaultHeight = 30;
+  
+  if (row && row.length > 0) {
+    const firstCell = row[0];
+    const cellContent = firstCell.content;
+    
+    // 根据类型获取对应的高度
+    if (cellContent && cellContent[props.type]) {
+      return cellContent[props.type].height || defaultHeight;
+    }
+  }
+  
+  // 根据类型设置默认行高
+  if (props.type === 'tableHeader') {
+    defaultHeight = 30;
+  } else if (props.type === 'columnHeader') {
+    defaultHeight = 30;
+  }
+  
+  return defaultHeight;
+}
+
 // 获取单元格样式
 function getCellStyle(cell: any, type: string) {
   const content = cell.content;
@@ -328,7 +356,7 @@ function handleCellContextMenu(cell: any, event: MouseEvent) {
 
 <style scoped>
 .column-group-row {
-  height: 30px;
+  /* 行高由动态计算确定，不使用硬编码值 */
 }
 
 .column-group-cell {
