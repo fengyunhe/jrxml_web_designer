@@ -334,6 +334,10 @@ function getCellContentStyle(cell: any, type: string) {
     if (element.forecolor) {
       styles.color = element.forecolor;
     }
+    // 背景颜色
+    if (element.mode === 'Opaque' && element.backcolor) {
+      styles.backgroundColor = element.backcolor;
+    }
     
     // 水平对齐方式
     if (element.textAlignment) {
@@ -352,6 +356,7 @@ function getCellContentStyle(cell: any, type: string) {
           styles.justifyContent = 'space-between';
           break;
         default:
+          console.log('未知的水平对齐方式:', align);
           styles.justifyContent = 'center';
       }
     } else {

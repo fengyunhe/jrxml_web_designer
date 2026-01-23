@@ -859,10 +859,10 @@ function generateColumnXML(column: any, index: number): string {
       verticalAlignment: 'Middle'
     };
   } else {
-    // 更新columnHeader的内容，使其与column.name保持一致
-    if (columnHeader.type === 'staticText') {
+    // 仅在columnHeader没有明确设置text或expression时，才使用column.name作为默认值
+    if (columnHeader.type === 'staticText' && !columnHeader.text) {
       columnHeader.text = column.name;
-    } else if (columnHeader.type === 'textField') {
+    } else if (columnHeader.type === 'textField' && !columnHeader.expression) {
       columnHeader.expression = column.name;
     }
   }
@@ -945,10 +945,10 @@ function generateColumnGroupXML(group: any, processedColumnUuids?: Set<string>):
   // 生成columnHeader
   let columnHeader = group.columnHeader;
   if (columnHeader) {
-    // 更新columnHeader的内容，使其与group.name保持一致
-    if (columnHeader.type === 'staticText') {
+    // 仅在columnHeader没有明确设置text或expression时，才使用group.name作为默认值
+    if (columnHeader.type === 'staticText' && !columnHeader.text) {
       columnHeader.text = group.name;
-    } else if (columnHeader.type === 'textField') {
+    } else if (columnHeader.type === 'textField' && !columnHeader.expression) {
       columnHeader.expression = group.name;
     }
     

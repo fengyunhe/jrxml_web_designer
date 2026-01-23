@@ -225,7 +225,7 @@
                   @click.stop="handleColumnClick(index, $event)"
                   @contextmenu.stop="handleColumnContextMenu(index, $event)"
                 >
-                  <div v-if="column.columnFooter" class="cell-content">
+                  <div v-if="column.columnFooter" class="cell-content" :style="getCellStyle(column.columnFooter)">
                     <!-- 渲染列尾内容 -->
                     <template v-if="column.columnFooter.type === 'staticText'">
                       <div class="static-text">{{ (column.columnFooter as StaticTextElement).text || '' }}</div>
@@ -260,7 +260,7 @@
                   @click.stop="handleColumnClick(index, $event)"
                   @contextmenu.stop="handleColumnContextMenu(index, $event)"
                 >
-                  <div v-if="column.tableFooter" class="cell-content">
+                  <div v-if="column.tableFooter" class="cell-content" :style="getCellStyle(column.tableFooter)">
                     <!-- 渲染表格表尾内容 -->
                     <template v-if="column.tableFooter.type === 'staticText'">
                       <div class="static-text">{{ (column.tableFooter as StaticTextElement).text || '' }}</div>

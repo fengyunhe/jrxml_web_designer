@@ -1,0 +1,344 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports"
+              xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+              xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" 
+    name="Simple_Blue_Table_Based"
+    pageWidth="595"
+    pageHeight="842"
+    columnWidth="555"
+    leftMargin="20"
+    rightMargin="20"
+    topMargin="20"
+    bottomMargin="20">
+
+  <!-- 子数据集定义 -->
+  <subDataset name="tableDataset" uuid="05745569-39c8-4b77-b24a-739a31b3346f">
+    <queryString language="sql"><![CDATA[select * from  "ORDERS" limit 10]]></queryString>
+    <field name="ORDERID" class="java.lang.Integer">
+        <property name="com.jaspersoft.studio.field.name" value="ORDERID"/>
+        <property name="com.jaspersoft.studio.field.label" value="ORDERID"/>
+        <property name="com.jaspersoft.studio.field.tree.path" value="ORDERS"/>
+    </field>
+    <field name="CUSTOMERID" class="java.lang.String">
+        <property name="com.jaspersoft.studio.field.name" value="CUSTOMERID"/>
+        <property name="com.jaspersoft.studio.field.label" value="CUSTOMERID"/>
+        <property name="com.jaspersoft.studio.field.tree.path" value="ORDERS"/>
+    </field>
+    <field name="EMPLOYEEID" class="java.lang.Integer">
+        <property name="com.jaspersoft.studio.field.name" value="EMPLOYEEID"/>
+        <property name="com.jaspersoft.studio.field.label" value="EMPLOYEEID"/>
+        <property name="com.jaspersoft.studio.field.tree.path" value="ORDERS"/>
+    </field>
+    <field name="ORDERDATE" class="java.sql.Timestamp">
+        <property name="com.jaspersoft.studio.field.name" value="ORDERDATE"/>
+        <property name="com.jaspersoft.studio.field.label" value="ORDERDATE"/>
+        <property name="com.jaspersoft.studio.field.tree.path" value="ORDERS"/>
+    </field>
+    <field name="REQUIREDDATE" class="java.sql.Timestamp">
+        <property name="com.jaspersoft.studio.field.name" value="REQUIREDDATE"/>
+        <property name="com.jaspersoft.studio.field.label" value="REQUIREDDATE"/>
+        <property name="com.jaspersoft.studio.field.tree.path" value="ORDERS"/>
+    </field>
+    <field name="SHIPPEDDATE" class="java.sql.Timestamp">
+        <property name="com.jaspersoft.studio.field.name" value="SHIPPEDDATE"/>
+        <property name="com.jaspersoft.studio.field.label" value="SHIPPEDDATE"/>
+        <property name="com.jaspersoft.studio.field.tree.path" value="ORDERS"/>
+    </field>
+    <field name="SHIPVIA" class="java.lang.Integer">
+        <property name="com.jaspersoft.studio.field.name" value="SHIPVIA"/>
+        <property name="com.jaspersoft.studio.field.label" value="SHIPVIA"/>
+        <property name="com.jaspersoft.studio.field.tree.path" value="ORDERS"/>
+    </field>
+    <field name="FREIGHT" class="java.math.BigDecimal">
+        <property name="com.jaspersoft.studio.field.name" value="FREIGHT"/>
+        <property name="com.jaspersoft.studio.field.label" value="FREIGHT"/>
+        <property name="com.jaspersoft.studio.field.tree.path" value="ORDERS"/>
+    </field>
+    <field name="SHIPNAME" class="java.lang.String">
+        <property name="com.jaspersoft.studio.field.name" value="SHIPNAME"/>
+        <property name="com.jaspersoft.studio.field.label" value="SHIPNAME"/>
+        <property name="com.jaspersoft.studio.field.tree.path" value="ORDERS"/>
+    </field>
+    <field name="SHIPADDRESS" class="java.lang.String">
+        <property name="com.jaspersoft.studio.field.name" value="SHIPADDRESS"/>
+        <property name="com.jaspersoft.studio.field.label" value="SHIPADDRESS"/>
+        <property name="com.jaspersoft.studio.field.tree.path" value="ORDERS"/>
+    </field>
+    <field name="SHIPCITY" class="java.lang.String">
+        <property name="com.jaspersoft.studio.field.name" value="SHIPCITY"/>
+        <property name="com.jaspersoft.studio.field.label" value="SHIPCITY"/>
+        <property name="com.jaspersoft.studio.field.tree.path" value="ORDERS"/>
+    </field>
+    <field name="SHIPREGION" class="java.lang.String">
+        <property name="com.jaspersoft.studio.field.name" value="SHIPREGION"/>
+        <property name="com.jaspersoft.studio.field.label" value="SHIPREGION"/>
+        <property name="com.jaspersoft.studio.field.tree.path" value="ORDERS"/>
+    </field>
+    <field name="SHIPPOSTALCODE" class="java.lang.String">
+        <property name="com.jaspersoft.studio.field.name" value="SHIPPOSTALCODE"/>
+        <property name="com.jaspersoft.studio.field.label" value="SHIPPOSTALCODE"/>
+        <property name="com.jaspersoft.studio.field.tree.path" value="ORDERS"/>
+    </field>
+    <field name="SHIPCOUNTRY" class="java.lang.String">
+        <property name="com.jaspersoft.studio.field.name" value="SHIPCOUNTRY"/>
+        <property name="com.jaspersoft.studio.field.label" value="SHIPCOUNTRY"/>
+        <property name="com.jaspersoft.studio.field.tree.path" value="ORDERS"/>
+    </field>
+  </subDataset>
+
+  <title>
+    <band height="85">
+    </band>
+  </title>
+  <pageHeader>
+    <band height="300">    <componentElement>
+      <reportElement x="0" y="0" width="552" height="257" uuid="c54a48b3-509d-451b-a6a3-ccf809b382d2" forecolor="#FF0905" backcolor="#999999" mode="Opaque">
+</reportElement>        <jr:table xmlns:jr="http://jasperreports.sourceforge.net/jasperreports/components" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports/components http://jasperreports.sourceforge.net/xsd/components.xsd" whenNoDataType="AllSectionsNoDetail" horizontalPosition="Left" shrinkWidth="false">
+          <datasetRun subDataset="tableDataset" uuid="ac5aaf3d-7070-410b-b98f-9b610bb95dc6">
+            <connectionExpression><![CDATA[$P{REPORT_CONNECTION}]]></connectionExpression>
+          </datasetRun>
+          <jr:columnGroup width="408" uuid="cc1b33b5-4088-403d-84c5-9e0080cdc1e1">
+            <property name="com.jaspersoft.studio.components.table.model.column.name" value="Columns [3]"/>
+            <jr:tableHeader height="30" rowSpan="1">
+                <staticText>
+                  <reportElement x="0" y="0" width="408" height="30" uuid="3fd252ed-b76c-4119-8552-b8f70be8fd64" forecolor="#ff1a1a" backcolor="#603939" mode="Opaque"/>
+                  <box>
+                    <topPen lineWidth="1" lineStyle="Solid" lineColor="#000000"/>
+                    <leftPen lineWidth="1" lineStyle="Solid" lineColor="#000000"/>
+                    <bottomPen lineWidth="1" lineStyle="Solid" lineColor="#000000"/>
+                    <rightPen lineWidth="1" lineStyle="Solid" lineColor="#000000"/>
+                  </box>
+                  <textElement textAlignment="Right" verticalAlignment="Middle">
+                    <font/>
+                  </textElement>
+                  <text><![CDATA[Static TextStatic TextStatic 1]]></text>
+                </staticText>
+            </jr:tableHeader>
+          <jr:columnGroup width="272" uuid="0b1b0587-9799-418b-83aa-0d4826c14ef6">
+            <property name="com.jaspersoft.studio.components.table.model.column.name" value="Columns [2]"/>
+            <jr:tableHeader height="30" rowSpan="1">
+                <staticText>
+                  <reportElement x="0" y="0" width="272" height="30" uuid="d04da120-0f16-4f33-a8fc-0bb3c5d87940"/>
+                  <box>
+                    <topPen lineWidth="1" lineStyle="Solid" lineColor="#000000"/>
+                    <leftPen lineWidth="1" lineStyle="Solid" lineColor="#000000"/>
+                    <bottomPen lineWidth="1" lineStyle="Solid" lineColor="#000000"/>
+                    <rightPen lineWidth="1" lineStyle="Solid" lineColor="#000000"/>
+                  </box>
+                  <textElement textAlignment="Left" verticalAlignment="Middle">
+                    <font/>
+                  </textElement>
+                  <text><![CDATA[1111111111111111111111111111111111111111111111]]></text>
+                </staticText>
+            </jr:tableHeader>
+          <jr:column width="136" uuid="7570d5aa-94eb-4891-8e78-fec33d433bc6">
+            <property name="com.jaspersoft.studio.components.table.model.column.name" value="ORDER ID123"/>
+            <jr:tableHeader height="30" rowSpan="1">
+                <staticText>
+                  <reportElement x="0" y="0" width="136" height="30" uuid="2806befe-f4e8-423b-be05-5ab3fdc89a98"/>
+                  <box>
+                    <topPen lineWidth="1" lineStyle="Solid" lineColor="#000000"/>
+                    <leftPen lineWidth="1" lineStyle="Solid" lineColor="#000000"/>
+                    <bottomPen lineWidth="1" lineStyle="Solid" lineColor="#000000"/>
+                    <rightPen lineWidth="1" lineStyle="Solid" lineColor="#000000"/>
+                  </box>
+                  <textElement textAlignment="Left" verticalAlignment="Middle">
+                    <font/>
+                  </textElement>
+                  <text><![CDATA[Static Text11]]></text>
+                </staticText>
+            </jr:tableHeader>
+            <jr:tableFooter height="30" rowSpan="1">
+            </jr:tableFooter>
+            <jr:columnHeader height="30" rowSpan="1">
+                <staticText>
+                  <reportElement x="0" y="0" width="136" height="30" uuid="8bf319b0-56a8-415f-a629-0189ef2def39"/>
+                  <box topPadding="0" leftPadding="0" bottomPadding="0" rightPadding="0">
+                    <pen lineWidth="1"/>
+                    <topPen lineWidth="1"/>
+                    <leftPen lineWidth="1"/>
+                    <bottomPen lineWidth="1"/>
+                    <rightPen lineWidth="1"/>
+                  </box>
+                  <textElement textAlignment="Center" verticalAlignment="Middle">
+                    <font/>
+                  </textElement>
+                  <text><![CDATA[ORDER ID123]]></text>
+                </staticText>
+            </jr:columnHeader>
+            <jr:columnFooter height="30" rowSpan="1">
+            </jr:columnFooter>
+            <jr:detailCell height="30">
+                <textField isBlankWhenNull="true">
+                  <reportElement x="0" y="0" width="136" height="30" uuid="49004eb2-90eb-4691-9ff3-0527cd5fad27"/>
+                  <box topPadding="0" leftPadding="0" bottomPadding="0" rightPadding="0">
+                    <pen lineWidth="1"/>
+                    <topPen lineWidth="1"/>
+                    <leftPen lineWidth="1"/>
+                    <bottomPen lineWidth="1"/>
+                    <rightPen lineWidth="1"/>
+                  </box>
+                  <textElement textAlignment="Center" verticalAlignment="Middle">
+                    <font fontName="Arial" size="14"/>
+                  </textElement>
+                  <textFieldExpression><![CDATA[$F{ORDERID}]]></textFieldExpression>
+                </textField>
+            </jr:detailCell>
+          </jr:column>
+          <jr:column width="136" uuid="0bdcdcf8-0c9d-46f8-8b96-735112a7a7f2">
+            <property name="com.jaspersoft.studio.components.table.model.column.name" value="CUSTOM NO"/>
+            <jr:tableHeader height="30" rowSpan="1">
+                <staticText>
+                  <reportElement x="0" y="0" width="136" height="30" uuid="8386da45-1bd8-4304-a8c7-c6599f4d62de" forecolor="#2bdafd" backcolor="#278514" mode="Opaque"/>
+                  <box>
+                    <topPen lineWidth="1" lineStyle="Solid" lineColor="#000000"/>
+                    <leftPen lineWidth="1" lineStyle="Solid" lineColor="#000000"/>
+                    <bottomPen lineWidth="1" lineStyle="Solid" lineColor="#000000"/>
+                    <rightPen lineWidth="1" lineStyle="Solid" lineColor="#000000"/>
+                  </box>
+                  <textElement textAlignment="Right" verticalAlignment="Middle">
+                    <font/>
+                  </textElement>
+                  <text><![CDATA[Static Text112]]></text>
+                </staticText>
+            </jr:tableHeader>
+            <jr:tableFooter height="30" rowSpan="1">
+            </jr:tableFooter>
+            <jr:columnHeader height="30" rowSpan="1">
+                <staticText>
+                  <reportElement x="0" y="0" width="136" height="30" uuid="ac24e47c-ba49-40cf-9d1c-5df12f52cf9f"/>
+                  <box topPadding="0" leftPadding="0" bottomPadding="0" rightPadding="0">
+                    <pen lineWidth="1"/>
+                    <topPen lineWidth="1"/>
+                    <leftPen lineWidth="1"/>
+                    <bottomPen lineWidth="1"/>
+                    <rightPen lineWidth="1"/>
+                  </box>
+                  <textElement textAlignment="Center" verticalAlignment="Middle">
+                    <font/>
+                  </textElement>
+                  <text><![CDATA[CUSTOM NO]]></text>
+                </staticText>
+            </jr:columnHeader>
+            <jr:columnFooter height="30" rowSpan="1">
+            </jr:columnFooter>
+            <jr:detailCell height="30">
+                <textField isBlankWhenNull="true">
+                  <reportElement x="0" y="0" width="136" height="30" uuid="639f269a-1c5c-4be7-885d-a6a0b230ec38"/>
+                  <box topPadding="0" leftPadding="0" bottomPadding="0" rightPadding="0">
+                    <pen lineWidth="1"/>
+                    <topPen lineWidth="1"/>
+                    <leftPen lineWidth="1"/>
+                    <bottomPen lineWidth="1"/>
+                    <rightPen lineWidth="1"/>
+                  </box>
+                  <textElement textAlignment="Center" verticalAlignment="Middle">
+                    <font/>
+                  </textElement>
+                  <textFieldExpression><![CDATA[$F{CUSTOMERID}]]></textFieldExpression>
+                </textField>
+            </jr:detailCell>
+          </jr:column>
+          </jr:columnGroup>
+          <jr:column width="136" uuid="cbc8b053-8ac0-4621-97b4-83d4a846df66">
+            <property name="com.jaspersoft.studio.components.table.model.column.name" value="ORDER DATE"/>
+            <jr:tableHeader height="60" rowSpan="2">
+                <staticText>
+                  <reportElement x="0" y="0" width="136" height="60" uuid="7c61017e-9f0e-4510-822e-6e8ee96fa6a8" forecolor="#000000" backcolor="#cc99c5" mode="Opaque"/>
+                  <box>
+                    <topPen lineWidth="1" lineStyle="Solid" lineColor="#000000"/>
+                    <leftPen lineWidth="1" lineStyle="Solid" lineColor="#000000"/>
+                    <bottomPen lineWidth="1" lineStyle="Solid" lineColor="#000000"/>
+                    <rightPen lineWidth="1" lineStyle="Solid" lineColor="#000000"/>
+                  </box>
+                  <textElement textAlignment="Center" verticalAlignment="Middle">
+                    <font fontName="Noto Serif SC" isUnderline="true"/>
+                  </textElement>
+                  <text><![CDATA[时间字段]]></text>
+                </staticText>
+            </jr:tableHeader>
+            <jr:tableFooter height="30" rowSpan="1">
+            </jr:tableFooter>
+            <jr:columnHeader height="30" rowSpan="1">
+                <staticText>
+                  <reportElement x="0" y="0" width="136" height="30" uuid="90848960-cd2d-485d-88a3-10493d98e822"/>
+                  <box>
+                    <topPen lineWidth="1" lineStyle="Solid" lineColor="#000000"/>
+                    <leftPen lineWidth="1" lineStyle="Solid" lineColor="#000000"/>
+                    <bottomPen lineWidth="1" lineStyle="Solid" lineColor="#000000"/>
+                    <rightPen lineWidth="1" lineStyle="Solid" lineColor="#000000"/>
+                  </box>
+                  <textElement markup="rtf" textAlignment="Center" verticalAlignment="Middle">
+                    <font/>
+                  </textElement>
+                  <text><![CDATA[ORDER DATE]]></text>
+                </staticText>
+            </jr:columnHeader>
+            <jr:columnFooter height="30" rowSpan="1">
+            </jr:columnFooter>
+            <jr:detailCell height="30">
+                <textField isBlankWhenNull="true">
+                  <reportElement x="0" y="0" width="136" height="30" uuid="80663ee2-fb24-4af0-87f8-fab95e579a55"/>
+                  <box>
+                    <topPen lineWidth="1" lineStyle="Solid" lineColor="#000000"/>
+                    <leftPen lineWidth="1" lineStyle="Solid" lineColor="#000000"/>
+                    <bottomPen lineWidth="1" lineStyle="Solid" lineColor="#000000"/>
+                    <rightPen lineWidth="1" lineStyle="Solid" lineColor="#000000"/>
+                  </box>
+                  <textElement textAlignment="Center" verticalAlignment="Middle">
+                    <font/>
+                  </textElement>
+                  <textFieldExpression><![CDATA[$F{ORDERDATE}]]></textFieldExpression>
+                </textField>
+            </jr:detailCell>
+          </jr:column>
+          </jr:columnGroup>
+          <jr:column width="144" uuid="1e1886db-6eff-4422-a236-1cfd17e11fb7">
+            <property name="com.jaspersoft.studio.components.table.model.column.name" value="1Column43111"/>
+            <jr:tableHeader height="90" rowSpan="3">
+                <staticText>
+                  <reportElement x="0" y="0" width="144" height="90" uuid="16c5e636-ea71-4610-bd10-36f93b017aaa"/>
+                  <box>
+                    <pen lineWidth="1" lineStyle="Solid"/>
+                  </box>
+                  <textElement textAlignment="Center" verticalAlignment="Middle">
+                    <font/>
+                  </textElement>
+                  <text><![CDATA[Hello world]]></text>
+                </staticText>
+            </jr:tableHeader>
+            <jr:tableFooter height="30" rowSpan="1">
+            </jr:tableFooter>
+            <jr:columnHeader height="30" rowSpan="1">
+                <staticText>
+                  <reportElement x="0" y="0" width="144" height="30" uuid="e467398b-7731-4227-bfb1-a01fa9279c1b"/>
+                  <box>
+                    <pen lineWidth="1" lineStyle="Solid"/>
+                  </box>
+                  <textElement textAlignment="Left" verticalAlignment="Middle">
+                    <font/>
+                  </textElement>
+                  <text><![CDATA[1Column43111]]></text>
+                </staticText>
+            </jr:columnHeader>
+            <jr:columnFooter height="30" rowSpan="1">
+            </jr:columnFooter>
+            <jr:detailCell height="30">
+                <textField textAdjust="CutText" isBlankWhenNull="true">
+                  <reportElement x="0" y="0" width="144" height="30"/>
+                  <textElement textAlignment="Left" verticalAlignment="Middle">
+                    <font/>
+                  </textElement>
+                  <textFieldExpression><![CDATA["OK1222111"]]></textFieldExpression>
+                </textField>
+            </jr:detailCell>
+          </jr:column>
+        </jr:table>
+    </componentElement>
+
+    </band>
+  </pageHeader>
+  <summary>
+    <band height="473" splitType="Stretch">
+    </band>
+  </summary></jasperReport>
