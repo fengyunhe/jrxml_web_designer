@@ -687,12 +687,6 @@ const handleElementCreated = (element: DesignElement, bandIndex: number, element
   // 可以在这里添加其他元素创建后的处理逻辑
   // 例如：根据元素类型执行特定的初始化操作
   switch (element.type) {
-    case 'table':
-      // 如果是表格元素，检查并创建默认数据集
-      const tableElement = element as any;
-      const datasetName = tableElement.dataset?.name || 'tableDataset';
-      checkAndCreateDefaultTableDataset(datasetName);
-      break;
     case 'textField':
       // 文本字段元素的初始化逻辑
       break;
@@ -1016,10 +1010,16 @@ const handleElementDoubleClick = (element: any) => {
     ...getDefaultElementProperties(element.type)
   } as DesignElement;
   
-  // 如果是表格元素，检查是否有数据集，生成对应的列
+  // 如果是表格元素，检查并创建默认数据集，然后生成对应的列
   if (element.type === 'table') {
     // 获取表格默认宽度
     const defaultTableWidth = (newElement as any).width || 555;
+    
+    // 检查并创建默认数据集
+    const datasetName = (newElement as any).dataset?.name || 'tableDataset';
+    checkAndCreateDefaultTableDataset(datasetName);
+    
+    // 使用数据集生成表格列
     const columns = generateTableColumnsFromDataset(defaultTableWidth);
     if (columns.length > 0) {
       (newElement as any).columns = columns;
@@ -1116,10 +1116,16 @@ const handleDrop = (event: DragEvent) => {
       ...getDefaultElementProperties(elementData.type)
     } as DesignElement;
     
-    // 如果是表格元素，检查是否有数据集，生成对应的列
+    // 如果是表格元素，检查并创建默认数据集，然后生成对应的列
     if (elementData.type === 'table') {
       // 获取表格默认宽度
       const defaultTableWidth = (newElement as any).width || 555;
+      
+      // 检查并创建默认数据集
+      const datasetName = (newElement as any).dataset?.name || 'tableDataset';
+      checkAndCreateDefaultTableDataset(datasetName);
+      
+      // 使用数据集生成表格列
       const columns = generateTableColumnsFromDataset(defaultTableWidth);
       if (columns.length > 0) {
         (newElement as any).columns = columns;
@@ -1278,6 +1284,14 @@ const getDefaultElementProperties = (type: string): Partial<DesignElement> => {
     isUnderline: reportProperties.value?.defaultFont?.isUnderline || false
   };
   
+  // 计算报表页面的可用宽度
+  const calculateAvailableWidth = () => {
+    const pageWidth = reportProperties.value?.pageWidth || REPORT_CONSTANTS.DEFAULT_PAGE_WIDTH;
+    const leftMargin = reportProperties.value?.leftMargin || REPORT_CONSTANTS.DEFAULT_MARGIN;
+    const rightMargin = reportProperties.value?.rightMargin || REPORT_CONSTANTS.DEFAULT_MARGIN;
+    return Math.round(pageWidth - leftMargin - rightMargin);
+  };
+  
   switch (type) {
     case 'staticText':
       return { 
@@ -1303,6 +1317,10 @@ const getDefaultElementProperties = (type: string): Partial<DesignElement> => {
       return { 
         mode: 'Transparent',
         border: '1px solid #ccc' // 为矩形元素默认添加边框
+      };
+    case 'table':
+      return {
+        width: calculateAvailableWidth()
       };
     default:
       return {};
