@@ -232,8 +232,6 @@ function getElementStyle(element: any) {
   if (!element) return {};
   
   const styles: any = {
-    textAlign: 'center',
-    verticalAlign: 'middle',
     padding: '0 5px',
     boxSizing: 'border-box',
     border: '1px solid #ccc'
@@ -256,6 +254,49 @@ function getElementStyle(element: any) {
   }
   if (element.mode === 'Opaque' && element.backcolor) {
     styles.backgroundColor = element.backcolor;
+  }
+  
+  // 文本对齐方式 - 由于cell-content使用flex布局，需要设置justify-content
+  if (element.textAlignment) {
+    const align = element.textAlignment.toLowerCase();
+    switch (align) {
+      case 'left':
+        styles.justifyContent = 'flex-start';
+        break;
+      case 'center':
+        styles.justifyContent = 'center';
+        break;
+      case 'right':
+        styles.justifyContent = 'flex-end';
+        break;
+      case 'justified':
+        styles.justifyContent = 'space-between';
+        break;
+      default:
+        styles.justifyContent = 'center';
+    }
+  } else {
+    styles.justifyContent = 'center';
+  }
+  
+  // 垂直对齐方式 - 由于cell-content使用flex布局，需要设置align-items
+  if (element.verticalAlignment) {
+    const align = element.verticalAlignment.toLowerCase();
+    switch (align) {
+      case 'top':
+        styles.alignItems = 'flex-start';
+        break;
+      case 'middle':
+        styles.alignItems = 'center';
+        break;
+      case 'bottom':
+        styles.alignItems = 'flex-end';
+        break;
+      default:
+        styles.alignItems = 'center';
+    }
+  } else {
+    styles.alignItems = 'center';
   }
   
   const borderWidth = element.borderWidth || 0;

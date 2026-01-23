@@ -1549,11 +1549,13 @@ function toggleTableHeader(column: any, event: Event) {
         width: column.width,
         height: 30,
         text: column.name,
-        forecolor: '#006699',
-        backcolor: '#E6E6E6',
+        forecolor: '#000000',
+        backcolor: '#FFFFFF',
         fontFamily: 'SansSerif',
         fontSize: 19,
-        isBold: true
+        isBold: true,
+        textAlignment: 'Center',
+        verticalAlignment: 'Middle'
       };
     }
   }
@@ -1751,11 +1753,13 @@ function addTableColumn() {
       width: columnWidth,
       height: 30,
       text: '',
-      forecolor: '#006699',
-      backcolor: '#E6E6E6',
+      forecolor: '#000000',
+      backcolor: '#FFFFFF',
       fontFamily: 'SansSerif',
       fontSize: 19,
-      isBold: true
+      isBold: true,
+      textAlignment: 'Center',
+      verticalAlignment: 'Middle'
     },
     columnHeader: {
       type: 'staticText',
@@ -1763,7 +1767,9 @@ function addTableColumn() {
       y: 0,
       width: columnWidth,
       height: 30,
-      text: `New Column`
+      text: `New Column`,
+      textAlignment: 'Center',
+      verticalAlignment: 'Middle'
     },
     detailCell: {
       type: 'textField',
@@ -1771,7 +1777,9 @@ function addTableColumn() {
       y: 0,
       width: columnWidth,
       height: 30,
-      expression: '$F{NEW_FIELD}'
+      expression: '$F{NEW_FIELD}',
+      textAlignment: 'Center',
+      verticalAlignment: 'Middle'
     },
     tableFooter: {
       type: 'textField',
@@ -1779,7 +1787,9 @@ function addTableColumn() {
       y: 0,
       width: columnWidth,
       height: 30,
-      expression: ''
+      expression: '',
+      textAlignment: 'Center',
+      verticalAlignment: 'Middle'
     },
     columnFooter: {
       type: 'textField',
@@ -1787,7 +1797,9 @@ function addTableColumn() {
       y: 0,
       width: columnWidth,
       height: 30,
-      expression: ''
+      expression: '',
+      textAlignment: 'Center',
+      verticalAlignment: 'Middle'
     }
   };
   

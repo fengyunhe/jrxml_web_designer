@@ -534,6 +534,44 @@ function getCellStyle(cell: any) {
     styles.backgroundColor = cell.backcolor;
   }
   
+  // 文本对齐方式 - 由于cell-content使用flex布局，需要设置justify-content
+  if (cell.textAlignment) {
+    const align = cell.textAlignment.toLowerCase();
+    switch (align) {
+      case 'left':
+        styles.justifyContent = 'flex-start';
+        break;
+      case 'center':
+        styles.justifyContent = 'center';
+        break;
+      case 'right':
+        styles.justifyContent = 'flex-end';
+        break;
+      case 'justified':
+        styles.justifyContent = 'space-between';
+        break;
+      default:
+        styles.justifyContent = 'center';
+    }
+  }
+  // 垂直对齐方式 - 由于cell-content使用flex布局，需要设置align-items
+  if (cell.verticalAlignment) {
+    const align = cell.verticalAlignment.toLowerCase();
+    switch (align) {
+      case 'top':
+        styles.alignItems = 'flex-start';
+        break;
+      case 'middle':
+        styles.alignItems = 'center';
+        break;
+      case 'bottom':
+        styles.alignItems = 'flex-end';
+        break;
+      default:
+        styles.alignItems = 'center';
+    }
+  }
+  
   // 边框样式 - 优先从box对象获取，否则从根级别获取
   let borderWidth = 0;
   let borderStyle = 'solid';
