@@ -119,6 +119,58 @@
             />
           </div>
           
+          <!-- 表格行高设置 -->
+          <div class="form-group">
+            <h5>{{ t('properties.rowHeightSettings') }}</h5>
+            <div class="band-heights-grid">
+              <div class="band-height-item">
+                <label>{{ t('properties.tableHeader') }}</label>
+                <div class="band-height-control">
+                  <input 
+                    v-model.number="tableRowHeights.tableHeader" 
+                    type="number" 
+                    min="0"
+                    step="1"
+                    class="band-height-input"
+                    @change="ensureIntegerValue(tableRowHeights, 'tableHeader'); updateAllColumnRowHeights(); emit('update-jrxml')"
+                    @blur="ensureIntegerValue(tableRowHeights, 'tableHeader'); updateAllColumnRowHeights(); emit('update-jrxml')"
+                  />
+                  <span class="band-height-unit">px</span>
+                </div>
+              </div>
+              <div class="band-height-item">
+                <label>{{ t('properties.columnHeader') }}</label>
+                <div class="band-height-control">
+                  <input 
+                    v-model.number="tableRowHeights.columnHeader" 
+                    type="number" 
+                    min="0"
+                    step="1"
+                    class="band-height-input"
+                    @change="ensureIntegerValue(tableRowHeights, 'columnHeader'); updateAllColumnRowHeights(); emit('update-jrxml')"
+                    @blur="ensureIntegerValue(tableRowHeights, 'columnHeader'); updateAllColumnRowHeights(); emit('update-jrxml')"
+                  />
+                  <span class="band-height-unit">px</span>
+                </div>
+              </div>
+              <div class="band-height-item">
+                <label>{{ t('properties.detailCell') }}</label>
+                <div class="band-height-control">
+                  <input 
+                    v-model.number="tableRowHeights.detailCell" 
+                    type="number" 
+                    min="0"
+                    step="1"
+                    class="band-height-input"
+                    @change="ensureIntegerValue(tableRowHeights, 'detailCell'); updateAllColumnRowHeights(); emit('update-jrxml')"
+                    @blur="ensureIntegerValue(tableRowHeights, 'detailCell'); updateAllColumnRowHeights(); emit('update-jrxml')"
+                  />
+                  <span class="band-height-unit">px</span>
+                </div>
+              </div>
+            </div>
+          </div>
+          
           <div class="form-group">
             <label>{{ t('properties.whenNoDataType') }}</label>
             <select 
@@ -1094,6 +1146,50 @@ const currentElement = computed(() => {
 const elementType = computed(() => {
   return currentElement.value?.type || '';
 });
+
+// 表格行高设置
+const tableRowHeights = ref({
+  tableHeader: 30,
+  columnHeader: 30,
+  detailCell: 30
+});
+
+// 当表格元素变化时，更新行高设置
+watch(() => currentElement.value, (newElement) => {
+  if (newElement && newElement.type === 'table' && newElement.columns && newElement.columns.length > 0) {
+    // 从第一列获取当前行高值
+    const firstColumn = newElement.columns[0];
+    if (firstColumn) {
+      tableRowHeights.value.tableHeader = firstColumn.tableHeader?.height || 30;
+      tableRowHeights.value.columnHeader = firstColumn.columnHeader?.height || 30;
+      tableRowHeights.value.detailCell = firstColumn.detailCell?.height || 30;
+    }
+  }
+}, { deep: true, immediate: true });
+
+// 更新所有列的行高
+function updateAllColumnRowHeights() {
+  if (!currentElement.value || currentElement.value.type !== 'table' || !currentElement.value.columns) return;
+  
+  currentElement.value.columns.forEach(column => {
+    if (column.tableHeader) {
+      column.tableHeader.height = tableRowHeights.value.tableHeader;
+    }
+    if (column.columnHeader) {
+      column.columnHeader.height = tableRowHeights.value.columnHeader;
+    }
+    if (column.detailCell) {
+      column.detailCell.height = tableRowHeights.value.detailCell;
+    }
+    // 也更新footer行高，保持一致性
+    if (column.columnFooter) {
+      column.columnFooter.height = tableRowHeights.value.detailCell;
+    }
+    if (column.tableFooter) {
+      column.tableFooter.height = tableRowHeights.value.detailCell;
+    }
+  });
+}
 
 // 矩形边框样式计算属性
 const rectangleBorderStyle = computed({
