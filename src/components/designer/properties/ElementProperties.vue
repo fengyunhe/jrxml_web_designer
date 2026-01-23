@@ -1960,13 +1960,67 @@ function updateFieldExpression(column: any, index: number) {
   
   const newExpression = column.detailCell.expression;
   
+  // 如果detailCell是staticText类型，将其转换为textField类型
+  if (column.detailCell.type === 'staticText') {
+    // 保存原有属性
+    const { x, y, width, height, textAlignment, verticalAlignment, fontSize, isBold, isItalic, isUnderline, fontFamily, backcolor, mode, box } = column.detailCell;
+    // 转换为textField类型
+    column.detailCell = {
+      type: 'textField',
+      x,
+      y,
+      width,
+      height,
+      expression: newExpression,
+      textAlignment,
+      verticalAlignment,
+      fontSize,
+      isBold,
+      isItalic,
+      isUnderline,
+      fontFamily,
+      backcolor,
+      mode,
+      box,
+      textAdjust: 'CutText',
+      isBlankWhenNull: true
+    };
+  }
+  
   // 如果表格有children属性，同时更新children属性中对应列的字段表达式
   if (currentElement.value && currentElement.value.type === 'table' && currentElement.value.children) {
     // 查找children中对应的列（通过uuid或索引）
     const childColumn = findColumnInChildren(currentElement.value.children, column);
     if (childColumn && childColumn.detailCell) {
-      // 更新childColumn的字段表达式
-      childColumn.detailCell.expression = newExpression;
+      // 如果childColumn的detailCell是staticText类型，将其转换为textField类型
+      if (childColumn.detailCell.type === 'staticText') {
+        // 保存原有属性
+        const { x, y, width, height, textAlignment, verticalAlignment, fontSize, isBold, isItalic, isUnderline, fontFamily, backcolor, mode, box } = childColumn.detailCell;
+        // 转换为textField类型
+        childColumn.detailCell = {
+          type: 'textField',
+          x,
+          y,
+          width,
+          height,
+          expression: newExpression,
+          textAlignment,
+          verticalAlignment,
+          fontSize,
+          isBold,
+          isItalic,
+          isUnderline,
+          fontFamily,
+          backcolor,
+          mode,
+          box,
+          textAdjust: 'CutText',
+          isBlankWhenNull: true
+        };
+      } else {
+        // 更新childColumn的字段表达式
+        childColumn.detailCell.expression = newExpression;
+      }
     }
   }
 }

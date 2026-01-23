@@ -369,19 +369,19 @@ function parseColumnElement(columnElem: Element, index: number): any {
   
   // 解析表头、列头和详情单元格 - 支持带命名空间和不带命名空间的单元格元素
   const tableHeaderElem = Array.from(columnElem.children).find(cell => 
-    cell.tagName === 'jr:tableHeader' || cell.localName === 'tableHeader' || cell.tagName === 'tableHeader'
+    cell.localName === 'tableHeader'
   );
   const columnHeaderElem = Array.from(columnElem.children).find(cell => 
-    cell.tagName === 'jr:columnHeader' || cell.localName === 'columnHeader' || cell.tagName === 'columnHeader'
+    cell.localName === 'columnHeader'
   );
   const tableFooterElem = Array.from(columnElem.children).find(cell => 
-    cell.tagName === 'jr:tableFooter' || cell.localName === 'tableFooter' || cell.tagName === 'tableFooter'
+    cell.localName === 'tableFooter'
   );
   const columnFooterElem = Array.from(columnElem.children).find(cell => 
-    cell.tagName === 'jr:columnFooter' || cell.localName === 'columnFooter' || cell.tagName === 'columnFooter'
+    cell.localName === 'columnFooter'
   );
   const detailCellElem = Array.from(columnElem.children).find(cell => 
-    cell.tagName === 'jr:detailCell' || cell.localName === 'detailCell' || cell.tagName === 'detailCell'
+    cell.localName === 'detailCell'
   );
   
   // 解析rowSpan属性
@@ -512,7 +512,7 @@ function parseColumnGroupElement(groupElem: Element, index: number): any {
   
   // 先解析columnHeader元素
   const columnHeaderElem = Array.from(groupElem.children).find(cell => 
-    cell.tagName === 'jr:columnHeader' || cell.localName === 'columnHeader' || cell.tagName === 'columnHeader'
+    cell.localName === 'columnHeader'
   );
   
   // 解析rowSpan属性的辅助函数
@@ -557,7 +557,7 @@ function parseColumnGroupElement(groupElem: Element, index: number): any {
   
   // 解析tableHeader
   const tableHeaderElem = Array.from(groupElem.children).find(cell => 
-    cell.tagName === 'jr:tableHeader' || cell.localName === 'tableHeader' || cell.tagName === 'tableHeader'
+    cell.localName === 'tableHeader'
   );
   group.hasTableHeader = !!tableHeaderElem;
   if (tableHeaderElem) {
@@ -566,7 +566,7 @@ function parseColumnGroupElement(groupElem: Element, index: number): any {
   
   // 解析tableFooter
   const tableFooterElem = Array.from(groupElem.children).find(cell => 
-    cell.tagName === 'jr:tableFooter' || cell.localName === 'tableFooter' || cell.tagName === 'tableFooter'
+    cell.localName === 'tableFooter'
   );
   group.hasTableFooter = !!tableFooterElem;
   if (tableFooterElem) {
@@ -581,7 +581,7 @@ function parseColumnGroupElement(groupElem: Element, index: number): any {
   
   // 解析columnFooter
   const columnFooterElem = Array.from(groupElem.children).find(cell => 
-    cell.tagName === 'jr:columnFooter' || cell.localName === 'columnFooter' || cell.tagName === 'columnFooter'
+    cell.localName === 'columnFooter'
   );
   group.hasColumnFooter = !!columnFooterElem;
   if (columnFooterElem) {
