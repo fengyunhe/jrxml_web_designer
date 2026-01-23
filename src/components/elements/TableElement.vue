@@ -39,10 +39,11 @@
             <template v-if="hasColumnGroups">
               <!-- 直接渲染分组生成的行，不添加外层tr -->
               <render-column-group 
-                :group="rootGroup" 
-                :level="0" 
-                :type="'tableHeader'"
-              />
+            :group="rootGroup" 
+            :level="0" 
+            :type="'tableHeader'"
+            @column-click="handleRenderColumnClick"
+          />
             </template>
             <template v-else>
               <!-- 普通列的表头 -->
@@ -118,10 +119,11 @@
           <template v-if="hasColumnHeaderGroups">
             <!-- 直接渲染分组生成的行，不添加外层tr -->
             <render-column-group 
-              :group="rootGroup" 
-              :level="0" 
-              :type="'columnHeader'"
-            />
+            :group="rootGroup" 
+            :level="0" 
+            :type="'columnHeader'"
+            @column-click="handleRenderColumnClick"
+          />
           </template>
           <template v-else>
             <!-- 普通列的列头 -->
@@ -358,11 +360,28 @@ const selectedColumns = ref<number[]>([]);
 const showColumnContextMenu = ref(false);
 const contextMenuPosition = ref({ x: 0, y: 0 });
 
-// 计算元素是否被选中
+
+
+// 计算元素是否被选中，与BaseElement保持一致的逻辑
 const isSelected = computed(() => {
-  return props.selectedElement?.bandIndex === props.bandIndex &&
-         props.selectedElement?.elementIndex === props.elementIndex &&
-         props.selectedElement?.parentFrameIndex === props.parentFrameIndex;
+  // 2. 降级到索引比较（辅助函数：将 undefined 视为 -1 进行比较）
+  const getPFI = (pfi: number | undefined) => pfi === undefined ? -1 : pfi;
+  const currentPFI = getPFI(props.parentFrameIndex);
+
+  // 检查是否在多选列表中
+  if (props.selectedElements && props.selectedElements.length > 0) {
+    return props.selectedElements.some(
+      el => el.bandIndex === props.bandIndex && 
+            el.elementIndex === props.elementIndex && 
+            getPFI(el.parentFrameIndex) === currentPFI
+    );
+  }
+  
+  // 单选逻辑
+  return props.selectedElement && 
+         props.selectedElement.bandIndex === props.bandIndex && 
+         props.selectedElement.elementIndex === props.elementIndex &&
+         getPFI(props.selectedElement.parentFrameIndex) === currentPFI;
 });
 
 // 判断列是否被选中
@@ -373,6 +392,12 @@ function isColumnSelected(index: number): boolean {
 // 处理选择事件
 const handleSelect = (bandIndex: number, elementIndex: number, isMultiSelect?: boolean, parentFrameIndex?: number) => {
   emit('select', bandIndex, elementIndex, isMultiSelect || false, parentFrameIndex);
+};
+
+// 处理RenderColumnGroup组件的点击事件
+const handleRenderColumnClick = (column: any, event: MouseEvent) => {
+  // 直接触发表格元素的选择事件
+  emit('select', props.bandIndex, props.elementIndex, false, props.parentFrameIndex);
 };
 
 // 处理拖拽开始事件
@@ -420,12 +445,16 @@ function handleColumnClick(index: number, event: MouseEvent) {
       // 保持选中索引有序
       selectedColumns.value.sort((a, b) => a - b);
     }
+    // 多选模式下，阻止事件冒泡，保持列选中状态
+    event.stopPropagation();
   } else {
     // 单选模式：只选中当前列
     selectedColumns.value = [index];
+    // 单选模式下，允许事件冒泡，触发表格元素选中
+    // event.stopPropagation(); // 移除阻止冒泡，让BaseElement处理选择
+    // 直接触发表格元素的选择事件
+    emit('select', props.bandIndex, props.elementIndex, false, props.parentFrameIndex);
   }
-  
-  event.stopPropagation();
 }
 
 // 处理列右键菜单事件
@@ -505,10 +534,20 @@ function getCellStyle(cell: any) {
     styles.backgroundColor = cell.backcolor;
   }
   
-  // 边框样式
-  const borderWidth = cell.borderWidth || 0;
-  const borderStyle = cell.borderStyle || 'solid';
-  const borderColor = cell.borderColor || '#000000';
+  // 边框样式 - 优先从box对象获取，否则从根级别获取
+  let borderWidth = 0;
+  let borderStyle = 'solid';
+  let borderColor = '#000000';
+  
+  if (cell.box && cell.box.pen) {
+    borderWidth = cell.box.pen.lineWidth || 0;
+    borderStyle = cell.box.pen.lineStyle || 'solid';
+    borderColor = cell.box.pen.lineColor || '#000000';
+  } else {
+    borderWidth = cell.borderWidth || 0;
+    borderStyle = cell.borderStyle || 'solid';
+    borderColor = cell.borderColor || '#000000';
+  }
   
   if (borderWidth > 0) {
     styles.border = `${borderWidth}px ${borderStyle} ${borderColor}`;
@@ -647,9 +686,7 @@ function getCellContentStyle(column: any, type: string) {
 </script>
 
 <style scoped>
-.design-element {
-  overflow: hidden;
-}
+
 
 .table-content {
   width: 100%;
@@ -804,7 +841,7 @@ function getCellContentStyle(column: any, type: string) {
 }
 
 .table-content {
-  overflow: visible !important;
+  overflow: hidden;
 }
 
 /* 表格元素容器样式 */

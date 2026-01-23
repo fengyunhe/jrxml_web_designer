@@ -206,26 +206,36 @@ function generateElementXML(element: any): string {
 }
 
 // 生成box元素XML
-function generateBoxXML(box: any): string {
-  if (!box) return '';
+function generateBoxXML(box: any, element: any = {}): string {
+  // 如果没有box对象，创建一个临时对象
+  const boxData = box || {};
+  
+  // 检查直接存储在元素根级别的边框属性（向后兼容）
+  if (!boxData.pen && (element.borderWidth || element.borderStyle || element.borderColor)) {
+    boxData.pen = {
+      lineWidth: element.borderWidth,
+      lineStyle: element.borderStyle,
+      lineColor: element.borderColor
+    };
+  }
   
   // 检查是否有任何边距设置
-  const hasPadding = box.padding !== undefined && box.padding !== '' && box.padding !== 0;
-  const hasTopPadding = box.topPadding !== undefined && box.topPadding !== '' && box.topPadding !== 0;
-  const hasLeftPadding = box.leftPadding !== undefined && box.leftPadding !== '' && box.leftPadding !== 0;
-  const hasBottomPadding = box.bottomPadding !== undefined && box.bottomPadding !== '' && box.bottomPadding !== 0;
-  const hasRightPadding = box.rightPadding !== undefined && box.rightPadding !== '' && box.rightPadding !== 0;
+  const hasPadding = boxData.padding !== undefined && boxData.padding !== '' && boxData.padding !== 0;
+  const hasTopPadding = boxData.topPadding !== undefined && boxData.topPadding !== '' && boxData.topPadding !== 0;
+  const hasLeftPadding = boxData.leftPadding !== undefined && boxData.leftPadding !== '' && boxData.leftPadding !== 0;
+  const hasBottomPadding = boxData.bottomPadding !== undefined && boxData.bottomPadding !== '' && boxData.bottomPadding !== 0;
+  const hasRightPadding = boxData.rightPadding !== undefined && boxData.rightPadding !== '' && boxData.rightPadding !== 0;
   
   // 检查pen格式的边框数据（不过时）
-  const hasTopPen = box.topPen && box.topPen.lineWidth !== undefined && box.topPen.lineWidth > 0;
-  const hasLeftPen = box.leftPen && box.leftPen.lineWidth !== undefined && box.leftPen.lineWidth > 0;
-  const hasBottomPen = box.bottomPen && box.bottomPen.lineWidth !== undefined && box.bottomPen.lineWidth > 0;
-  const hasRightPen = box.rightPen && box.rightPen.lineWidth !== undefined && box.rightPen.lineWidth > 0;
-  const hasPen = box.pen && box.pen.lineWidth !== undefined && box.pen.lineWidth > 0;
+  const hasTopPen = boxData.topPen && boxData.topPen.lineWidth !== undefined && boxData.topPen.lineWidth > 0;
+  const hasLeftPen = boxData.leftPen && boxData.leftPen.lineWidth !== undefined && boxData.leftPen.lineWidth > 0;
+  const hasBottomPen = boxData.bottomPen && boxData.bottomPen.lineWidth !== undefined && boxData.bottomPen.lineWidth > 0;
+  const hasRightPen = boxData.rightPen && boxData.rightPen.lineWidth !== undefined && boxData.rightPen.lineWidth > 0;
+  const hasPen = boxData.pen && boxData.pen.lineWidth !== undefined && boxData.pen.lineWidth > 0;
   
   // 检查直接格式的边框数据（过时，但向后兼容）
-  const hasGlobalBorderWidth = box.borderWidth !== undefined && box.borderWidth > 0;
-  const hasGlobalBorderStyle = box.borderStyle !== undefined && box.borderStyle !== '';
+  const hasGlobalBorderWidth = boxData.borderWidth !== undefined && boxData.borderWidth > 0;
+  const hasGlobalBorderStyle = boxData.borderStyle !== undefined && boxData.borderStyle !== '';
   
   // 如果没有任何边框和边距设置，则不生成box标签
   if (!hasPen && !hasTopPen && !hasLeftPen && !hasBottomPen && !hasRightPen &&
@@ -237,24 +247,24 @@ function generateBoxXML(box: any): string {
   let xml = '      <box';
   
   // 添加非过时的box属性（padding相关）
-  if (box.padding !== undefined && box.padding !== '') {
-    const paddingValue = box.padding === '' ? 0 : box.padding;
+  if (boxData.padding !== undefined && boxData.padding !== '') {
+    const paddingValue = boxData.padding === '' ? 0 : boxData.padding;
     xml += ` padding="${paddingValue}"`;
   }
-  if (box.topPadding !== undefined && box.topPadding !== '') {
-    const topPaddingValue = box.topPadding === '' ? 0 : box.topPadding;
+  if (boxData.topPadding !== undefined && boxData.topPadding !== '') {
+    const topPaddingValue = boxData.topPadding === '' ? 0 : boxData.topPadding;
     xml += ` topPadding="${topPaddingValue}"`;
   }
-  if (box.leftPadding !== undefined && box.leftPadding !== '') {
-    const leftPaddingValue = box.leftPadding === '' ? 0 : box.leftPadding;
+  if (boxData.leftPadding !== undefined && boxData.leftPadding !== '') {
+    const leftPaddingValue = boxData.leftPadding === '' ? 0 : boxData.leftPadding;
     xml += ` leftPadding="${leftPaddingValue}"`;
   }
-  if (box.bottomPadding !== undefined && box.bottomPadding !== '') {
-    const bottomPaddingValue = box.bottomPadding === '' ? 0 : box.bottomPadding;
+  if (boxData.bottomPadding !== undefined && boxData.bottomPadding !== '') {
+    const bottomPaddingValue = boxData.bottomPadding === '' ? 0 : boxData.bottomPadding;
     xml += ` bottomPadding="${bottomPaddingValue}"`;
   }
-  if (box.rightPadding !== undefined && box.rightPadding !== '') {
-    const rightPaddingValue = box.rightPadding === '' ? 0 : box.rightPadding;
+  if (boxData.rightPadding !== undefined && boxData.rightPadding !== '') {
+    const rightPaddingValue = boxData.rightPadding === '' ? 0 : boxData.rightPadding;
     xml += ` rightPadding="${rightPaddingValue}"`;
   }
   
@@ -264,8 +274,8 @@ function generateBoxXML(box: any): string {
   // 1. 处理全局边框
   if (hasPen) {
     xml += '        <pen';
-    if (box.pen.lineWidth !== undefined && box.pen.lineWidth !== null) {
-      let lineWidth = box.pen.lineWidth;
+    if (boxData.pen.lineWidth !== undefined && boxData.pen.lineWidth !== null) {
+      let lineWidth = boxData.pen.lineWidth;
       if (typeof lineWidth === 'string') {
         if (lineWidth === '1Point' || lineWidth === 'Thin') lineWidth = 1;
         else if (lineWidth === '2Point') lineWidth = 2;
@@ -274,20 +284,20 @@ function generateBoxXML(box: any): string {
       }
       xml += ` lineWidth="${lineWidth}"`;
     }
-    if (box.pen.lineStyle && box.pen.lineStyle !== null && box.pen.lineStyle !== '') xml += ` lineStyle="${box.pen.lineStyle}"`;
-    if (box.pen.lineColor && box.pen.lineColor !== null) xml += ` lineColor="${box.pen.lineColor}"`;
+    if (boxData.pen.lineStyle && boxData.pen.lineStyle !== null && boxData.pen.lineStyle !== '') xml += ` lineStyle="${boxData.pen.lineStyle}"`;
+    if (boxData.pen.lineColor && boxData.pen.lineColor !== null) xml += ` lineColor="${boxData.pen.lineColor}"`;
     xml += '/>\n';
   } else if (hasGlobalBorderWidth || hasGlobalBorderStyle) {
     // 回退到直接格式（过时）
     xml += '        <pen';
-    if (box.borderWidth !== undefined && box.borderWidth !== null && box.borderWidth > 0) {
-      xml += ` lineWidth="${box.borderWidth}"`;
+    if (boxData.borderWidth !== undefined && boxData.borderWidth !== null && boxData.borderWidth > 0) {
+      xml += ` lineWidth="${boxData.borderWidth}"`;
     }
-    if (box.borderStyle !== undefined && box.borderStyle !== null && box.borderStyle !== '') {
-      xml += ` lineStyle="${box.borderStyle}"`;
+    if (boxData.borderStyle !== undefined && boxData.borderStyle !== null && boxData.borderStyle !== '') {
+      xml += ` lineStyle="${boxData.borderStyle}"`;
     }
-    if (box.borderColor !== undefined && box.borderColor !== null) {
-      xml += ` lineColor="${box.borderColor}"`;
+    if (boxData.borderColor !== undefined && boxData.borderColor !== null) {
+      xml += ` lineColor="${boxData.borderColor}"`;
     }
     xml += '/>\n';
   }
@@ -296,7 +306,7 @@ function generateBoxXML(box: any): string {
   // 上边框
   if (hasTopPen) {
     xml += '        <topPen';
-    let lineWidth = box.topPen.lineWidth;
+    let lineWidth = boxData.topPen.lineWidth;
     if (typeof lineWidth === 'string') {
       if (lineWidth === '1Point' || lineWidth === 'Thin') lineWidth = 1;
       else if (lineWidth === '2Point') lineWidth = 2;
@@ -304,15 +314,15 @@ function generateBoxXML(box: any): string {
       else if (/^\d+$/.test(lineWidth)) lineWidth = parseInt(lineWidth);
     }
     xml += ` lineWidth="${lineWidth}"`;
-    if (box.topPen.lineStyle && box.topPen.lineStyle !== null && box.topPen.lineStyle !== '') xml += ` lineStyle="${box.topPen.lineStyle}"`;
-    if (box.topPen.lineColor && box.topPen.lineColor !== null) xml += ` lineColor="${box.topPen.lineColor}"`;
+    if (boxData.topPen.lineStyle && boxData.topPen.lineStyle !== null && boxData.topPen.lineStyle !== '') xml += ` lineStyle="${boxData.topPen.lineStyle}"`;
+    if (boxData.topPen.lineColor && boxData.topPen.lineColor !== null) xml += ` lineColor="${boxData.topPen.lineColor}"`;
     xml += '/>\n';
   }
   
   // 左边框
   if (hasLeftPen) {
     xml += '        <leftPen';
-    let lineWidth = box.leftPen.lineWidth;
+    let lineWidth = boxData.leftPen.lineWidth;
     if (typeof lineWidth === 'string') {
       if (lineWidth === '1Point' || lineWidth === 'Thin') lineWidth = 1;
       else if (lineWidth === '2Point') lineWidth = 2;
@@ -320,15 +330,15 @@ function generateBoxXML(box: any): string {
       else if (/^\d+$/.test(lineWidth)) lineWidth = parseInt(lineWidth);
     }
     xml += ` lineWidth="${lineWidth}"`;
-    if (box.leftPen.lineStyle && box.leftPen.lineStyle !== null && box.leftPen.lineStyle !== '') xml += ` lineStyle="${box.leftPen.lineStyle}"`;
-    if (box.leftPen.lineColor && box.leftPen.lineColor !== null) xml += ` lineColor="${box.leftPen.lineColor}"`;
+    if (boxData.leftPen.lineStyle && boxData.leftPen.lineStyle !== null && boxData.leftPen.lineStyle !== '') xml += ` lineStyle="${boxData.leftPen.lineStyle}"`;
+    if (boxData.leftPen.lineColor && boxData.leftPen.lineColor !== null) xml += ` lineColor="${boxData.leftPen.lineColor}"`;
     xml += '/>\n';
   }
   
   // 下边框
   if (hasBottomPen) {
     xml += '        <bottomPen';
-    let lineWidth = box.bottomPen.lineWidth;
+    let lineWidth = boxData.bottomPen.lineWidth;
     if (typeof lineWidth === 'string') {
       if (lineWidth === '1Point' || lineWidth === 'Thin') lineWidth = 1;
       else if (lineWidth === '2Point') lineWidth = 2;
@@ -336,15 +346,15 @@ function generateBoxXML(box: any): string {
       else if (/^\d+$/.test(lineWidth)) lineWidth = parseInt(lineWidth);
     }
     xml += ` lineWidth="${lineWidth}"`;
-    if (box.bottomPen.lineStyle && box.bottomPen.lineStyle !== null && box.bottomPen.lineStyle !== '') xml += ` lineStyle="${box.bottomPen.lineStyle}"`;
-    if (box.bottomPen.lineColor && box.bottomPen.lineColor !== null) xml += ` lineColor="${box.bottomPen.lineColor}"`;
+    if (boxData.bottomPen.lineStyle && boxData.bottomPen.lineStyle !== null && boxData.bottomPen.lineStyle !== '') xml += ` lineStyle="${boxData.bottomPen.lineStyle}"`;
+    if (boxData.bottomPen.lineColor && boxData.bottomPen.lineColor !== null) xml += ` lineColor="${boxData.bottomPen.lineColor}"`;
     xml += '/>\n';
   }
   
   // 右边框
   if (hasRightPen) {
     xml += '        <rightPen';
-    let lineWidth = box.rightPen.lineWidth;
+    let lineWidth = boxData.rightPen.lineWidth;
     if (typeof lineWidth === 'string') {
       if (lineWidth === '1Point' || lineWidth === 'Thin') lineWidth = 1;
       else if (lineWidth === '2Point') lineWidth = 2;
@@ -352,8 +362,8 @@ function generateBoxXML(box: any): string {
       else if (/^\d+$/.test(lineWidth)) lineWidth = parseInt(lineWidth);
     }
     xml += ` lineWidth="${lineWidth}"`;
-    if (box.rightPen.lineStyle && box.rightPen.lineStyle !== null && box.rightPen.lineStyle !== '') xml += ` lineStyle="${box.rightPen.lineStyle}"`;
-    if (box.rightPen.lineColor && box.rightPen.lineColor !== null) xml += ` lineColor="${box.rightPen.lineColor}"`;
+    if (boxData.rightPen.lineStyle && boxData.rightPen.lineStyle !== null && boxData.rightPen.lineStyle !== '') xml += ` lineStyle="${boxData.rightPen.lineStyle}"`;
+    if (boxData.rightPen.lineColor && boxData.rightPen.lineColor !== null) xml += ` lineColor="${boxData.rightPen.lineColor}"`;
     xml += '/>\n';
   }
   
@@ -428,7 +438,7 @@ function generateStaticTextXML(element: any): string {
   }
   
   // 生成box元素
-  xml += generateBoxXML(element.box);
+  xml += generateBoxXML(element.box, element);
   
   // 确保始终包含textElement和font元素，符合DTD结构
   let textElementAttrs = '';
@@ -544,7 +554,7 @@ function generateTextFieldXML(element: any): string {
   xml += '/>\n';
   
   // 生成box元素
-  xml += generateBoxXML(element.box);
+  xml += generateBoxXML(element.box, element);
   
   // 添加文本元素配置，确保textAlignment符合DTD
   let textElementAttrs = '';
@@ -773,7 +783,7 @@ function generateFrameXML(element: any): string {
   xml += '/>\n';
   
   // 生成box元素
-  xml += generateBoxXML(element.box);
+  xml += generateBoxXML(element.box, element);
   
   // 生成子元素
   if (element.elements && element.elements.length > 0) {

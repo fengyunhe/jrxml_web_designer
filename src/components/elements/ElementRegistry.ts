@@ -193,7 +193,9 @@ export class ElementRegistry {
               backcolor: '#E6E6E6',
               fontFamily: 'SansSerif',
               fontSize: 19,
-              isBold: true
+              isBold: true,
+              textAlignment: 'Center',
+              verticalAlignment: 'Middle'
             },
             columnHeader: {
               type: 'staticText',
@@ -201,7 +203,9 @@ export class ElementRegistry {
               y: 0,
               width: 160,
               height: 30,
-              text: 'Column Header'
+              text: 'Column Header',
+              textAlignment: 'Center',
+              verticalAlignment: 'Middle'
             },
             detailCell: {
               type: 'textField',
@@ -209,7 +213,9 @@ export class ElementRegistry {
               y: 0,
               width: 160,
               height: 30,
-              expression: '$F{FIELD_NAME}'
+              expression: '$F{FIELD_NAME}',
+              textAlignment: 'Center',
+              verticalAlignment: 'Middle'
             }
           },
           {
@@ -227,7 +233,9 @@ export class ElementRegistry {
               backcolor: '#E6E6E6',
               fontFamily: 'SansSerif',
               fontSize: 19,
-              isBold: true
+              isBold: true,
+              textAlignment: 'Center',
+              verticalAlignment: 'Middle'
             },
             columnHeader: {
               type: 'staticText',
@@ -235,7 +243,9 @@ export class ElementRegistry {
               y: 0,
               width: 180,
               height: 30,
-              text: 'Column Header'
+              text: 'Column Header',
+              textAlignment: 'Center',
+              verticalAlignment: 'Middle'
             },
             detailCell: {
               type: 'textField',
@@ -243,7 +253,9 @@ export class ElementRegistry {
               y: 0,
               width: 180,
               height: 30,
-              expression: '$F{FIELD_NAME}'
+              expression: '$F{FIELD_NAME}',
+              textAlignment: 'Center',
+              verticalAlignment: 'Middle'
             }
           }
         ],

@@ -761,6 +761,39 @@ function parseElement(element: Element, type: string): any {
   const boxElement = findChildElement(element, 'box');
   if (boxElement) {
     result.box = parseBoxElement(boxElement);
+    
+    // 将边框属性复制到元素根级别，以便表格UI能够正确显示
+    const box = result.box;
+    if (box) {
+      const resultAny = result as any;
+      if (box.pen) {
+        resultAny.borderWidth = box.pen.lineWidth;
+        resultAny.borderStyle = box.pen.lineStyle;
+        resultAny.borderColor = box.pen.lineColor;
+      }
+      
+      // 处理各边边框属性
+      if (box.topPen) {
+        resultAny.topBorderWidth = box.topPen.lineWidth;
+        resultAny.topBorderStyle = box.topPen.lineStyle;
+        resultAny.topBorderColor = box.topPen.lineColor;
+      }
+      if (box.leftPen) {
+        resultAny.leftBorderWidth = box.leftPen.lineWidth;
+        resultAny.leftBorderStyle = box.leftPen.lineStyle;
+        resultAny.leftBorderColor = box.leftPen.lineColor;
+      }
+      if (box.bottomPen) {
+        resultAny.bottomBorderWidth = box.bottomPen.lineWidth;
+        resultAny.bottomBorderStyle = box.bottomPen.lineStyle;
+        resultAny.bottomBorderColor = box.bottomPen.lineColor;
+      }
+      if (box.rightPen) {
+        resultAny.rightBorderWidth = box.rightPen.lineWidth;
+        resultAny.rightBorderStyle = box.rightPen.lineStyle;
+        resultAny.rightBorderColor = box.rightPen.lineColor;
+      }
+    }
   }
 
   switch (type) {

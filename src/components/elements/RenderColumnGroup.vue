@@ -10,7 +10,7 @@
             :colspan="cell.colspan"
             :rowspan="cell.rowspan"
             :style="getCellStyle(cell, type)"
-            @click.stop="handleCellClick(cell, $event)"
+            @click="handleCellClick(cell, $event)"
             @contextmenu.stop="handleCellContextMenu(cell, $event)"
           >
             <div class="cell-content">
@@ -26,7 +26,7 @@
             :colspan="cell.colspan"
             :rowspan="cell.rowspan"
             :style="getCellStyle(cell, type)"
-            @click.stop="handleCellClick(cell, $event)"
+            @click="handleCellClick(cell, $event)"
             @contextmenu.stop="handleCellContextMenu(cell, $event)"
           >
             <div class="cell-content">
@@ -274,6 +274,7 @@ function handleCellClick(cell: any, event: MouseEvent) {
   if (!cell.content.children) {
     emit('columnClick', cell.content, event);
   }
+  // 不阻止事件冒泡，让事件传递到父组件
 }
 
 function handleCellContextMenu(cell: any, event: MouseEvent) {

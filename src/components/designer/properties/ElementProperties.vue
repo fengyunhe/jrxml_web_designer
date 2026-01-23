@@ -302,90 +302,20 @@
                         <div class="table-column-properties">
                           <!-- 表格头部边框样式 -->
                           <div v-if="groupInfo.hasTableHeader && groupInfo.tableHeader" class="form-group small full-width">
-                            <label>{{ t('properties.headerBorder') }}</label>
-                            <div class="border-controls">
-                              <div class="form-group small" style="flex: 1;">
-                                <label style="font-size: 10px;">{{ t('properties.style') }}</label>
-                                <select 
-                                  v-model="(groupInfo.tableHeader as any).borderStyle" 
-                                  class="small-input"
-                                  @change="emit('update-jrxml')"
-                                  style="height: 20px; padding: 0 4px;"
-                                >
-                                  <option value="">{{ t('properties.none') }}</option>
-                                  <option value="Solid">{{ t('properties.solid') }}</option>
-                                  <option value="Dashed">{{ t('properties.dashed') }}</option>
-                                  <option value="Dotted">{{ t('properties.dotted') }}</option>
-                                  <option value="Double">{{ t('properties.double') }}</option>
-                                </select>
-                              </div>
-                              <div class="form-group small" style="flex: 0 0 60px;">
-                                <label style="font-size: 10px;">{{ t('properties.width') }}</label>
-                                <input 
-                                  v-model.number="(groupInfo.tableHeader as any).borderWidth" 
-                                  type="number" 
-                                  min="0"
-                                  max="10"
-                                  step="0.5"
-                                  class="small-input"
-                                  @change="emit('update-jrxml')"
-                                />
-                              </div>
-                              <div class="form-group small" style="flex: 0 0 60px;">
-                                <label style="font-size: 10px;">{{ t('properties.color') }}</label>
-                                <input 
-                                  v-model="(groupInfo.tableHeader as any).borderColor" 
-                                  type="color" 
-                                  class="small-input color-picker"
-                                  @change="emit('update-jrxml')"
-                                  style="height: 20px; padding: 0;"
-                                />
-                              </div>
-                            </div>
+                            <BorderStyleSettings 
+                              v-model="(groupInfo.tableHeader as any)" 
+                              :label="t('properties.headerBorder')"
+                              @change="emit('update-jrxml')"
+                            />
                           </div>
                           
                           <!-- 列头部边框样式 -->
                           <div class="form-group small full-width" v-if="groupInfo.columnHeader">
-                            <label>{{ t('properties.columnHeader') }}</label>
-                            <div class="border-controls">
-                              <div class="form-group small" style="flex: 1;">
-                                <label style="font-size: 10px;">{{ t('properties.style') }}</label>
-                                <select 
-                                  v-model="(groupInfo.columnHeader as any).borderStyle" 
-                                  class="small-input"
-                                  @change="emit('update-jrxml')"
-                                  style="height: 20px; padding: 0 4px;"
-                                >
-                                  <option value="">{{ t('properties.none') }}</option>
-                                  <option value="Solid">{{ t('properties.solid') }}</option>
-                                  <option value="Dashed">{{ t('properties.dashed') }}</option>
-                                  <option value="Dotted">{{ t('properties.dotted') }}</option>
-                                  <option value="Double">{{ t('properties.double') }}</option>
-                                </select>
-                              </div>
-                              <div class="form-group small" style="flex: 0 0 60px;">
-                                <label style="font-size: 10px;">{{ t('properties.width') }}</label>
-                                <input 
-                                  v-model.number="(groupInfo.columnHeader as any).borderWidth" 
-                                  type="number" 
-                                  min="0"
-                                  max="10"
-                                  step="0.5"
-                                  class="small-input"
-                                  @change="emit('update-jrxml')"
-                                />
-                              </div>
-                              <div class="form-group small" style="flex: 0 0 60px;">
-                                <label style="font-size: 10px;">{{ t('properties.color') }}</label>
-                                <input 
-                                  v-model="(groupInfo.columnHeader as any).borderColor" 
-                                  type="color" 
-                                  class="small-input color-picker"
-                                  @change="emit('update-jrxml')"
-                                  style="height: 20px; padding: 0;"
-                                />
-                              </div>
-                            </div>
+                            <BorderStyleSettings 
+                              v-model="(groupInfo.columnHeader as any)" 
+                              :label="t('properties.columnHeader')"
+                              @change="emit('update-jrxml')"
+                            />
                           </div>
                         </div>
                       </n-tab-pane>
@@ -521,500 +451,74 @@
                     </div>
                   </n-tab-pane>
                   
-                  <!-- 文本样式标签页 -->
-                  <n-tab-pane name="textStyle" :tab="t('properties.textStyle')">
-                    <div class="table-column-properties">
-                      <!-- 表头文本样式 -->
-                      <div v-if="column.hasTableHeader" class="form-group small full-width">
-                        <label>{{ t('properties.headerTextStyle') }}</label>
-                        <div class="text-style-controls">
-                          <div class="form-group small" style="flex: 0 0 40px;">
-                            <label style="font-size: 10px;">{{ t('properties.fontSize') }}</label>
-                            <input 
-                              v-model.number="column.tableHeader.fontSize" 
-                              type="number" 
-                              min="6"
-                              max="72"
-                              step="1"
-                              class="small-input"
-                              @change="emit('update-jrxml')"
-                            />
-                          </div>
-                          <div class="form-group small" style="flex: 1;">
-                            <label style="font-size: 10px;">{{ t('properties.forecolor') }}</label>
-                            <ColorPickerWithOpacity 
-                              v-model="column.tableHeader.forecolor"
-                              v-model:mode="column.tableHeader.forecolorMode"
-                              @update:modelValue="emit('update-jrxml')"
-                              @update:mode="emit('update-jrxml')"
-                            />
-                          </div>
-                          <div class="form-group small" style="flex: 1;">
-                            <label style="font-size: 10px;">{{ t('properties.backgroundColor') }}</label>
-                            <ColorPickerWithOpacity 
-                              v-model="column.tableHeader.backcolor"
-                              v-model:mode="column.tableHeader.mode"
-                              @update:modelValue="emit('update-jrxml')"
-                              @update:mode="emit('update-jrxml')"
-                              style="height: 20px;"
-                            />
-                          </div>
-                        </div>
-                      </div>
-                        
-                      <div v-if="column.hasTableHeader" class="checkbox-group" style="gap: 12px; margin-bottom: 6px;">
-                        <label style="font-size: 11px;">
-                          <input v-model="column.tableHeader.isBold" type="checkbox" @change="emit('update-jrxml')" />{{ t('properties.bold') }}
-                        </label>
-                        <label style="font-size: 11px;">
-                          <input v-model="column.tableHeader.isItalic" type="checkbox" @change="emit('update-jrxml')" />{{ t('properties.italic') }}
-                        </label>
-                        <label style="font-size: 11px;">
-                          <input v-model="column.tableHeader.isUnderline" type="checkbox" @change="emit('update-jrxml')" />{{ t('properties.underline') }}
-                        </label>
-                        <label style="font-size: 11px;">
-                          <input v-model="column.tableHeader.mode" type="checkbox" true-value="Opaque" false-value="Transparent" @change="emit('update-jrxml')" />{{ t('properties.opaque') }}
-                        </label>
-                      </div>
-                      
-                      <!-- 列头文本样式 -->
-                      <div class="form-group small full-width">
-                        <label>{{ t('properties.columnHeader') }}</label>
-                        <div class="text-style-controls">
-                          <div class="form-group small" style="flex: 0 0 40px;">
-                            <label style="font-size: 10px;">{{ t('properties.fontSize') }}</label>
-                            <input 
-                              v-model.number="column.columnHeader.fontSize" 
-                              type="number" 
-                              min="6"
-                              max="72"
-                              step="1"
-                              class="small-input"
-                              @change="emit('update-jrxml')"
-                            />
-                          </div>
-                          <div class="form-group small" style="flex: 1;">
-                            <label style="font-size: 10px;">{{ t('properties.forecolor') }}</label>
-                            <ColorPickerWithOpacity 
-                              v-model="column.columnHeader.forecolor"
-                              v-model:mode="column.columnHeader.forecolorMode"
-                              @update:modelValue="emit('update-jrxml')"
-                              @update:mode="emit('update-jrxml')"
-                            />
-                          </div>
-                          <div class="form-group small" style="flex: 1;">
-                            <label style="font-size: 10px;">{{ t('properties.backgroundColor') }}</label>
-                            <ColorPickerWithOpacity 
-                              v-model="column.columnHeader.backcolor"
-                              v-model:mode="column.columnHeader.mode"
-                              @update:modelValue="emit('update-jrxml')"
-                              @update:mode="emit('update-jrxml')"
-                              style="height: 20px;"
-                            />
-                          </div>
-                        </div>
-                      </div>
-                       
-                      <div class="checkbox-group" style="gap: 12px; margin-bottom: 6px;">
-                        <label style="font-size: 11px;">
-                          <input v-model="column.columnHeader.isBold" type="checkbox" @change="emit('update-jrxml')" />{{ t('properties.bold') }}
-                        </label>
-                        <label style="font-size: 11px;">
-                          <input v-model="column.columnHeader.isItalic" type="checkbox" @change="emit('update-jrxml')" />{{ t('properties.italic') }}
-                        </label>
-                        <label style="font-size: 11px;">
-                          <input v-model="column.columnHeader.isUnderline" type="checkbox" @change="emit('update-jrxml')" />{{ t('properties.underline') }}
-                        </label>
-                        <label style="font-size: 11px;">
-                          <input v-model="column.columnHeader.mode" type="checkbox" true-value="Opaque" false-value="Transparent" @change="emit('update-jrxml')" />{{ t('properties.opaque') }}
-                        </label>
-                      </div>
-                      
-                      <!-- 详情单元格文本样式 -->
-                      <div class="form-group small full-width">
-                        <label>{{ t('properties.detailTextStyle') }}</label>
-                        <div class="text-style-controls">
-                          <div class="form-group small" style="flex: 0 0 40px;">
-                            <label style="font-size: 10px;">{{ t('properties.fontSize') }}</label>
-                            <input 
-                              v-model.number="column.detailCell.fontSize" 
-                              type="number" 
-                              min="6"
-                              max="72"
-                              step="1"
-                              class="small-input"
-                              @change="emit('update-jrxml')"
-                            />
-                          </div>
-                          <div class="form-group small" style="flex: 1;">
-                            <label style="font-size: 10px;">{{ t('properties.forecolor') }}</label>
-                            <ColorPickerWithOpacity 
-                              v-model="column.detailCell.forecolor"
-                              v-model:mode="column.detailCell.forecolorMode"
-                              @update:modelValue="emit('update-jrxml')"
-                              @update:mode="emit('update-jrxml')"
-                            />
-                          </div>
-                          <div class="form-group small" style="flex: 1;">
-                            <label style="font-size: 10px;">{{ t('properties.backgroundColor') }}</label>
-                            <ColorPickerWithOpacity 
-                              v-model="column.detailCell.backcolor"
-                              v-model:mode="column.detailCell.mode"
-                              @update:modelValue="emit('update-jrxml')"
-                              @update:mode="emit('update-jrxml')"
-                              style="height: 20px;"
-                            />
-                          </div>
-                        </div>
-                      </div>
-                        
-                      <div class="checkbox-group" style="gap: 12px; margin-bottom: 6px;">
-                        <label style="font-size: 11px;">
-                          <input v-model="column.detailCell.isBold" type="checkbox" @change="emit('update-jrxml')" />{{ t('properties.bold') }}
-                        </label>
-                        <label style="font-size: 11px;">
-                          <input v-model="column.detailCell.isItalic" type="checkbox" @change="emit('update-jrxml')" />{{ t('properties.italic') }}
-                        </label>
-                        <label style="font-size: 11px;">
-                          <input v-model="column.detailCell.isUnderline" type="checkbox" @change="emit('update-jrxml')" />{{ t('properties.underline') }}
-                        </label>
-                        <label style="font-size: 11px;">
-                          <input v-model="column.detailCell.mode" type="checkbox" true-value="Opaque" false-value="Transparent" @change="emit('update-jrxml')" />{{ t('properties.opaque') }}
-                        </label>
-                      </div>
-                      
-                      <!-- 列尾文本样式 -->
-                      <div v-if="column.columnFooter && column.columnFooter.expression" class="form-group small full-width">
-                        <label>{{ t('properties.columnFooter') }}</label>
-                        <div class="text-style-controls">
-                          <div class="form-group small" style="flex: 0 0 40px;">
-                            <label style="font-size: 10px;">{{ t('properties.fontSize') }}</label>
-                            <input 
-                              v-model.number="column.columnFooter.fontSize" 
-                              type="number" 
-                              min="6"
-                              max="72"
-                              step="1"
-                              class="small-input"
-                              @change="emit('update-jrxml')"
-                            />
-                          </div>
-                          <div class="form-group small" style="flex: 1;">
-                            <label style="font-size: 10px;">{{ t('properties.forecolor') }}</label>
-                            <ColorPickerWithOpacity 
-                              v-model="column.columnFooter.forecolor"
-                              v-model:mode="column.columnFooter.forecolorMode"
-                              @update:modelValue="emit('update-jrxml')"
-                              @update:mode="emit('update-jrxml')"
-                            />
-                          </div>
-                          <div class="form-group small" style="flex: 1;">
-                            <label style="font-size: 10px;">{{ t('properties.backgroundColor') }}</label>
-                            <ColorPickerWithOpacity 
-                              v-model="column.columnFooter.backcolor"
-                              v-model:mode="column.columnFooter.mode"
-                              @update:modelValue="emit('update-jrxml')"
-                              @update:mode="emit('update-jrxml')"
-                              style="height: 20px;"
-                            />
-                          </div>
-                        </div>
-                      </div>
-                        
-                      <div v-if="column.columnFooter && column.columnFooter.expression" class="checkbox-group" style="gap: 12px; margin-bottom: 6px;">
-                        <label style="font-size: 11px;">
-                          <input v-model="column.columnFooter.isBold" type="checkbox" @change="emit('update-jrxml')" />{{ t('properties.bold') }}
-                        </label>
-                        <label style="font-size: 11px;">
-                          <input v-model="column.columnFooter.isItalic" type="checkbox" @change="emit('update-jrxml')" />{{ t('properties.italic') }}
-                        </label>
-                        <label style="font-size: 11px;">
-                          <input v-model="column.columnFooter.isUnderline" type="checkbox" @change="emit('update-jrxml')" />{{ t('properties.underline') }}
-                        </label>
-                        <label style="font-size: 11px;">
-                          <input v-model="column.columnFooter.mode" type="checkbox" true-value="Opaque" false-value="Transparent" @change="emit('update-jrxml')" />{{ t('properties.opaque') }}
-                        </label>
-                      </div>
-                      
-                      <!-- 表格表尾文本样式 -->
-                      <div v-if="column.tableFooter && column.tableFooter.expression" class="form-group small full-width">
-                        <label>{{ t('properties.tableFooter') }}</label>
-                        <div class="text-style-controls">
-                          <div class="form-group small" style="flex: 0 0 40px;">
-                            <label style="font-size: 10px;">{{ t('properties.fontSize') }}</label>
-                            <input 
-                              v-model.number="column.tableFooter.fontSize" 
-                              type="number" 
-                              min="6"
-                              max="72"
-                              step="1"
-                              class="small-input"
-                              @change="emit('update-jrxml')"
-                            />
-                          </div>
-                          <div class="form-group small" style="flex: 1;">
-                            <label style="font-size: 10px;">{{ t('properties.forecolor') }}</label>
-                            <ColorPickerWithOpacity 
-                              v-model="column.tableFooter.forecolor"
-                              v-model:mode="column.tableFooter.forecolorMode"
-                              @update:modelValue="emit('update-jrxml')"
-                              @update:mode="emit('update-jrxml')"
-                            />
-                          </div>
-                          <div class="form-group small" style="flex: 1;">
-                            <label style="font-size: 10px;">{{ t('properties.backgroundColor') }}</label>
-                            <ColorPickerWithOpacity 
-                              v-model="column.tableFooter.backcolor"
-                              v-model:mode="column.tableFooter.mode"
-                              @update:modelValue="emit('update-jrxml')"
-                              @update:mode="emit('update-jrxml')"
-                              style="height: 20px;"
-                            />
-                          </div>
-                        </div>
-                      </div>
-                        
-                      <div v-if="column.tableFooter && column.tableFooter.expression" class="checkbox-group" style="gap: 12px; margin-bottom: 6px;">
-                        <label style="font-size: 11px;">
-                          <input v-model="column.tableFooter.isBold" type="checkbox" @change="emit('update-jrxml')" />{{ t('properties.bold') }}
-                        </label>
-                        <label style="font-size: 11px;">
-                          <input v-model="column.tableFooter.isItalic" type="checkbox" @change="emit('update-jrxml')" />{{ t('properties.italic') }}
-                        </label>
-                        <label style="font-size: 11px;">
-                          <input v-model="column.tableFooter.isUnderline" type="checkbox" @change="emit('update-jrxml')" />{{ t('properties.underline') }}
-                        </label>
-                        <label style="font-size: 11px;">
-                          <input v-model="column.tableFooter.mode" type="checkbox" true-value="Opaque" false-value="Transparent" @change="emit('update-jrxml')" />{{ t('properties.opaque') }}
-                        </label>
-                      </div>
-                    </div>
+                  <!-- 表头行设置标签页 -->
+                   <n-tab-pane v-if="column.hasTableHeader" name="tableHeader" :tab="t('properties.tableHeader')">
+                        <FontStyleSettings 
+                          v-model="column.tableHeader"
+                          @update:modelValue="emit('update-jrxml')"
+                        />
+
+                        <BorderStyleSettings 
+                          v-model="column.tableHeader" 
+                          :label="t('properties.borderStyle')"
+                          @change="emit('update-jrxml')"
+                        />
+                   </n-tab-pane>
+
+                  <!-- 列头单元格设置标签页 -->
+                   <n-tab-pane name="columnHeader" :tab="t('properties.columnHeader')">
+                        <FontStyleSettings 
+                          v-model="column.columnHeader"
+                          @update:modelValue="emit('update-jrxml')"
+                        />
+
+                        <BorderStyleSettings 
+                          v-model="column.columnHeader" 
+                          :label="t('properties.borderStyle')"
+                          @change="emit('update-jrxml')"
+                        />
+                   </n-tab-pane>
+
+                  <!-- 详情单元格设置标签页 -->
+                  <n-tab-pane name="detailCell" :tab="t('properties.detailCell')">
+                      <FontStyleSettings 
+                          v-model="column.detailCell"
+                          @update:modelValue="emit('update-jrxml')"
+                        />
+
+                        <BorderStyleSettings 
+                          v-model="column.detailCell" 
+                          :label="t('properties.borderStyle')"
+                          @change="emit('update-jrxml')"
+                        />
                   </n-tab-pane>
-                  
-                  <!-- 边框样式标签页 -->
-                  <n-tab-pane name="borderStyle" :tab="t('properties.borderStyle')">
-                    <div class="table-column-properties">
-                      <!-- 表头边框样式 -->
-                      <div v-if="column.hasTableHeader" class="form-group small full-width">
-                        <label>{{ t('properties.headerBorder') }}</label>
-                        <div class="border-controls">
-                          <div class="form-group small" style="flex: 1;">
-                            <label style="font-size: 10px;">{{ t('properties.style') }}</label>
-                            <select 
-                              v-model="column.tableHeader.borderStyle" 
-                              class="small-input"
-                              @change="emit('update-jrxml')"
-                              style="height: 20px; padding: 0 4px;"
-                            >
-                              <option value="">{{ t('properties.none') }}</option>
-                              <option value="Solid">{{ t('properties.solid') }}</option>
-                              <option value="Dashed">{{ t('properties.dashed') }}</option>
-                              <option value="Dotted">{{ t('properties.dotted') }}</option>
-                              <option value="Double">{{ t('properties.double') }}</option>
-                            </select>
-                          </div>
-                          <div class="form-group small" style="flex: 0 0 60px;">
-                            <label style="font-size: 10px;">{{ t('properties.width') }}</label>
-                            <input 
-                              v-model.number="column.tableHeader.borderWidth" 
-                              type="number" 
-                              min="0"
-                              max="10"
-                              step="0.5"
-                              class="small-input"
-                              @change="emit('update-jrxml')"
-                            />
-                          </div>
-                          <div class="form-group small" style="flex: 0 0 60px;">
-                            <label style="font-size: 10px;">{{ t('properties.color') }}</label>
-                            <input 
-                              v-model="column.tableHeader.borderColor" 
-                              type="color" 
-                              class="small-input color-picker"
-                              @change="emit('update-jrxml')"
-                              style="height: 20px; padding: 0;"
-                            />
-                          </div>
-                        </div>
-                      </div>
-                      
-                      <!-- 列头边框样式 -->
-                      <div class="form-group small full-width">
-                        <label>{{ t('properties.columnHeader') }}</label>
-                        <div class="border-controls">
-                          <div class="form-group small" style="flex: 1;">
-                            <label style="font-size: 10px;">{{ t('properties.style') }}</label>
-                            <select 
-                              v-model="column.columnHeader.borderStyle" 
-                              class="small-input"
-                              @change="emit('update-jrxml')"
-                              style="height: 20px; padding: 0 4px;"
-                            >
-                              <option value="">{{ t('properties.none') }}</option>
-                              <option value="Solid">{{ t('properties.solid') }}</option>
-                              <option value="Dashed">{{ t('properties.dashed') }}</option>
-                              <option value="Dotted">{{ t('properties.dotted') }}</option>
-                              <option value="Double">{{ t('properties.double') }}</option>
-                            </select>
-                          </div>
-                          <div class="form-group small" style="flex: 0 0 60px;">
-                            <label style="font-size: 10px;">{{ t('properties.width') }}</label>
-                            <input 
-                              v-model.number="column.columnHeader.borderWidth" 
-                              type="number" 
-                              min="0"
-                              max="10"
-                              step="0.5"
-                              class="small-input"
-                              @change="emit('update-jrxml')"
-                            />
-                          </div>
-                          <div class="form-group small" style="flex: 0 0 60px;">
-                            <label style="font-size: 10px;">{{ t('properties.color') }}</label>
-                            <input 
-                              v-model="column.columnHeader.borderColor" 
-                              type="color" 
-                              class="small-input color-picker"
-                              @change="emit('update-jrxml')"
-                              style="height: 20px; padding: 0;"
-                            />
-                          </div>
-                        </div>
-                      </div>
-                      
-                      <!-- 详情单元格边框样式 -->
-                      <div class="form-group small full-width">
-                        <label>{{ t('properties.detailBorder') }}</label>
-                        <div class="border-controls">
-                          <div class="form-group small" style="flex: 1;">
-                            <label style="font-size: 10px;">{{ t('properties.style') }}</label>
-                            <select 
-                              v-model="column.detailCell.borderStyle" 
-                              class="small-input"
-                              @change="emit('update-jrxml')"
-                              style="height: 20px; padding: 0 4px;"
-                            >
-                              <option value="">{{ t('properties.none') }}</option>
-                              <option value="Solid">{{ t('properties.solid') }}</option>
-                              <option value="Dashed">{{ t('properties.dashed') }}</option>
-                              <option value="Dotted">{{ t('properties.dotted') }}</option>
-                              <option value="Double">{{ t('properties.double') }}</option>
-                            </select>
-                          </div>
-                          <div class="form-group small" style="flex: 0 0 60px;">
-                            <label style="font-size: 10px;">{{ t('properties.width') }}</label>
-                            <input 
-                              v-model.number="column.detailCell.borderWidth" 
-                              type="number" 
-                              min="0"
-                              max="10"
-                              step="0.5"
-                              class="small-input"
-                              @change="emit('update-jrxml')"
-                            />
-                          </div>
-                          <div class="form-group small" style="flex: 0 0 60px;">
-                            <label style="font-size: 10px;">{{ t('properties.color') }}</label>
-                            <input 
-                              v-model="column.detailCell.borderColor" 
-                              type="color" 
-                              class="small-input color-picker"
-                              @change="emit('update-jrxml')"
-                              style="height: 20px; padding: 0;"
-                            />
-                          </div>
-                        </div>
-                      </div>
-                      
-                      <!-- 列尾边框样式 -->
-                      <div v-if="column.columnFooter && column.columnFooter.expression" class="form-group small full-width">
-                        <label>{{ t('properties.columnFooter') }}</label>
-                        <div class="border-controls">
-                          <div class="form-group small" style="flex: 1;">
-                            <label style="font-size: 10px;">{{ t('properties.style') }}</label>
-                            <select 
-                              v-model="column.columnFooter.borderStyle" 
-                              class="small-input"
-                              @change="emit('update-jrxml')"
-                              style="height: 20px; padding: 0 4px;"
-                            >
-                              <option value="">{{ t('properties.none') }}</option>
-                              <option value="Solid">{{ t('properties.solid') }}</option>
-                              <option value="Dashed">{{ t('properties.dashed') }}</option>
-                              <option value="Dotted">{{ t('properties.dotted') }}</option>
-                              <option value="Double">{{ t('properties.double') }}</option>
-                            </select>
-                          </div>
-                          <div class="form-group small" style="flex: 0 0 60px;">
-                            <label style="font-size: 10px;">{{ t('properties.width') }}</label>
-                            <input 
-                              v-model.number="column.columnFooter.borderWidth" 
-                              type="number" 
-                              min="0"
-                              max="10"
-                              step="0.5"
-                              class="small-input"
-                              @change="emit('update-jrxml')"
-                            />
-                          </div>
-                          <div class="form-group small" style="flex: 0 0 60px;">
-                            <label style="font-size: 10px;">{{ t('properties.color') }}</label>
-                            <input 
-                              v-model="column.columnFooter.borderColor" 
-                              type="color" 
-                              class="small-input color-picker"
-                              @change="emit('update-jrxml')"
-                              style="height: 20px; padding: 0;"
-                            />
-                          </div>
-                        </div>
-                      </div>
-                      
-                      <!-- 表格表尾边框样式 -->
-                      <div v-if="column.tableFooter && column.tableFooter.expression" class="form-group small full-width">
-                        <label>{{ t('properties.tableFooter') }}</label>
-                        <div class="border-controls">
-                          <div class="form-group small" style="flex: 1;">
-                            <label style="font-size: 10px;">{{ t('properties.style') }}</label>
-                            <select 
-                              v-model="column.tableFooter.borderStyle" 
-                              class="small-input"
-                              @change="emit('update-jrxml')"
-                              style="height: 20px; padding: 0 4px;"
-                            >
-                              <option value="">{{ t('properties.none') }}</option>
-                              <option value="Solid">{{ t('properties.solid') }}</option>
-                              <option value="Dashed">{{ t('properties.dashed') }}</option>
-                              <option value="Dotted">{{ t('properties.dotted') }}</option>
-                              <option value="Double">{{ t('properties.double') }}</option>
-                            </select>
-                          </div>
-                          <div class="form-group small" style="flex: 0 0 60px;">
-                            <label style="font-size: 10px;">{{ t('properties.width') }}</label>
-                            <input 
-                              v-model.number="column.tableFooter.borderWidth" 
-                              type="number" 
-                              min="0"
-                              max="10"
-                              step="0.5"
-                              class="small-input"
-                              @change="emit('update-jrxml')"
-                            />
-                          </div>
-                          <div class="form-group small" style="flex: 0 0 60px;">
-                            <label style="font-size: 10px;">{{ t('properties.color') }}</label>
-                            <input 
-                              v-model="column.tableFooter.borderColor" 
-                              type="color" 
-                              class="small-input color-picker"
-                              @change="emit('update-jrxml')"
-                              style="height: 20px; padding: 0;"
-                            />
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </n-tab-pane>
+                  <!-- 列尾行设置标签页 -->
+                   <n-tab-pane v-if="column.columnFooter && column.columnFooter.expression" name="columnFooter" :tab="t('properties.columnFooter')">
+                        <FontStyleSettings 
+                          v-model="column.columnFooter"
+                          @update:modelValue="emit('update-jrxml')"
+                        />
+
+                        <BorderStyleSettings 
+                          v-model="column.columnFooter" 
+                          :label="t('properties.borderStyle')"
+                          @change="emit('update-jrxml')"
+                        />
+                   </n-tab-pane>
+
+                  <!-- 表尾行设置标签页 -->
+                   <n-tab-pane v-if="column.tableFooter && column.tableFooter.expression" name="tableFooter" :tab="t('properties.tableFooter')">
+                        <FontStyleSettings 
+                          v-model="column.tableFooter"
+                          @update:modelValue="emit('update-jrxml')"
+                        />
+
+                        <BorderStyleSettings 
+                          v-model="column.tableFooter" 
+                          :label="t('properties.borderStyle')"
+                          @change="emit('update-jrxml')"
+                        />
+                   </n-tab-pane>
                 </n-tabs>
                 </div>
               </div>
@@ -1535,6 +1039,8 @@ import type { Band, SelectedElementInfo, TableDataset } from '../../../types';
 import { getAvailableFonts } from '../../../utils/fontUtils';
 import BaseModal from '../../modals/BaseModal.vue';
 import ColorPickerWithOpacity from './ColorPickerWithOpacity.vue';
+import FontStyleSettings from './FontStyleSettings.vue';
+import BorderStyleSettings from './BorderStyleSettings.vue';
 
 const { t } = useI18n();
 

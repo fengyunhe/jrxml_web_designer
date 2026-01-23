@@ -924,6 +924,62 @@ const lastClickedBandIndex = ref<number>(3); // 默认为DETAIL区域（索引3�
 // 跟踪从组件库拖拽的元素（修复Mac Tauri环境下dataTransfer可能失效的问题）
 const draggedLibraryElement = ref<any>(null);
 
+// 辅助函数：根据数据集生成表格列
+function generateTableColumnsFromDataset(defaultTableWidth: number = 555) {
+  // 优先使用子数据集
+  if (subDatasets.value.length > 0) {
+    const dataset = subDatasets.value[0];
+    if (dataset && dataset.fields && dataset.fields.length > 0) {
+      const fieldCount = dataset.fields.length;
+      const columnWidth = Math.round(defaultTableWidth / fieldCount); // 根据表格宽度均分列宽
+      return dataset.fields.map(field => {
+        return {
+          uuid: crypto.randomUUID(),
+          width: columnWidth,
+          name: field.name,
+          tableHeader: {
+            type: 'staticText',
+            x: 0,
+            y: 0,
+            width: columnWidth,
+            height: 30,
+            text: field.name,
+            forecolor: '#006699',
+            backcolor: '#E6E6E6',
+            fontFamily: 'SansSerif',
+            fontSize: 19,
+            isBold: true,
+            textAlignment: 'Center',
+            verticalAlignment: 'Middle'
+          },
+          columnHeader: {
+            type: 'staticText',
+            x: 0,
+            y: 0,
+            width: columnWidth,
+            height: 30,
+            text: field.name,
+            textAlignment: 'Center',
+            verticalAlignment: 'Middle'
+          },
+          detailCell: {
+            type: 'textField',
+            x: 0,
+            y: 0,
+            width: columnWidth,
+            height: 30,
+            expression: `$F{${field.name}}`,
+            textAlignment: 'Center',
+            verticalAlignment: 'Middle'
+          }
+        };
+      });
+    }
+  }
+  // 默认返回空数组，使用ElementRegistry中的默认列
+  return [];
+}
+
 // 处理拖放
 const handleDragStart = (event: DragEvent, element: any) => {
   draggedLibraryElement.value = element;
@@ -952,13 +1008,26 @@ const handleElementDoubleClick = (element: any) => {
   saveStateToHistory();
   
   // 创建新元素
-  const newElement: DesignElement = {
+  let newElement: DesignElement = {
     ...createElement(element.type),
     uuid: crypto.randomUUID(), // 生成 UUID
     x: 50, // 默认位置
     y: 20, // 默认位置
     ...getDefaultElementProperties(element.type)
   } as DesignElement;
+  
+  // 如果是表格元素，检查是否有数据集，生成对应的列
+  if (element.type === 'table') {
+    // 获取表格默认宽度
+    const defaultTableWidth = (newElement as any).width || 555;
+    const columns = generateTableColumnsFromDataset(defaultTableWidth);
+    if (columns.length > 0) {
+      (newElement as any).columns = columns;
+      // 计算表格总宽度
+      const totalWidth = columns.reduce((sum, column) => sum + (column.width || 150), 0);
+      newElement.width = totalWidth;
+    }
+  }
   
   // 为矩形、椭圆、容器和图片设置默认高度为band高度的一半
   if (['rectangle', 'ellipse', 'frame', 'image'].includes(element.type)) {
@@ -1039,13 +1108,28 @@ const handleDrop = (event: DragEvent) => {
     }
     
     // 创建新元素
-    const newElement: DesignElement = {
+    let newElement: DesignElement = {
       ...createElement(elementData.type),
       uuid: crypto.randomUUID(), // 生成 UUID
       x: Math.round(Math.max(0, scaledX - 50)), // 减去元素宽度的一半以居中，并确保为整数
       y: Math.round(Math.max(0, scaledY - currentY)), // 相对于band的位置，并确保为整数
       ...getDefaultElementProperties(elementData.type)
     } as DesignElement;
+    
+    // 如果是表格元素，检查是否有数据集，生成对应的列
+    if (elementData.type === 'table') {
+      // 获取表格默认宽度
+      const defaultTableWidth = (newElement as any).width || 555;
+      const columns = generateTableColumnsFromDataset(defaultTableWidth);
+      if (columns.length > 0) {
+        (newElement as any).columns = columns;
+        // 计算表格总宽度
+        const totalWidth = columns.reduce((sum, column) => sum + (column.width || 150), 0);
+        newElement.width = totalWidth;
+        // 更新x坐标，使其居中
+        newElement.x = Math.round(Math.max(0, scaledX - totalWidth / 2));
+      }
+    }
     
     const targetBand = bands.value[bandIndex];
     if (targetBand && targetBand.elements) {
@@ -3526,6 +3610,22 @@ const startResizingElement = (event: MouseEvent, bandIndex: number, elementIndex
           
           // 特殊处理表格元素：调整表格宽度时自动调整列宽
           if (element.type === 'table') {
+            // 在children数组中查找对应的列（递归查找）
+            function findColumnInChildren(children: any[], targetColumn: any): any | null {
+              for (const child of children) {
+                if (child.uuid === targetColumn.uuid) {
+                  return child;
+                }
+                if (child.children) {
+                  const found = findColumnInChildren(child.children, targetColumn);
+                  if (found) {
+                    return found;
+                  }
+                }
+              }
+              return null;
+            }
+            
             // 计算表格宽度变化
             const widthChange = element.width - resizingInfo.value.startWidth;
             
@@ -3565,10 +3665,37 @@ const startResizingElement = (event: MouseEvent, bandIndex: number, elementIndex
                   if (col.tableFooter) {
                     col.tableFooter.width = newWidth;
                   }
+                  
+                  // 如果表格有children属性，同时更新children属性中对应列的宽度
+                  if (element.children) {
+                    // 查找children中对应的列（通过uuid）
+                    const childColumn = findColumnInChildren(element.children, col);
+                    if (childColumn) {
+                      // 更新childColumn的宽度
+                      childColumn.width = newWidth;
+                      
+                      // 同时更新childColumn中所有相关单元格的宽度
+                      if (childColumn.tableHeader) {
+                        childColumn.tableHeader.width = newWidth;
+                      }
+                      if (childColumn.columnHeader) {
+                        childColumn.columnHeader.width = newWidth;
+                      }
+                      if (childColumn.detailCell) {
+                        childColumn.detailCell.width = newWidth;
+                      }
+                      if (childColumn.columnFooter) {
+                        childColumn.columnFooter.width = newWidth;
+                      }
+                      if (childColumn.tableFooter) {
+                        childColumn.tableFooter.width = newWidth;
+                      }
+                    }
+                  }
                 });
               }
             }
-          } 
+          }
           // 特殊处理表格单元格内的元素：确保元素宽度不超过所在列的宽度
           else {
             // 检查当前元素是否是表格单元格内的元素

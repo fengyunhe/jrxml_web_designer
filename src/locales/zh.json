@@ -287,7 +287,8 @@
     "maxWidthHint": "最大允许宽度：{maxWidth}",
     "autoCalculated": "自动计算",
     "all": "全部",
-    "fontStyle": "字体样式"
+    "fontStyle": "字体样式",
+    "detailCell": "详情单元格"
   },
   "bottomPanel": {
     "pageSettings": "页面设置",
