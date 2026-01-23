@@ -415,5 +415,420 @@ describe('parseJRXMLContent', () => {
     expect(result.properties.query?.language).toBe('sql')
     expect(result.properties.query?.text).toBe('SELECT * FROM main_table')
   })
+
+  it('should parse ellipse elements', () => {
+    const jrxmlContent = `
+      <jasperReport name="TestReport" pageWidth="595" pageHeight="842">
+        <detail>
+          <band height="100">
+            <ellipse>
+              <reportElement x="20" y="20" width="50" height="50"/>
+              <graphicElement>
+                <pen lineWidth="1" lineStyle="Solid" lineColor="#000000"/>
+              </graphicElement>
+            </ellipse>
+          </band>
+        </detail>
+      </jasperReport>
+    `
+    
+    const result = parseJRXMLContent(jrxmlContent)
+    
+    expect(result.bands[0].elements).toHaveLength(1)
+    expect(result.bands[0].elements[0].type).toBe('ellipse')
+    expect(result.bands[0].elements[0].x).toBe(20)
+    expect(result.bands[0].elements[0].y).toBe(20)
+    expect(result.bands[0].elements[0].width).toBe(50)
+    expect(result.bands[0].elements[0].height).toBe(50)
+  })
+
+  it('should parse break elements', () => {
+    const jrxmlContent = `
+      <jasperReport name="TestReport" pageWidth="595" pageHeight="842">
+        <detail>
+          <band height="100">
+            <break type="Page">
+              <reportElement x="20" y="20" width="1" height="1"/>
+            </break>
+          </band>
+        </detail>
+      </jasperReport>
+    `
+    
+    const result = parseJRXMLContent(jrxmlContent)
+    
+    expect(result.bands[0].elements).toHaveLength(1)
+    expect(result.bands[0].elements[0].type).toBe('break')
+    expect(result.bands[0].elements[0].breakType).toBe('Page')
+  })
+
+  it('should parse frame elements', () => {
+    const jrxmlContent = `
+      <jasperReport name="TestReport" pageWidth="595" pageHeight="842">
+        <detail>
+          <band height="100">
+            <frame>
+              <reportElement x="20" y="20" width="200" height="50"/>
+              <staticText>
+                <reportElement x="10" y="10" width="180" height="30"/>
+                <text>Text inside Frame</text>
+              </staticText>
+            </frame>
+          </band>
+        </detail>
+      </jasperReport>
+    `
+    
+    const result = parseJRXMLContent(jrxmlContent)
+    
+    expect(result.bands[0].elements).toHaveLength(1)
+    expect(result.bands[0].elements[0].type).toBe('frame')
+    expect(result.bands[0].elements[0].x).toBe(20)
+    expect(result.bands[0].elements[0].y).toBe(20)
+    expect(result.bands[0].elements[0].width).toBe(200)
+    expect(result.bands[0].elements[0].height).toBe(50)
+  })
+
+  it('should parse text elements with textAlignment and verticalAlignment', () => {
+    const jrxmlContent = `
+      <jasperReport name="TestReport" pageWidth="595" pageHeight="842">
+        <detail>
+          <band height="100">
+            <staticText>
+              <reportElement x="20" y="20" width="100" height="30"/>
+              <textElement textAlignment="Center" verticalAlignment="Middle">
+                <font size="12"/>
+              </textElement>
+              <text>Centered Text</text>
+            </staticText>
+          </band>
+        </detail>
+      </jasperReport>
+    `
+    
+    const result = parseJRXMLContent(jrxmlContent)
+    
+    expect(result.bands[0].elements[0].textAlignment).toBe('Center')
+    expect(result.bands[0].elements[0].verticalAlignment).toBe('Middle')
+  })
+
+  it('should parse text elements with markup', () => {
+    const jrxmlContent = `
+      <jasperReport name="TestReport" pageWidth="595" pageHeight="842">
+        <detail>
+          <band height="100">
+            <staticText>
+              <reportElement x="20" y="20" width="100" height="30"/>
+              <textElement markup="styled">
+                <font size="12"/>
+              </textElement>
+              <text><![CDATA[<b>Bold Text</b>]]></text>
+            </staticText>
+          </band>
+        </detail>
+      </jasperReport>
+    `
+    
+    const result = parseJRXMLContent(jrxmlContent)
+    
+    expect(result.bands[0].elements[0].markup).toBe('styled')
+  })
+
+  it('should parse textField with evaluationTime', () => {
+    const jrxmlContent = `
+      <jasperReport name="TestReport" pageWidth="595" pageHeight="842">
+        <detail>
+          <band height="100">
+            <textField evaluationTime="Report">
+              <reportElement x="20" y="20" width="100" height="30"/>
+              <textFieldExpression>$V{REPORT_COUNT}</textFieldExpression>
+            </textField>
+          </band>
+        </detail>
+      </jasperReport>
+    `
+    
+    const result = parseJRXMLContent(jrxmlContent)
+    
+    expect(result.bands[0].elements[0].type).toBe('textField')
+    expect(result.bands[0].elements[0].evaluationTime).toBe('Report')
+    expect(result.bands[0].elements[0].expression).toBe('$V{REPORT_COUNT}')
+  })
+
+  it('should parse textField with pattern', () => {
+    const jrxmlContent = `
+      <jasperReport name="TestReport" pageWidth="595" pageHeight="842">
+        <detail>
+          <band height="100">
+            <textField pattern="$ #,##0.00">
+              <reportElement x="20" y="20" width="100" height="30"/>
+              <textFieldExpression>$F{amount}</textFieldExpression>
+            </textField>
+          </band>
+        </detail>
+      </jasperReport>
+    `
+    
+    const result = parseJRXMLContent(jrxmlContent)
+    
+    expect(result.bands[0].elements[0].type).toBe('textField')
+    expect(result.bands[0].elements[0].pattern).toBe('$ #,##0.00')
+    expect(result.bands[0].elements[0].expression).toBe('$F{amount}')
+  })
+
+  it('should parse subDataset with fields having properties', () => {
+    const jrxmlContent = `
+      <jasperReport name="TestReport" pageWidth="595" pageHeight="842">
+        <subDataset name="tableDataset">
+          <field name="field1" class="java.lang.String">
+            <property name="com.jaspersoft.studio.field.label" value="Field 1 Label"/>
+            <property name="com.jaspersoft.studio.field.description" value="Field 1 Description"/>
+          </field>
+        </subDataset>
+        <detail>
+          <band height="100">
+          </band>
+        </detail>
+      </jasperReport>
+    `
+    
+    const result = parseJRXMLContent(jrxmlContent)
+    
+    expect(result.datasets).toHaveLength(1)
+    expect(result.datasets[0].fields).toHaveLength(1)
+    expect(result.datasets[0].fields[0].properties).toBeDefined()
+    expect(result.datasets[0].fields[0].properties?.['com.jaspersoft.studio.field.label']).toBe('Field 1 Label')
+    expect(result.datasets[0].fields[0].properties?.['com.jaspersoft.studio.field.description']).toBe('Field 1 Description')
+  })
+
+  it('should parse subDataset with parameters', () => {
+    const jrxmlContent = `
+      <jasperReport name="TestReport" pageWidth="595" pageHeight="842">
+        <subDataset name="tableDataset">
+          <parameter name="datasetParam" class="java.lang.String">
+            <defaultValueExpression>"default"</defaultValueExpression>
+          </parameter>
+          <queryString language="sql">
+            SELECT * FROM test_table WHERE status = $P{datasetParam}
+          </queryString>
+        </subDataset>
+        <detail>
+          <band height="100">
+          </band>
+        </detail>
+      </jasperReport>
+    `
+    
+    const result = parseJRXMLContent(jrxmlContent)
+    
+    expect(result.datasets).toHaveLength(1)
+    expect(result.datasets[0].parameters).toHaveLength(1)
+    expect(result.datasets[0].parameters[0].name).toBe('datasetParam')
+    expect(result.datasets[0].parameters[0].class).toBe('java.lang.String')
+    expect(result.datasets[0].parameters[0].defaultValue).toBe('"default"')
+  })
+
+  it('should parse textField with textAdjust property', () => {
+    const jrxmlContent = `
+      <jasperReport name="TestReport" pageWidth="595" pageHeight="842">
+        <detail>
+          <band height="100">
+            <textField textAdjust="StretchHeight">
+              <reportElement x="20" y="20" width="100" height="30"/>
+              <textFieldExpression>$F{longText}</textFieldExpression>
+            </textField>
+          </band>
+        </detail>
+      </jasperReport>
+    `
+    
+    const result = parseJRXMLContent(jrxmlContent)
+    
+    expect(result.bands[0].elements[0].type).toBe('textField')
+    expect(result.bands[0].elements[0].textAdjust).toBe('StretchHeight')
+  })
+
+  it('should parse textField with isStretchWithOverflow property', () => {
+    const jrxmlContent = `
+      <jasperReport name="TestReport" pageWidth="595" pageHeight="842">
+        <detail>
+          <band height="100">
+            <textField isStretchWithOverflow="true">
+              <reportElement x="20" y="20" width="100" height="30"/>
+              <textFieldExpression>$F{longText}</textFieldExpression>
+            </textField>
+          </band>
+        </detail>
+      </jasperReport>
+    `
+    
+    const result = parseJRXMLContent(jrxmlContent)
+    
+    expect(result.bands[0].elements[0].type).toBe('textField')
+    expect(result.bands[0].elements[0].textAdjust).toBe('StretchHeight')
+  })
+
+  it('should parse textField with isBlankWhenNull property', () => {
+    const jrxmlContent = `
+      <jasperReport name="TestReport" pageWidth="595" pageHeight="842">
+        <detail>
+          <band height="100">
+            <textField isBlankWhenNull="true">
+              <reportElement x="20" y="20" width="100" height="30"/>
+              <textFieldExpression>$F{nullableField}</textFieldExpression>
+            </textField>
+          </band>
+        </detail>
+      </jasperReport>
+    `
+    
+    const result = parseJRXMLContent(jrxmlContent)
+    
+    expect(result.bands[0].elements[0].type).toBe('textField')
+    expect(result.bands[0].elements[0].isBlankWhenNull).toBe(true)
+  })
+
+  it('should parse image with scaleImage property', () => {
+    const jrxmlContent = `
+      <jasperReport name="TestReport" pageWidth="595" pageHeight="842">
+        <detail>
+          <band height="100">
+            <image scaleImage="RetainShape">
+              <reportElement x="20" y="20" width="100" height="100"/>
+              <imageExpression>"/path/to/image.png"</imageExpression>
+            </image>
+          </band>
+        </detail>
+      </jasperReport>
+    `
+    
+    const result = parseJRXMLContent(jrxmlContent)
+    
+    expect(result.bands[0].elements[0].type).toBe('image')
+    expect(result.bands[0].elements[0].scaleImage).toBe('RetainShape')
+  })
+
+  it('should parse line with lineDirection property', () => {
+    const jrxmlContent = `
+      <jasperReport name="TestReport" pageWidth="595" pageHeight="842">
+        <detail>
+          <band height="100">
+            <line direction="TopDown">
+              <reportElement x="20" y="20" width="1" height="60"/>
+            </line>
+          </band>
+        </detail>
+      </jasperReport>
+    `
+    
+    const result = parseJRXMLContent(jrxmlContent)
+    
+    expect(result.bands[0].elements[0].type).toBe('line')
+    expect(result.bands[0].elements[0].lineDirection).toBe('TopDown')
+  })
+
+  it('should parse rectangle with fill property', () => {
+    const jrxmlContent = `
+      <jasperReport name="TestReport" pageWidth="595" pageHeight="842">
+        <detail>
+          <band height="100">
+            <rectangle>
+              <reportElement x="20" y="20" width="100" height="50"/>
+              <graphicElement fill="Solid">
+                <pen lineWidth="1" lineStyle="Solid" lineColor="#000000"/>
+              </graphicElement>
+            </rectangle>
+          </band>
+        </detail>
+      </jasperReport>
+    `
+    
+    const result = parseJRXMLContent(jrxmlContent)
+    
+    expect(result.bands[0].elements[0].type).toBe('rectangle')
+    expect(result.bands[0].elements[0].fill).toBe('Solid')
+  })
+
+  it('should parse band with isSplitAllowed property', () => {
+    const jrxmlContent = `
+      <jasperReport name="TestReport" pageWidth="595" pageHeight="842">
+        <detail>
+          <band height="100" isSplitAllowed="false">
+          </band>
+        </detail>
+      </jasperReport>
+    `
+    
+    const result = parseJRXMLContent(jrxmlContent)
+    
+    expect(result.bands[0].splitType).toBe('Prevent')
+  })
+
+  it('should parse frame with backcolor and mode properties', () => {
+    const jrxmlContent = `
+      <jasperReport name="TestReport" pageWidth="595" pageHeight="842">
+        <detail>
+          <band height="100">
+            <frame>
+              <reportElement x="20" y="20" width="200" height="50" backcolor="#FFFF00" mode="Opaque"/>
+            </frame>
+          </band>
+        </detail>
+      </jasperReport>
+    `
+    
+    const result = parseJRXMLContent(jrxmlContent)
+    
+    expect(result.bands[0].elements[0].type).toBe('frame')
+    expect(result.bands[0].elements[0].backcolor).toBe('#FFFF00')
+    expect(result.bands[0].elements[0].mode).toBe('Opaque')
+  })
+
+  it('should parse textElement with isStyledText property', () => {
+    const jrxmlContent = `
+      <jasperReport name="TestReport" pageWidth="595" pageHeight="842">
+        <detail>
+          <band height="100">
+            <staticText>
+              <reportElement x="20" y="20" width="100" height="30"/>
+              <textElement isStyledText="true">
+                <font size="12"/>
+              </textElement>
+              <text><![CDATA[<b>Bold Text</b>]]></text>
+            </staticText>
+          </band>
+        </detail>
+      </jasperReport>
+    `
+    
+    const result = parseJRXMLContent(jrxmlContent)
+    
+    expect(result.bands[0].elements[0].markup).toBe('styled')
+  })
+
+  it('should parse subDataset with properties', () => {
+    const jrxmlContent = `
+      <jasperReport name="TestReport" pageWidth="595" pageHeight="842">
+        <subDataset name="tableDataset">
+          <property name="com.jaspersoft.studio.data.defaultdataadapter" value="Sample DB"/>
+          <property name="net.sf.jasperreports.query.executer.factory.sql" value="com.jaspersoft.hiberynate.jdbc.HibQueryExecuterFactory"/>
+          <queryString language="sql">
+            SELECT * FROM test_table
+          </queryString>
+        </subDataset>
+        <detail>
+          <band height="100">
+          </band>
+        </detail>
+      </jasperReport>
+    `
+    
+    const result = parseJRXMLContent(jrxmlContent)
+    
+    expect(result.datasets).toHaveLength(1)
+    expect(result.datasets[0].properties).toBeDefined()
+    expect(result.datasets[0].properties?.['com.jaspersoft.studio.data.defaultdataadapter']).toBe('Sample DB')
+    expect(result.datasets[0].properties?.['net.sf.jasperreports.query.executer.factory.sql']).toBe('com.jaspersoft.hiberynate.jdbc.HibQueryExecuterFactory')
+  })
 })
 

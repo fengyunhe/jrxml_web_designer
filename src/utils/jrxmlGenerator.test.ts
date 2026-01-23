@@ -470,4 +470,316 @@ describe('jrxmlGenerator', () => {
     expect(jrxml).toContain('<staticText>')
     expect(jrxml).toContain('<textField>')
   })
+
+  it('should generate box elements with borders', () => {
+    const bandsWithBox: Band[] = [
+      {
+        type: 'detail',
+        height: 100,
+        elements: [
+          {
+            type: 'staticText',
+            x: 20,
+            y: 10,
+            width: 100,
+            height: 20,
+            text: 'Text with Border',
+            fontFamily: 'Arial',
+            fontSize: 12,
+            box: {
+              pen: {
+                lineWidth: 1,
+                lineStyle: 'Solid',
+                lineColor: '#000000'
+              }
+            }
+          } as DesignElement
+        ]
+      }
+    ]
+    
+    const jrxml = generateJRXMLContent(mockReportProperties, bandsWithBox, [], [])
+    
+    // Should include box element with border
+    expect(jrxml).toContain('<box>')
+    expect(jrxml).toContain('<pen lineWidth="1" lineStyle="Solid" lineColor="#000000"/>')
+    expect(jrxml).toContain('</box>')
+  })
+
+  it('should generate box elements with padding', () => {
+    const bandsWithBoxPadding: Band[] = [
+      {
+        type: 'detail',
+        height: 100,
+        elements: [
+          {
+            type: 'staticText',
+            x: 20,
+            y: 10,
+            width: 100,
+            height: 20,
+            text: 'Text with Padding',
+            fontFamily: 'Arial',
+            fontSize: 12,
+            box: {
+              padding: 5
+            }
+          } as DesignElement
+        ]
+      }
+    ]
+    
+    const jrxml = generateJRXMLContent(mockReportProperties, bandsWithBoxPadding, [], [])
+    
+    // Should include box element with padding
+    expect(jrxml).toContain('<box padding="5">')
+    expect(jrxml).toContain('</box>')
+  })
+
+  it('should generate image elements', () => {
+    const bandsWithImage: Band[] = [
+      {
+        type: 'detail',
+        height: 100,
+        elements: [
+          {
+            type: 'image',
+            x: 20,
+            y: 10,
+            width: 100,
+            height: 50,
+            imageExpression: '"/path/to/image.png"'
+          } as DesignElement
+        ]
+      }
+    ]
+    
+    const jrxml = generateJRXMLContent(mockReportProperties, bandsWithImage, [], [])
+    
+    // Should include image element
+    expect(jrxml).toContain('<image>')
+    expect(jrxml).toContain('<reportElement x="20" y="10" width="100" height="50"')
+    expect(jrxml).toContain('<imageExpression><![CDATA["/path/to/image.png"]]></imageExpression>')
+    expect(jrxml).toContain('</image>')
+  })
+
+  it('should generate line elements', () => {
+    const bandsWithLine: Band[] = [
+      {
+        type: 'detail',
+        height: 100,
+        elements: [
+          {
+            type: 'line',
+            x: 20,
+            y: 10,
+            width: 100,
+            height: 0,
+            lineDirection: 'TopDown'
+          } as DesignElement
+        ]
+      }
+    ]
+    
+    const jrxml = generateJRXMLContent(mockReportProperties, bandsWithLine, [], [])
+    
+    // Should include line element
+    expect(jrxml).toContain('<line direction="TopDown">')
+    expect(jrxml).toContain('<reportElement x="20" y="10" width="100" height="20"')
+    expect(jrxml).toContain('</line>')
+  })
+
+  it('should generate rectangle elements', () => {
+    const bandsWithRectangle: Band[] = [
+      {
+        type: 'detail',
+        height: 100,
+        elements: [
+          {
+            type: 'rectangle',
+            x: 20,
+            y: 10,
+            width: 100,
+            height: 50,
+            radius: 5
+          } as DesignElement
+        ]
+      }
+    ]
+    
+    const jrxml = generateJRXMLContent(mockReportProperties, bandsWithRectangle, [], [])
+    
+    // Should include rectangle element
+    expect(jrxml).toContain('<rectangle radius="5">')
+    expect(jrxml).toContain('<reportElement x="20" y="10" width="100" height="50"')
+    expect(jrxml).toContain('</rectangle>')
+  })
+
+  it('should generate box elements with individual side borders', () => {
+    const bandsWithIndividualBorders: Band[] = [
+      {
+        type: 'detail',
+        height: 100,
+        elements: [
+          {
+            type: 'staticText',
+            x: 20,
+            y: 10,
+            width: 100,
+            height: 20,
+            text: 'Text with Individual Borders',
+            fontFamily: 'Arial',
+            fontSize: 12,
+            box: {
+              topPen: {
+                lineWidth: 1,
+                lineStyle: 'Solid',
+                lineColor: '#FF0000'
+              },
+              bottomPen: {
+                lineWidth: 2,
+                lineStyle: 'Dashed',
+                lineColor: '#00FF00'
+              }
+            }
+          } as DesignElement
+        ]
+      }
+    ]
+    
+    const jrxml = generateJRXMLContent(mockReportProperties, bandsWithIndividualBorders, [], [])
+    
+    // Should include box element with individual side borders
+    expect(jrxml).toContain('<box>')
+    expect(jrxml).toContain('<topPen lineWidth="1" lineStyle="Solid" lineColor="#FF0000"/>')
+    expect(jrxml).toContain('<bottomPen lineWidth="2" lineStyle="Dashed" lineColor="#00FF00"/>')
+    expect(jrxml).toContain('</box>')
+  })
+
+  it('should generate box elements with directional padding', () => {
+    const bandsWithDirectionalPadding: Band[] = [
+      {
+        type: 'detail',
+        height: 100,
+        elements: [
+          {
+            type: 'staticText',
+            x: 20,
+            y: 10,
+            width: 100,
+            height: 20,
+            text: 'Text with Directional Padding',
+            fontFamily: 'Arial',
+            fontSize: 12,
+            box: {
+              leftPadding: 10,
+              rightPadding: 5,
+              topPadding: 3,
+              bottomPadding: 3
+            }
+          } as DesignElement
+        ]
+      }
+    ]
+    
+    const jrxml = generateJRXMLContent(mockReportProperties, bandsWithDirectionalPadding, [], [])
+    
+    // Should include box element with directional padding
+    // Don't check the exact order, just check that all attributes are present
+    expect(jrxml).toContain('topPadding="3"')
+    expect(jrxml).toContain('leftPadding="10"')
+    expect(jrxml).toContain('bottomPadding="3"')
+    expect(jrxml).toContain('rightPadding="5"')
+    expect(jrxml).toContain('<box')
+    expect(jrxml).toContain('</box>')
+  })
+
+  it('should generate ellipse elements', () => {
+    const bandsWithEllipse: Band[] = [
+      {
+        type: 'detail',
+        height: 100,
+        elements: [
+          {
+            type: 'ellipse',
+            x: 20,
+            y: 10,
+            width: 50,
+            height: 30
+          } as DesignElement
+        ]
+      }
+    ]
+    
+    const jrxml = generateJRXMLContent(mockReportProperties, bandsWithEllipse, [], [])
+    
+    // Should include ellipse element
+    expect(jrxml).toContain('<ellipse>')
+    expect(jrxml).toContain('<reportElement x="20" y="10" width="50" height="30"')
+    expect(jrxml).toContain('</ellipse>')
+  })
+
+  it('should generate break elements', () => {
+    const bandsWithBreak: Band[] = [
+      {
+        type: 'detail',
+        height: 100,
+        elements: [
+          {
+            type: 'break',
+            x: 20,
+            y: 10,
+            width: 1,
+            height: 1,
+            breakType: 'Page'
+          } as DesignElement
+        ]
+      }
+    ]
+    
+    const jrxml = generateJRXMLContent(mockReportProperties, bandsWithBreak, [], [])
+    
+    // Should include break element
+    expect(jrxml).toContain('<break type="Page">')
+    expect(jrxml).toContain('<reportElement x="20" y="10" width="1" height="1"')
+    expect(jrxml).toContain('</break>')
+  })
+
+  it('should generate frame elements', () => {
+    const bandsWithFrame: Band[] = [
+      {
+        type: 'detail',
+        height: 100,
+        elements: [
+          {
+            type: 'frame',
+            x: 20,
+            y: 10,
+            width: 150,
+            height: 50,
+            elements: [
+              {
+                type: 'staticText',
+                x: 10,
+                y: 10,
+                width: 130,
+                height: 30,
+                text: 'Text inside Frame',
+                fontFamily: 'Arial',
+                fontSize: 12
+              } as DesignElement
+            ]
+          } as DesignElement
+        ]
+      }
+    ]
+    
+    const jrxml = generateJRXMLContent(mockReportProperties, bandsWithFrame, [], [])
+    
+    // Should include frame element and its content
+    expect(jrxml).toContain('<frame>')
+    expect(jrxml).toContain('<reportElement x="20" y="10" width="150" height="50"')
+    expect(jrxml).toContain('Text inside Frame')
+    expect(jrxml).toContain('</frame>')
+  })
 })
