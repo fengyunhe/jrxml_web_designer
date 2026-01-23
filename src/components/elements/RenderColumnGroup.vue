@@ -11,11 +11,11 @@
               :class="['column-group-cell', { 'column-selected': isCellSelected(cell) }]"
               :colspan="cell.colspan"
               :rowspan="cell.rowspan"
-              :style="getCellStyle(cell, type)"
+              :style="getCellContainerStyle(cell, type)"
               @click="handleCellClick(cell, $event)"
               @contextmenu.stop="handleCellContextMenu(cell, $event)"
             >
-              <div class="cell-content">
+              <div class="cell-content" :style="getCellContentStyle(cell, type)">
                 <div class="static-text">
                   {{ cell.content.tableHeader?.text || '' }}
                 </div>
@@ -27,11 +27,11 @@
               :class="['column-group-cell', { 'column-selected': isCellSelected(cell) }]"
               :colspan="cell.colspan"
               :rowspan="cell.rowspan"
-              :style="getCellStyle(cell, type)"
+              :style="getCellContainerStyle(cell, type)"
               @click="handleCellClick(cell, $event)"
               @contextmenu.stop="handleCellContextMenu(cell, $event)"
             >
-              <div class="cell-content">
+              <div class="cell-content" :style="getCellContentStyle(cell, type)">
                 <template v-if="cell.content.columnHeader">
                   <template v-if="cell.content.columnHeader.type === 'staticText'">
                     <div class="static-text">{{ cell.content.columnHeader.text || '' }}</div>
@@ -236,100 +236,153 @@ function calculateRowHeight(row: any[]) {
   return defaultHeight;
 }
 
-// 获取单元格样式
-function getCellStyle(cell: any, type: string) {
+// 获取单元格容器样式（应用到th元素）
+function getCellContainerStyle(cell: any, type: string) {
   const content = cell.content;
-  if (content[type]) {
-    return getElementStyle(content[type]);
+  let element;
+  if (type === 'tableHeader' && content.tableHeader) {
+    element = content.tableHeader;
+  } else if (type === 'columnHeader' && content.columnHeader) {
+    element = content.columnHeader;
   }
-  // 默认样式
-  return {
-    backgroundColor: type === 'tableHeader' ? '#f0f0f0' : '#e6e6e6',
-    fontWeight: '600',
-    color: '#333',
-    border: '1px solid #ccc',
-    textAlign: 'center',
-    verticalAlign: 'middle',
+  
+  const styles: any = {
+    padding: '0',
+    margin: '0',
+    boxSizing: 'border-box'
+  };
+  
+  if (element) {
+    // 背景颜色
+    if (element.mode === 'Opaque' && element.backcolor) {
+      styles.backgroundColor = element.backcolor;
+    }
+    
+    // 边框样式
+    if (element.box && element.box.pen) {
+      const pen = element.box.pen;
+      if (pen.lineWidth && pen.lineWidth > 0) {
+        styles.border = `${pen.lineWidth}px ${pen.lineStyle || 'solid'} ${pen.lineColor || '#000000'}`;
+      }
+    } else if (element.borderWidth && element.borderWidth > 0) {
+      styles.border = `${element.borderWidth}px solid #000000`;
+    } else {
+      styles.border = '1px solid #ccc';
+    }
+  } else {
+    // 默认样式
+    styles.backgroundColor = type === 'tableHeader' ? '#f0f0f0' : '#e6e6e6';
+    styles.border = '1px solid #ccc';
+  }
+  
+  return styles;
+}
+
+// 获取单元格内容样式（应用到.cell-content元素）
+function getCellContentStyle(cell: any, type: string) {
+  const content = cell.content;
+  let element;
+  if (type === 'tableHeader' && content.tableHeader) {
+    element = content.tableHeader;
+  } else if (type === 'columnHeader' && content.columnHeader) {
+    element = content.columnHeader;
+  }
+  
+  const styles: any = {
+    width: '100%',
+    height: '100%',
+    display: 'flex',
+    overflow: 'hidden',
+    textOverflow: 'ellipsis',
+    whiteSpace: 'nowrap',
     padding: '0 5px',
     boxSizing: 'border-box'
   };
-}
-
-// 获取元素样式
-function getElementStyle(element: any) {
-  if (!element) return {};
   
-  const styles: any = {
-    padding: '0 5px',
-    boxSizing: 'border-box',
-    border: '1px solid #ccc'
-  };
-  
-  if (element.fontSize) {
-    styles.fontSize = `${element.fontSize}px`;
-  }
-  if (element.forecolor) {
-    styles.color = element.forecolor;
-  }
-  if (element.isBold) {
-    styles.fontWeight = 'bold';
-  }
-  if (element.isItalic) {
-    styles.fontStyle = 'italic';
-  }
-  if (element.isUnderline) {
-    styles.textDecoration = 'underline';
-  }
-  if (element.mode === 'Opaque' && element.backcolor) {
-    styles.backgroundColor = element.backcolor;
-  }
-  
-  // 文本对齐方式 - 由于cell-content使用flex布局，需要设置justify-content
-  if (element.textAlignment) {
-    const align = element.textAlignment.toLowerCase();
-    switch (align) {
-      case 'left':
-        styles.justifyContent = 'flex-start';
-        break;
-      case 'center':
-        styles.justifyContent = 'center';
-        break;
-      case 'right':
-        styles.justifyContent = 'flex-end';
-        break;
-      case 'justified':
-        styles.justifyContent = 'space-between';
-        break;
-      default:
-        styles.justifyContent = 'center';
+  if (element) {
+    // 字体样式
+    if (element.font) {
+      if (element.font.isBold) {
+        styles.fontWeight = 'bold';
+      }
+      if (element.font.isItalic) {
+        styles.fontStyle = 'italic';
+      }
+      if (element.font.isUnderline) {
+        styles.textDecoration = 'underline';
+      }
+      if (element.font.size) {
+        styles.fontSize = `${element.font.size}pt`;
+      }
+    } else {
+      // 兼容旧格式
+      if (element.fontSize) {
+        styles.fontSize = `${element.fontSize}px`;
+      }
+      if (element.isBold) {
+        styles.fontWeight = 'bold';
+      }
+      if (element.isItalic) {
+        styles.fontStyle = 'italic';
+      }
+      if (element.isUnderline) {
+        styles.textDecoration = 'underline';
+      }
+    }
+    
+    // 文字颜色
+    if (element.forecolor) {
+      styles.color = element.forecolor;
+    }
+    
+    // 水平对齐方式
+    if (element.textAlignment) {
+      const align = element.textAlignment.toLowerCase();
+      switch (align) {
+        case 'left':
+          styles.justifyContent = 'flex-start';
+          break;
+        case 'right':
+          styles.justifyContent = 'flex-end';
+          break;
+        case 'center':
+          styles.justifyContent = 'center';
+          break;
+        case 'justified':
+          styles.justifyContent = 'space-between';
+          break;
+        default:
+          styles.justifyContent = 'center';
+      }
+    } else {
+      styles.justifyContent = 'center';
+    }
+    
+    // 垂直对齐方式
+    if (element.verticalAlignment) {
+      const align = element.verticalAlignment.toLowerCase();
+      switch (align) {
+        case 'top':
+          styles.alignItems = 'flex-start';
+          break;
+        case 'bottom':
+          styles.alignItems = 'flex-end';
+          break;
+        case 'middle':
+          styles.alignItems = 'center';
+          break;
+        default:
+          styles.alignItems = 'center';
+      }
+    } else {
+      styles.alignItems = 'center';
     }
   } else {
+    // 默认样式
+    styles.fontWeight = '600';
+    styles.color = '#333';
     styles.justifyContent = 'center';
-  }
-  
-  // 垂直对齐方式 - 由于cell-content使用flex布局，需要设置align-items
-  if (element.verticalAlignment) {
-    const align = element.verticalAlignment.toLowerCase();
-    switch (align) {
-      case 'top':
-        styles.alignItems = 'flex-start';
-        break;
-      case 'middle':
-        styles.alignItems = 'center';
-        break;
-      case 'bottom':
-        styles.alignItems = 'flex-end';
-        break;
-      default:
-        styles.alignItems = 'center';
-    }
-  } else {
     styles.alignItems = 'center';
-  }
-  
-  const borderWidth = element.borderWidth || 0;
-  if (borderWidth > 0) {
-    styles.border = `${borderWidth}px solid #000000`;
   }
   
   return styles;
