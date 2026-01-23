@@ -1842,9 +1842,9 @@ function initTableCell(column: any, cellType: 'tableFooter' | 'columnFooter') {
   }
 }
 
-// 更新列宽度，同时更新所有相关单元格的宽度
+// 更新列宽度，同时更新所有相关单元格的宽度，并重新计算表格总宽度
 function updateColumnWidth(column: any, index: number) {
-  if (!column) return;
+  if (!column || !currentElement) return;
   
   const newWidth = column.width;
   
@@ -1864,6 +1864,55 @@ function updateColumnWidth(column: any, index: number) {
   if (column.tableFooter) {
     column.tableFooter.width = newWidth;
   }
+  
+  // 如果表格有children属性，同时更新children属性中对应列的宽度
+  if (currentElement.value && currentElement.value.type === 'table' && currentElement.value.children) {
+    // 查找children中对应的列（通过uuid或索引）
+    const childColumn = findColumnInChildren(currentElement.value.children, column);
+    if (childColumn) {
+      // 更新childColumn的宽度
+      childColumn.width = newWidth;
+      
+      // 同时更新childColumn中所有相关单元格的宽度
+      if (childColumn.tableHeader) {
+        childColumn.tableHeader.width = newWidth;
+      }
+      if (childColumn.columnHeader) {
+        childColumn.columnHeader.width = newWidth;
+      }
+      if (childColumn.detailCell) {
+        childColumn.detailCell.width = newWidth;
+      }
+      if (childColumn.columnFooter) {
+        childColumn.columnFooter.width = newWidth;
+      }
+      if (childColumn.tableFooter) {
+        childColumn.tableFooter.width = newWidth;
+      }
+    }
+  }
+  
+  // 重新计算表格总宽度：所有列宽度之和
+  if (currentElement.value && currentElement.value.type === 'table' && currentElement.value.columns) {
+    const totalWidth = currentElement.value.columns.reduce((sum: number, col: any) => sum + (col.width || 0), 0);
+    currentElement.value.width = totalWidth;
+  }
+}
+
+// 在children数组中查找对应的列（递归查找）
+function findColumnInChildren(children: any[], targetColumn: any): any | null {
+  for (const child of children) {
+    if (child.uuid === targetColumn.uuid) {
+      return child;
+    }
+    if (child.children) {
+      const found = findColumnInChildren(child.children, targetColumn);
+      if (found) {
+        return found;
+      }
+    }
+  }
+  return null;
 }
 
 // 切换是否包含Table Header
@@ -2131,6 +2180,11 @@ function addTableColumn() {
   }
   
   currentElement.value.columns.push(newColumn);
+  
+  // 重新计算表格总宽度：所有列宽度之和
+  const totalWidth = currentElement.value.columns.reduce((sum: number, col: any) => sum + (col.width || 0), 0);
+  currentElement.value.width = totalWidth;
+  
   emit('update-jrxml');
 }
 
@@ -2144,6 +2198,11 @@ function removeTableColumn(index: number) {
   
   emit('save-state');
   currentElement.value.columns.splice(index, 1);
+  
+  // 重新计算表格总宽度：所有列宽度之和
+  const totalWidth = currentElement.value.columns.reduce((sum: number, col: any) => sum + (col.width || 0), 0);
+  currentElement.value.width = totalWidth;
+  
   emit('update-jrxml');
 }
 

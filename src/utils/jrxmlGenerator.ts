@@ -982,39 +982,42 @@ function generateColumnGroupXML(group: any): string {
   return xml;
 }
 
-// 预处理表格元素，确保多列组合的单元格中的元素宽度不超过聚合列的总宽度
+// 预处理表格元素，确保多列组合的单元格中的元素宽度与聚合列的总宽度一致
 function preprocessTableElements(element: any) {
   // 处理列分组
   function processColumnGroup(group: any) {
-    // 计算聚合列的总宽度
-    const totalWidth = group.width;
+    // 首先确保group.width是最新计算的聚合宽度
+    function calculateGroupWidth(node: any): number {
+      if (node.children && node.children.length > 0) {
+        return node.children.reduce((sum: number, child: any) => {
+          return sum + calculateGroupWidth(child);
+        }, 0);
+      }
+      return node.width || 0;
+    }
     
-    // 检查并调整group的tableHeader宽度
+    // 计算并更新聚合列的总宽度
+    const totalWidth = calculateGroupWidth(group);
+    group.width = totalWidth; // 更新group的width属性，确保一致性
+    
+    // 确保group的tableHeader宽度始终等于聚合列总宽度
     if (group.tableHeader) {
-      if (group.tableHeader.width > totalWidth) {
-        group.tableHeader.width = totalWidth;
-      }
+      group.tableHeader.width = totalWidth;
     }
     
-    // 检查并调整group的columnHeader宽度
+    // 确保group的columnHeader宽度始终等于聚合列总宽度
     if (group.columnHeader) {
-      if (group.columnHeader.width > totalWidth) {
-        group.columnHeader.width = totalWidth;
-      }
+      group.columnHeader.width = totalWidth;
     }
     
-    // 检查并调整group的columnFooter宽度
+    // 确保group的columnFooter宽度始终等于聚合列总宽度
     if (group.columnFooter) {
-      if (group.columnFooter.width > totalWidth) {
-        group.columnFooter.width = totalWidth;
-      }
+      group.columnFooter.width = totalWidth;
     }
     
-    // 检查并调整group的tableFooter宽度
+    // 确保group的tableFooter宽度始终等于聚合列总宽度
     if (group.tableFooter) {
-      if (group.tableFooter.width > totalWidth) {
-        group.tableFooter.width = totalWidth;
-      }
+      group.tableFooter.width = totalWidth;
     }
     
     // 递归处理子分组或列

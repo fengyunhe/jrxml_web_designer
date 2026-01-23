@@ -2788,9 +2788,6 @@ const saveJRXML = (): void => {
     // 更新选中的band类型
     selectedBandTypes.value = parsedData.bands.map(band => band.type);
     
-    // 重新生成JRXML内容，确保参数被包含
-    updateJRXML();
-    
     // 为矩形元素添加默认边框，确保显示效果
     bands.value.forEach(band => {
       band.elements.forEach(element => {
@@ -3000,6 +2997,9 @@ const saveJRXML = (): void => {
       const minHeight = BAND_CONSTANTS.MIN_HEIGHT;
       band.height = Math.max(band.height, minHeight);
     });
+
+    // 重新生成JRXML内容，确保参数被包含
+    updateJRXML();
     
     // 保存到本地存储
     saveToLocalStorageWrapper();
