@@ -6,6 +6,7 @@ export interface ReportProperties {
   rightMargin: number;
   topMargin: number;
   bottomMargin: number;
+  whenNoDataType?: string;
   query?: { language: string; text: string };
 }
 

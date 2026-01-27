@@ -1,5 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import { parseJRXMLContent } from './parse'
+import fs from 'fs'
+import path from 'path'
 
 describe('parseJRXMLContent', () => {
   it('should parse JRXML with componentElement containing table', () => {
@@ -830,5 +832,363 @@ describe('parseJRXMLContent', () => {
     expect(result.datasets[0].properties?.['com.jaspersoft.studio.data.defaultdataadapter']).toBe('Sample DB')
     expect(result.datasets[0].properties?.['net.sf.jasperreports.query.executer.factory.sql']).toBe('com.jaspersoft.hiberynate.jdbc.HibQueryExecuterFactory')
   })
+
+  it('should parse table with 2 head rows correctly', () => {
+    // 读取外部JRXML文件
+    const jrxmlFilePath = path.join(__dirname, '../../../tests/table_with_2_head_rows.jrxml')
+    const jrxmlContent = fs.readFileSync(jrxmlFilePath, 'utf-8')
+    
+    const result = parseJRXMLContent(jrxmlContent)
+    
+    // 验证基本属性
+    expect(result.properties.name).toBe('Cherry_Table_Based')
+    expect(result.properties.pageWidth).toBe(595)
+    expect(result.properties.pageHeight).toBe(842)
+    expect(result.properties.whenNoDataType).toBe('AllSectionsNoDetail')
+    
+    // 验证subDataset
+    expect(result.datasets).toHaveLength(1)
+    expect(result.datasets[0].name).toBe('Dataset1')
+    
+    // 验证bands
+    expect(result.bands).toHaveLength(1)
+    expect(result.bands[0].type).toBe('summary')
+    expect(result.bands[0].height).toBe(471)
+    expect(result.bands[0].splitType).toBe('Stretch')
+    
+    // 验证表格元素
+    expect(result.bands[0].elements).toHaveLength(1)
+    const tableElement = result.bands[0].elements[0]
+    expect(tableElement.type).toBe('table')
+    expect(tableElement.x).toBe(0)
+    expect(tableElement.y).toBe(20)
+    expect(tableElement.width).toBe(545)
+    expect(tableElement.height).toBe(120)
+    
+    // 验证表格结构
+    expect(tableElement.columns).toBeDefined()
+    expect(tableElement.columns).toHaveLength(3) // 2个子列 + 1个普通column
+    
+    // 验证children数组包含columnGroup和普通column
+    expect(tableElement.children).toBeDefined()
+    expect(tableElement.children).toHaveLength(2) // 1个columnGroup + 1个普通column
+    
+    // 验证columnGroup
+    const columnGroup = tableElement.children[0]
+    expect(columnGroup.type).toBe('columnGroup')
+    expect(columnGroup.width).toBe(94)
+    expect(columnGroup.children).toHaveLength(2) // 2个子列
+    
+    // 验证columnGroup的表格头
+    expect(columnGroup.tableHeader).toBeDefined()
+    expect(columnGroup.tableHeader.height).toBe(30)
+    expect(columnGroup.tableHeader.rowSpan).toBe(1)
+    
+    // 验证columnGroup的子列
+    expect(columnGroup.children[0].width).toBe(49)
+    expect(columnGroup.children[1].width).toBe(45)
+    
+    // 验证普通column
+    const normalColumn = tableElement.children[1]
+    expect(normalColumn.type).toBe('column')
+    expect(normalColumn.width).toBe(451)
+    
+    // 验证普通column的表格头
+    expect(normalColumn.tableHeader).toBeDefined()
+    expect(normalColumn.tableHeader.height).toBe(60)
+    expect(normalColumn.tableHeader.rowSpan).toBe(2)
+  })
+
+  it('should generate expected TableElement structure from table_with_2_head_rows.jrxml', () => {
+    // 读取外部JRXML文件
+    const jrxmlFilePath = path.join(__dirname, '../../../tests/table_with_2_head_rows.jrxml')
+    const jrxmlContent = fs.readFileSync(jrxmlFilePath, 'utf-8')
+    
+    const result = parseJRXMLContent(jrxmlContent)
+    
+    // 验证表格元素
+    expect(result.bands[0].elements).toHaveLength(1)
+    const tableElement = result.bands[0].elements[0] as any
+    expect(tableElement.type).toBe('table')
+    expect(tableElement.x).toBe(0)
+    expect(tableElement.y).toBe(20)
+    expect(tableElement.width).toBe(545)
+    expect(tableElement.height).toBe(120)
+    
+    // 验证表格数据集
+    expect(tableElement.dataset).toBeDefined()
+    expect(tableElement.dataset.name).toBe('Dataset1')
+    expect(tableElement.dataset.uuid).toBe('4192004d-c999-41ee-abb5-a49cba17a2f3')
+    
+    // 验证children数组（包含列分组和普通列）
+    expect(tableElement.children).toHaveLength(2)
+    expect(tableElement.children[0].type).toBe('columnGroup')
+    expect(tableElement.children[0].width).toBe(94)
+    expect(tableElement.children[0].name).toBe('Columns [2]')
+    expect(tableElement.children[0].children).toHaveLength(2)
+    expect(tableElement.children[1].type).toBe('column')
+    expect(tableElement.children[1].width).toBe(451)
+    
+    // 验证列分组的表格头
+    expect(tableElement.children[0].tableHeader).toBeDefined()
+    expect(tableElement.children[0].tableHeader.text).toBe('ROW 1+CELL 1')
+    expect(tableElement.children[0].tableHeader.height).toBe(30)
+    expect(tableElement.children[0].tableHeader.rowSpan).toBe(1)
+    
+    // 验证列分组的子列
+    expect(tableElement.children[0].children[0].tableHeader).toBeDefined()
+    expect(tableElement.children[0].children[0].tableHeader.text).toBe('ROW 2 CELL 1')
+    expect(tableElement.children[0].children[0].tableHeader.height).toBe(30)
+    expect(tableElement.children[0].children[0].tableHeader.rowSpan).toBe(1)
+    expect(tableElement.children[0].children[0].tableHeader.textAlignment).toBe('Center')
+    expect(tableElement.children[0].children[0].tableHeader.verticalAlignment).toBe('Middle')
+    expect(tableElement.children[0].children[0].tableHeader.box).toBeDefined()
+    
+    expect(tableElement.children[0].children[1].tableHeader).toBeDefined()
+    expect(tableElement.children[0].children[1].tableHeader.text).toBe('ROW 2 CELL 2')
+    expect(tableElement.children[0].children[1].tableHeader.height).toBe(30)
+    expect(tableElement.children[0].children[1].tableHeader.rowSpan).toBe(1)
+    expect(tableElement.children[0].children[1].tableHeader.textAlignment).toBe('Center')
+    expect(tableElement.children[0].children[1].tableHeader.verticalAlignment).toBe('Middle')
+    expect(tableElement.children[0].children[1].tableHeader.box).toBeDefined()
+    
+    // 验证普通列的表格头
+    expect(tableElement.children[1].tableHeader).toBeDefined()
+    expect(tableElement.children[1].tableHeader.text).toBe('ROW 1+CELL 2+ROWSPAN2')
+    expect(tableElement.children[1].tableHeader.height).toBe(60)
+    expect(tableElement.children[1].tableHeader.rowSpan).toBe(2)
+    expect(tableElement.children[1].tableHeader.textAlignment).toBe('Center')
+    expect(tableElement.children[1].tableHeader.verticalAlignment).toBe('Middle')
+    expect(tableElement.children[1].tableHeader.box).toBeDefined()
+    
+    // 验证列头的box元素和文本对齐设置
+    expect(tableElement.children[0].children[0].columnHeader).toBeDefined()
+    expect(tableElement.children[0].children[0].columnHeader.textAlignment).toBe('Center')
+    expect(tableElement.children[0].children[0].columnHeader.verticalAlignment).toBe('Middle')
+    expect(tableElement.children[0].children[0].columnHeader.box).toBeDefined()
+    
+    expect(tableElement.children[0].children[1].columnHeader).toBeDefined()
+    expect(tableElement.children[0].children[1].columnHeader.textAlignment).toBe('Center')
+    expect(tableElement.children[0].children[1].columnHeader.verticalAlignment).toBe('Middle')
+    expect(tableElement.children[0].children[1].columnHeader.box).toBeDefined()
+    
+    expect(tableElement.children[1].columnHeader).toBeDefined()
+    expect(tableElement.children[1].columnHeader.textAlignment).toBe('Center')
+    expect(tableElement.children[1].columnHeader.verticalAlignment).toBe('Middle')
+    expect(tableElement.children[1].columnHeader.box).toBeDefined()
+    
+    // 推导组合列后的表头行结构
+    // 辅助函数：递归计算列或列分组的实际列数
+    const calculateColumnsCount = (item: any): number => {
+      if (item.type === 'column') {
+        return 1;
+      } else if (item.type === 'columnGroup') {
+        return item.children.reduce((sum: number, child: any) => sum + calculateColumnsCount(child), 0);
+      }
+      return 0;
+    };
+    
+    // 辅助函数：递归构建表头结构
+    const buildHeaderStructure = (items: any[], headerLevel: 'tableHeader' | 'columnHeader'): any[] => {
+      const result: any[] = [];
+      
+      items.forEach(item => {
+        if (item.type === 'column') {
+          // 普通列，直接添加单元格
+          if (item[headerLevel]) {
+            result.push({
+              content: item[headerLevel].text || item[headerLevel].expression,
+              rowSpan: item[headerLevel].rowSpan,
+              colSpan: 1,
+              width: item.width,
+              height: item[headerLevel].height
+            });
+          }
+        } else if (item.type === 'columnGroup') {
+          // 列分组，计算其 colspan
+          const colSpan = calculateColumnsCount(item);
+          if (item[headerLevel]) {
+            result.push({
+              content: item[headerLevel].text || item[headerLevel].expression,
+              rowSpan: item[headerLevel].rowSpan,
+              colSpan: colSpan,
+              width: item.width,
+              height: item[headerLevel].height
+            });
+          } else {
+            // 如果列分组没有该级别的表头，则递归处理其子项
+            const childHeaders = buildHeaderStructure(item.children, headerLevel);
+            result.push(...childHeaders);
+          }
+        }
+      });
+      
+      return result;
+    };
+    
+    // 构建表格头（第一级表头）
+    const tableHeaders = buildHeaderStructure(tableElement.children, 'tableHeader');
+    expect(tableHeaders).toHaveLength(2);
+    expect(tableHeaders[0].content).toBe('ROW 1+CELL 1');
+    expect(tableHeaders[0].rowSpan).toBe(1);
+    expect(tableHeaders[0].colSpan).toBe(2); // 跨2列
+    expect(tableHeaders[0].width).toBe(94);
+    
+    expect(tableHeaders[1].content).toBe('ROW 1+CELL 2+ROWSPAN2');
+    expect(tableHeaders[1].rowSpan).toBe(2); // 跨2行
+    expect(tableHeaders[1].colSpan).toBe(1);
+    expect(tableHeaders[1].width).toBe(451);
+    
+    // 构建列头（第二级表头）
+    const columnHeaders = buildHeaderStructure(tableElement.children, 'columnHeader');
+    expect(columnHeaders).toHaveLength(3);
+    // 列头由列分组的子列和普通列组成
+    expect(columnHeaders[0].content).toBe('"Text Field"');
+    expect(columnHeaders[0].rowSpan).toBe(1);
+    expect(columnHeaders[0].colSpan).toBe(1);
+    
+    expect(columnHeaders[1].content).toBe('"Text Field"');
+    expect(columnHeaders[1].rowSpan).toBe(1);
+    expect(columnHeaders[1].colSpan).toBe(1);
+    
+    expect(columnHeaders[2].content).toBe('"Text Field"');
+    expect(columnHeaders[2].rowSpan).toBe(1);
+    expect(columnHeaders[2].colSpan).toBe(1);
+    
+    // 计算表头的总行数（根据rowSpan最大的值）
+    const calculateTotalHeaderRows = () => {
+      let maxRowSpan = 0;
+      
+      // 递归检查所有表头的rowSpan
+      const checkRowSpan = (items: any[]) => {
+        items.forEach(item => {
+          if (item.type === 'column') {
+            if (item.tableHeader) {
+              maxRowSpan = Math.max(maxRowSpan, item.tableHeader.rowSpan);
+            }
+          } else if (item.type === 'columnGroup') {
+            if (item.tableHeader) {
+              maxRowSpan = Math.max(maxRowSpan, item.tableHeader.rowSpan);
+            }
+            checkRowSpan(item.children);
+          }
+        });
+      };
+      
+      checkRowSpan(tableElement.children);
+      return maxRowSpan;
+    };
+    
+    const totalHeaderRows = calculateTotalHeaderRows();
+    expect(totalHeaderRows).toBe(2); // 最大rowSpan为2，所以表头总共有2行
+    
+    // 构建最终的表头行结构（按行组织）
+    const buildHeaderRows = () => {
+      const rows: any[][] = [];
+      const totalRows = calculateTotalHeaderRows();
+      
+      // 初始化行数组
+      for (let i = 0; i < totalRows; i++) {
+        rows[i] = [];
+      }
+      
+      // 递归填充行结构
+      const fillRows = (items: any[], startRow: number) => {
+        items.forEach(item => {
+          if (item.type === 'column') {
+            // 普通列，填充其tableHeader（如果有）
+            if (item.tableHeader) {
+              const { rowSpan, height, text, expression } = item.tableHeader;
+              const cell = {
+                content: text || expression,
+                rowSpan: rowSpan,
+                colSpan: 1,
+                width: item.width,
+                height: height
+              };
+              
+              // 将单元格添加到起始行
+              rows[startRow].push(cell);
+            }
+          } else if (item.type === 'columnGroup') {
+            // 列分组
+            if (item.tableHeader) {
+              const { rowSpan, height, text, expression } = item.tableHeader;
+              const colSpan = calculateColumnsCount(item);
+              const cell = {
+                content: text || expression,
+                rowSpan: rowSpan,
+                colSpan: colSpan,
+                width: item.width,
+                height: height
+              };
+              
+              // 将单元格添加到起始行
+              rows[startRow].push(cell);
+            }
+            
+            // 无论列分组是否有tableHeader，都需要处理其子项的表头
+            // 对于第二行，我们需要直接处理子项
+            if (startRow < totalRows - 1) {
+              fillRows(item.children, startRow + 1);
+            }
+          }
+        });
+      };
+      
+      // 填充第一级表头（tableHeader）
+      fillRows(tableElement.children, 0);
+      
+      return rows;
+    };
+    
+    // 构建列头行结构
+    const buildColumnHeaderRow = () => {
+      return buildHeaderStructure(tableElement.children, 'columnHeader');
+    };
+    
+    const headerRows = buildHeaderRows();
+    const columnHeaderRow = buildColumnHeaderRow();
+    
+    // 验证表头行结构（与Jasperreport Studio预览对比）
+    expect(headerRows).toHaveLength(2);
+    
+    // 第一行表头（对应预览第一行）
+    expect(headerRows[0]).toHaveLength(2);
+    expect(headerRows[0][0].content).toBe('ROW 1+CELL 1');
+    expect(headerRows[0][0].rowSpan).toBe(1);
+    expect(headerRows[0][0].colSpan).toBe(2); // 跨2列
+    expect(headerRows[0][1].content).toBe('ROW 1+CELL 2+ROWSPAN2');
+    expect(headerRows[0][1].rowSpan).toBe(2); // 跨2行
+    expect(headerRows[0][1].colSpan).toBe(1);
+    
+    // 第二行表头（对应预览第二行）
+    expect(headerRows[1]).toHaveLength(2);
+    expect(headerRows[1][0].content).toBe('ROW 2 CELL 1');
+    expect(headerRows[1][0].rowSpan).toBe(1);
+    expect(headerRows[1][0].colSpan).toBe(1);
+    expect(headerRows[1][1].content).toBe('ROW 2 CELL 2');
+    expect(headerRows[1][1].rowSpan).toBe(1);
+    expect(headerRows[1][1].colSpan).toBe(1);
+    
+    // 列头行（对应预览第三行）
+    expect(columnHeaderRow).toHaveLength(3);
+    expect(columnHeaderRow[0].content).toBe('"Text Field"');
+    expect(columnHeaderRow[0].rowSpan).toBe(1);
+    expect(columnHeaderRow[0].colSpan).toBe(1);
+    expect(columnHeaderRow[1].content).toBe('"Text Field"');
+    expect(columnHeaderRow[1].rowSpan).toBe(1);
+    expect(columnHeaderRow[1].colSpan).toBe(1);
+    expect(columnHeaderRow[2].content).toBe('"Text Field"');
+    expect(columnHeaderRow[2].rowSpan).toBe(1);
+    expect(columnHeaderRow[2].colSpan).toBe(1);
+    
+    // 验证整体表格结构与预览一致
+    // 第一行：ROW 1+CELL 1 (colSpan=2) | ROW 1+CELL 2+ROWSPAN2 (rowSpan=2)
+    // 第二行：ROW 2 CELL 1 | ROW 2 CELL 2 | (空白，被上方单元格跨行覆盖)
+    // 第三行：Text Field | Text Field | Text Field
+  })
+
+  
 })
 

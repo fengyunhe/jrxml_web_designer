@@ -517,6 +517,9 @@ function getCellStyle(cell: any) {
   // 文本样式
   if (cell.fontSize) {
     styles.fontSize = `${cell.fontSize}px`;
+  } else {
+    // 默认字体大小10，与JasperReport Studio一致
+    styles.fontSize = '10px';
   }
   if (cell.forecolor) {
     styles.color = cell.forecolor;

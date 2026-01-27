@@ -142,7 +142,7 @@ const elementStyle = computed(() => {
     borderRight: calculateBorder('right'),
     borderRadius: props.element.type === 'ellipse' ? '50%' : ((props.element.type === 'rectangle' && (props.element as any).radius) ? `${(props.element as any).radius}px` : undefined),
     fontFamily: props.element.fontFamily || props.reportFontFamily,
-    fontSize: props.element.fontSize ? `${props.element.fontSize}px` : (props.reportFontSize ? `${props.reportFontSize}px` : undefined),
+    fontSize: props.element.fontSize ? `${props.element.fontSize}px` : (props.reportFontSize ? `${props.reportFontSize}px` : '10px'),
     fontWeight: (props.element.isBold === true || (props.element.isBold === undefined && props.reportIsBold)) ? 'bold' : 'normal',
     fontStyle: (props.element.isItalic === true || (props.element.isItalic === undefined && props.reportIsItalic)) ? 'italic' : 'normal',
     textDecoration: (props.element.isUnderline === true || (props.element.isUnderline === undefined && props.reportIsUnderline)) ? 'underline' : 'none',

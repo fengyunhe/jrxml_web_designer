@@ -79,6 +79,16 @@ function countLeafColumns(node: any): number {
   return node.children.reduce((sum: number, child: any) => sum + countLeafColumns(child), 0);
 }
 
+// 计算节点的总宽度（用于设置单元格宽度）
+function calculateNodeWidth(node: any): number {
+  if (!node.children || node.children.length === 0) {
+    // 叶子节点，返回自身宽度
+    return node.width || 0;
+  }
+  // 分组节点，计算所有子节点宽度总和
+  return node.children.reduce((sum: number, child: any) => sum + calculateNodeWidth(child), 0);
+}
+
 // 计算节点的深度
 function calculateNodeDepth(node: any, depth: number = 0): number {
   if (!node.children || node.children.length === 0) {
@@ -252,6 +262,12 @@ function getCellContainerStyle(cell: any, type: string) {
     boxSizing: 'border-box'
   };
   
+  // 计算并设置宽度，基于JRXML中定义的宽度
+  const width = calculateNodeWidth(content);
+  if (width > 0) {
+    styles.width = `${width}px`;
+  }
+  
   if (element) {
     // 背景颜色
     if (element.mode === 'Opaque' && element.backcolor) {
@@ -313,11 +329,17 @@ function getCellContentStyle(cell: any, type: string) {
       }
       if (element.font.size) {
         styles.fontSize = `${element.font.size}pt`;
+      } else {
+        // 默认字体大小10，与JasperReport Studio一致
+        styles.fontSize = '10px';
       }
     } else {
       // 兼容旧格式
       if (element.fontSize) {
         styles.fontSize = `${element.fontSize}px`;
+      } else {
+        // 默认字体大小10，与JasperReport Studio一致
+        styles.fontSize = '10px';
       }
       if (element.isBold) {
         styles.fontWeight = 'bold';

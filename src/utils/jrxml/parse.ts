@@ -60,6 +60,7 @@ export function parseJRXMLContent(jrxmlContent: string): { properties: ReportPro
     rightMargin: parseInt(jasperReportElem.getAttribute('rightMargin') || '20'),
     topMargin: parseInt(jasperReportElem.getAttribute('topMargin') || '30'),
     bottomMargin: parseInt(jasperReportElem.getAttribute('bottomMargin') || '30'),
+    whenNoDataType: jasperReportElem.getAttribute('whenNoDataType') || 'AllSectionsNoDetail',
     query
   };
 
@@ -407,7 +408,8 @@ function parseColumnElement(columnElem: Element, index: number): any {
     if (columnHeader.type === 'staticText') {
       columnName = columnHeader.text || '';
     } else if (columnHeader.type === 'textField') {
-      columnName = columnHeader.expression || '';
+      // 去除expression值两侧的引号
+      columnName = (columnHeader.expression || '').replace(/^"|"$/g, '');
     }
   }
   
@@ -489,6 +491,7 @@ function parseColumnElement(columnElem: Element, index: number): any {
   };
 
   return {
+    type: 'column',
     uuid: columnUuid || crypto.randomUUID(),
     width: columnWidth,
     name: columnName,
@@ -549,6 +552,7 @@ function parseColumnGroupElement(groupElem: Element, index: number): any {
   }
   
   const group: any = {
+    type: 'columnGroup',
     uuid: groupUuid,
     width: groupWidth,
     name: groupName,

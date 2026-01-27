@@ -821,7 +821,9 @@ function generateColumnXML(column: any, index: number): string {
   column.uuid = columnUuid;
   let xml = `          <jr:column width="${toInt(column.width)}" uuid="${columnUuid}">
 `;
-  xml += `            <property name="com.jaspersoft.studio.components.table.model.column.name" value="${column.name || `Column${index + 1}`}"/>
+  // 确保value属性值被正确转义，避免双重引用
+  const escapedColumnName = (column.name || `Column${index + 1}`).replace(/"/g, '&quot;');
+  xml += `            <property name="com.jaspersoft.studio.components.table.model.column.name" value="${escapedColumnName}"/>
 `;
   
   // 生成tableHeader
@@ -919,7 +921,9 @@ function generateColumnGroupXML(group: any, processedColumnUuids?: Set<string>):
   
   let xml = `          <jr:columnGroup width="${toInt(groupWidth)}" uuid="${groupUuid}">
 `;
-  xml += `            <property name="com.jaspersoft.studio.components.table.model.column.name" value="${group.name || `Group`}"/>
+  // 确保value属性值被正确转义，避免双重引用
+  const escapedGroupName = (group.name || `Group`).replace(/"/g, '&quot;');
+  xml += `            <property name="com.jaspersoft.studio.components.table.model.column.name" value="${escapedGroupName}"/>
 `;
   
   // 生成tableHeader
@@ -1147,7 +1151,7 @@ function generateTableXML(element: any): string {
     }
   }
 
-  xml +='</reportElement>'
+  xml += '</reportElement>\n'
   
   // 添加表格属性 - 包含所有XSD允许的属性
   let tableAttrs = '';
