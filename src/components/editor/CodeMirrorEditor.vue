@@ -41,6 +41,7 @@
 <script setup lang="ts">
 import { ref, onMounted, watch, onBeforeUnmount } from 'vue';
 import { EditorState } from '@codemirror/state';
+import type { Extension } from '@codemirror/state';
 import { EditorView } from '@codemirror/view';
 import { lineNumbers, keymap, highlightActiveLine, highlightActiveLineGutter } from '@codemirror/view';
 import { xml } from '@codemirror/lang-xml';
@@ -276,10 +277,11 @@ const performSearch = () => {
   let index = 0;
   
   while ((index = text.indexOf(query, index)) !== -1) {
-    searchResults.push({
+    const result = {
       from: index,
       to: index + query.length
-    });
+    };
+    searchResults.push(result);
     index += query.length;
   }
   
@@ -288,8 +290,7 @@ const performSearch = () => {
   currentSearchIndex = 0;
   currentSearchResult.value = searchResults.length > 0 ? 1 : 0;
   
-  // 高亮显示搜索结果并滚动到第一个匹配项
-  highlightSearchResults();
+  // 滚动到第一个匹配项
   if (searchResults.length > 0) {
     scrollToResult(currentSearchIndex);
   }
@@ -301,7 +302,6 @@ const findNext = () => {
   currentSearchIndex = (currentSearchIndex + 1) % searchResults.length;
   currentSearchResult.value = currentSearchIndex + 1;
   scrollToResult(currentSearchIndex);
-  highlightSearchResults();
 };
 
 const findPrevious = () => {
@@ -310,7 +310,6 @@ const findPrevious = () => {
   currentSearchIndex = (currentSearchIndex - 1 + searchResults.length) % searchResults.length;
   currentSearchResult.value = currentSearchIndex + 1;
   scrollToResult(currentSearchIndex);
-  highlightSearchResults();
 };
 
 const closeSearch = () => {
@@ -325,23 +324,10 @@ const closeSearch = () => {
 const clearSearchHighlights = () => {
   if (!editorView) return;
   
-  // 清除所有搜索高亮
+  // 重置选择
   editorView.dispatch({
     selection: { anchor: 0, head: 0 }
   });
-};
-
-const highlightSearchResults = () => {
-  if (!editorView || searchResults.length === 0) return;
-  
-  // 这里可以实现更复杂的搜索结果高亮
-  // 简单起见，我们只滚动到当前结果并选中它
-  const result = searchResults[currentSearchIndex];
-  if (result) {
-    editorView.dispatch({
-      selection: { anchor: result.from, head: result.to }
-    });
-  }
 };
 
 const scrollToResult = (index: number) => {

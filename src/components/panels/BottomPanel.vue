@@ -133,6 +133,9 @@ const availableFonts = ref<string[]>([]);
 // PDF预览Modal显示状态
 const showPdfPreview = ref(false);
 
+// CodeMirrorEditor组件引用
+const codeMirrorEditorRef = ref<InstanceType<typeof CodeMirrorEditor> | null>(null);
+
 onMounted(async () => {
   availableFonts.value = await getAvailableFonts();
 });
@@ -289,10 +292,34 @@ const toggleFullscreen = (): void => {
   }
 };
 
-// 监听ESC键退出全屏
+// 监听键盘事件
 function handleKeyDown(event: KeyboardEvent) {
+  // 监听ESC键退出全屏
   if (event.key === 'Escape' && isFullscreen.value) {
     toggleFullscreen();
+  }
+  
+  // 监听Cmd+F或Ctrl+F键，切换到JRXML标签页并进入全屏
+  if ((event.metaKey || event.ctrlKey) && event.key === 'f') {
+    event.preventDefault(); // 阻止默认的搜索功能
+    
+    // 如果底部面板未打开，则打开它
+    if (!props.visible) {
+      emit('update:visible', true);
+    }
+    
+    // 切换到JRXML标签页
+    activeTab.value = 'jrxml';
+    
+    // 进入全屏模式
+    if (!isFullscreen.value) {
+      toggleFullscreen();
+    }
+    
+    // 延迟一下，确保DOM已经更新，然后打开搜索栏并聚焦搜索输入框
+    setTimeout(() => {
+      codeMirrorEditorRef.value?.openSearch();
+    }, 200);
   }
 }
 
@@ -445,13 +472,11 @@ onBeforeUnmount(() => {
             <n-button @click="regenerateJRXML" type="default" size="small">{{ t('bottomPanel.regenerate') }}</n-button>
             <n-button @click="downloadJRXML" type="primary" size="small">{{ t('bottomPanel.downloadJRXML') }}</n-button>
             <n-button @click="openPdfPreview" type="info" size="small">{{ t('bottomPanel.previewPDF') }}</n-button>
-            <n-button @click="toggleFullscreen" type="default" size="small" :class="{ 'fullscreen-active': isFullscreen }">
-              {{ isFullscreen ? '退出全屏' : '全屏' }}
-            </n-button>
           </div>
         </div>
         <div class="jrxml-content">
           <CodeMirrorEditor
+            ref="codeMirrorEditorRef"
             v-model="localJrxmlContent"
             :placeholder="localJrxmlContent ? '' : t('bottomPanel.clickToGenerate')"
             @update:modelValue="localJrxmlContent = $event"
