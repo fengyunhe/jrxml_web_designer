@@ -4179,6 +4179,17 @@ const confirmJoinColumnsToGroup = (): void => {
   const tableElement = element as any;
   if (!tableElement.columns || !Array.isArray(tableElement.columns)) return;
   
+  console.log('开始处理列分组操作:', {
+    selectedGroupName,
+    columnIndices,
+    bandIndex,
+    elementIndex,
+    parentFrameIndex,
+    existingGroupsCount: existingGroups.length
+  });
+  
+  console.log('操作前的表格元素:', tableElement);
+  
   // 保存状态到历史记录
   saveStateToHistory();
   
@@ -4187,15 +4198,18 @@ const confirmJoinColumnsToGroup = (): void => {
   
   // 获取选中的列
   const selectedColumns = sortedIndices.map(index => tableElement.columns[index]);
+  console.log('选中的列:', selectedColumns);
   
   // 初始化children数组（如果不存在）
   if (!tableElement.children) {
     // 从columns数组创建初始children数组
     tableElement.children = [...tableElement.columns];
+    console.log('初始化children数组:', tableElement.children);
   }
   
   // 查找用户指定的组
   let targetGroup = existingGroups.find(group => group.name === selectedGroupName);
+  console.log('找到的目标组:', targetGroup);
   
   // 先创建新的children数组，避免索引偏移问题
   const newChildren = [...tableElement.children];
@@ -4205,6 +4219,7 @@ const confirmJoinColumnsToGroup = (): void => {
     const index = sortedIndices[i] as number;
     newChildren.splice(index, 1);
   }
+  console.log('移除选中列后的newChildren:', newChildren);
   
   if (!targetGroup) {
     // 如果组不存在，创建新组
@@ -4237,14 +4252,17 @@ const confirmJoinColumnsToGroup = (): void => {
       },
       children: []
     };
+    console.log('创建的新组:', targetGroup);
     
     // 在第一个选中列的位置插入新分组
     const firstIndex = sortedIndices[0] as number;
     newChildren.splice(firstIndex, 0, targetGroup);
+    console.log('插入新组后的newChildren:', newChildren);
   }
   
   // 将选中的列添加到目标组
   targetGroup.children.push(...selectedColumns);
+  console.log('添加列到目标组后:', targetGroup);
   
   // 重新计算目标组的宽度
   targetGroup.width = targetGroup.children.reduce((sum: number, item: any) => sum + item.width, 0);
@@ -4256,19 +4274,23 @@ const confirmJoinColumnsToGroup = (): void => {
   if (targetGroup.columnHeader) {
     targetGroup.columnHeader.width = targetGroup.width;
   }
+  console.log('更新宽度后的目标组:', targetGroup);
   
   // 更新表格元素
   tableElement.children = newChildren;
+  console.log('更新后的表格元素:', tableElement);
   
   // 不再从columns数组中移除列，而是让generateTableXML函数通过uuid来避免重复处理
   // 这样可以确保JRXML生成正确，同时保持数据结构的一致性
   // 表格渲染时会优先使用children数组中的分组结构
   
   // 更新JRXML
+  console.log('准备更新JRXML...');
   updateJRXML();
   
   // 关闭对话框
   showGroupDialog.value = false;
+  console.log('列分组操作完成，对话框已关闭');
 };
 
 // 处理元素上下文菜单

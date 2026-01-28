@@ -1114,11 +1114,18 @@ watch(() => currentElement.value, (newElement) => {
 function updateAllColumnRowHeights() {
   if (!currentElement.value || currentElement.value.type !== 'table') return;
   
+  console.log('开始更新所有列的行高:', {
+    tableRowHeights: tableRowHeights.value,
+    columnCount: currentElement.value.columns ? currentElement.value.columns.length : 0,
+    groupCount: currentElement.value.children ? currentElement.value.children.length : 0
+  });
+  
   // 处理普通列
   if (currentElement.value.columns) {
     currentElement.value.columns.forEach(column => {
       updateColumnRowHeights(column);
     });
+    console.log('普通列行高更新完成');
   }
   
   // 处理分组列
@@ -1126,7 +1133,10 @@ function updateAllColumnRowHeights() {
     currentElement.value.children.forEach(group => {
       updateGroupRowHeights(group);
     });
+    console.log('分组列行高更新完成');
   }
+  
+  console.log('所有列行高更新完成，表格元素:', currentElement.value);
 }
 
 // 更新单个列的行高
@@ -1264,6 +1274,13 @@ function updateGroupHeaderHeights(group: any) {
   // 获取组合列的高度
   const groupHeight = group.height;
   
+  console.log('开始更新组合列表头高度:', {
+    groupName: group.name,
+    groupHeight,
+    hasTableHeader: !!group.tableHeader,
+    hasColumnHeader: !!group.columnHeader
+  });
+  
   // 更新分组的tableHeader高度
   if (group.tableHeader) {
     // 更新tableHeader本身的高度
@@ -1277,6 +1294,7 @@ function updateGroupHeaderHeights(group: any) {
       // 如果没有reportElement，直接更新元素的height属性
       group.tableHeader.height = groupHeight;
     }
+    console.log('更新后的tableHeader:', group.tableHeader);
   }
   
   // 更新分组的columnHeader高度
@@ -1292,7 +1310,10 @@ function updateGroupHeaderHeights(group: any) {
       // 如果没有reportElement，直接更新元素的height属性
       group.columnHeader.height = groupHeight;
     }
+    console.log('更新后的columnHeader:', group.columnHeader);
   }
+  
+  console.log('组合列表头高度更新完成，更新后的组合列:', group);
 }
 
 // 递归更新分组的行高
