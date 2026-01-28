@@ -294,9 +294,14 @@ const toggleFullscreen = (): void => {
 
 // 监听键盘事件
 function handleKeyDown(event: KeyboardEvent) {
-  // 监听ESC键退出全屏
-  if (event.key === 'Escape' && isFullscreen.value) {
-    toggleFullscreen();
+  // 监听ESC键退出全屏或隐藏底部面板
+  if (event.key === 'Escape') {
+    if (isFullscreen.value) {
+      toggleFullscreen();
+    } else if (props.visible) {
+      // 当底部面板可见且未全屏时，按下ESC键隐藏底部面板
+      emit('update:visible', false);
+    }
   }
   
   // 监听Cmd+F或Ctrl+F键，切换到JRXML标签页并进入全屏

@@ -16,9 +16,20 @@
               @contextmenu.stop="handleCellContextMenu(cell, $event)"
             >
               <div class="cell-content" :style="getCellContentStyle(cell, type)">
-                <div class="static-text">
-                  {{ cell.content.tableHeader?.text || '' }}
-                </div>
+                <template v-if="cell.content.tableHeader">
+                  <template v-if="cell.content.tableHeader.type === 'staticText'">
+                    <div class="static-text">{{ cell.content.tableHeader.text || '' }}</div>
+                  </template>
+                  <template v-else-if="cell.content.tableHeader.type === 'textField'">
+                    <div class="text-field">{{ cell.content.tableHeader.expression || '' }}</div>
+                  </template>
+                  <template v-else>
+                    <div class="static-text">{{ cell.content.tableHeader.text || '' }}</div>
+                  </template>
+                </template>
+                <template v-else>
+                  <div class="static-text"></div>
+                </template>
               </div>
             </th>
           </template>

@@ -494,13 +494,26 @@ function handleClickOutside() {
   showColumnContextMenu.value = false;
 }
 
-// 添加点击事件监听器，点击页面其他地方关闭右键菜单
+// 处理键盘事件
+function handleKeyDown(event: KeyboardEvent) {
+  // 检查是否按下了 cmd+g 或 ctrl+g 快捷键
+  if ((event.metaKey || event.ctrlKey) && event.key === 'g') {
+    event.preventDefault();
+    event.stopPropagation();
+    // 调用将选中的列加入现有组的函数
+    joinSelectedColumnsToExistingGroup();
+  }
+}
+
+// 添加事件监听器
 onMounted(() => {
   document.addEventListener('click', handleClickOutside);
+  document.addEventListener('keydown', handleKeyDown);
 });
 
 onBeforeUnmount(() => {
   document.removeEventListener('click', handleClickOutside);
+  document.removeEventListener('keydown', handleKeyDown);
 });
 
 // 将选中的列加入组
@@ -629,9 +642,34 @@ function getColumnHeaderStyle(column: any) {
 
 // 检查是否有列分组（用于Table Header）
 const hasTableHeaderGroups = computed(() => {
-  return tableElement.value.children && 
-         tableElement.value.children.length > 0 &&
-         tableElement.value.children.some(child => (child as any).children && (child as any).children.length > 0);
+  // 只有当列分组实际定义了tableHeader时，才渲染为分组
+  const hasGroups = tableElement.value.children && 
+                   tableElement.value.children.length > 0 &&
+                   tableElement.value.children.some(child => (child as any).children && (child as any).children.length > 0);
+  
+  if (!hasGroups) return false;
+  
+  // 检查是否有任何列分组实际定义了tableHeader
+  const checkHasTableHeader = (group: any): boolean => {
+    if (group.tableHeader) return true;
+    if (group.children) {
+      return group.children.some((child: any) => {
+        if (child.children) {
+          return checkHasTableHeader(child);
+        } else {
+          return child.tableHeader;
+        }
+      });
+    }
+    return false;
+  };
+  
+  return tableElement.value.children!.some((child: any) => {
+    if (child.children) {
+      return checkHasTableHeader(child);
+    }
+    return child.tableHeader;
+  });
 });
 
 // 检查是否有列分组（用于Column Header）
@@ -684,6 +722,10 @@ const hasTableHeader = computed(() => {
   if (hasColumnGroups.value) {
     // 递归检查所有分组和列是否有tableHeader
     const checkHasTableHeader = (group: any): boolean => {
+      // 首先检查当前分组是否有tableHeader
+      if (group.hasTableHeader) return true;
+      
+      // 然后检查子节点
       if (group.children) {
         return group.children.some((child: any) => {
           if (child.children) {

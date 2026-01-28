@@ -4209,6 +4209,16 @@ const confirmJoinColumnsToGroup = (): void => {
   if (!targetGroup) {
     // 如果组不存在，创建新组
     const groupWidth = selectedColumns.reduce((sum, column) => sum + column.width, 0);
+    
+    // 获取选中列中第一个列的头部高度，作为新组的默认高度
+    let defaultTableHeaderHeight = 30;
+    let defaultColumnHeaderHeight = 30;
+    if (selectedColumns.length > 0 && selectedColumns[0]) {
+      const firstColumn = selectedColumns[0];
+      defaultTableHeaderHeight = firstColumn.tableHeader?.height || 30;
+      defaultColumnHeaderHeight = firstColumn.columnHeader?.height || 30;
+    }
+    
     targetGroup = {
       uuid: crypto.randomUUID(),
       name: selectedGroupName,
@@ -4221,15 +4231,9 @@ const confirmJoinColumnsToGroup = (): void => {
         x: 0,
         y: 0,
         width: groupWidth,
-        height: 20
-      },
-      columnHeader: {
-        type: 'staticText',
-        text: selectedGroupName,
-        x: 0,
-        y: 0,
-        width: groupWidth,
-        height: 20
+        height: defaultTableHeaderHeight,
+        textAlignment: 'Center',
+        verticalAlignment: 'Middle'
       },
       children: []
     };
