@@ -282,6 +282,7 @@
     "dashedAll": "All Dashed Borders",
     "dottedAll": "All Dotted Borders",
     "addColumnsToGroup": "Add Columns to Group",
+    "joinColumnsToExistingGroup": "Join Columns to Existing Group",
     "columnGroups": "Column Groups",
     "addColumnGroup": "Add Column Group",
     "maxWidthHint": "Maximum allowed width: {maxWidth}",

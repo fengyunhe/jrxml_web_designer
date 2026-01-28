@@ -1,9 +1,10 @@
 <script setup lang="ts">
-import { ref, computed, onMounted, watch } from 'vue';
+import { ref, computed, onMounted, onBeforeUnmount, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { NButton } from 'naive-ui';
 import ResizablePanel from './ResizablePanel.vue';
 import PdfPreviewModal from '../modals/PdfPreviewModal.vue';
+import CodeMirrorEditor from '../editor/CodeMirrorEditor.vue';
 import {
   UI_CONSTANTS,
   PANEL_CONSTANTS
@@ -62,6 +63,12 @@ const tabs = ref([
 
 // 底部面板高度
 const bottomPanelHeight = ref(props.initialHeight);
+
+// 全屏状态
+const isFullscreen = ref(false);
+const originalPanelHeight = ref(props.initialHeight);
+const originalMaxSize = ref(400); // 原始最大高度
+const currentMaxSize = ref(400); // 当前最大高度
 
 // 纸张规格定义
 const PAPER_SIZES = [
@@ -225,22 +232,10 @@ const localJrxmlContent = computed({
   set: (value) => emit('update:jrxml-content', value)
 });
 
-// 计算行号
-const lineNumbers = computed(() => {
-  if (!localJrxmlContent.value) return '';
-  const lines = localJrxmlContent.value.split('\n').length;
-  return Array.from({ length: lines }, (_, i) => i + 1).join('\n');
-});
-
-// 引用
-const textareaRef = ref<HTMLTextAreaElement | null>(null);
-const lineNumbersRef = ref<HTMLDivElement | null>(null);
-
 // 同步滚动
 const syncScroll = () => {
-  if (textareaRef.value && lineNumbersRef.value) {
-    lineNumbersRef.value.scrollTop = textareaRef.value.scrollTop;
-  }
+  // CodeMirrorEditor组件已经内置了行号和滚动同步功能
+  // 这里可以留空，或者添加其他需要的滚动处理逻辑
 };
 
 // 处理底部面板大小变化
@@ -277,6 +272,39 @@ const downloadJRXML = (): void => {
 const saveJRXML = (): void => {
   emit('save-jrxml');
 };
+
+// 切换全屏模式
+const toggleFullscreen = (): void => {
+  isFullscreen.value = !isFullscreen.value;
+  if (isFullscreen.value) {
+    // 进入全屏模式
+    originalPanelHeight.value = bottomPanelHeight.value;
+    originalMaxSize.value = currentMaxSize.value;
+    currentMaxSize.value = window.innerHeight; // 设置更大的最大高度
+    bottomPanelHeight.value = window.innerHeight - 100; // 留出一些空间给其他UI元素
+  } else {
+    // 退出全屏模式
+    bottomPanelHeight.value = originalPanelHeight.value;
+    currentMaxSize.value = originalMaxSize.value; // 恢复原始最大高度
+  }
+};
+
+// 监听ESC键退出全屏
+function handleKeyDown(event: KeyboardEvent) {
+  if (event.key === 'Escape' && isFullscreen.value) {
+    toggleFullscreen();
+  }
+}
+
+// 组件挂载时添加事件监听器
+onMounted(() => {
+  window.addEventListener('keydown', handleKeyDown);
+});
+
+// 组件卸载时移除事件监听器
+onBeforeUnmount(() => {
+  window.removeEventListener('keydown', handleKeyDown);
+});
 </script>
 
 <template>
@@ -285,7 +313,7 @@ const saveJRXML = (): void => {
     position="bottom"
     :initial-size="bottomPanelHeight"
     :min-size="150"
-    :max-size="400"
+    :max-size="currentMaxSize"
     :collapsible="true"
     @size-change="handleBottomPanelSizeChange"
   >
@@ -417,23 +445,18 @@ const saveJRXML = (): void => {
             <n-button @click="regenerateJRXML" type="default" size="small">{{ t('bottomPanel.regenerate') }}</n-button>
             <n-button @click="downloadJRXML" type="primary" size="small">{{ t('bottomPanel.downloadJRXML') }}</n-button>
             <n-button @click="openPdfPreview" type="info" size="small">{{ t('bottomPanel.previewPDF') }}</n-button>
+            <n-button @click="toggleFullscreen" type="default" size="small" :class="{ 'fullscreen-active': isFullscreen }">
+              {{ isFullscreen ? '退出全屏' : '全屏' }}
+            </n-button>
           </div>
         </div>
         <div class="jrxml-content">
-          <div class="editor-container">
-            <div class="line-numbers" ref="lineNumbersRef">{{ lineNumbers }}</div>
-            <textarea 
-              ref="textareaRef"
-              v-model="localJrxmlContent" 
-              class="jrxml-editor" 
-              spellcheck="false"
-              @keyup.ctrl.s.prevent="saveJRXML"
-              @scroll="syncScroll"
-              @input="syncScroll" 
-              @contextmenu.stop="$event.stopPropagation()"
-              placeholder="{{ localJrxmlContent ? '' : t('bottomPanel.clickToGenerate') }}"
-            ></textarea>
-          </div>
+          <CodeMirrorEditor
+            v-model="localJrxmlContent"
+            :placeholder="localJrxmlContent ? '' : t('bottomPanel.clickToGenerate')"
+            @update:modelValue="localJrxmlContent = $event"
+            @scroll="syncScroll"
+          />
         </div>
       </div>
     </div>
@@ -683,11 +706,16 @@ const saveJRXML = (): void => {
 
 .jrxml-actions {
   display: flex;
-  gap: v-bind('UI_CONSTANTS.SMALL_GAP + "px"');
+  gap: 8px;
+}
+
+.jrxml-actions .fullscreen-active {
+  background-color: #4a90e2;
+  color: white;
 }
 
 .jrxml-placeholder {
-  padding: v-bind('UI_CONSTANTS.LARGE_MARGIN + "px"') v-bind('UI_CONSTANTS.MEDIUM_MARGIN + "px"');
+  padding: 16px 12px;
   text-align: center;
   color: #999;
   height: 100%;

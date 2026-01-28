@@ -267,6 +267,22 @@
                             </div>
                             <div class="width-hint">{{ t('properties.autoCalculated') }}</div>
                           </div>
+                          
+                          <!-- 组合列高度设置 -->
+                          <div class="form-group small" style="flex: 0 0 120px;">
+                            <label style="font-size: 10px;">{{ t('properties.height') }}</label>
+                            <div class="inline-input">
+                              <input 
+                                v-model.number="groupInfo.height" 
+                                type="number" 
+                                min="10"
+                                step="1"
+                                class="small-input"
+                                @change="updateGroupHeaderHeights(groupInfo); emit('update-jrxml')"
+                                @blur="updateGroupHeaderHeights(groupInfo); emit('update-jrxml')"
+                              />
+                            </div>
+                          </div>
                         </div>
                       </n-tab-pane>
                       
@@ -371,6 +387,17 @@
                           step="1"
                           class="small-input"
                           @change="updateColumnWidth(column, Number(index)); emit('update-jrxml')"
+                        />
+                      </div>
+                      <div class="form-group small">
+                        <label>{{ t('properties.height') }}</label>
+                        <input 
+                          v-model.number="column.height" 
+                          type="number" 
+                          min="10"
+                          step="1"
+                          class="small-input"
+                          @change="emit('update-jrxml')"
                         />
                       </div>
                       <div class="form-group small full-width">
@@ -1228,6 +1255,42 @@ function updateColumnRowHeights(column: any) {
       } else {
         column.tableFooter.height = mergedHeight;
       }
+    }
+  }
+}
+
+// 更新组合列的表头高度，确保与组合列高度一致
+function updateGroupHeaderHeights(group: any) {
+  // 获取组合列的高度
+  const groupHeight = group.height;
+  
+  // 更新分组的tableHeader高度
+  if (group.tableHeader) {
+    // 更新tableHeader本身的高度
+    group.tableHeader.height = groupHeight;
+    
+    // 直接更新内部元素的高度，因为这些元素直接包含textField或staticText，而不是通过elements数组
+    // 检查并更新reportElement的高度
+    if (group.tableHeader.reportElement) {
+      group.tableHeader.reportElement.height = groupHeight;
+    } else {
+      // 如果没有reportElement，直接更新元素的height属性
+      group.tableHeader.height = groupHeight;
+    }
+  }
+  
+  // 更新分组的columnHeader高度
+  if (group.columnHeader) {
+    // 更新columnHeader本身的高度
+    group.columnHeader.height = groupHeight;
+    
+    // 直接更新内部元素的高度，因为这些元素直接包含textField或staticText，而不是通过elements数组
+    // 检查并更新reportElement的高度
+    if (group.columnHeader.reportElement) {
+      group.columnHeader.reportElement.height = groupHeight;
+    } else {
+      // 如果没有reportElement，直接更新元素的height属性
+      group.columnHeader.height = groupHeight;
     }
   }
 }

@@ -127,6 +127,7 @@
             @check-fields="checkFields"
             @move-column="handleMoveColumn"
             @add-columns-to-group="handleAddColumnsToGroup"
+            @join-columns-to-existing-group="handleJoinColumnsToExistingGroup"
           />
           </div>
           <!-- 区域高度调整手柄 -->
@@ -287,6 +288,7 @@ const emit = defineEmits([
   'contextmenu', // 添加上下文菜单事件
   'move-column', // 添加列移动事件
   'add-columns-to-group', // 添加列分组事件
+  'join-columns-to-existing-group', // 添加将列加入现有组事件
   'update:enableSnapToGrid', // 添加自动吸附到网格事件
   'update:enableSnapToAlignment', // 添加自动吸附对齐事件
   'update:showGrid' // 添加显示/隐藏网格事件
@@ -370,6 +372,11 @@ const handleMoveColumn = (elementIndex: number, fromIndex: number, toIndex: numb
 // 处理将选中的列加入组
 const handleAddColumnsToGroup = (elementIndex: number, columnIndices: number[], bandIndex: number, parentFrameIndex?: number) => {
   emit('add-columns-to-group', elementIndex, columnIndices, bandIndex, parentFrameIndex);
+};
+
+// 处理将选中的列加入现有组
+const handleJoinColumnsToExistingGroup = (elementIndex: number, columnIndices: number[], bandIndex: number, parentFrameIndex?: number) => {
+  emit('join-columns-to-existing-group', elementIndex, columnIndices, bandIndex, parentFrameIndex);
 };
 
 // 处理元素上下文菜单

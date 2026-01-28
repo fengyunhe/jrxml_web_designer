@@ -141,6 +141,7 @@
         @reset-zoom="resetZoom"
         @move-column="handleMoveColumn"
         @add-columns-to-group="handleAddColumnsToGroup"
+        @join-columns-to-existing-group="handleJoinColumnsToExistingGroup"
         @update:enable-snap-to-grid="enableSnapToGrid = $event"
         @update:enable-snap-to-alignment="enableSnapToAlignment = $event"
         @update:show-grid="showGrid = $event"
@@ -234,6 +235,29 @@
       @update:visible="showSubDatasetModal = $event"
       @save="handleSubDatasetSave"
     />
+    
+    <!-- 组名称输入对话框 -->
+    <BaseModal
+      v-model:visible="showGroupDialog"
+      title="将列加入组"
+      :contentClass="'group-dialog'"
+      :useVShow="true"
+      @confirm="confirmJoinColumnsToGroup"
+    >
+      <div class="group-dialog-content">
+        <div class="form-group">
+          <label>选择现有组或输入新组名称：</label>
+          <n-select
+            v-model:value="groupDialogState.selectedGroupName"
+            :options="groupDialogState.existingGroups.map(group => ({ label: group.name, value: group.name }))"
+            placeholder="选择现有组或输入新名称"
+            filterable
+            tag
+            style="width: 100%; margin-top: 8px;"
+          />
+        </div>
+      </div>
+    </BaseModal>
   </div>
 </template>
 
@@ -248,13 +272,14 @@ import FieldManagementModal from './modals/FieldManagementModal.vue';
 import PdfPreviewModal from './modals/PdfPreviewModal.vue';
 import PreviewServerSettingsModal from './modals/PreviewServerSettingsModal.vue';
 import SubDatasetManagementModal from './modals/SubDatasetManagementModal.vue';
+import BaseModal from './modals/BaseModal.vue';
 import BottomPanel from './panels/BottomPanel.vue';
 import ElementLibrary from './ElementLibrary.vue';
 import FileManager from './designer/controls/FileManager.vue';
 import ElementProperties from './designer/properties/ElementProperties.vue';
 import LanguageSwitcher from './common/LanguageSwitcher.vue';
 import SplitButton from './common/SplitButton.vue';
-import {NButton} from 'naive-ui';
+import {NButton, NSelect} from 'naive-ui';
 import type {
   Band,
   BandType,
@@ -759,8 +784,19 @@ const isDraggingOrResizing = ref(false); // 标记是否正在拖动或调整大
 // 选中状态
 const selectedBandIndex = ref<number | null>(null);
 const selectedElement = ref<SelectedElementInfo | null>(null);
-const selectedElements = ref<SelectedElementInfo[]>([]); // 多选元素数组
+const selectedElements = ref<SelectedElementInfo[]>([]); // 元素编辑状态
 const editingElement = ref<EditingElementInfo | null>(null);
+
+// 组名称输入对话框状态
+const showGroupDialog = ref(false);
+const groupDialogState = ref({
+  elementIndex: 0,
+  columnIndices: [] as number[],
+  bandIndex: 0,
+  parentFrameIndex: undefined as number | undefined,
+  existingGroups: [] as any[],
+  selectedGroupName: ''
+});
 
 
 
@@ -4048,6 +4084,189 @@ const handleAddColumnsToGroup = (elementIndex: number, columnIndices: number[], 
   updateJRXML();
 };
 
+// 处理将选中的列加入现有组
+const handleJoinColumnsToExistingGroup = (elementIndex: number, columnIndices: number[], bandIndex: number, parentFrameIndex?: number): void => {
+  // 获取当前band
+  const band = bands.value[bandIndex];
+  if (!band) return;
+  
+  // 获取要操作的元素
+  let element;
+  if (parentFrameIndex !== undefined) {
+    // 处理Frame内的元素
+    const frame = band.elements[parentFrameIndex];
+    if (frame && frame.type === 'frame' && frame.elements) {
+      element = frame.elements[elementIndex];
+    }
+  } else {
+    // 处理直接在Band中的元素
+    element = band.elements[elementIndex];
+  }
+  
+  // 确保是表格元素
+  if (!element || element.type !== 'table') return;
+  
+  const tableElement = element as any;
+  if (!tableElement.columns || !Array.isArray(tableElement.columns)) return;
+  
+  // 确保至少选择了1列
+  if (columnIndices.length < 1) return;
+  
+  // 收集所有现有的列分组
+  const existingGroups: any[] = [];
+  
+  // 递归收集所有分组
+  const collectGroups = (items: any[]): void => {
+    items.forEach(item => {
+      if (item.children) {
+        existingGroups.push(item);
+        collectGroups(item.children);
+      }
+    });
+  };
+  
+  // 初始化children属性（如果不存在）
+  if (!tableElement.children) {
+    tableElement.children = [...tableElement.columns];
+  }
+  
+  // 收集现有分组
+  collectGroups(tableElement.children);
+  
+  // 更新对话框状态
+  groupDialogState.value = {
+    elementIndex,
+    columnIndices,
+    bandIndex,
+    parentFrameIndex,
+    existingGroups,
+    selectedGroupName: ''
+  };
+  
+  // 显示对话框
+  showGroupDialog.value = true;
+};
+
+// 确认将列加入组
+const confirmJoinColumnsToGroup = (): void => {
+  const { elementIndex, columnIndices, bandIndex, parentFrameIndex, existingGroups, selectedGroupName } = groupDialogState.value;
+  
+  if (!selectedGroupName) {
+    // 如果用户没有输入组名称，直接返回
+    return;
+  }
+  
+  // 获取当前band
+  const band = bands.value[bandIndex];
+  if (!band) return;
+  
+  // 获取要操作的元素
+  let element;
+  if (parentFrameIndex !== undefined) {
+    // 处理Frame内的元素
+    const frame = band.elements[parentFrameIndex];
+    if (frame && frame.type === 'frame' && frame.elements) {
+      element = frame.elements[elementIndex];
+    }
+  } else {
+    // 处理直接在Band中的元素
+    element = band.elements[elementIndex];
+  }
+  
+  // 确保是表格元素
+  if (!element || element.type !== 'table') return;
+  
+  const tableElement = element as any;
+  if (!tableElement.columns || !Array.isArray(tableElement.columns)) return;
+  
+  // 保存状态到历史记录
+  saveStateToHistory();
+  
+  // 排序选中的列索引，确保从左到右处理
+  const sortedIndices = [...columnIndices].sort((a, b) => a - b);
+  
+  // 获取选中的列
+  const selectedColumns = sortedIndices.map(index => tableElement.columns[index]);
+  
+  // 初始化children数组（如果不存在）
+  if (!tableElement.children) {
+    // 从columns数组创建初始children数组
+    tableElement.children = [...tableElement.columns];
+  }
+  
+  // 查找用户指定的组
+  let targetGroup = existingGroups.find(group => group.name === selectedGroupName);
+  
+  // 先创建新的children数组，避免索引偏移问题
+  const newChildren = [...tableElement.children];
+  
+  // 从后往前移除选中的列，避免索引偏移
+  for (let i = sortedIndices.length - 1; i >= 0; i--) {
+    const index = sortedIndices[i] as number;
+    newChildren.splice(index, 1);
+  }
+  
+  if (!targetGroup) {
+    // 如果组不存在，创建新组
+    const groupWidth = selectedColumns.reduce((sum, column) => sum + column.width, 0);
+    targetGroup = {
+      uuid: crypto.randomUUID(),
+      name: selectedGroupName,
+      width: groupWidth,
+      hasTableHeader: true,
+      // 添加必要的头部属性，确保在UI中可见
+      tableHeader: {
+        type: 'staticText',
+        text: selectedGroupName,
+        x: 0,
+        y: 0,
+        width: groupWidth,
+        height: 20
+      },
+      columnHeader: {
+        type: 'staticText',
+        text: selectedGroupName,
+        x: 0,
+        y: 0,
+        width: groupWidth,
+        height: 20
+      },
+      children: []
+    };
+    
+    // 在第一个选中列的位置插入新分组
+    const firstIndex = sortedIndices[0] as number;
+    newChildren.splice(firstIndex, 0, targetGroup);
+  }
+  
+  // 将选中的列添加到目标组
+  targetGroup.children.push(...selectedColumns);
+  
+  // 重新计算目标组的宽度
+  targetGroup.width = targetGroup.children.reduce((sum: number, item: any) => sum + item.width, 0);
+  
+  // 更新目标组的头部宽度
+  if (targetGroup.tableHeader) {
+    targetGroup.tableHeader.width = targetGroup.width;
+  }
+  if (targetGroup.columnHeader) {
+    targetGroup.columnHeader.width = targetGroup.width;
+  }
+  
+  // 更新表格元素
+  tableElement.children = newChildren;
+  
+  // 不再从columns数组中移除列，而是让generateTableXML函数通过uuid来避免重复处理
+  // 这样可以确保JRXML生成正确，同时保持数据结构的一致性
+  // 表格渲染时会优先使用children数组中的分组结构
+  
+  // 更新JRXML
+  updateJRXML();
+  
+  // 关闭对话框
+  showGroupDialog.value = false;
+};
+
 // 处理元素上下文菜单
 const handleElementContextMenu = (event: MouseEvent, bandIndex: number, elementIndex: number, parentFrameIndex?: number): void => {
   // 可以在这里添加上下文菜单的处理逻辑
@@ -4126,6 +4345,35 @@ const handleBandSelectionChange = (): void => {
 </script>
 
 <style scoped>
+/* 组名称输入对话框样式 */
+.group-dialog {
+  width: 400px;
+}
+
+.existing-groups-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.existing-group-tag {
+  display: inline-block;
+  padding: 4px 12px;
+  background-color: #f0f0f0;
+  border: 1px solid #d9d9d9;
+  border-radius: 16px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.existing-group-tag:hover {
+  background-color: #e6f7ff;
+  border-color: #91d5ff;
+  color: #1890ff;
+}
+
 /* CSS变量定义 */
 :root {
   --primary-color: #1890ff;

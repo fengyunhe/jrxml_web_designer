@@ -9,8 +9,8 @@
     >
       <div 
         class="menu-item"
-        @click="addSelectedColumnsToGroup"
-        :disabled="selectedColumns.length < 2"
+        @click="joinSelectedColumnsToExistingGroup"
+        :disabled="selectedColumns.length < 1"
       >
         {{ t('properties.addColumnsToGroup') }}
       </div>
@@ -338,6 +338,9 @@ const emit = defineEmits<{
   contextmenu: [event: MouseEvent, bandIndex: number, elementIndex: number, parentFrameIndex?: number];
   moveColumn: [elementIndex: number, fromIndex: number, toIndex: number];
   addColumnsToGroup: [elementIndex: number, columnIndices: number[]];
+  joinColumnsToExistingGroup: [elementIndex: number, columnIndices: number[], bandIndex: number, parentFrameIndex: number | undefined];
+
+
 }>();
 
 // Move column left or right
@@ -506,6 +509,14 @@ function addSelectedColumnsToGroup() {
   
   // Emit event to parent component
   emit('addColumnsToGroup', props.elementIndex, selectedColumns.value);
+}
+
+// 将选中的列加入现有组
+function joinSelectedColumnsToExistingGroup() {
+  if (selectedColumns.value.length < 1) return;
+  
+  // Emit event to parent component with correct parameter order
+  emit('joinColumnsToExistingGroup', props.elementIndex, selectedColumns.value, props.bandIndex, props.parentFrameIndex);
 }
 
 // 获取单元格样式

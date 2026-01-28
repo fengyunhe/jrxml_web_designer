@@ -282,6 +282,7 @@
     "dashedAll": "全虚线边框",
     "dottedAll": "全点线边框",
     "addColumnsToGroup": "将列加入组",
+    "joinColumnsToExistingGroup": "将列加入现有组",
     "columnGroups": "组合列表头",
     "addColumnGroup": "添加列组",
     "maxWidthHint": "最大允许宽度：{maxWidth}",
