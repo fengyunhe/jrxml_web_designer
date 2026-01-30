@@ -101,10 +101,8 @@
                         </template>
                       </div>
                       <div v-else-if="column.hasTableHeader" class="cell-content empty">
-                        Table Header
                       </div>
                       <div v-else class="cell-content empty">
-                        - 
                       </div>
                     </th>
                   </template>
@@ -197,7 +195,6 @@
                     </template>
                   </div>
                   <div v-else class="cell-content empty">
-                    Detail Cell
                   </div>
                 </td>
               </template>
@@ -235,7 +232,6 @@
                     </template>
                   </div>
                   <div v-else class="cell-content empty">
-                    Column Footer
                   </div>
                 </td>
               </template>
@@ -270,7 +266,6 @@
                     </template>
                   </div>
                   <div v-else class="cell-content empty">
-                    Table Footer
                   </div>
                 </td>
               </template>
@@ -847,21 +842,18 @@ function getCellContentStyle(column: any, type: string) {
   user-select: none;
   padding: 0;
   margin: 0;
-  border: 1px solid transparent;
 }
 
 .table-column.th,
 .table-column.td {
   padding: 0;
   margin: 0;
-  border: 1px solid transparent;
 }
 
 .designer-table th,
 .designer-table td {
   padding: 0;
   margin: 0;
-  border: 1px solid transparent;
   box-sizing: border-box;
   overflow: visible;
 }
@@ -869,7 +861,6 @@ function getCellContentStyle(column: any, type: string) {
 /* 列选中样式 */
 .column-selected {
   background-color: rgba(64, 158, 255, 0.15);
-  border: 1px solid rgba(64, 158, 255, 0.5);
   box-sizing: border-box;
 }
 

@@ -814,7 +814,7 @@ function generateBreakXML(element: any): string {
 }
 
 // 生成列XML
-function generateColumnXML(column: any, index: number): string {
+function generateColumnXML(column: any, index: number, hasColumnGroups: boolean = false, maxDepth: number = 0): string {
   // 确保column有uuid，如果没有则生成一个
   const columnUuid = column.uuid || crypto.randomUUID();
   // 更新column的uuid，确保被保存
@@ -827,8 +827,24 @@ function generateColumnXML(column: any, index: number): string {
 `;
   
   // 生成tableHeader
-  if (column.hasTableHeader && column.tableHeader) {
-    xml += `            <jr:tableHeader height="${toInt(column.tableHeader.height)}" rowSpan="${column.tableHeader.rowSpan || 1}">
+  if (column.tableHeader) {
+    // 如果没有边框设置，添加默认的边框
+    if (!column.tableHeader.box || !column.tableHeader.box.pen) {
+      column.tableHeader.box = {
+        ...column.tableHeader.box,
+        pen: {
+          lineWidth: 1,
+          lineStyle: 'Solid',
+          lineColor: '#000000'
+        }
+      };
+    }
+    // 只有没有被任何组合列包含的单独列（顶层直接列），才根据maxDepth计算rowSpan
+    // 被组合的列的rowSpan始终为1
+    const rowspan = column.tableHeader.rowSpan || 1;
+    // 确保rowspan至少为1
+    const finalRowspan = Math.max(1, rowspan);
+    xml += `            <jr:tableHeader height="${toInt(column.tableHeader.height)}" rowSpan="${finalRowspan}">
 `;
     xml += generateElementXML(column.tableHeader).replace(/^    /gm, '                ');
     xml += `            </jr:tableHeader>
@@ -858,7 +874,14 @@ function generateColumnXML(column: any, index: number): string {
       height: 30,
       text: column.name || `Column${index + 1}`,
       textAlignment: 'Center',
-      verticalAlignment: 'Middle'
+      verticalAlignment: 'Middle',
+      box: {
+        pen: {
+          lineWidth: 1,
+          lineStyle: 'Solid',
+          lineColor: '#000000'
+        }
+      }
     };
   } else {
     // 仅在columnHeader没有明确设置text或expression时，才使用column.name作为默认值
@@ -867,13 +890,27 @@ function generateColumnXML(column: any, index: number): string {
     } else if (columnHeader.type === 'textField' && !columnHeader.expression) {
       columnHeader.expression = column.name;
     }
+    // 如果没有边框设置，添加默认的边框
+    if (!columnHeader.box || !columnHeader.box.pen) {
+      columnHeader.box = {
+        ...columnHeader.box,
+        pen: {
+          lineWidth: 1,
+          lineStyle: 'Solid',
+          lineColor: '#000000'
+        }
+      };
+    }
   }
   
-  xml += `            <jr:columnHeader height="${toInt(columnHeader.height)}" rowSpan="${columnHeader.rowSpan || 1}">
+  // 如果表格有任何一个组合列，则不输出任何columnHeader
+  if (!hasColumnGroups) {
+    xml += `            <jr:columnHeader height="${toInt(columnHeader.height)}" rowSpan="${columnHeader.rowSpan || 1}">
 `;
-  xml += generateElementXML(columnHeader).replace(/^    /gm, '                ');
-  xml += `            </jr:columnHeader>
+    xml += generateElementXML(columnHeader).replace(/^    /gm, '                ');
+    xml += `            </jr:columnHeader>
 `;
+  }
   
   // 生成columnFooter - 只要存在就生成，即使是空的
   if (column.hasColumnFooter) {
@@ -900,7 +937,7 @@ function generateColumnXML(column: any, index: number): string {
 }
 
 // 生成列分组XML，同时收集处理过的列的UUID
-function generateColumnGroupXML(group: any, processedColumnUuids?: Set<string>): string {
+function generateColumnGroupXML(group: any, processedColumnUuids?: Set<string>, hasColumnGroups: boolean = true, maxDepth: number = 0): string {
   // 确保group有uuid，如果没有则生成一个
   const groupUuid = group.uuid || crypto.randomUUID();
   // 更新group的uuid，确保被保存
@@ -927,7 +964,18 @@ function generateColumnGroupXML(group: any, processedColumnUuids?: Set<string>):
 `;
   
   // 生成tableHeader
-  if (group.hasTableHeader && group.tableHeader) {
+  if (group.tableHeader) {
+    // 如果没有边框设置，添加默认的边框
+    if (!group.tableHeader.box || !group.tableHeader.box.pen) {
+      group.tableHeader.box = {
+        ...group.tableHeader.box,
+        pen: {
+          lineWidth: 1,
+          lineStyle: 'Solid',
+          lineColor: '#000000'
+        }
+      };
+    }
     xml += `            <jr:tableHeader height="${toInt(group.tableHeader.height)}" rowSpan="${group.tableHeader.rowSpan || 1}">
 `;
     xml += generateElementXML(group.tableHeader).replace(/^    /gm, '                ');
@@ -955,6 +1003,17 @@ function generateColumnGroupXML(group: any, processedColumnUuids?: Set<string>):
     } else if (columnHeader.type === 'textField' && !columnHeader.expression) {
       columnHeader.expression = group.name;
     }
+    // 如果没有边框设置，添加默认的边框
+    if (!columnHeader.box || !columnHeader.box.pen) {
+      columnHeader.box = {
+        ...columnHeader.box,
+        pen: {
+          lineWidth: 1,
+          lineStyle: 'Solid',
+          lineColor: '#000000'
+        }
+      };
+    }
     
     xml += `            <jr:columnHeader height="${toInt(columnHeader.height)}" rowSpan="${columnHeader.rowSpan || 1}">
 `;
@@ -978,11 +1037,11 @@ function generateColumnGroupXML(group: any, processedColumnUuids?: Set<string>):
   const children = group.children || [];
   children.forEach((child: any, index: number) => {
     if (child.children) {
-      // 递归生成子分组
-      xml += generateColumnGroupXML(child, processedColumnUuids);
+      // 递归生成子分组，传递hasColumnGroups标志和maxDepth
+      xml += generateColumnGroupXML(child, processedColumnUuids, hasColumnGroups, maxDepth);
     } else {
-      // 生成普通列
-      xml += generateColumnXML(child, index);
+      // 生成普通列，传递hasColumnGroups标志和maxDepth
+      xml += generateColumnXML(child, index, hasColumnGroups, maxDepth);
       // 收集处理过的列的UUID
       if (processedColumnUuids) {
         processedColumnUuids.add(child.uuid);
@@ -1187,6 +1246,26 @@ function generateTableXML(element: any): string {
   
   // 生成列和列分组
   
+  // 检测表格是否有任何组合列
+  const hasColumnGroups = element.children && element.children.some((child: any) => child.children);
+  
+  // 计算表格中组合列的最大嵌套层级
+  function calculateMaxDepth(node: any, depth: number = 0): number {
+    if (!node.children || node.children.length === 0) {
+      return depth;
+    }
+    let maxDepth = depth;
+    for (const child of node.children) {
+      const childDepth = calculateMaxDepth(child, depth + 1);
+      if (childDepth > maxDepth) {
+        maxDepth = childDepth;
+      }
+    }
+    return maxDepth;
+  }
+  
+  const maxDepth = calculateMaxDepth({ children: element.children || [] });
+  
   // 1. 收集已经处理过的列的UUID
   const processedColumnUuids = new Set<string>();
   
@@ -1194,11 +1273,21 @@ function generateTableXML(element: any): string {
   const children = element.children || [];
   children.forEach((child: any, index: number) => {
     if (child.children) {
-      // 列分组，传递processedColumnUuids集合
-      xml += generateColumnGroupXML(child, processedColumnUuids);
+      // 列分组，传递processedColumnUuids集合、hasColumnGroups标志和maxDepth
+      xml += generateColumnGroupXML(child, processedColumnUuids, hasColumnGroups, maxDepth);
     } else {
-      // 直接列
-      xml += generateColumnXML(child, index);
+      // 直接列，是顶层直接列
+      // 对于没有子列的顶层直接列，设置其tableHeader的rowSpan为maxDepth
+      if (child.tableHeader && !child.children) {
+        child.tableHeader.rowSpan = child.tableHeader.rowSpan || maxDepth;
+        // 当rowSpan大于1时，调整tableHeader的height为单行高度乘以rowSpan
+        if (child.tableHeader.rowSpan > 1) {
+          const singleRowHeight = 30; // 默认单行高度
+          child.tableHeader.height = singleRowHeight * child.tableHeader.rowSpan;
+        }
+      }
+      // 传递hasColumnGroups标志和maxDepth
+      xml += generateColumnXML(child, index, hasColumnGroups, maxDepth);
       processedColumnUuids.add(child.uuid);
     }
   });
@@ -1207,8 +1296,18 @@ function generateTableXML(element: any): string {
   const normalColumns = element.columns || [];
   normalColumns.forEach((child: any, index: number) => {
     if (!child.children && !processedColumnUuids.has(child.uuid)) {
-      // 普通列且未被处理过
-      xml += generateColumnXML(child, index);
+      // 普通列且未被处理过，是顶层直接列
+      // 对于没有子列的顶层直接列，设置其tableHeader的rowSpan为maxDepth
+      if (child.tableHeader && !child.children) {
+        child.tableHeader.rowSpan = child.tableHeader.rowSpan || maxDepth;
+        // 当rowSpan大于1时，调整tableHeader的height为单行高度乘以rowSpan
+        if (child.tableHeader.rowSpan > 1) {
+          const singleRowHeight = 30; // 默认单行高度
+          child.tableHeader.height = singleRowHeight * child.tableHeader.rowSpan;
+        }
+      }
+      // 传递hasColumnGroups标志和maxDepth
+      xml += generateColumnXML(child, index, hasColumnGroups, maxDepth);
       processedColumnUuids.add(child.uuid);
     }
   });

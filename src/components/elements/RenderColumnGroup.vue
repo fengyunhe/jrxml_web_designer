@@ -51,11 +51,11 @@
                     <div class="text-field">{{ cell.content.columnHeader.expression || '' }}</div>
                   </template>
                   <template v-else>
-                    <div class="column-name">{{ cell.content.name || '' }}</div>
+                    <div class="static-text">{{ cell.content.columnHeader.text || '' }}</div>
                   </template>
                 </template>
                 <template v-else>
-                  <div class="column-name">{{ cell.content.name || '' }}</div>
+                  <div class="static-text"></div>
                 </template>
               </div>
             </th>
@@ -130,6 +130,7 @@ function getLeafNodes(node: any): any[] {
 
 // 构建分组行数据，正确处理colspan和rowspan
 function buildGroupRows(group: any): any[][] {
+  console.log('group', group);
   // 获取所有叶子节点
   const allLeaves = getLeafNodes(group);
   const totalColumns = allLeaves.length;
@@ -184,10 +185,21 @@ function buildGroupRows(group: any): any[][] {
         rowspan = maxDepth - depth + 1;
       }
     } else {
-      // 对于Table Header，使用原有逻辑
+      // 对于Table Header，检查是否实际定义了tableHeader
       if (node.children && node.children.length > 0) {
-        // 有子节点的分组单元格，rowspan始终为1
-        rowspan = 1;
+        // 有子节点的分组单元格
+        // 只有当分组实际定义了tableHeader时，才渲染为组合单元格
+        if (node.tableHeader) {
+          rowspan = 1;
+        } else {
+          // 没有定义tableHeader，递归渲染子节点
+          let currentColumn = startColumn;
+          for (const child of node.children) {
+            buildTable(child, currentColumn, depth);
+            currentColumn += countLeafColumns(child);
+          }
+          return; // 跳过当前节点的渲染
+        }
       } else {
         // 叶子节点，rowspan为从当前深度到最大深度的行数
         rowspan = maxDepth - depth + 1;
