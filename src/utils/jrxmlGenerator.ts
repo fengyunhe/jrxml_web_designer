@@ -63,6 +63,9 @@ export function generateJRXMLContent(
   const updatedFields = Array.from(fieldMap.values());
   let jrxml = buildJasperReportOpenTag(safeProperties);
 
+  // 添加默认表格样式
+  jrxml += generateDefaultTableStylesXML();
+
   // 添加参数定义
   if (parameters.length > 0) {
     jrxml += '\n  <!-- 报表参数定义 -->\n';
@@ -133,6 +136,8 @@ export function generateJRXMLContent(
     });
   }
   
+
+
   // 添加字段定义
   if (updatedFields.length > 0) {
     jrxml += '\n  <!-- 数据字段定义 -->\n';
@@ -177,6 +182,39 @@ export function generateJRXMLContent(
 
   jrxml += '</jasperReport>';
   return jrxml;
+}
+
+// 生成默认表格样式XML
+function generateDefaultTableStylesXML(): string {
+  return `  <!-- 默认表格样式 -->
+  <style name="Table_TH" mode="Opaque" backcolor="#F0F8FF">
+    <box>
+      <pen lineWidth="0.5" lineColor="#000000"/>
+      <topPen lineWidth="0.5" lineColor="#000000"/>
+      <leftPen lineWidth="0.5" lineColor="#000000"/>
+      <bottomPen lineWidth="0.5" lineColor="#000000"/>
+      <rightPen lineWidth="0.5" lineColor="#000000"/>
+    </box>
+  </style>
+  <style name="Table_CH" mode="Opaque" backcolor="#BFE1FF">
+    <box>
+      <pen lineWidth="0.5" lineColor="#000000"/>
+      <topPen lineWidth="0.5" lineColor="#000000"/>
+      <leftPen lineWidth="0.5" lineColor="#000000"/>
+      <bottomPen lineWidth="0.5" lineColor="#000000"/>
+      <rightPen lineWidth="0.5" lineColor="#000000"/>
+    </box>
+  </style>
+  <style name="Table_TD" mode="Opaque" backcolor="#FFFFFF">
+    <box>
+      <pen lineWidth="0.5" lineColor="#000000"/>
+      <topPen lineWidth="0.5" lineColor="#000000"/>
+      <leftPen lineWidth="0.5" lineColor="#000000"/>
+      <bottomPen lineWidth="0.5" lineColor="#000000"/>
+      <rightPen lineWidth="0.5" lineColor="#000000"/>
+    </box>
+  </style>
+`;
 }
 
 // 生成元素XML
@@ -844,7 +882,7 @@ function generateColumnXML(column: any, index: number, hasColumnGroups: boolean 
     const rowspan = column.tableHeader.rowSpan || 1;
     // 确保rowspan至少为1
     const finalRowspan = Math.max(1, rowspan);
-    xml += `            <jr:tableHeader height="${toInt(column.tableHeader.height)}" rowSpan="${finalRowspan}">
+    xml += `            <jr:tableHeader height="${toInt(column.tableHeader.height)}" rowSpan="${finalRowspan}" style="Table_TH">
 `;
     xml += generateElementXML(column.tableHeader).replace(/^    /gm, '                ');
     xml += `            </jr:tableHeader>
@@ -905,7 +943,7 @@ function generateColumnXML(column: any, index: number, hasColumnGroups: boolean 
   
   // 如果表格有任何一个组合列，则不输出任何columnHeader
   if (!hasColumnGroups) {
-    xml += `            <jr:columnHeader height="${toInt(columnHeader.height)}" rowSpan="${columnHeader.rowSpan || 1}">
+    xml += `            <jr:columnHeader height="${toInt(columnHeader.height)}" rowSpan="${columnHeader.rowSpan || 1}" style="Table_CH">
 `;
     xml += generateElementXML(columnHeader).replace(/^    /gm, '                ');
     xml += `            </jr:columnHeader>
@@ -914,7 +952,7 @@ function generateColumnXML(column: any, index: number, hasColumnGroups: boolean 
   
   // 生成columnFooter - 只要存在就生成，即使是空的
   if (column.hasColumnFooter) {
-    xml += `            <jr:columnFooter height="${toInt(column.columnFooter?.height ?? 30)}" rowSpan="${column.columnFooter?.rowSpan || 1}">
+    xml += `            <jr:columnFooter height="${toInt(column.columnFooter?.height ?? 30)}" rowSpan="${column.columnFooter?.rowSpan || 1}" style="Table_CH">
 `;
     if (column.columnFooter && column.columnFooter.expression) {
       xml += generateElementXML(column.columnFooter).replace(/^    /gm, '                ');
@@ -925,7 +963,7 @@ function generateColumnXML(column: any, index: number, hasColumnGroups: boolean 
   
   // 生成detailCell
   if (column.detailCell) {
-    xml += `            <jr:detailCell height="${toInt(column.detailCell.height)}">
+    xml += `            <jr:detailCell height="${toInt(column.detailCell.height)}" style="Table_TD">
 `;
     xml += generateElementXML(column.detailCell).replace(/^    /gm, '                ');
     xml += `            </jr:detailCell>
@@ -976,7 +1014,7 @@ function generateColumnGroupXML(group: any, processedColumnUuids?: Set<string>, 
         }
       };
     }
-    xml += `            <jr:tableHeader height="${toInt(group.tableHeader.height)}" rowSpan="${group.tableHeader.rowSpan || 1}">
+    xml += `            <jr:tableHeader height="${toInt(group.tableHeader.height)}" rowSpan="${group.tableHeader.rowSpan || 1}" style="Table_TH">
 `;
     xml += generateElementXML(group.tableHeader).replace(/^    /gm, '                ');
     xml += `            </jr:tableHeader>
@@ -1015,7 +1053,7 @@ function generateColumnGroupXML(group: any, processedColumnUuids?: Set<string>, 
       };
     }
     
-    xml += `            <jr:columnHeader height="${toInt(columnHeader.height)}" rowSpan="${columnHeader.rowSpan || 1}">
+    xml += `            <jr:columnHeader height="${toInt(columnHeader.height)}" rowSpan="${columnHeader.rowSpan || 1}" style="Table_CH">
 `;
     xml += generateElementXML(columnHeader).replace(/^    /gm, '                ');
     xml += `            </jr:columnHeader>
@@ -1024,7 +1062,7 @@ function generateColumnGroupXML(group: any, processedColumnUuids?: Set<string>, 
   
   // 生成columnFooter - 只要存在就生成，即使是空的
   if (group.hasColumnFooter) {
-    xml += `            <jr:columnFooter height="${toInt(group.columnFooter?.height ?? 30)}" rowSpan="${group.columnFooter?.rowSpan || 1}">
+    xml += `            <jr:columnFooter height="${toInt(group.columnFooter?.height ?? 30)}" rowSpan="${group.columnFooter?.rowSpan || 1}" style="Table_CH">
 `;
     if (group.columnFooter && group.columnFooter.expression) {
       xml += generateElementXML(group.columnFooter).replace(/^    /gm, '                ');
