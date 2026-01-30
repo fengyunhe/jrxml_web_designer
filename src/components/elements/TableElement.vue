@@ -114,16 +114,7 @@
             </template>
           </template>
           <!-- 列头部 -->
-          <template v-if="hasColumnHeaderGroups && columnHeaderHeight > 0">
-            <!-- 直接渲染分组生成的行，不添加外层tr -->
-            <render-column-group 
-            :group="rootGroup" 
-            :level="0" 
-            :type="'columnHeader'"
-            @column-click="handleRenderColumnClick"
-          />
-          </template>
-          <template v-else-if="columnHeaderHeight > 0">
+          <template v-if="!hasColumnGroups && columnHeaderHeight > 0">
             <!-- 普通列的列头 -->
             <tr class="column-header" :style="{ height: `${columnHeaderHeight}px` }">
               <n-tooltip 
@@ -823,7 +814,6 @@ function getCellContentStyle(column: any, type: string) {
 .designer-table {
   width: 100%;
   border-collapse: collapse;
-  table-layout: fixed;
 }
 
 .table-header,
