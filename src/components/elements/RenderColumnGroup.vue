@@ -615,7 +615,6 @@ function handleCellContextMenu(cell: any, event: MouseEvent) {
   font-weight: inherit;
   font-style: inherit;
   color: inherit;
-  padding: 0 5px;
 }
 
 .cell-content.empty {

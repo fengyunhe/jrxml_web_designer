@@ -723,6 +723,67 @@ function getCellStyle(cell: any, cellType?: string) {
     }
   }
   
+  // 最后应用cell.element的样式，覆盖cell中的样式，确保元素本身的样式优先级最高
+  if (cell.element) {
+    // 文本样式
+    if (cell.element.fontSize) {
+      styles.fontSize = `${cell.element.fontSize}px`;
+    }
+    if (cell.element.forecolor) {
+      styles.color = cell.element.forecolor;
+    }
+    if (cell.element.isBold) {
+      styles.fontWeight = 'bold';
+    }
+    if (cell.element.isItalic) {
+      styles.fontStyle = 'italic';
+    }
+    if (cell.element.isUnderline) {
+      styles.textDecoration = 'underline';
+    }
+    if (cell.element.mode === 'Opaque' && cell.element.backcolor) {
+      styles.backgroundColor = cell.element.backcolor;
+    }
+    
+    // 文本对齐方式
+    if (cell.element.textAlignment) {
+      const align = cell.element.textAlignment.toLowerCase();
+      switch (align) {
+        case 'left':
+          styles.justifyContent = 'flex-start';
+          break;
+        case 'center':
+          styles.justifyContent = 'center';
+          break;
+        case 'right':
+          styles.justifyContent = 'flex-end';
+          break;
+        case 'justified':
+          styles.justifyContent = 'space-between';
+          break;
+        default:
+          styles.justifyContent = 'center';
+      }
+    }
+    // 垂直对齐方式
+    if (cell.element.verticalAlignment) {
+      const align = cell.element.verticalAlignment.toLowerCase();
+      switch (align) {
+        case 'top':
+          styles.alignItems = 'flex-start';
+          break;
+        case 'middle':
+          styles.alignItems = 'center';
+          break;
+        case 'bottom':
+          styles.alignItems = 'flex-end';
+          break;
+        default:
+          styles.alignItems = 'center';
+      }
+    }
+  }
+  
   return styles;
 };
 
@@ -1031,8 +1092,6 @@ function getRowStyle(rowType: string) {
   height: 100%;
   min-height: 100%;
   display: flex;
-  align-items: center;
-  justify-content: center;
   padding: 0 5px;
   box-sizing: border-box;
   overflow: hidden;
@@ -1088,25 +1147,7 @@ function getRowStyle(rowType: string) {
   background-color: rgba(64, 158, 255, 0.1);
 }
 
-.cell-content {
-  width: 100%;
-  height: 100%;
-  min-height: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0 5px;
-  box-sizing: border-box;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  font-family: inherit;
-  font-size: inherit;
-  font-weight: inherit;
-  font-style: inherit;
-  color: inherit;
-  background-color: transparent;
-}
+
 
 .cell-content.empty {
   color: #999;
@@ -1172,10 +1213,6 @@ function getRowStyle(rowType: string) {
   transform: translateY(-50%);
 }
 
-/* Ensure cells have enough padding to accommodate the buttons */
-.cell-content {
-  padding: 0 12px;
-}
 
 /* Ensure the buttons are not clipped by parent elements */
 .design-element {

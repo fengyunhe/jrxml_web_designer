@@ -456,71 +456,56 @@
                   
                   <!-- 表头行设置标签页 -->
                    <n-tab-pane v-if="column.hasTableHeader" name="tableHeader" :tab="t('properties.tableHeader')">
-                        <FontStyleSettings 
-                          v-model="column.tableHeader"
-                          @update:modelValue="emit('update-jrxml')"
-                        />
-
-                        <BorderStyleSettings 
-                          v-model="column.tableHeader" 
-                          :label="t('properties.borderStyle')"
-                          @change="emit('update-jrxml')"
-                        />
+                        <!-- 使用通用的元素类型设置组件 -->
+                        <div v-if="column.tableHeader.element">
+                          <ElementTypeBasedSettings 
+                            v-model="column.tableHeader.element"
+                            @update:modelValue="emit('update-jrxml')"
+                          />
+                        </div>
                    </n-tab-pane>
 
                   <!-- 列头单元格设置标签页 -->
                    <n-tab-pane name="columnHeader" :tab="t('properties.columnHeader')">
-                        <FontStyleSettings 
-                          v-model="column.columnHeader"
-                          @update:modelValue="emit('update-jrxml')"
-                        />
-
-                        <BorderStyleSettings 
-                          v-model="column.columnHeader" 
-                          :label="t('properties.borderStyle')"
-                          @change="emit('update-jrxml')"
-                        />
+                        <!-- 使用通用的元素类型设置组件 -->
+                        <div v-if="column.columnHeader.element">
+                          <ElementTypeBasedSettings 
+                            v-model="column.columnHeader.element"
+                            @update:modelValue="emit('update-jrxml')"
+                          />
+                        </div>
                    </n-tab-pane>
 
                   <!-- 详情单元格设置标签页 -->
                   <n-tab-pane name="detailCell" :tab="t('properties.detailCell')">
-                      <FontStyleSettings 
-                          v-model="column.detailCell"
+                      <!-- 使用通用的元素类型设置组件 -->
+                      <div v-if="column.detailCell.element">
+                        <ElementTypeBasedSettings 
+                          v-model="column.detailCell.element"
                           @update:modelValue="emit('update-jrxml')"
                         />
-
-                        <BorderStyleSettings 
-                          v-model="column.detailCell" 
-                          :label="t('properties.borderStyle')"
-                          @change="emit('update-jrxml')"
-                        />
+                      </div>
                   </n-tab-pane>
                   <!-- 列尾行设置标签页 -->
                    <n-tab-pane v-if="column.columnFooter && column.columnFooter.expression" name="columnFooter" :tab="t('properties.columnFooter')">
-                        <FontStyleSettings 
-                          v-model="column.columnFooter"
-                          @update:modelValue="emit('update-jrxml')"
-                        />
-
-                        <BorderStyleSettings 
-                          v-model="column.columnFooter" 
-                          :label="t('properties.borderStyle')"
-                          @change="emit('update-jrxml')"
-                        />
+                        <!-- 使用通用的元素类型设置组件 -->
+                        <div v-if="column.columnFooter.element">
+                          <ElementTypeBasedSettings 
+                            v-model="column.columnFooter.element"
+                            @update:modelValue="emit('update-jrxml')"
+                          />
+                        </div>
                    </n-tab-pane>
 
                   <!-- 表尾行设置标签页 -->
                    <n-tab-pane v-if="column.tableFooter && column.tableFooter.expression" name="tableFooter" :tab="t('properties.tableFooter')">
-                        <FontStyleSettings 
-                          v-model="column.tableFooter"
-                          @update:modelValue="emit('update-jrxml')"
-                        />
-
-                        <BorderStyleSettings 
-                          v-model="column.tableFooter" 
-                          :label="t('properties.borderStyle')"
-                          @change="emit('update-jrxml')"
-                        />
+                        <!-- 使用通用的元素类型设置组件 -->
+                        <div v-if="column.tableFooter.element">
+                          <ElementTypeBasedSettings 
+                            v-model="column.tableFooter.element"
+                            @update:modelValue="emit('update-jrxml')"
+                          />
+                        </div>
                    </n-tab-pane>
                 </n-tabs>
                 </div>
@@ -581,142 +566,12 @@
             </BaseModal>
           
           
-          <!-- 使用计算属性来简化模板中的类型检查 -->
+          <!-- 使用通用的元素类型设置组件 -->
           <div v-if="currentElement">
-            <!-- 静态文本特定属性 -->
-            <template v-if="elementType === 'staticText'">
-              <div class="form-group">
-                <label>{{ t('properties.textContent') }}</label>
-                <textarea v-model="(currentElement as any).text"></textarea>
-              </div>
-              <div class="form-group">
-                <label>{{ t('properties.fontSize') }}</label>
-                <input v-model.number="(currentElement as any).fontSize" type="number" />
-              </div>
-              <div class="checkbox-group">
-                <label>
-                  <input v-model="(currentElement as any).isBold" type="checkbox" />
-                  {{ t('properties.bold') }}
-                </label>
-                <label>
-                  <input v-model="(currentElement as any).isItalic" type="checkbox" />
-                  {{ t('properties.italic') }}
-                </label>
-                <label>
-                  <input v-model="(currentElement as any).isUnderline" type="checkbox" />
-                  {{ t('properties.underline') }}
-                </label>
-              </div>
-            </template>
-            
-            <!-- 文本字段特定属性 -->
-            <template v-else-if="elementType === 'textField'">
-              <div class="form-group">
-                <label>{{ t('properties.expression') }}</label>
-                <input v-model="(currentElement as any).expression" type="text" />
-              </div>
-              <div class="form-group">
-                <label>{{ t('properties.pattern') }}</label>
-                <input v-model="(currentElement as any).pattern" type="text" />
-              </div>
-              <div class="checkbox-group">
-                <label>
-                  <input v-model="(currentElement as any).isBlankWhenNull" type="checkbox" />
-                  {{ t('properties.blankWhenNull') }}
-                </label>
-              </div>
-              <div class="form-group">
-                <label>{{ t('properties.evaluationTime') }}</label>
-                <select v-model="(currentElement as any).evaluationTime">
-                  <option value="Now">{{ t('properties.evalTime.Now') }}</option>
-                  <option value="Report">{{ t('properties.evalTime.Report') }}</option>
-                  <option value="Page">{{ t('properties.evalTime.Page') }}</option>
-                  <option value="Column">{{ t('properties.evalTime.Column') }}</option>
-                  <option value="Group">{{ t('properties.evalTime.Group') }}</option>
-                  <option value="Band">{{ t('properties.evalTime.Band') }}</option>
-                  <option value="Auto">{{ t('properties.evalTime.Auto') }}</option>
-                </select>
-              </div>
-            </template>
-            
-            <!-- 图片特定属性 -->
-            <template v-else-if="elementType === 'image'">
-              <div class="form-group">
-                <label>{{ t('properties.imageExpression') }}</label>
-                <input v-model="(currentElement as any).imageExpression" type="text" />
-                <small>{{ t('properties.imageExpressionHint', { imageFileHolder: '$F{imageFieldName}' }) }}</small>
-              </div>
-            </template>
-            
-            <!-- 矩形特定属性 -->
-            <template v-else-if="elementType === 'rectangle'">
-              <div class="form-group">
-                <label>{{ t('properties.radius') }}</label>
-                <input v-model.number="(currentElement as any).radius" type="number" min="0" @change="ensureIntegerValue(currentElement, 'radius')" />
-              </div>
-            </template>
-            
-            <!-- 分页符特定属性 -->
-            <template v-else-if="elementType === 'break'">
-              <div class="form-group">
-                <label>{{ t('properties.breakType') }}</label>
-                <select v-model="(currentElement as any).breakType" @change="emit('update-jrxml')">
-                  <option value="Page">{{ t('properties.pageBreak') }}</option>
-                  <option value="Column">{{ t('properties.columnBreak') }}</option>
-                </select>
-              </div>
-            </template>
-            
-            <!-- 框架特定属性 -->
-            <template v-else-if="elementType === 'frame'">
-              <div class="form-group">
-                <label>{{ t('properties.layoutMode') }}</label>
-                <select v-model="(currentElement as any).layout" @change="emit('update-jrxml')">
-                  <option :value="undefined">{{ t('properties.freeLayout') }}</option>
-                  <option value="HorizontalLayout">{{ t('properties.horizontalLayout') }}</option>
-                  <option value="VerticalLayout">{{ t('properties.verticalLayout') }}</option>
-                </select>
-              </div>
-            </template>
-            
-            <!-- 通用文本属性 -->
-            <template v-if="['staticText', 'textField'].includes(elementType)">
-              <div class="form-group">
-                <label>{{ t('properties.textAlignment') }}</label>
-                <select v-model="(currentElement as any).textAlignment">
-                  <option value="Left">{{ t('properties.left') }}</option>
-                  <option value="Center">{{ t('properties.center') }}</option>
-                  <option value="Right">{{ t('properties.right') }}</option>
-                  <option value="Justified">{{ t('properties.justified') }}</option>
-                </select>
-              </div>
-              <div class="form-group">
-                <label>{{ t('properties.verticalAlignment') }}</label>
-                <select v-model="(currentElement as any).verticalAlignment">
-                  <option value="Top">{{ t('properties.top') }}</option>
-                  <option value="Middle">{{ t('properties.middle') }}</option>
-                  <option value="Bottom">{{ t('properties.bottom') }}</option>
-                </select>
-              </div>
-              <div class="form-group">
-                <label>{{ t('properties.fontSize') }}</label>
-                <input v-model.number="(currentElement as any).fontSize" type="number" />
-              </div>
-              <div class="checkbox-group">
-                <label>
-                  <input v-model="(currentElement as any).isBold" type="checkbox" />
-                  {{ t('properties.bold') }}
-                </label>
-                <label>
-                  <input v-model="(currentElement as any).isItalic" type="checkbox" />
-                  {{ t('properties.italic') }}
-                </label>
-                <label>
-                  <input v-model="(currentElement as any).isUnderline" type="checkbox" />
-                  {{ t('properties.underline') }}
-                </label>
-              </div>
-            </template>
+            <ElementTypeBasedSettings 
+              v-model="currentElement"
+              @update:modelValue="emit('update-jrxml')"
+            />
           </div>
         </n-tab-pane>
         
@@ -1218,6 +1073,7 @@ import BaseModal from '../../modals/BaseModal.vue';
 import ColorPickerWithOpacity from './ColorPickerWithOpacity.vue';
 import FontStyleSettings from './FontStyleSettings.vue';
 import BorderStyleSettings from './BorderStyleSettings.vue';
+import ElementTypeBasedSettings from './ElementTypeBasedSettings.vue';
 
 const { t } = useI18n();
 

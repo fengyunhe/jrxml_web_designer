@@ -6,7 +6,7 @@
         <div class="form-group small style-control">
           <label>{{ t('properties.style') }}</label>
           <select 
-            v-model="modelValue.borderStyle" 
+            v-model="borderStyle" 
             class="small-input border-select"
             @change="handleChange"
           >
@@ -20,7 +20,7 @@
         <div class="form-group small width-control">
           <label>{{ t('properties.width') }}</label>
           <input 
-            v-model.number="modelValue.borderWidth" 
+            v-model.number="borderWidth" 
             type="number" 
             min="0"
             max="10"
@@ -32,7 +32,7 @@
         <div class="form-group small color-control">
           <label>{{ t('properties.color') }}</label>
           <input 
-            v-model="modelValue.borderColor" 
+            v-model="borderColor" 
             type="color" 
             class="small-input color-picker"
             @change="handleChange"
@@ -44,10 +44,12 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch } from 'vue'
+import { ref, computed, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 
 const { t } = useI18n()
+
+import type { DesignElement } from '../../../types';
 
 interface BorderStyle {
   borderStyle?: string
@@ -56,14 +58,80 @@ interface BorderStyle {
 }
 
 const props = defineProps<{
-  modelValue: BorderStyle
+  modelValue: BorderStyle | DesignElement
   label: string
 }>()
 
 const emit = defineEmits<{
-  'update:modelValue': [value: BorderStyle]
+  'update:modelValue': [value: BorderStyle | DesignElement]
   'change': []
 }>()
+
+// 计算属性：边框样式
+const borderStyle = computed({
+  get: () => {
+    if ('borderStyle' in props.modelValue) {
+      return props.modelValue.borderStyle || '';
+    } else if ('box' in props.modelValue) {
+      return props.modelValue.box?.borderStyle || '';
+    }
+    return '';
+  },
+  set: (value) => {
+    if ('borderStyle' in props.modelValue) {
+      props.modelValue.borderStyle = value;
+    } else if ('box' in props.modelValue) {
+      if (!props.modelValue.box) {
+        props.modelValue.box = {};
+      }
+      props.modelValue.box.borderStyle = value;
+    }
+  }
+});
+
+// 计算属性：边框宽度
+const borderWidth = computed({
+  get: () => {
+    if ('borderWidth' in props.modelValue) {
+      return props.modelValue.borderWidth || 0;
+    } else if ('box' in props.modelValue) {
+      return props.modelValue.box?.borderWidth || 0;
+    }
+    return 0;
+  },
+  set: (value) => {
+    if ('borderWidth' in props.modelValue) {
+      props.modelValue.borderWidth = value;
+    } else if ('box' in props.modelValue) {
+      if (!props.modelValue.box) {
+        props.modelValue.box = {};
+      }
+      props.modelValue.box.borderWidth = value;
+    }
+  }
+});
+
+// 计算属性：边框颜色
+const borderColor = computed({
+  get: () => {
+    if ('borderColor' in props.modelValue) {
+      return props.modelValue.borderColor || '#000000';
+    } else if ('box' in props.modelValue) {
+      return props.modelValue.box?.borderColor || '#000000';
+    }
+    return '#000000';
+  },
+  set: (value) => {
+    if ('borderColor' in props.modelValue) {
+      props.modelValue.borderColor = value;
+    } else if ('box' in props.modelValue) {
+      if (!props.modelValue.box) {
+        props.modelValue.box = {};
+      }
+      props.modelValue.box.borderColor = value;
+    }
+  }
+});
 
 const handleChange = () => {
   emit('update:modelValue', props.modelValue)
