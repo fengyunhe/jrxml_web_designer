@@ -1,5 +1,12 @@
 import { describe, it, expect } from 'vitest';
+import { JSDOM } from 'jsdom';
 import { parseJRXMLContent, generateJRXMLContent } from '../../src/utils/jrxmlGenerator';
+
+// Helper function to parse JRXML content into a DOM object
+function parseJRXMLToDOM(jrxmlContent: string) {
+  const dom = new JSDOM(jrxmlContent, { contentType: 'application/xml' });
+  return dom.window.document;
+}
 
 describe('JRXML边框一致性测试', () => {
   it('当topPen的lineWidth为0时，上边框不显示，其他边框正常显示', () => {
@@ -43,8 +50,23 @@ describe('JRXML边框一致性测试', () => {
     );
     
     // 验证生成的JRXML中包含相同的边框设置
-    expect(generatedJRXML).toContain('<pen lineWidth="1" lineStyle="Solid" lineColor="#000000"/>');
+    const doc = parseJRXMLToDOM(generatedJRXML);
+    const staticTextElements = doc.querySelectorAll('staticText');
+    expect(staticTextElements.length).toBeGreaterThan(0);
+    
+    const boxElement = staticTextElements[0].querySelector('box');
+    expect(boxElement).toBeDefined();
+    
+    // 检查是否生成了全局pen元素
+    const penElement = boxElement!.querySelector('pen');
+    expect(penElement).toBeDefined();
+    expect(penElement!.getAttribute('lineWidth')).toBe('1');
+    expect(penElement!.getAttribute('lineStyle')).toBe('Solid');
+    expect(penElement!.getAttribute('lineColor')).toBe('#000000');
+    
     // 注意：当lineWidth为0时，不会生成对应的pen元素，这是当前实现的行为
+    const topPenElement = boxElement!.querySelector('topPen');
+    expect(topPenElement).toBeNull();
     
     // 再次解析生成的JRXML，验证一致性
     const reparsedData = parseJRXMLContent(generatedJRXML);
@@ -106,6 +128,27 @@ describe('JRXML边框一致性测试', () => {
     
     // 验证生成的JRXML中包含相同的边框设置
     // 注意：当所有lineWidth为0时，不会生成任何pen元素，这是当前实现的行为
-    expect(generatedJRXML).not.toContain('<pen');
+    const doc = parseJRXMLToDOM(generatedJRXML);
+    const staticTextElements = doc.querySelectorAll('staticText');
+    expect(staticTextElements.length).toBeGreaterThan(0);
+    
+    const boxElement = staticTextElements[0].querySelector('box');
+    expect(boxElement).toBeDefined();
+    
+    // 检查是否没有生成任何pen元素
+    const penElement = boxElement!.querySelector('pen');
+    expect(penElement).toBeNull();
+    
+    const topPenElement = boxElement!.querySelector('topPen');
+    expect(topPenElement).toBeNull();
+    
+    const leftPenElement = boxElement!.querySelector('leftPen');
+    expect(leftPenElement).toBeNull();
+    
+    const bottomPenElement = boxElement!.querySelector('bottomPen');
+    expect(bottomPenElement).toBeNull();
+    
+    const rightPenElement = boxElement!.querySelector('rightPen');
+    expect(rightPenElement).toBeNull();
   });
 });

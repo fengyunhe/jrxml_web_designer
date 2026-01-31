@@ -289,7 +289,12 @@
     "maxWidthHint": "Maximum allowed width: {maxWidth}",
     "autoCalculated": "Auto Calculated",
     "all": "All",
-    "fontStyle": "Font Style"
+    "fontStyle": "Font Style",
+    "tableStyleSettings": "Table Style Settings",
+    "rowHeightSettings": "Row Height Settings",
+    "detailCell": "Detail Cell",
+    "styleManagement": "Style Management",
+    "selectStyle": "Select Style"
   },
   "bottomPanel": {
     "pageSettings": "Page Settings",

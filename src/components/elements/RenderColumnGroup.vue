@@ -3,7 +3,7 @@
   <template v-for="(row, rowIndex) in groupRows" :key="rowIndex">
     <!-- 只有当行高大于0时才渲染该行 -->
     <template v-if="calculateRowHeight(row) > 0">
-      <tr class="column-group-row" :style="{ height: `${calculateRowHeight(row)}px` }">
+      <tr :class="['column-group-row', type]" :style="{ height: `${calculateRowHeight(row)}px`, ...getRowStyle(type) }">
         <template v-for="(cell, cellIndex) in row" :key="cell.key">
           <!-- 根据类型选择使用th还是td -->
           <template v-if="type === 'tableHeader'">
@@ -75,6 +75,13 @@ const props = defineProps<{
   level: number;
   type: string;
   columns?: any[];
+  reportStyles?: any[];
+  tableStyles?: {
+    tableHeader: string;
+    columnHeader: string;
+    columnFooter: string;
+    detailCell: string;
+  };
 }>();
 
 const emit = defineEmits<{
@@ -310,11 +317,123 @@ function getCellContainerStyle(cell: any, type: string) {
     }
   } else {
     // 默认样式
-    styles.backgroundColor = type === 'tableHeader' ? '#f0f0f0' : '#e6e6e6';
+    styles.backgroundColor = type === 'tableHeader' ? '#FFFFFF' : '#FFFFFF';
     styles.border = '1px solid #ccc';
   }
   
   return styles;
+}
+
+// 根据style名称获取样式对象
+function getStyleByName(styleName: string) {
+  if (!props.reportStyles || !styleName) return null;
+  return props.reportStyles.find((style: any) => style.name === styleName) || null;
+}
+
+// 从JRXML style转换为CSS样式
+function convertStyleToCSS(style: any) {
+  if (!style) return {};
+  
+  const styles: any = {};
+  
+  // 文本样式
+  if (style.fontSize) {
+    styles.fontSize = `${style.fontSize}px`;
+  }
+  if (style.forecolor) {
+    styles.color = style.forecolor;
+  }
+  if (style.isBold) {
+    styles.fontWeight = 'bold';
+  }
+  if (style.isItalic) {
+    styles.fontStyle = 'italic';
+  }
+  if (style.isUnderline) {
+    styles.textDecoration = 'underline';
+  }
+  if (style.mode === 'Opaque' && style.backcolor) {
+    styles.backgroundColor = style.backcolor;
+  }
+  
+  // 文本对齐方式
+  if (style.textAlignment) {
+    const align = style.textAlignment.toLowerCase();
+    switch (align) {
+      case 'left':
+        styles.justifyContent = 'flex-start';
+        break;
+      case 'center':
+        styles.justifyContent = 'center';
+        break;
+      case 'right':
+        styles.justifyContent = 'flex-end';
+        break;
+      case 'justified':
+        styles.justifyContent = 'space-between';
+        break;
+      default:
+        styles.justifyContent = 'center';
+    }
+  }
+  // 垂直对齐方式
+  if (style.verticalAlignment) {
+    const align = style.verticalAlignment.toLowerCase();
+    switch (align) {
+      case 'top':
+        styles.alignItems = 'flex-start';
+        break;
+      case 'middle':
+        styles.alignItems = 'center';
+        break;
+      case 'bottom':
+        styles.alignItems = 'flex-end';
+        break;
+      default:
+        styles.alignItems = 'center';
+    }
+  }
+  
+  // 边框样式
+  let borderWidth = 0;
+  let borderStyle = 'solid';
+  let borderColor = '#000000';
+  
+  if (style.box && style.box.pen) {
+    borderWidth = style.box.pen.lineWidth || 0;
+    borderStyle = style.box.pen.lineStyle || 'solid';
+    borderColor = style.box.pen.lineColor || '#000000';
+  }
+  
+  if (borderWidth > 0) {
+    styles.border = `${borderWidth}px ${borderStyle} ${borderColor}`;
+  }
+  
+  return styles;
+}
+
+// 获取行样式
+function getRowStyle(rowType: string) {
+  // 从tableStyles中获取样式
+  if (props.tableStyles) {
+    let styleName = '';
+    switch (rowType) {
+      case 'tableHeader':
+        styleName = props.tableStyles.tableHeader;
+        break;
+      case 'columnHeader':
+        styleName = props.tableStyles.columnHeader;
+        break;
+    }
+    
+    if (styleName) {
+      const style = getStyleByName(styleName);
+      if (style) {
+        return convertStyleToCSS(style);
+      }
+    }
+  }
+  return {};
 }
 
 // 获取单元格内容样式（应用到.cell-content元素）
@@ -484,6 +603,7 @@ function handleCellContextMenu(cell: any, event: MouseEvent) {
 .cell-content {
   width: 100%;
   height: 100%;
+  min-height: 100%;
   display: flex;
   align-items: center;
   justify-content: center;

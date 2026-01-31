@@ -804,20 +804,26 @@ describe('jrxmlGenerator', () => {
           width: 200,
           hasTableHeader: true,
           tableHeader: {
-            type: 'staticText',
-            text: 'Group Header',
-            x: 0,
-            y: 0,
-            width: 200,
-            height: 30
+            enable: true,
+            element: {
+              type: 'staticText',
+              text: 'Group Header',
+              x: 0,
+              y: 0,
+              width: 200,
+              height: 30
+            }
           },
           columnHeader: {
-            type: 'staticText',
-            text: 'Group1',
-            x: 0,
-            y: 0,
-            width: 200,
-            height: 30
+            enable: true,
+            element: {
+              type: 'staticText',
+              text: 'Group1',
+              x: 0,
+              y: 0,
+              width: 200,
+              height: 30
+            }
           },
           children: [
             {
@@ -827,20 +833,26 @@ describe('jrxmlGenerator', () => {
               width: 100,
               hasTableHeader: false,
               columnHeader: {
-                type: 'staticText',
-                text: 'Column1',
-                x: 0,
-                y: 0,
-                width: 100,
-                height: 30
+                enable: true,
+                element: {
+                  type: 'staticText',
+                  text: 'Column1',
+                  x: 0,
+                  y: 0,
+                  width: 100,
+                  height: 30
+                }
               },
               detailCell: {
-                type: 'textField',
-                expression: '$F{field1}',
-                x: 0,
-                y: 0,
-                width: 100,
-                height: 30
+                enable: true,
+                element: {
+                  type: 'textField',
+                  expression: '$F{field1}',
+                  x: 0,
+                  y: 0,
+                  width: 100,
+                  height: 30
+                }
               }
             },
             {
@@ -850,20 +862,26 @@ describe('jrxmlGenerator', () => {
               width: 100,
               hasTableHeader: false,
               columnHeader: {
-                type: 'staticText',
-                text: 'Column2',
-                x: 0,
-                y: 0,
-                width: 100,
-                height: 30
+                enable: true,
+                element: {
+                  type: 'staticText',
+                  text: 'Column2',
+                  x: 0,
+                  y: 0,
+                  width: 100,
+                  height: 30
+                }
               },
               detailCell: {
-                type: 'textField',
-                expression: '$F{field2}',
-                x: 0,
-                y: 0,
-                width: 100,
-                height: 30
+                enable: true,
+                element: {
+                  type: 'textField',
+                  expression: '$F{field2}',
+                  x: 0,
+                  y: 0,
+                  width: 100,
+                  height: 30
+                }
               }
             }
           ]
@@ -875,20 +893,26 @@ describe('jrxmlGenerator', () => {
           width: 100,
           hasTableHeader: false,
           columnHeader: {
-            type: 'staticText',
-            text: 'Column3',
-            x: 0,
-            y: 0,
-            width: 100,
-            height: 30
+            enable: true,
+            element: {
+              type: 'staticText',
+              text: 'Column3',
+              x: 0,
+              y: 0,
+              width: 100,
+              height: 30
+            }
           },
           detailCell: {
-            type: 'textField',
-            expression: '$F{field3}',
-            x: 0,
-            y: 0,
-            width: 100,
-            height: 30
+            enable: true,
+            element: {
+              type: 'textField',
+              expression: '$F{field3}',
+              x: 0,
+              y: 0,
+              width: 100,
+              height: 30
+            }
           }
         }
       ],

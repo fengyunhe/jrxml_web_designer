@@ -2,6 +2,16 @@
   <div class="element-properties">
     <h3>{{ t('properties.title') }}</h3>
     
+    <!-- 样式管理按钮 -->
+    <div class="style-management-section">
+      <n-button 
+        type="primary" 
+        @click="showStyleManagerModal = true"
+      >
+        {{ t('properties.styleManagement') }}
+      </n-button>
+    </div>
+    
     <!-- 报表属性 -->
     <div v-if="!selectedBandIndex && !selectedElement" class="property-section">
       <h4>{{ t('properties.reportProperties') }}</h4>
@@ -213,6 +223,8 @@
               <option value="AllSectionsNoDetail">{{ t('properties.whenNoDataTypeOptions.AllSectionsNoDetail') }}</option>
             </select>
           </div>
+          
+
 
                       <!-- 组合列设置 -->
             <div class="form-group">
@@ -949,7 +961,88 @@
             </select>
           </div>
           
-          <template v-if="currentElement && currentElement.type !== 'line' && currentElement.type !== 'image' && currentElement.type !== 'frame'">
+          <!-- 表格特定样式设置 -->
+          <template v-if="currentElement && currentElement.type === 'table'">
+            <div class="form-group">
+              <h5>{{ t('properties.tableStyleSettings') }}</h5>
+              <div class="table-style-settings">
+                <!-- 表头样式选择 -->
+                <div class="table-style-section">
+                  <h6>{{ t('properties.tableHeader') }} {{ t('properties.style') }}</h6>
+                  <div class="box-section compact">
+                    <div class="form-group">
+                      <label>{{ t('properties.selectStyle') }}</label>
+                      <select 
+                        v-model="tableStyles.tableHeader" 
+                        @change="updateTableStyles(); emit('update-jrxml')"
+                      >
+                        <option value="Table_TH">Table_TH</option>
+                        <option value="Table_CH">Table_CH</option>
+                        <option value="Table_TD">Table_TD</option>
+                      </select>
+                    </div>
+                  </div>
+                </div>
+                
+                <!-- 列头样式选择 -->
+                <div class="table-style-section">
+                  <h6>{{ t('properties.columnHeader') }} {{ t('properties.style') }}</h6>
+                  <div class="box-section compact">
+                    <div class="form-group">
+                      <label>{{ t('properties.selectStyle') }}</label>
+                      <select 
+                        v-model="tableStyles.columnHeader" 
+                        @change="updateTableStyles(); emit('update-jrxml')"
+                      >
+                        <option value="Table_TH">Table_TH</option>
+                        <option value="Table_CH">Table_CH</option>
+                        <option value="Table_TD">Table_TD</option>
+                      </select>
+                    </div>
+                  </div>
+                </div>
+                
+                <!-- 列尾样式选择 -->
+                <div class="table-style-section">
+                  <h6>{{ t('properties.columnFooter') }} {{ t('properties.style') }}</h6>
+                  <div class="box-section compact">
+                    <div class="form-group">
+                      <label>{{ t('properties.selectStyle') }}</label>
+                      <select 
+                        v-model="tableStyles.columnFooter" 
+                        @change="updateTableStyles(); emit('update-jrxml')"
+                      >
+                        <option value="Table_TH">Table_TH</option>
+                        <option value="Table_CH">Table_CH</option>
+                        <option value="Table_TD">Table_TD</option>
+                      </select>
+                    </div>
+                  </div>
+                </div>
+                
+                <!-- 详情单元格样式选择 -->
+                <div class="table-style-section">
+                  <h6>{{ t('properties.detailCell') }} {{ t('properties.style') }}</h6>
+                  <div class="box-section compact">
+                    <div class="form-group">
+                      <label>{{ t('properties.selectStyle') }}</label>
+                      <select 
+                        v-model="tableStyles.detailCell" 
+                        @change="updateTableStyles(); emit('update-jrxml')"
+                      >
+                        <option value="Table_TH">Table_TH</option>
+                        <option value="Table_CH">Table_CH</option>
+                        <option value="Table_TD">Table_TD</option>
+                      </select>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </template>
+          
+          <!-- 其他元素的样式设置 -->
+          <template v-else-if="currentElement && currentElement.type !== 'line' && currentElement.type !== 'image' && currentElement.type !== 'frame'">
             <div class="form-group">
               <label>{{ t('properties.fontName') }}</label>
               <select v-if="currentElement" v-model="currentElement.fontFamily" style="appearance: none; -webkit-appearance: none;">
@@ -1020,6 +1113,99 @@
       </div>
     </div>
   </div>
+  
+  <!-- 样式管理模态框 -->
+  <BaseModal
+    :visible="showStyleManagerModal"
+    :title="t('properties.styleManagement')"
+    @update:visible="showStyleManagerModal = $event"
+    @confirm="saveStyleChanges"
+    @cancel="cancelStyleChanges"
+  >
+    <div class="style-manager-content">
+      <div v-for="(style, index) in reportStyles" :key="index" class="style-item">
+        <h4>{{ style.name }}</h4>
+        <div class="style-properties">
+          <!-- 背景模式设置 -->
+          <div class="form-group">
+            <label>{{ t('properties.backgroundMode') }}</label>
+            <select v-model="style.mode" @change="emit('update-jrxml')">
+              <option :value="undefined">{{ t('properties.defaultTransparent') }}</option>
+              <option value="Transparent">{{ t('properties.transparent') }}</option>
+              <option value="Opaque">{{ t('properties.opaque') }}</option>
+            </select>
+          </div>
+          
+          <!-- 前景颜色设置 -->
+          <div class="form-group">
+            <label>{{ t('properties.forecolor') }}</label>
+            <ColorPickerWithOpacity 
+              v-model="style.forecolor"
+              v-model:mode="style.forecolorMode"
+              @update:modelValue="emit('update-jrxml')"
+              @update:mode="emit('update-jrxml')"
+            />
+          </div>
+          
+          <!-- 背景颜色设置 -->
+          <div class="form-group">
+            <label>{{ t('properties.backgroundColor') }}</label>
+            <ColorPickerWithOpacity 
+              v-model="style.backcolor"
+              v-model:mode="style.mode"
+              @update:modelValue="emit('update-jrxml')"
+              @update:mode="emit('update-jrxml')"
+            />
+          </div>
+          
+          <!-- 水平文本对齐 -->
+          <div class="form-group">
+            <label>{{ t('properties.hTextAlign') }}</label>
+            <select v-model="style.hTextAlign" @change="emit('update-jrxml')">
+              <option :value="undefined">{{ t('properties.default') }}</option>
+              <option value="Left">{{ t('properties.left') }}</option>
+              <option value="Center">{{ t('properties.center') }}</option>
+              <option value="Right">{{ t('properties.right') }}</option>
+              <option value="Justified">{{ t('properties.justified') }}</option>
+            </select>
+          </div>
+          
+          <!-- 水平图片对齐 -->
+          <div class="form-group">
+            <label>{{ t('properties.hImageAlign') }}</label>
+            <select v-model="style.hImageAlign" @change="emit('update-jrxml')">
+              <option :value="undefined">{{ t('properties.default') }}</option>
+              <option value="Left">{{ t('properties.left') }}</option>
+              <option value="Center">{{ t('properties.center') }}</option>
+              <option value="Right">{{ t('properties.right') }}</option>
+            </select>
+          </div>
+          
+          <!-- 垂直文本对齐 -->
+          <div class="form-group">
+            <label>{{ t('properties.vTextAlign') }}</label>
+            <select v-model="style.vTextAlign" @change="emit('update-jrxml')">
+              <option :value="undefined">{{ t('properties.default') }}</option>
+              <option value="Top">{{ t('properties.top') }}</option>
+              <option value="Middle">{{ t('properties.middle') }}</option>
+              <option value="Bottom">{{ t('properties.bottom') }}</option>
+            </select>
+          </div>
+          
+          <!-- 垂直图片对齐 -->
+          <div class="form-group">
+            <label>{{ t('properties.vImageAlign') }}</label>
+            <select v-model="style.vImageAlign" @change="emit('update-jrxml')">
+              <option :value="undefined">{{ t('properties.default') }}</option>
+              <option value="Top">{{ t('properties.top') }}</option>
+              <option value="Middle">{{ t('properties.middle') }}</option>
+              <option value="Bottom">{{ t('properties.bottom') }}</option>
+            </select>
+          </div>
+        </div>
+      </div>
+    </div>
+  </BaseModal>
 </template>
 
 <script setup lang="ts">
@@ -1041,6 +1227,7 @@ interface Props {
   bands: Band[];
   reportProperties: any;
   subDatasets?: TableDataset[];
+  reportStyles?: any[];
 }
 
 interface Emits {
@@ -1048,6 +1235,7 @@ interface Emits {
   (e: 'delete-element'): void;
   (e: 'update-jrxml'): void;
   (e: 'save-state'): void;
+  (e: 'update:reportStyles', styles: any[]): void;
 }
 
 const props = defineProps<Props>();
@@ -1095,17 +1283,253 @@ const tableRowHeights = ref({
   tableFooter: 30
 });
 
-// 当表格元素变化时，更新行高设置
+// 表格样式选择
+const tableStyles = ref({
+  tableHeader: 'Table_TH',
+  columnHeader: 'Table_CH',
+  columnFooter: 'Table_CH',
+  detailCell: 'Table_TD'
+});
+
+// 样式管理模态框控制
+const showStyleManagerModal = ref(false);
+
+// 报表样式管理
+const reportStyles = ref<any[]>(props.reportStyles || [
+  {
+    name: 'Table_TH',
+    mode: 'Opaque',
+    backcolor: '#F0F8FF',
+    forecolor: '#000000',
+    forecolorMode: 'Opaque',
+    hTextAlign: 'Center',
+    hImageAlign: 'Center',
+    vTextAlign: 'Middle',
+    vImageAlign: 'Middle',
+    box: {
+      pen: {
+        lineWidth: 0.5,
+        lineColor: '#000000'
+      },
+      topPen: {
+        lineWidth: 0.5,
+        lineColor: '#000000'
+      },
+      leftPen: {
+        lineWidth: 0.5,
+        lineColor: '#000000'
+      },
+      bottomPen: {
+        lineWidth: 0.5,
+        lineColor: '#000000'
+      },
+      rightPen: {
+        lineWidth: 0.5,
+        lineColor: '#000000'
+      }
+    }
+  },
+  {
+    name: 'Table_CH',
+    mode: 'Opaque',
+    backcolor: '#BFE1FF',
+    forecolor: '#000000',
+    forecolorMode: 'Opaque',
+    hTextAlign: 'Center',
+    hImageAlign: 'Center',
+    vTextAlign: 'Middle',
+    vImageAlign: 'Middle',
+    box: {
+      pen: {
+        lineWidth: 0.5,
+        lineColor: '#000000'
+      },
+      topPen: {
+        lineWidth: 0.5,
+        lineColor: '#000000'
+      },
+      leftPen: {
+        lineWidth: 0.5,
+        lineColor: '#000000'
+      },
+      bottomPen: {
+        lineWidth: 0.5,
+        lineColor: '#000000'
+      },
+      rightPen: {
+        lineWidth: 0.5,
+        lineColor: '#000000'
+      }
+    }
+  },
+  {
+    name: 'Table_TD',
+    mode: 'Opaque',
+    backcolor: '#FFFFFF',
+    forecolor: '#000000',
+    forecolorMode: 'Opaque',
+    hTextAlign: 'Left',
+    hImageAlign: 'Left',
+    vTextAlign: 'Middle',
+    vImageAlign: 'Middle',
+    box: {
+      pen: {
+        lineWidth: 0.5,
+        lineColor: '#000000'
+      },
+      topPen: {
+        lineWidth: 0.5,
+        lineColor: '#000000'
+      },
+      leftPen: {
+        lineWidth: 0.5,
+        lineColor: '#000000'
+      },
+      bottomPen: {
+        lineWidth: 0.5,
+        lineColor: '#000000'
+      },
+      rightPen: {
+        lineWidth: 0.5,
+        lineColor: '#000000'
+      }
+    }
+  }
+]);
+
+// 保存样式更改
+function saveStyleChanges() {
+  emit('update:reportStyles', reportStyles.value);
+  emit('update-jrxml');
+  showStyleManagerModal.value = false;
+}
+
+// 取消样式更改
+function cancelStyleChanges() {
+  // 重置样式为原始状态
+  reportStyles.value = props.reportStyles || [
+    {
+      name: 'Table_TH',
+      mode: 'Opaque',
+      backcolor: '#F0F8FF',
+      forecolor: '#000000',
+      forecolorMode: 'Opaque',
+      hTextAlign: 'Center',
+      hImageAlign: 'Center',
+      vTextAlign: 'Middle',
+      vImageAlign: 'Middle',
+      box: {
+        pen: {
+          lineWidth: 0.5,
+          lineColor: '#000000'
+        },
+        topPen: {
+          lineWidth: 0.5,
+          lineColor: '#000000'
+        },
+        leftPen: {
+          lineWidth: 0.5,
+          lineColor: '#000000'
+        },
+        bottomPen: {
+          lineWidth: 0.5,
+          lineColor: '#000000'
+        },
+        rightPen: {
+          lineWidth: 0.5,
+          lineColor: '#000000'
+        }
+      }
+    },
+    {
+      name: 'Table_CH',
+      mode: 'Opaque',
+      backcolor: '#BFE1FF',
+      forecolor: '#000000',
+      forecolorMode: 'Opaque',
+      hTextAlign: 'Center',
+      hImageAlign: 'Center',
+      vTextAlign: 'Middle',
+      vImageAlign: 'Middle',
+      box: {
+        pen: {
+          lineWidth: 0.5,
+          lineColor: '#000000'
+        },
+        topPen: {
+          lineWidth: 0.5,
+          lineColor: '#000000'
+        },
+        leftPen: {
+          lineWidth: 0.5,
+          lineColor: '#000000'
+        },
+        bottomPen: {
+          lineWidth: 0.5,
+          lineColor: '#000000'
+        },
+        rightPen: {
+          lineWidth: 0.5,
+          lineColor: '#000000'
+        }
+      }
+    },
+    {
+      name: 'Table_TD',
+      mode: 'Opaque',
+      backcolor: '#FFFFFF',
+      forecolor: '#000000',
+      forecolorMode: 'Opaque',
+      hTextAlign: 'Left',
+      hImageAlign: 'Left',
+      vTextAlign: 'Middle',
+      vImageAlign: 'Middle',
+      box: {
+        pen: {
+          lineWidth: 0.5,
+          lineColor: '#000000'
+        },
+        topPen: {
+          lineWidth: 0.5,
+          lineColor: '#000000'
+        },
+        leftPen: {
+          lineWidth: 0.5,
+          lineColor: '#000000'
+        },
+        bottomPen: {
+          lineWidth: 0.5,
+          lineColor: '#000000'
+        },
+        rightPen: {
+          lineWidth: 0.5,
+          lineColor: '#000000'
+        }
+      }
+    }
+  ];
+  showStyleManagerModal.value = false;
+}
+
+// 当表格元素变化时，更新行高设置和样式选择
 watch(() => currentElement.value, (newElement) => {
-  if (newElement && newElement.type === 'table' && newElement.columns && newElement.columns.length > 0) {
+  if (newElement && newElement.type === 'table') {
     // 从第一列获取当前行高值
-    const firstColumn = newElement.columns[0];
-    if (firstColumn) {
-      tableRowHeights.value.tableHeader = firstColumn.tableHeader?.height ?? 30;
-      tableRowHeights.value.columnHeader = firstColumn.columnHeader?.height ?? 30;
-      tableRowHeights.value.detailCell = firstColumn.detailCell?.height ?? 30;
-      tableRowHeights.value.columnFooter = firstColumn.columnFooter?.height ?? 30;
-      tableRowHeights.value.tableFooter = firstColumn.tableFooter?.height ?? 30;
+    if (newElement.columns && newElement.columns.length > 0) {
+      const firstColumn = newElement.columns[0];
+      if (firstColumn) {
+        tableRowHeights.value.tableHeader = firstColumn.tableHeader?.element?.height ?? 30;
+        tableRowHeights.value.columnHeader = firstColumn.columnHeader?.element?.height ?? 30;
+        tableRowHeights.value.detailCell = firstColumn.detailCell?.element?.height ?? 30;
+        tableRowHeights.value.columnFooter = firstColumn.columnFooter?.element?.height ?? 30;
+        tableRowHeights.value.tableFooter = firstColumn.tableFooter?.element?.height ?? 30;
+        
+        // 更新表格样式选择
+        tableStyles.value.tableHeader = (firstColumn.tableHeader as any)?.style ?? 'Table_TH';
+        tableStyles.value.columnHeader = (firstColumn.columnHeader as any)?.style ?? 'Table_CH';
+        tableStyles.value.columnFooter = (firstColumn.columnFooter as any)?.style ?? 'Table_CH';
+        tableStyles.value.detailCell = (firstColumn.detailCell as any)?.style ?? 'Table_TD';
+      }
     }
   }
 }, { deep: true, immediate: true });
@@ -1689,14 +2113,17 @@ function setUnifiedBorderColor(value: string) {
 function initTableCell(column: any, cellType: 'tableFooter' | 'columnFooter') {
   if (!column[cellType]) {
     column[cellType] = {
-      type: 'textField',
-      x: 0,
-      y: 0,
-      width: column.width,
-      height: 30,
-      expression: '',
-      backcolor: '',
-      mode: 'Transparent'
+      enable: false,
+      element: {
+        type: 'textField',
+        x: 0,
+        y: 0,
+        width: column.width,
+        height: 30,
+        expression: '',
+        backcolor: '',
+        mode: 'Transparent'
+      }
     };
   }
 }
@@ -1709,19 +2136,39 @@ function updateColumnWidth(column: any, index: number) {
   
   // 更新所有相关单元格的宽度
   if (column.tableHeader) {
-    column.tableHeader.width = newWidth;
+    if (column.tableHeader.element) {
+      column.tableHeader.element.width = newWidth;
+    } else {
+      column.tableHeader.width = newWidth;
+    }
   }
   if (column.columnHeader) {
-    column.columnHeader.width = newWidth;
+    if (column.columnHeader.element) {
+      column.columnHeader.element.width = newWidth;
+    } else {
+      column.columnHeader.width = newWidth;
+    }
   }
   if (column.detailCell) {
-    column.detailCell.width = newWidth;
+    if (column.detailCell.element) {
+      column.detailCell.element.width = newWidth;
+    } else {
+      column.detailCell.width = newWidth;
+    }
   }
   if (column.columnFooter) {
-    column.columnFooter.width = newWidth;
+    if (column.columnFooter.element) {
+      column.columnFooter.element.width = newWidth;
+    } else {
+      column.columnFooter.width = newWidth;
+    }
   }
   if (column.tableFooter) {
-    column.tableFooter.width = newWidth;
+    if (column.tableFooter.element) {
+      column.tableFooter.element.width = newWidth;
+    } else {
+      column.tableFooter.width = newWidth;
+    }
   }
   
   // 如果表格有children属性，同时更新children属性中对应列的宽度
@@ -1734,19 +2181,39 @@ function updateColumnWidth(column: any, index: number) {
       
       // 同时更新childColumn中所有相关单元格的宽度
       if (childColumn.tableHeader) {
-        childColumn.tableHeader.width = newWidth;
+        if (childColumn.tableHeader.element) {
+          childColumn.tableHeader.element.width = newWidth;
+        } else {
+          childColumn.tableHeader.width = newWidth;
+        }
       }
       if (childColumn.columnHeader) {
-        childColumn.columnHeader.width = newWidth;
+        if (childColumn.columnHeader.element) {
+          childColumn.columnHeader.element.width = newWidth;
+        } else {
+          childColumn.columnHeader.width = newWidth;
+        }
       }
       if (childColumn.detailCell) {
-        childColumn.detailCell.width = newWidth;
+        if (childColumn.detailCell.element) {
+          childColumn.detailCell.element.width = newWidth;
+        } else {
+          childColumn.detailCell.width = newWidth;
+        }
       }
       if (childColumn.columnFooter) {
-        childColumn.columnFooter.width = newWidth;
+        if (childColumn.columnFooter.element) {
+          childColumn.columnFooter.element.width = newWidth;
+        } else {
+          childColumn.columnFooter.width = newWidth;
+        }
       }
       if (childColumn.tableFooter) {
-        childColumn.tableFooter.width = newWidth;
+        if (childColumn.tableFooter.element) {
+          childColumn.tableFooter.element.width = newWidth;
+        } else {
+          childColumn.tableFooter.width = newWidth;
+        }
       }
     }
   }
@@ -1999,8 +2466,8 @@ function addSelectedFieldsAsColumns() {
   
   // Populate existing field map
   existingColumns.forEach(column => {
-    if (column.detailCell?.expression) {
-      const match = column.detailCell.expression.match(/\$F\{([^}]+)\}/);
+    if (column.detailCell?.element?.expression) {
+      const match = column.detailCell.element.expression.match(/\$F\{([^}]+)\}/);
       if (match) {
         const fieldName = match[1];
         existingFieldMap.set(fieldName, column);
@@ -2027,50 +2494,65 @@ function addSelectedFieldsAsColumns() {
         name: fieldName,
         hasTableHeader: false,
         tableHeader: {
-          type: 'staticText',
-          x: 0,
-          y: 0,
-          width: columnWidth,
-          height: 30,
-          text: fieldName,
-          forecolor: '#006699',
-          backcolor: '#E6E6E6',
-          fontFamily: 'SansSerif',
-          fontSize: 19,
-          isBold: true
+          enable: false,
+          element: {
+            type: 'staticText',
+            x: 0,
+            y: 0,
+            width: columnWidth,
+            height: 30,
+            text: fieldName,
+            forecolor: '#000000',
+            backcolor: '#FFFFFF',
+            fontFamily: 'SansSerif',
+            fontSize: 19,
+            isBold: true
+          }
         },
         columnHeader: {
-          type: 'staticText',
-          x: 0,
-          y: 0,
-          width: columnWidth,
-          height: 30,
-          text: fieldName
+          enable: true,
+          element: {
+            type: 'staticText',
+            x: 0,
+            y: 0,
+            width: columnWidth,
+            height: 30,
+            text: fieldName
+          }
         },
         detailCell: {
-          type: 'textField',
-          x: 0,
-          y: 0,
-          width: columnWidth,
-          height: 30,
-          expression: `$F{${fieldName}}`
-        },
-        tableFooter: {
-          type: 'textField',
-          x: 0,
-          y: 0,
-          width: columnWidth,
-          height: 30,
-          expression: ''
+          enable: true,
+          element: {
+            type: 'textField',
+            x: 0,
+            y: 0,
+            width: columnWidth,
+            height: 30,
+            expression: `$F{${fieldName}}`
+          }
         },
         columnFooter: {
-          type: 'textField',
-          x: 0,
-          y: 0,
-          width: columnWidth,
-          height: 30,
-          expression: ''
-        }
+          enable: false,
+          element: {
+            type: 'textField',
+            x: 0,
+            y: 0,
+            width: columnWidth,
+            height: 30,
+            expression: ''
+          }
+        },
+        tableFooter: {
+          enable: false,
+          element: {
+            type: 'textField',
+            x: 0,
+            y: 0,
+            width: columnWidth,
+            height: 30,
+            expression: ''
+          }
+        },
       };
       
       newColumns.push(newColumn);
@@ -2100,59 +2582,54 @@ function addTableColumn() {
     name: `Column${currentElement.value.columns.length + 1}`,
     hasTableHeader: false,
     tableHeader: {
-      type: 'staticText',
-      x: 0,
-      y: 0,
-      width: columnWidth,
-      height: 30,
-      text: '',
-      forecolor: '#000000',
-      backcolor: '#FFFFFF',
-      fontFamily: 'SansSerif',
-      fontSize: 19,
-      isBold: true,
-      textAlignment: 'Center',
-      verticalAlignment: 'Middle'
+      enable: false,
+      element: {
+        type: 'empty',
+        x: 0,
+        y: 0,
+        width: columnWidth,
+        height: 30
+      }
     },
     columnHeader: {
-      type: 'staticText',
-      x: 0,
-      y: 0,
-      width: columnWidth,
-      height: 30,
-      text: `New Column`,
-      textAlignment: 'Center',
-      verticalAlignment: 'Middle'
+      enable: true,
+      element: {
+        type: 'empty',
+        x: 0,
+        y: 0,
+        width: columnWidth,
+        height: 30
+      }
     },
     detailCell: {
-      type: 'textField',
-      x: 0,
-      y: 0,
-      width: columnWidth,
-      height: 30,
-      expression: '$F{NEW_FIELD}',
-      textAlignment: 'Center',
-      verticalAlignment: 'Middle'
+      enable: true,
+      element: {
+        type: 'empty',
+        x: 0,
+        y: 0,
+        width: columnWidth,
+        height: 30
+      }
     },
     tableFooter: {
-      type: 'textField',
-      x: 0,
-      y: 0,
-      width: columnWidth,
-      height: 30,
-      expression: '',
-      textAlignment: 'Center',
-      verticalAlignment: 'Middle'
+      enable: false,
+      element: {
+        type: 'empty',
+        x: 0,
+        y: 0,
+        width: columnWidth,
+        height: 30
+      }
     },
     columnFooter: {
-      type: 'textField',
-      x: 0,
-      y: 0,
-      width: columnWidth,
-      height: 30,
-      expression: '',
-      textAlignment: 'Center',
-      verticalAlignment: 'Middle'
+      enable: false,
+      element: {
+        type: 'empty',
+        x: 0,
+        y: 0,
+        width: columnWidth,
+        height: 30
+      }
     }
   };
   
@@ -2279,6 +2756,152 @@ function setRectangleBorderColor(value: string) {
   }
   el.pen.lineColor = value;
   emit('update-jrxml');
+}
+
+// 获取表格中第一个出现的指定类型的单元格样式
+function getFirstTableCellStyle(cellType: 'tableHeader' | 'columnHeader' | 'columnFooter' | 'detailCell') {
+  const tableElement = currentElement.value;
+  if (!tableElement || tableElement.type !== 'table') return {
+    textAlignment: 'Center',
+    verticalAlignment: 'Middle',
+    fontSize: 12,
+    isBold: false,
+    isItalic: false,
+    isUnderline: false,
+    forecolor: '#000000',
+    forecolorMode: 'Opaque',
+    backcolor: '#ffffff',
+    mode: 'Opaque'
+  };
+  
+  // 递归查找函数
+  function findCellStyle(node: any): any {
+    if (node[cellType]) {
+      return node[cellType];
+    }
+    if (node.children) {
+      for (const child of node.children) {
+        const style = findCellStyle(child);
+        if (style) {
+          return style;
+        }
+      }
+    }
+    return null;
+  }
+  
+  // 首先检查直接子列
+  if (tableElement.columns) {
+    for (const column of tableElement.columns) {
+      const style = findCellStyle(column);
+      if (style) {
+        return style;
+      }
+    }
+  }
+  
+  // 然后检查列分组
+  if (tableElement.children) {
+    for (const group of tableElement.children) {
+      const style = findCellStyle(group);
+      if (style) {
+        return style;
+      }
+    }
+  }
+  
+  // 如果没有找到样式，返回默认样式
+  return {
+    textAlignment: 'Center',
+    verticalAlignment: 'Middle',
+    fontSize: 12,
+    isBold: false,
+    isItalic: false,
+    isUnderline: false,
+    forecolor: '#000000',
+    forecolorMode: 'Opaque',
+    backcolor: '#ffffff',
+    mode: 'Opaque'
+  };
+}
+
+// 更新表格中所有指定类型的单元格样式
+function updateAllTableCellStyles(cellType: 'tableHeader' | 'columnHeader' | 'columnFooter' | 'detailCell', style: any) {
+  const tableElement = currentElement.value;
+  if (!tableElement || tableElement.type !== 'table') return;
+  
+  // 递归更新函数
+  function updateCellStyle(node: any) {
+    if (node[cellType]) {
+      // 深拷贝样式对象，避免引用问题
+      node[cellType] = { ...style };
+    }
+    if (node.children) {
+      for (const child of node.children) {
+        updateCellStyle(child);
+      }
+    }
+  }
+  
+  // 更新所有直接子列
+  if (tableElement.columns) {
+    for (const column of tableElement.columns) {
+      updateCellStyle(column);
+    }
+  }
+  
+  // 更新所有列分组
+  if (tableElement.children) {
+    for (const group of tableElement.children) {
+      updateCellStyle(group);
+    }
+  }
+}
+
+// 更新表格所有单元格的样式属性
+function updateTableStyles() {
+  const tableElement = currentElement.value;
+  if (!tableElement || tableElement.type !== 'table') return;
+  
+  // 递归更新函数
+  function updateCellStyle(node: any) {
+    // 更新tableHeader样式
+    if (node.tableHeader) {
+      node.tableHeader.style = tableStyles.value.tableHeader;
+    }
+    // 更新columnHeader样式
+    if (node.columnHeader) {
+      node.columnHeader.style = tableStyles.value.columnHeader;
+    }
+    // 更新columnFooter样式
+    if (node.columnFooter) {
+      node.columnFooter.style = tableStyles.value.columnFooter;
+    }
+    // 更新detailCell样式
+    if (node.detailCell) {
+      node.detailCell.style = tableStyles.value.detailCell;
+    }
+    // 递归更新子节点
+    if (node.children) {
+      for (const child of node.children) {
+        updateCellStyle(child);
+      }
+    }
+  }
+  
+  // 更新所有直接子列
+  if (tableElement.columns) {
+    for (const column of tableElement.columns) {
+      updateCellStyle(column);
+    }
+  }
+  
+  // 更新所有列分组
+  if (tableElement.children) {
+    for (const group of tableElement.children) {
+      updateCellStyle(group);
+    }
+  }
 }
 </script>
 
@@ -2906,5 +3529,62 @@ function setRectangleBorderColor(value: string) {
 .group-action-buttons {
   display: flex;
   gap: 5px;
+}
+
+.table-style-settings {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.table-style-section {
+  margin-bottom: 12px;
+}
+
+.table-style-section h6 {
+  margin-bottom: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  color: #333;
+}
+
+/* 样式管理部分 */
+.style-management-section {
+  margin-bottom: 16px;
+}
+
+.style-manager-content {
+  max-height: 500px;
+  overflow-y: auto;
+}
+
+.style-item {
+  margin-bottom: 24px;
+  padding: 16px;
+  border: 1px solid #e8e8e8;
+  border-radius: 4px;
+  background-color: #f9f9f9;
+}
+
+.style-item h4 {
+  margin-top: 0;
+  margin-bottom: 12px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #333;
+  border-bottom: 1px solid #e8e8e8;
+  padding-bottom: 8px;
+}
+
+.style-properties {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+@media (max-width: 768px) {
+  .style-properties {
+    grid-template-columns: 1fr;
+  }
 }
 </style>

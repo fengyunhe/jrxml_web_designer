@@ -183,39 +183,48 @@ export class ElementRegistry {
             width: 160,
             name: 'Column1',
             tableHeader: {
-              type: 'staticText',
-              x: 0,
-              y: 0,
-              width: 160,
-              height: 30,
-              text: 'Header',
-              forecolor: '#006699',
-              backcolor: '#E6E6E6',
-              fontFamily: 'SansSerif',
-              fontSize: 19,
-              isBold: true,
-              textAlignment: 'Center',
-              verticalAlignment: 'Middle'
+              enable: false,
+              element: {
+                type: 'staticText',
+                x: 0,
+                y: 0,
+                width: 160,
+                height: 30,
+                text: 'Header',
+                forecolor: '#000000',
+                backcolor: '#FFFFFF',
+                fontFamily: 'SansSerif',
+                fontSize: 19,
+                isBold: true,
+                textAlignment: 'Center',
+                verticalAlignment: 'Middle'
+              }
             },
             columnHeader: {
-              type: 'staticText',
-              x: 0,
-              y: 0,
-              width: 160,
-              height: 30,
-              text: 'Column Header',
-              textAlignment: 'Center',
-              verticalAlignment: 'Middle'
+              enable: true,
+              element: {
+                type: 'staticText',
+                x: 0,
+                y: 0,
+                width: 160,
+                height: 30,
+                text: 'Column Header',
+                textAlignment: 'Center',
+                verticalAlignment: 'Middle'
+              }
             },
             detailCell: {
-              type: 'textField',
-              x: 0,
-              y: 0,
-              width: 160,
-              height: 30,
-              expression: '$F{FIELD_NAME}',
-              textAlignment: 'Center',
-              verticalAlignment: 'Middle'
+              enable: true,
+              element: {
+                type: 'textField',
+                x: 0,
+                y: 0,
+                width: 160,
+                height: 30,
+                expression: '$F{FIELD_NAME}',
+                textAlignment: 'Center',
+                verticalAlignment: 'Middle'
+              }
             }
           },
           {
@@ -223,39 +232,48 @@ export class ElementRegistry {
             width: 180,
             name: 'Column2',
             tableHeader: {
-              type: 'staticText',
-              x: 0,
-              y: 0,
-              width: 180,
-              height: 30,
-              text: '',
-              forecolor: '#006699',
-              backcolor: '#E6E6E6',
-              fontFamily: 'SansSerif',
-              fontSize: 19,
-              isBold: true,
-              textAlignment: 'Center',
-              verticalAlignment: 'Middle'
+              enable: false,
+              element: {
+                type: 'staticText',
+                x: 0,
+                y: 0,
+                width: 180,
+                height: 30,
+                text: '',
+                forecolor: '#000000',
+                backcolor: '#FFFFFF',
+                fontFamily: 'SansSerif',
+                fontSize: 19,
+                isBold: true,
+                textAlignment: 'Center',
+                verticalAlignment: 'Middle'
+              }
             },
             columnHeader: {
-              type: 'staticText',
-              x: 0,
-              y: 0,
-              width: 180,
-              height: 30,
-              text: 'Column Header',
-              textAlignment: 'Center',
-              verticalAlignment: 'Middle'
+              enable: true,
+              element: {
+                type: 'staticText',
+                x: 0,
+                y: 0,
+                width: 180,
+                height: 30,
+                text: 'Column Header',
+                textAlignment: 'Center',
+                verticalAlignment: 'Middle'
+              }
             },
             detailCell: {
-              type: 'textField',
-              x: 0,
-              y: 0,
-              width: 180,
-              height: 30,
-              expression: '$F{FIELD_NAME}',
-              textAlignment: 'Center',
-              verticalAlignment: 'Middle'
+              enable: true,
+              element: {
+                type: 'textField',
+                x: 0,
+                y: 0,
+                width: 180,
+                height: 30,
+                expression: '$F{FIELD_NAME}',
+                textAlignment: 'Center',
+                verticalAlignment: 'Middle'
+              }
             }
           }
         ],

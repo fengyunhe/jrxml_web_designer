@@ -117,6 +117,8 @@
             :report-is-underline="reportProperties.defaultFont.isUnderline"
             :is-out-of-bounds="isElementOutOfBounds(bandIndex, index)"
             :zoom-level="zoomLevel"
+            :report-styles="props.reportStyles"
+            :table-styles="props.tableStyles"
             @select="selectElement"
             @drag-start="startDragging"
             @resize-start="startResizingElement"
@@ -239,6 +241,13 @@ interface Props {
   enableSnapToGrid: boolean;
   enableSnapToAlignment: boolean;
   showGrid: boolean;
+  reportStyles?: any[];
+  tableStyles?: {
+    tableHeader: string;
+    columnHeader: string;
+    columnFooter: string;
+    detailCell: string;
+  };
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -263,7 +272,14 @@ const props = withDefaults(defineProps<Props>(), {
   outOfBoundsElements: () => [],
   enableSnapToGrid: false,
   enableSnapToAlignment: false,
-  showGrid: true
+  showGrid: true,
+  reportStyles: () => [],
+  tableStyles: () => ({
+    tableHeader: 'Table_TH',
+    columnHeader: 'Table_CH',
+    columnFooter: 'Table_CH',
+    detailCell: 'Table_TD'
+  })
 });
 
 // Emits
@@ -281,7 +297,6 @@ const emit = defineEmits([
   'cancel-editing',
   'start-resizing-band',
   'zoom-change',
-  'reset-zoom', // 添加重置缩放事件
   'select-elements-in-rect', // 添加框选事件
   'clear-selection', // 添加清空选择事件
   'check-fields', // 添加字段检查事件
@@ -291,7 +306,9 @@ const emit = defineEmits([
   'join-columns-to-existing-group', // 添加将列加入现有组事件
   'update:enableSnapToGrid', // 添加自动吸附到网格事件
   'update:enableSnapToAlignment', // 添加自动吸附对齐事件
-  'update:showGrid' // 添加显示/隐藏网格事件
+  'update:showGrid', // 添加显示/隐藏网格事件
+  'update:table-styles', // 添加表格样式更新事件
+  'reset-zoom' // 添加重置缩放事件
 ]);
 
 // 框选状态

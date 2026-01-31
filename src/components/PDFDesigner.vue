@@ -121,6 +121,8 @@
         :enable-snap-to-grid="enableSnapToGrid"
         :enable-snap-to-alignment="enableSnapToAlignment"
         :show-grid="showGrid"
+        :report-styles="reportStyles"
+        :table-styles="tableStyles"
         @set-design-area-focused="setDesignAreaFocused"
         @select-band="selectBand"
         @select-element="selectElement"
@@ -145,6 +147,7 @@
         @update:enable-snap-to-grid="enableSnapToGrid = $event"
         @update:enable-snap-to-alignment="enableSnapToAlignment = $event"
         @update:show-grid="showGrid = $event"
+        @update:table-styles="tableStyles = $event"
       />
       
       <!-- 右侧属性面板 -->
@@ -164,10 +167,12 @@
           :bands="bands"
           :report-properties="reportProperties"
           :sub-datasets="subDatasets"
+          :report-styles="reportStyles"
           @update:bands="bands = $event"
           @delete-element="deleteElement"
           @update-jrxml="updateJRXML"
           @save-state="saveStateToHistory"
+          @update:reportStyles="reportStyles = $event"
         />
       </ResizablePanel>
     </div>
@@ -613,10 +618,101 @@ const reportParameters = ref<ReportParameter[]>([
 
 // 子数据集
 const subDatasets = ref<TableDataset[]>([]);
-
-// 子数据集管理弹窗状态
 const showSubDatasetModal = ref(false);
 const editingSubDataset = ref<TableDataset | undefined>(undefined);
+
+// 报表样式
+const reportStyles = ref<any[]>([
+  {
+    name: 'Table_TH',
+    mode: 'Opaque',
+    backcolor: '#F0F8FF',
+    box: {
+      pen: {
+        lineWidth: 0.5,
+        lineColor: '#000000'
+      },
+      topPen: {
+        lineWidth: 0.5,
+        lineColor: '#000000'
+      },
+      leftPen: {
+        lineWidth: 0.5,
+        lineColor: '#000000'
+      },
+      bottomPen: {
+        lineWidth: 0.5,
+        lineColor: '#000000'
+      },
+      rightPen: {
+        lineWidth: 0.5,
+        lineColor: '#000000'
+      }
+    }
+  },
+  {
+    name: 'Table_CH',
+    mode: 'Opaque',
+    backcolor: '#BFE1FF',
+    box: {
+      pen: {
+        lineWidth: 0.5,
+        lineColor: '#000000'
+      },
+      topPen: {
+        lineWidth: 0.5,
+        lineColor: '#000000'
+      },
+      leftPen: {
+        lineWidth: 0.5,
+        lineColor: '#000000'
+      },
+      bottomPen: {
+        lineWidth: 0.5,
+        lineColor: '#000000'
+      },
+      rightPen: {
+        lineWidth: 0.5,
+        lineColor: '#000000'
+      }
+    }
+  },
+  {
+    name: 'Table_TD',
+    mode: 'Opaque',
+    backcolor: '#FFFFFF',
+    box: {
+      pen: {
+        lineWidth: 0.5,
+        lineColor: '#000000'
+      },
+      topPen: {
+        lineWidth: 0.5,
+        lineColor: '#000000'
+      },
+      leftPen: {
+        lineWidth: 0.5,
+        lineColor: '#000000'
+      },
+      bottomPen: {
+        lineWidth: 0.5,
+        lineColor: '#000000'
+      },
+      rightPen: {
+        lineWidth: 0.5,
+        lineColor: '#000000'
+      }
+    }
+  }
+]);
+
+// 表格样式
+const tableStyles = ref({
+  tableHeader: 'Table_TH',
+  columnHeader: 'Table_CH',
+  columnFooter: 'Table_CH',
+  detailCell: 'Table_TD'
+});
 
 // 处理添加子数据集
 const handleAddSubDataset = () => {
@@ -968,39 +1064,48 @@ function generateTableColumnsFromDataset(defaultTableWidth: number = 555) {
           width: columnWidth,
           name: field.name,
           tableHeader: {
-            type: 'staticText',
-            x: 0,
-            y: 0,
-            width: columnWidth,
-            height: 30,
-            text: field.name,
-            forecolor: '#006699',
-            backcolor: '#E6E6E6',
-            fontFamily: 'SansSerif',
-            fontSize: 19,
-            isBold: true,
-            textAlignment: 'Center',
-            verticalAlignment: 'Middle'
+            enable: false,
+            element: {
+              type: 'staticText',
+              x: 0,
+              y: 0,
+              width: columnWidth,
+              height: 30,
+              text: field.name,
+              forecolor: '#000000',
+              backcolor: '#FFFFFF',
+              fontFamily: 'SansSerif',
+              fontSize: 19,
+              isBold: true,
+              textAlignment: 'Center',
+              verticalAlignment: 'Middle'
+            }
           },
           columnHeader: {
-            type: 'staticText',
-            x: 0,
-            y: 0,
-            width: columnWidth,
-            height: 30,
-            text: field.name,
-            textAlignment: 'Center',
-            verticalAlignment: 'Middle'
+            enable: true,
+            element: {
+              type: 'staticText',
+              x: 0,
+              y: 0,
+              width: columnWidth,
+              height: 30,
+              text: field.name,
+              textAlignment: 'Center',
+              verticalAlignment: 'Middle'
+            }
           },
           detailCell: {
-            type: 'textField',
-            x: 0,
-            y: 0,
-            width: columnWidth,
-            height: 30,
-            expression: `$F{${field.name}}`,
-            textAlignment: 'Center',
-            verticalAlignment: 'Middle'
+            enable: true,
+            element: {
+              type: 'textField',
+              x: 0,
+              y: 0,
+              width: columnWidth,
+              height: 30,
+              expression: `$F{${field.name}}`,
+              textAlignment: 'Center',
+              verticalAlignment: 'Middle'
+            }
           }
         };
       });
@@ -2289,9 +2394,9 @@ const updateJRXML = () => {
     console.log('当前reportFields数量:', reportFields.value.length);
     console.log('当前reportParameters数量:', reportParameters.value.length);
     
-    const content = generateJRXMLContent(reportProperties.value, bands.value, reportFields.value, reportParameters.value, subDatasets.value);
+    const content = generateJRXMLContent(reportProperties.value, bands.value, reportFields.value, reportParameters.value, subDatasets.value, reportStyles.value);
     console.log('生成的JRXML内容长度:', content.length);
-    console.log('生成的JRXML内容预览:', content.substring(0, 200) + '...');
+    console.log('生成的JRXML内容预览:', content);
     
     // 如果内容有变化，保存到历史记录
     if (content !== jrxmlContent.value) {
@@ -3711,20 +3816,20 @@ const startResizingElement = (event: MouseEvent, bandIndex: number, elementIndex
               col.width = newColWidth;
               
               // 同时更新列中所有单元格的宽度
-              if (col.tableHeader) {
-                col.tableHeader.width = newColWidth;
+              if (col.tableHeader && col.tableHeader.element) {
+                col.tableHeader.element.width = newColWidth;
               }
-              if (col.columnHeader) {
-                col.columnHeader.width = newColWidth;
+              if (col.columnHeader && col.columnHeader.element) {
+                col.columnHeader.element.width = newColWidth;
               }
-              if (col.detailCell) {
-                col.detailCell.width = newColWidth;
+              if (col.detailCell && col.detailCell.element) {
+                col.detailCell.element.width = newColWidth;
               }
-              if (col.columnFooter) {
-                col.columnFooter.width = newColWidth;
+              if (col.columnFooter && col.columnFooter.element) {
+                col.columnFooter.element.width = newColWidth;
               }
-              if (col.tableFooter) {
-                col.tableFooter.width = newColWidth;
+              if (col.tableFooter && col.tableFooter.element) {
+                col.tableFooter.element.width = newColWidth;
               }
               
               // 如果表格有children属性，同时更新children属性中对应列的宽度
@@ -4230,8 +4335,8 @@ const confirmJoinColumnsToGroup = (): void => {
     let defaultColumnHeaderHeight = 30;
     if (selectedColumns.length > 0 && selectedColumns[0]) {
       const firstColumn = selectedColumns[0];
-      defaultTableHeaderHeight = firstColumn.tableHeader?.height || 30;
-      defaultColumnHeaderHeight = firstColumn.columnHeader?.height || 30;
+      defaultTableHeaderHeight = firstColumn.tableHeader?.element?.height || 30;
+      defaultColumnHeaderHeight = firstColumn.columnHeader?.element?.height || 30;
     }
     
     targetGroup = {
@@ -4241,14 +4346,17 @@ const confirmJoinColumnsToGroup = (): void => {
       hasTableHeader: true,
       // 添加必要的头部属性，确保在UI中可见
       tableHeader: {
-        type: 'staticText',
-        text: selectedGroupName,
-        x: 0,
-        y: 0,
-        width: groupWidth,
-        height: defaultTableHeaderHeight,
-        textAlignment: 'Center',
-        verticalAlignment: 'Middle'
+        enable: true,
+        element: {
+          type: 'staticText',
+          text: selectedGroupName,
+          x: 0,
+          y: 0,
+          width: groupWidth,
+          height: defaultTableHeaderHeight,
+          textAlignment: 'Center',
+          verticalAlignment: 'Middle'
+        }
       },
       children: []
     };
@@ -4268,11 +4376,11 @@ const confirmJoinColumnsToGroup = (): void => {
   targetGroup.width = targetGroup.children.reduce((sum: number, item: any) => sum + item.width, 0);
   
   // 更新目标组的头部宽度
-  if (targetGroup.tableHeader) {
-    targetGroup.tableHeader.width = targetGroup.width;
+  if (targetGroup.tableHeader && targetGroup.tableHeader.element) {
+    targetGroup.tableHeader.element.width = targetGroup.width;
   }
-  if (targetGroup.columnHeader) {
-    targetGroup.columnHeader.width = targetGroup.width;
+  if (targetGroup.columnHeader && targetGroup.columnHeader.element) {
+    targetGroup.columnHeader.element.width = targetGroup.width;
   }
   console.log('更新宽度后的目标组:', targetGroup);
   

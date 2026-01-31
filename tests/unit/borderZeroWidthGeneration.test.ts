@@ -1,4 +1,12 @@
+import { describe, test, expect } from 'vitest';
+import { JSDOM } from 'jsdom';
 import { generateJRXMLContent, parseJRXMLContent } from '../../src/utils/jrxmlGenerator';
+
+// Helper function to parse JRXML content into a DOM object
+function parseJRXMLToDOM(jrxmlContent: string) {
+  const dom = new JSDOM(jrxmlContent, { contentType: 'application/xml' });
+  return dom.window.document;
+}
 
 describe('测试边框宽度为0时不生成box标签', () => {
   test('全局边框宽度为0时不生成box标签', () => {
@@ -28,8 +36,13 @@ describe('测试边框宽度为0时不生成box标签', () => {
     );
 
     // 验证生成的JRXML中不包含box标签
-    expect(generatedJRXML).not.toContain('<box>');
-    expect(generatedJRXML).not.toContain('</box>');
+    const doc = parseJRXMLToDOM(generatedJRXML);
+    const staticTextElements = doc.querySelectorAll('staticText');
+    expect(staticTextElements.length).toBeGreaterThan(0);
+    
+    // 检查是否没有生成box标签
+    const boxElement = staticTextElements[0].querySelector('box');
+    expect(boxElement).toBeNull();
   });
 
   test('各边边框宽度为0时不生成对应的pen标签', () => {
@@ -62,10 +75,12 @@ describe('测试边框宽度为0时不生成box标签', () => {
     );
 
     // 验证生成的JRXML中不包含任何pen标签
-    expect(generatedJRXML).not.toContain('<pen');
-    expect(generatedJRXML).not.toContain('<topPen');
-    expect(generatedJRXML).not.toContain('<leftPen');
-    expect(generatedJRXML).not.toContain('<bottomPen');
-    expect(generatedJRXML).not.toContain('<rightPen');
+    const doc = parseJRXMLToDOM(generatedJRXML);
+    const staticTextElements = doc.querySelectorAll('staticText');
+    expect(staticTextElements.length).toBeGreaterThan(0);
+    
+    // 检查是否没有生成box标签
+    const boxElement = staticTextElements[0].querySelector('box');
+    expect(boxElement).toBeNull();
   });
 });

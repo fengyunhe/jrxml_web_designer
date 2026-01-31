@@ -16,7 +16,8 @@ export function generateJRXMLContent(
   bands: Band[],
   fields: Field[],
   parameters: Parameter[] = [],
-  subDatasets: any[] = []
+  subDatasets: any[] = [],
+  styles: any[] = []
 ): string {
   // 确保页边距有默认值，如果没有设置则使用0
   const safeProperties = {
@@ -63,8 +64,16 @@ export function generateJRXMLContent(
   const updatedFields = Array.from(fieldMap.values());
   let jrxml = buildJasperReportOpenTag(safeProperties);
 
-  // 添加默认表格样式
-  jrxml += generateDefaultTableStylesXML();
+  // 添加表格样式
+  if (styles && styles.length > 0) {
+    jrxml += '  <!-- 表格样式 -->\n';
+    styles.forEach(style => {
+      jrxml += generateStyleXML(style);
+    });
+  } else {
+    // 如果没有提供样式，使用默认样式
+    jrxml += generateDefaultTableStylesXML();
+  }
 
   // 添加参数定义
   if (parameters.length > 0) {
@@ -217,9 +226,83 @@ function generateDefaultTableStylesXML(): string {
 `;
 }
 
+// 生成样式XML
+function generateStyleXML(style: any): string {
+  if (!style.name) return '';
+  
+  let xml = `  <style name="${style.name}"`;
+  
+  // 添加模式属性
+  if (style.mode) {
+    xml += ` mode="${style.mode}"`;
+  }
+  
+  // 添加背景颜色属性
+  if (style.backcolor) {
+    xml += ` backcolor="${style.backcolor}"`;
+  }
+  
+  // 添加前景颜色属性
+  if (style.forecolor) {
+    xml += ` forecolor="${style.forecolor}"`;
+  }
+  
+  xml += `>
+`;
+  
+  // 添加box元素
+  if (style.box) {
+    xml += generateBoxXML(style.box, style);
+  }
+  
+  // 添加textElement元素（如果有文本对齐或垂直对齐设置）
+  if (style.textAlignment || style.verticalAlignment) {
+    xml += `    <textElement`;
+    if (style.textAlignment) {
+      xml += ` textAlignment="${style.textAlignment}"`;
+    }
+    if (style.verticalAlignment) {
+      xml += ` verticalAlignment="${style.verticalAlignment}"`;
+    }
+    xml += `>
+`;
+    
+    // 添加font元素
+    if (style.fontFamily || style.fontSize || style.isBold || style.isItalic || style.isUnderline) {
+      xml += `      <font`;
+      if (style.fontFamily) {
+        xml += ` fontName="${style.fontFamily}"`;
+      }
+      if (style.fontSize) {
+        xml += ` size="${style.fontSize}"`;
+      }
+      if (style.isBold) {
+        xml += ` isBold="true"`;
+      }
+      if (style.isItalic) {
+        xml += ` isItalic="true"`;
+      }
+      if (style.isUnderline) {
+        xml += ` isUnderline="true"`;
+      }
+      xml += `/>
+`;
+    }
+    
+    xml += `    </textElement>
+`;
+  }
+  
+  xml += `  </style>
+`;
+  return xml;
+}
+
 // 生成元素XML
 function generateElementXML(element: any): string {
   switch (element.type) {
+    case 'empty':
+      return '';
     case 'staticText':
       return generateStaticTextXML(element);
     case 'textField':
@@ -866,109 +949,131 @@ function generateColumnXML(column: any, index: number, hasColumnGroups: boolean 
   
   // 生成tableHeader
   if (column.tableHeader) {
-    // 如果没有边框设置，添加默认的边框
-    if (!column.tableHeader.box || !column.tableHeader.box.pen) {
-      column.tableHeader.box = {
-        ...column.tableHeader.box,
-        pen: {
-          lineWidth: 1,
-          lineStyle: 'Solid',
-          lineColor: '#000000'
-        }
-      };
+    if (column.tableHeader.element) {
+      // 如果有element对象，则生成包含元素的tableHeader
+      const tableHeaderElement = column.tableHeader.element;
+      xml += `            <jr:tableHeader height="${toInt(tableHeaderElement.height || 30)}" rowSpan="${tableHeaderElement.rowSpan || 1}" style="Table_TH">
+`;
+      xml += generateElementXML(tableHeaderElement).replace(/^    /gm, '                ');
+      xml += `            </jr:tableHeader>
+`;
+    } else {
+      // 如果没有element对象，则生成空的tableHeader（自闭合形式）
+      xml += `            <jr:tableHeader height="30" rowSpan="1" style="Table_TH"/>
+`;
     }
-    // 只有没有被任何组合列包含的单独列（顶层直接列），才根据maxDepth计算rowSpan
-    // 被组合的列的rowSpan始终为1
-    const rowspan = column.tableHeader.rowSpan || 1;
-    // 确保rowspan至少为1
-    const finalRowspan = Math.max(1, rowspan);
-    xml += `            <jr:tableHeader height="${toInt(column.tableHeader.height)}" rowSpan="${finalRowspan}" style="Table_TH">
-`;
-    xml += generateElementXML(column.tableHeader).replace(/^    /gm, '                ');
-    xml += `            </jr:tableHeader>
-`;
   }
   
-  // 生成tableFooter - 只要存在就生成，即使是空的
-  if (column.hasTableFooter) {
-    xml += `            <jr:tableFooter height="${toInt(column.tableFooter?.height ?? 30)}" rowSpan="${column.tableFooter?.rowSpan || 1}">
+  // 生成tableFooter
+  if (column.tableFooter) {
+    if (column.tableFooter.element) {
+      // 如果有element对象，则生成包含元素的tableFooter
+      const tableFooterElement = column.tableFooter.element;
+      xml += `            <jr:tableFooter height="${toInt(tableFooterElement.height || 30)}" rowSpan="${tableFooterElement.rowSpan || 1}">
 `;
-    if (column.tableFooter && column.tableFooter.expression) {
-      xml += generateElementXML(column.tableFooter).replace(/^    /gm, '                ');
+      xml += generateElementXML(tableFooterElement).replace(/^    /gm, '                ');
+      xml += `            </jr:tableFooter>
+`;
+    } else {
+      // 如果没有element对象，则生成空的tableFooter（自闭合形式）
+      xml += `            <jr:tableFooter height="30" rowSpan="1"/>
+`;
     }
-    xml += `            </jr:tableFooter>
-`;
   }
   
   // 生成columnHeader
-  let columnHeader = column.columnHeader;
-  if (!columnHeader) {
-    // 如果没有columnHeader，创建一个默认的
-    columnHeader = {
-      type: 'staticText',
-      x: 0,
-      y: 0,
-      width: column.width,
-      height: 30,
-      text: column.name || `Column${index + 1}`,
-      textAlignment: 'Center',
-      verticalAlignment: 'Middle',
-      box: {
-        pen: {
-          lineWidth: 1,
-          lineStyle: 'Solid',
-          lineColor: '#000000'
-        }
+  if (!column.children) {
+    if (column.columnHeader) {
+      if (column.columnHeader.element) {
+        // 如果有element对象，则生成包含元素的columnHeader
+        const columnHeaderElement = column.columnHeader.element;
+        xml += `            <jr:columnHeader height="${toInt(columnHeaderElement.height || 30)}" rowSpan="${columnHeaderElement.rowSpan || 1}" style="Table_CH">
+`;
+        xml += generateElementXML(columnHeaderElement).replace(/^    /gm, '                ');
+        xml += `            </jr:columnHeader>
+`;
+      } else {
+        // 如果没有element对象，则生成空的columnHeader（自闭合形式）
+        xml += `            <jr:columnHeader height="30" rowSpan="1" style="Table_CH"/>
+`;
       }
-    };
-  } else {
-    // 仅在columnHeader没有明确设置text或expression时，才使用column.name作为默认值
-    if (columnHeader.type === 'staticText' && !columnHeader.text) {
-      columnHeader.text = column.name;
-    } else if (columnHeader.type === 'textField' && !columnHeader.expression) {
-      columnHeader.expression = column.name;
-    }
-    // 如果没有边框设置，添加默认的边框
-    if (!columnHeader.box || !columnHeader.box.pen) {
-      columnHeader.box = {
-        ...columnHeader.box,
-        pen: {
-          lineWidth: 1,
-          lineStyle: 'Solid',
-          lineColor: '#000000'
-        }
-      };
+    } else {
+      // 如果没有columnHeader对象，则生成默认的columnHeader
+      xml += `            <jr:columnHeader height="30" rowSpan="1" style="Table_CH">
+`;
+      xml += `                <staticText>
+`;
+      xml += `                  <reportElement x="0" y="0" width="${toInt(column.width)}" height="30"/>
+`;
+      xml += `                  <textElement textAlignment="Center" verticalAlignment="Middle">
+`;
+      xml += `                    <font/>
+`;
+      xml += `                  </textElement>
+`;
+      xml += `                  <text><![CDATA[${column.name || `Column${index + 1}`}]]></text>
+`;
+      xml += `                </staticText>
+`;
+      xml += `            </jr:columnHeader>
+`;
     }
   }
   
-  // 如果表格有任何一个组合列，则不输出任何columnHeader
-  if (!hasColumnGroups) {
-    xml += `            <jr:columnHeader height="${toInt(columnHeader.height)}" rowSpan="${columnHeader.rowSpan || 1}" style="Table_CH">
+  // 生成columnFooter
+  if (column.columnFooter) {
+    if (column.columnFooter.element) {
+      // 如果有element对象，则生成包含元素的columnFooter
+      const columnFooterElement = column.columnFooter.element;
+      xml += `            <jr:columnFooter height="${toInt(columnFooterElement.height || 30)}" rowSpan="${columnFooterElement.rowSpan || 1}" style="Table_CH">
 `;
-    xml += generateElementXML(columnHeader).replace(/^    /gm, '                ');
-    xml += `            </jr:columnHeader>
+      xml += generateElementXML(columnFooterElement).replace(/^    /gm, '                ');
+      xml += `            </jr:columnFooter>
 `;
-  }
-  
-  // 生成columnFooter - 只要存在就生成，即使是空的
-  if (column.hasColumnFooter) {
-    xml += `            <jr:columnFooter height="${toInt(column.columnFooter?.height ?? 30)}" rowSpan="${column.columnFooter?.rowSpan || 1}" style="Table_CH">
+    } else {
+      // 如果没有element对象，则生成空的columnFooter（自闭合形式）
+      xml += `            <jr:columnFooter height="30" rowSpan="1" style="Table_CH"/>
 `;
-    if (column.columnFooter && column.columnFooter.expression) {
-      xml += generateElementXML(column.columnFooter).replace(/^    /gm, '                ');
     }
-    xml += `            </jr:columnFooter>
-`;
   }
   
   // 生成detailCell
   if (column.detailCell) {
-    xml += `            <jr:detailCell height="${toInt(column.detailCell.height)}" style="Table_TD">
+    if (column.detailCell.element) {
+      // 如果有element对象，则生成包含元素的detailCell
+      const detailCellElement = column.detailCell.element;
+      xml += `            <jr:detailCell height="${toInt(detailCellElement.height || 30)}" style="Table_TD">
 `;
-    xml += generateElementXML(column.detailCell).replace(/^    /gm, '                ');
+      xml += generateElementXML(detailCellElement).replace(/^    /gm, '                ');
+      xml += `            </jr:detailCell>
+`;
+    } else {
+      // 如果没有element对象，则生成空的detailCell（自闭合形式）
+      xml += `            <jr:detailCell height="30" style="Table_TD"/>
+`;
+    }
+  } else {
+    // 如果没有detailCell对象，则生成默认的detailCell
+    xml += `            <jr:detailCell height="30" style="Table_TD">
+`;
+    xml += `                <textField>
+`;
+    xml += `                  <reportElement x="0" y="0" width="${toInt(column.width)}" height="30"/>
+`;
+    xml += `                  <textElement textAlignment="Center" verticalAlignment="Middle">
+`;
+    xml += `                    <font/>
+`;
+    xml += `                  </textElement>
+`;
+    xml += `                  <textFieldExpression><![CDATA[$F{FIELD_NAME}]]></textFieldExpression>
+`;
+    xml += `                </textField>
+`;
     xml += `            </jr:detailCell>
 `;
-  } 
+  }
+  
   xml += `          </jr:column>
 `;
   return xml;
@@ -1001,7 +1106,7 @@ function generateColumnGroupXML(group: any, processedColumnUuids?: Set<string>, 
   xml += `            <property name="com.jaspersoft.studio.components.table.model.column.name" value="${escapedGroupName}"/>
 `;
   
-  // 生成tableHeader
+  // 生成tableHeader - 无论enable属性如何，都生成标签
   if (group.tableHeader) {
     // 如果没有边框设置，添加默认的边框
     if (!group.tableHeader.box || !group.tableHeader.box.pen) {
@@ -1087,8 +1192,7 @@ function generateColumnGroupXML(group: any, processedColumnUuids?: Set<string>, 
     }
   });
   
-  xml += `          </jr:columnGroup>
-`;
+  xml += `</jr:columnGroup>`;
   return xml;
 }
 
@@ -1285,7 +1389,7 @@ function generateTableXML(element: any): string {
   // 生成列和列分组
   
   // 检测表格是否有任何组合列
-  const hasColumnGroups = element.children && element.children.some((child: any) => child.children);
+  const hasColumnGroups = element.children && element.children.some((child: any) => child.children) || false;
   
   // 计算表格中组合列的最大嵌套层级
   function calculateMaxDepth(node: any, depth: number = 0): number {

@@ -77,6 +77,13 @@ const props = defineProps<{
   isOutOfBounds?: boolean;
   parentFrameIndex?: number;
   zoomLevel?: number;
+  reportStyles?: any[];
+  tableStyles?: {
+    tableHeader: string;
+    columnHeader: string;
+    columnFooter: string;
+    detailCell: string;
+  };
 }>();
 
 // Emits
@@ -126,8 +133,12 @@ const commonProps = computed(() => ({
   reportIsUnderline: props.reportIsUnderline,
   isOutOfBounds: props.isOutOfBounds,
   parentFrameIndex: props.parentFrameIndex,
-  zoomLevel: props.zoomLevel
+  zoomLevel: props.zoomLevel,
+  reportStyles: props.reportStyles,
+  tableStyles: props.tableStyles
 }));
+
+
 
 // 通用事件
 const commonEvents = {

@@ -42,12 +42,14 @@
             :group="rootGroup" 
             :level="0" 
             :type="'tableHeader'"
+            :report-styles="reportStyles"
+            :table-styles="tableStyles"
             @column-click="handleRenderColumnClick"
           />
             </template>
             <template v-else>
               <!-- 普通列的表头 -->
-              <tr class="table-header" :style="{ height: `${tableHeaderHeight}px` }">
+              <tr class="tableHeader" :style="{ height: `${tableHeaderHeight}px`, ...getRowStyle('tableHeader') }">
                 <n-tooltip 
                   v-for="(column, index) in columns" 
                   :key="column.uuid"
@@ -91,13 +93,13 @@
                         ▶
                       </n-button>
                       
-                      <div v-if="column.hasTableHeader && column.tableHeader" class="cell-content" :style="getCellStyle(column.tableHeader)">
+                      <div v-if="column.hasTableHeader && column.tableHeader" class="cell-content" :style="getCellStyle(column.tableHeader, 'tableHeader')">
                         <!-- 渲染表头内容 -->
-                        <template v-if="column.tableHeader.type === 'staticText'">
-                          <div class="static-text">{{ column.tableHeader.text }}</div>
+                        <template v-if="column.tableHeader.element?.type === 'staticText'">
+                          <div class="static-text">{{ column.tableHeader.element?.text }}</div>
                         </template>
-                        <template v-else-if="column.tableHeader.type === 'textField'">
-                          <div class="text-field">{{ column.tableHeader.expression }}</div>
+                        <template v-else-if="column.tableHeader.element?.type === 'textField'">
+                          <div class="text-field">{{ column.tableHeader.element?.expression }}</div>
                         </template>
                       </div>
                       <div v-else-if="column.hasTableHeader" class="cell-content empty">
@@ -116,7 +118,7 @@
           <!-- 列头部 -->
           <template v-if="!hasColumnGroups && columnHeaderHeight > 0">
             <!-- 普通列的列头 -->
-            <tr class="column-header" :style="{ height: `${columnHeaderHeight}px` }">
+            <tr class="columnHeader" :style="{ height: `${columnHeaderHeight}px`, ...getRowStyle('columnHeader') }">
               <n-tooltip 
                   v-for="(column, index) in columns" 
                   :key="column.uuid"
@@ -134,12 +136,12 @@
                       <div class="cell-content" :style="getColumnHeaderStyle(column)">
                         <!-- 渲染列头内容，从columnHeader获取实际的静态文本或动态文本表达式 -->
                         <template v-if="column.columnHeader">
-                          <template v-if="column.columnHeader.type === 'staticText'">
-                            <div class="static-text">{{ column.columnHeader.text || '' }}</div>
-                          </template>
-                          <template v-else-if="column.columnHeader.type === 'textField'">
-                            <div class="text-field">{{ column.columnHeader.expression || '' }}</div>
-                          </template>
+                          <template v-if="column.columnHeader.element?.type === 'staticText'">
+                             <div class="static-text">{{ column.columnHeader.element?.text || '' }}</div>
+                           </template>
+                           <template v-else-if="column.columnHeader.element?.type === 'textField'">
+                             <div class="text-field">{{ column.columnHeader.element?.expression || '' }}</div>
+                           </template>
                           <template v-else>
                             <div class="column-name">{{ column.name }}</div>
                           </template>
@@ -161,7 +163,7 @@
         <!-- 表格主体区域 -->
         <tbody>
           <!-- 详情行 -->
-          <tr v-if="detailCellHeight > 0" class="detail-row" :style="{ height: `${detailCellHeight}px` }">
+          <tr v-if="detailCellHeight > 0" class="cellDetail" :style="{ height: `${detailCellHeight}px`, ...getRowStyle('detailCell') }">
             <n-tooltip 
               v-for="(column, index) in columns" 
               :key="column.uuid"
@@ -176,13 +178,15 @@
                   @click.stop="handleColumnClick(index, $event)"
                   @contextmenu.stop="handleColumnContextMenu(index, $event)"
                 >
-                  <div v-if="column.detailCell" class="cell-content" :style="getCellStyle(column.detailCell)">
+                  <div v-if="column.detailCell" class="cell-content" :style="getCellStyle(column.detailCell, 'detailCell')">
                     <!-- 渲染详情内容 -->
-                    <template v-if="column.detailCell.type === 'staticText'">
-                      <div class="static-text">{{ column.detailCell.text }}</div>
-                    </template>
-                    <template v-else-if="column.detailCell.type === 'textField'">
-                      <div class="text-field">{{ column.detailCell.expression }}</div>
+                    <template v-if="column.detailCell.element">
+                      <template v-if="column.detailCell.element.type === 'staticText'">
+                        <div class="static-text">{{ column.detailCell.element.text }}</div>
+                      </template>
+                      <template v-else-if="column.detailCell.element.type === 'textField'">
+                        <div class="text-field">{{ column.detailCell.element.expression }}</div>
+                      </template>
                     </template>
                   </div>
                   <div v-else class="cell-content empty">
@@ -198,7 +202,7 @@
         <!-- 表格尾部区域 -->
         <tfoot>
           <!-- 列尾 -->
-          <tr v-if="columnFooterHeight > 0 && columns.some(column => column.columnFooter && (column.columnFooter.type === 'textField' && (column.columnFooter as TextFieldElement).expression || column.columnFooter.type === 'staticText'))" class="column-footer" :style="{ height: `${columnFooterHeight}px` }">
+          <tr v-if="columnFooterHeight > 0 && columns.some(column => column.columnFooter && (column.columnFooter.element?.type === 'textField' && (column.columnFooter.element as TextFieldElement).expression || column.columnFooter.element?.type === 'staticText'))" class="columnFooter" :style="{ height: `${columnFooterHeight}px`, ...getRowStyle('columnFooter') }">
             <n-tooltip 
               v-for="(column, index) in columns" 
               :key="column.uuid"
@@ -213,13 +217,15 @@
                   @click.stop="handleColumnClick(index, $event)"
                   @contextmenu.stop="handleColumnContextMenu(index, $event)"
                 >
-                  <div v-if="column.columnFooter" class="cell-content" :style="getCellStyle(column.columnFooter)">
+                  <div v-if="column.columnFooter" class="cell-content" :style="getCellStyle(column.columnFooter, 'columnFooter')">
                     <!-- 渲染列尾内容 -->
-                    <template v-if="column.columnFooter.type === 'staticText'">
-                      <div class="static-text">{{ (column.columnFooter as StaticTextElement).text || '' }}</div>
-                    </template>
-                    <template v-else-if="column.columnFooter.type === 'textField'">
-                      <div class="text-field">{{ (column.columnFooter as TextFieldElement).expression || '' }}</div>
+                    <template v-if="column.columnFooter.element">
+                      <template v-if="column.columnFooter.element.type === 'staticText'">
+                        <div class="static-text">{{ (column.columnFooter.element as StaticTextElement).text || '' }}</div>
+                      </template>
+                      <template v-else-if="column.columnFooter.element.type === 'textField'">
+                        <div class="text-field">{{ (column.columnFooter.element as TextFieldElement).expression || '' }}</div>
+                      </template>
                     </template>
                   </div>
                   <div v-else class="cell-content empty">
@@ -232,7 +238,7 @@
             </n-tooltip>
           </tr>
           <!-- 表格表尾 -->
-          <tr v-if="tableFooterHeight > 0 && columns.some(column => column.tableFooter && (column.tableFooter.type === 'textField' && (column.tableFooter as TextFieldElement).expression || column.tableFooter.type === 'staticText'))" class="table-footer" :style="{ height: `${tableFooterHeight}px` }">
+          <tr v-if="tableFooterHeight > 0 && columns.some(column => column.tableFooter && (column.tableFooter.element?.type === 'textField' && (column.tableFooter.element as TextFieldElement).expression || column.tableFooter.element?.type === 'staticText'))" class="tableFooter" :style="{ height: `${tableFooterHeight}px`, ...getRowStyle('tableFooter') }">
             <n-tooltip 
               v-for="(column, index) in columns" 
               :key="column.uuid"
@@ -247,13 +253,15 @@
                   @click.stop="handleColumnClick(index, $event)"
                   @contextmenu.stop="handleColumnContextMenu(index, $event)"
                 >
-                  <div v-if="column.tableFooter" class="cell-content" :style="getCellStyle(column.tableFooter)">
+                  <div v-if="column.tableFooter" class="cell-content" :style="getCellStyle(column.tableFooter, 'tableHeader')">
                     <!-- 渲染表格表尾内容 -->
-                    <template v-if="column.tableFooter.type === 'staticText'">
-                      <div class="static-text">{{ (column.tableFooter as StaticTextElement).text || '' }}</div>
-                    </template>
-                    <template v-else-if="column.tableFooter.type === 'textField'">
-                      <div class="text-field">{{ (column.tableFooter as TextFieldElement).expression || '' }}</div>
+                    <template v-if="column.tableFooter.element">
+                      <template v-if="column.tableFooter.element.type === 'staticText'">
+                        <div class="static-text">{{ (column.tableFooter.element as StaticTextElement).text || '' }}</div>
+                      </template>
+                      <template v-else-if="column.tableFooter.element.type === 'textField'">
+                        <div class="text-field">{{ (column.tableFooter.element as TextFieldElement).expression || '' }}</div>
+                      </template>
                     </template>
                   </div>
                   <div v-else class="cell-content empty">
@@ -314,6 +322,13 @@ const props = defineProps<{
   isOutOfBounds?: boolean;
   parentFrameIndex?: number;
   zoomLevel?: number;
+  reportStyles?: any[];
+  tableStyles?: {
+    tableHeader: string;
+    columnHeader: string;
+    columnFooter: string;
+    detailCell: string;
+  };
 }>();
 
 const emit = defineEmits<{
@@ -518,12 +533,135 @@ function joinSelectedColumnsToExistingGroup() {
   emit('joinColumnsToExistingGroup', props.elementIndex, selectedColumns.value, props.bandIndex, props.parentFrameIndex);
 }
 
+// 根据style名称获取样式对象
+function getStyleByName(styleName: string) {
+  if (!props.reportStyles || !styleName) return null;
+  return props.reportStyles.find((style: any) => style.name === styleName) || null;
+}
+
+// 从JRXML style转换为CSS样式
+function convertStyleToCSS(style: any) {
+  if (!style) return {};
+  
+  const styles: any = {};
+  
+  // 文本样式
+  if (style.fontSize) {
+    styles.fontSize = `${style.fontSize}px`;
+  }
+  if (style.forecolor) {
+    styles.color = style.forecolor;
+  }
+  if (style.isBold) {
+    styles.fontWeight = 'bold';
+  }
+  if (style.isItalic) {
+    styles.fontStyle = 'italic';
+  }
+  if (style.isUnderline) {
+    styles.textDecoration = 'underline';
+  }
+  if (style.mode === 'Opaque' && style.backcolor) {
+    styles.backgroundColor = style.backcolor;
+  }
+  
+  // 文本对齐方式
+  if (style.textAlignment) {
+    const align = style.textAlignment.toLowerCase();
+    switch (align) {
+      case 'left':
+        styles.justifyContent = 'flex-start';
+        break;
+      case 'center':
+        styles.justifyContent = 'center';
+        break;
+      case 'right':
+        styles.justifyContent = 'flex-end';
+        break;
+      case 'justified':
+        styles.justifyContent = 'space-between';
+        break;
+      default:
+        styles.justifyContent = 'center';
+    }
+  }
+  // 垂直对齐方式
+  if (style.verticalAlignment) {
+    const align = style.verticalAlignment.toLowerCase();
+    switch (align) {
+      case 'top':
+        styles.alignItems = 'flex-start';
+        break;
+      case 'middle':
+        styles.alignItems = 'center';
+        break;
+      case 'bottom':
+        styles.alignItems = 'flex-end';
+        break;
+      default:
+        styles.alignItems = 'center';
+    }
+  }
+  
+  // 边框样式
+  let borderWidth = 0;
+  let borderStyle = 'solid';
+  let borderColor = '#000000';
+  
+  if (style.box && style.box.pen) {
+    borderWidth = style.box.pen.lineWidth || 0;
+    borderStyle = style.box.pen.lineStyle || 'solid';
+    borderColor = style.box.pen.lineColor || '#000000';
+  }
+  
+  if (borderWidth > 0) {
+    styles.border = `${borderWidth}px ${borderStyle} ${borderColor}`;
+  }
+  
+  return styles;
+}
+
 // 获取单元格样式
-function getCellStyle(cell: any) {
+function getCellStyle(cell: any, cellType?: string) {
   if (!cell) return {};
   
   const styles: any = {};
   
+  // 首先根据cellType从tableStyles中获取样式
+  if (cellType && props.tableStyles) {
+    let styleName = '';
+    switch (cellType) {
+      case 'tableHeader':
+        styleName = props.tableStyles.tableHeader;
+        break;
+      case 'columnHeader':
+        styleName = props.tableStyles.columnHeader;
+        break;
+      case 'columnFooter':
+        styleName = props.tableStyles.columnFooter;
+        break;
+      case 'detailCell':
+        styleName = props.tableStyles.detailCell;
+        break;
+    }
+    
+    if (styleName) {
+      const style = getStyleByName(styleName);
+      if (style) {
+        Object.assign(styles, convertStyleToCSS(style));
+      }
+    }
+  }
+  
+  // 然后检查cell是否有style属性，覆盖tableStyles中的样式
+  if (cell.style) {
+    const style = getStyleByName(cell.style);
+    if (style) {
+      Object.assign(styles, convertStyleToCSS(style));
+    }
+  }
+  
+  // 然后应用cell自身的样式，覆盖style中的样式
   // 文本样式
   if (cell.fontSize) {
     styles.fontSize = `${cell.fontSize}px`;
@@ -585,25 +723,6 @@ function getCellStyle(cell: any) {
     }
   }
   
-  // 边框样式 - 优先从box对象获取，否则从根级别获取
-  let borderWidth = 0;
-  let borderStyle = 'solid';
-  let borderColor = '#000000';
-  
-  if (cell.box && cell.box.pen) {
-    borderWidth = cell.box.pen.lineWidth || 0;
-    borderStyle = cell.box.pen.lineStyle || 'solid';
-    borderColor = cell.box.pen.lineColor || '#000000';
-  } else {
-    borderWidth = cell.borderWidth || 0;
-    borderStyle = cell.borderStyle || 'solid';
-    borderColor = cell.borderColor || '#000000';
-  }
-  
-  if (borderWidth > 0) {
-    styles.border = `${borderWidth}px ${borderStyle} ${borderColor}`;
-  }
-  
   return styles;
 };
 
@@ -613,12 +732,20 @@ function getColumnHeaderStyle(column: any) {
   
   // 如果column.header有样式属性，使用它
   if (column.columnHeader) {
-    return getCellStyle(column.columnHeader);
+    return getCellStyle(column.columnHeader, 'columnHeader');
+  }
+  
+  // 否则从tableStyles中获取样式
+  if (props.tableStyles && props.tableStyles.columnHeader) {
+    const style = getStyleByName(props.tableStyles.columnHeader);
+    if (style) {
+      return convertStyleToCSS(style);
+    }
   }
   
   // 否则返回默认样式
   return {
-    backgroundColor: '#e6e6e6',
+    backgroundColor: '#FFFFFF',
     fontWeight: '500',
     color: '#333'
   };
@@ -734,35 +861,35 @@ const tableHeaderHeight = computed(() => {
   if (columns.value.length === 0) return 30;
   const firstColumn = columns.value[0];
   if (!firstColumn) return 30;
-  return firstColumn.tableHeader?.height || 30;
+  return firstColumn.tableHeader?.element?.height || 30;
 });
 
 const columnHeaderHeight = computed(() => {
   if (columns.value.length === 0) return 30;
   const firstColumn = columns.value[0];
   if (!firstColumn) return 30;
-  return firstColumn.columnHeader?.height || 30;
+  return firstColumn.columnHeader?.element?.height || 30;
 });
 
 const detailCellHeight = computed(() => {
   if (columns.value.length === 0) return 30;
   const firstColumn = columns.value[0];
   if (!firstColumn) return 30;
-  return firstColumn.detailCell?.height || 30;
+  return firstColumn.detailCell?.element?.height || 30;
 });
 
 const columnFooterHeight = computed(() => {
   if (columns.value.length === 0) return 30;
   const firstColumn = columns.value[0];
   if (!firstColumn) return 30;
-  return firstColumn.columnFooter?.height || 30;
+  return firstColumn.columnFooter?.element?.height || 30;
 });
 
 const tableFooterHeight = computed(() => {
   if (columns.value.length === 0) return 30;
   const firstColumn = columns.value[0];
   if (!firstColumn) return 30;
-  return firstColumn.tableFooter?.height || 30;
+  return firstColumn.tableFooter?.element?.height || 30;
 });
 
 // 根据列UUID获取列索引
@@ -773,11 +900,32 @@ function getColumnIndex(column: any): number {
 // 获取分组单元格样式
 function getGroupCellStyle(group: any, type: string) {
   if (group[type]) {
-    return getCellStyle(group[type]);
+    return getCellStyle(group[type], type);
   }
+  
+  // 从tableStyles中获取样式
+  if (props.tableStyles) {
+    let styleName = '';
+    switch (type) {
+      case 'tableHeader':
+        styleName = props.tableStyles.tableHeader;
+        break;
+      case 'columnHeader':
+        styleName = props.tableStyles.columnHeader;
+        break;
+    }
+    
+    if (styleName) {
+      const style = getStyleByName(styleName);
+      if (style) {
+        return convertStyleToCSS(style);
+      }
+    }
+  }
+  
   // 默认样式
   return {
-    backgroundColor: type === 'tableHeader' ? '#f0f0f0' : '#e6e6e6',
+    backgroundColor: type === 'tableHeader' ? '#FFFFFF' : '#FFFFFF',
     fontWeight: '600',
     color: '#333'
   };
@@ -786,14 +934,74 @@ function getGroupCellStyle(group: any, type: string) {
 // 获取单元格内容样式
 function getCellContentStyle(column: any, type: string) {
   if (column[type]) {
-    return getCellStyle(column[type]);
+    return getCellStyle(column[type], type);
   }
+  
+  // 从tableStyles中获取样式
+  if (props.tableStyles) {
+    let styleName = '';
+    switch (type) {
+      case 'tableHeader':
+        styleName = props.tableStyles.tableHeader;
+        break;
+      case 'columnHeader':
+        styleName = props.tableStyles.columnHeader;
+        break;
+      case 'columnFooter':
+        styleName = props.tableStyles.columnFooter;
+        break;
+      case 'detailCell':
+        styleName = props.tableStyles.detailCell;
+        break;
+    }
+    
+    if (styleName) {
+      const style = getStyleByName(styleName);
+      if (style) {
+        return convertStyleToCSS(style);
+      }
+    }
+  }
+  
   if (type === 'columnHeader') {
     return {
-      backgroundColor: '#e6e6e6',
+      backgroundColor: '#FFFFFF',
       fontWeight: '500',
       color: '#333'
     };
+  }
+  return {};
+}
+
+// 获取行样式
+function getRowStyle(rowType: string) {
+  // 从tableStyles中获取样式
+  if (props.tableStyles) {
+    let styleName = '';
+    switch (rowType) {
+      case 'tableHeader':
+        styleName = props.tableStyles.tableHeader;
+        break;
+      case 'columnHeader':
+        styleName = props.tableStyles.columnHeader;
+        break;
+      case 'columnFooter':
+        styleName = props.tableStyles.columnFooter;
+        break;
+      case 'detailCell':
+        styleName = props.tableStyles.detailCell;
+        break;
+      case 'tableFooter':
+        styleName = props.tableStyles.tableHeader;
+        break;
+    }
+    
+    if (styleName) {
+      const style = getStyleByName(styleName);
+      if (style) {
+        return convertStyleToCSS(style);
+      }
+    }
   }
   return {};
 }
@@ -816,11 +1024,11 @@ function getCellContentStyle(column: any, type: string) {
   border-collapse: collapse;
 }
 
-.table-header,
-.column-header,
-.detail-row,
-.column-footer,
-.table-footer {
+.tableHeader,
+.columnHeader,
+.cellDetail,
+.columnFooter,
+.tableFooter {
   height: 30px;
 }
 
@@ -846,6 +1054,7 @@ function getCellContentStyle(column: any, type: string) {
   margin: 0;
   box-sizing: border-box;
   overflow: visible;
+  border: 1px solid rgba(201, 84, 216, 0.337);
 }
 
 /* 列选中样式 */
@@ -861,6 +1070,7 @@ function getCellContentStyle(column: any, type: string) {
 .cell-content {
   width: 100%;
   height: 100%;
+  min-height: 100%;
   display: flex;
   align-items: center;
   justify-content: center;

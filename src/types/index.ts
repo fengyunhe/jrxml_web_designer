@@ -7,12 +7,18 @@ export interface ColumnGroup {
   name: string;
   width: number;
   hasTableHeader?: boolean;
-  tableHeader?: DesignElement;
-  columnHeader?: DesignElement;
-  columnFooter?: DesignElement;
-  tableFooter?: DesignElement;
+  tableHeader?: TableCell;
+  columnHeader?: TableCell;
+  columnFooter?: TableCell;
+  tableFooter?: TableCell;
   // 子分组或列
   children: (ColumnGroup | TableColumn)[];
+}
+
+// 表格单元格接口
+export interface TableCell {
+  enable: boolean;
+  element?: DesignElement;
 }
 
 // 表格列接口
@@ -21,11 +27,12 @@ export interface TableColumn {
   width: number;
   name: string;
   hasTableHeader?: boolean;
-  tableHeader?: DesignElement;
-  columnHeader?: DesignElement;
-  detailCell?: DesignElement;
-  columnFooter?: DesignElement;
-  tableFooter?: DesignElement;
+  tableHeader?: TableCell;
+  columnHeader?: TableCell;
+  detailCell?: TableCell;
+  columnFooter?: TableCell;
+  tableFooter?: TableCell;
+  children?: (ColumnGroup | TableColumn)[];
 }
 
 // 查询接口

@@ -1,5 +1,12 @@
 import { describe, it, expect } from 'vitest';
+import { JSDOM } from 'jsdom';
 import { generateJRXMLContent, parseJRXMLContent } from './jrxmlGenerator';
+
+// Helper function to parse JRXML content into a DOM object
+function parseJRXMLToDOM(jrxmlContent: string) {
+  const dom = new JSDOM(jrxmlContent, { contentType: 'application/xml' });
+  return dom.window.document;
+}
 
 describe('JRXML过时标签和属性转换测试', () => {
   describe('生成JRXML内容时的过时属性转换', () => {
@@ -38,14 +45,27 @@ describe('JRXML过时标签和属性转换测试', () => {
       ];
 
       const jrxmlContent = generateJRXMLContent(properties, bands, []);
+      const doc = parseJRXMLToDOM(jrxmlContent);
       
       // 检查是否没有使用过时的border和borderColor属性
-      expect(jrxmlContent).not.toContain('border="');
-      expect(jrxmlContent).not.toContain('borderColor="');
+      const staticTextElements = doc.querySelectorAll('staticText');
+      expect(staticTextElements.length).toBeGreaterThan(0);
       
-      // 检查是否使用了pen子元素 - 修改为检查完整的pen元素
-      expect(jrxmlContent).toContain('<pen lineWidth="1"');
-      expect(jrxmlContent).toContain('lineColor="#000000"');
+      const reportElement = staticTextElements[0].querySelector('reportElement');
+      expect(reportElement).toBeDefined();
+      
+      // 检查reportElement是否没有过时的border属性
+      expect(reportElement!.getAttribute('border')).toBeNull();
+      expect(reportElement!.getAttribute('borderColor')).toBeNull();
+      
+      // 检查是否使用了pen子元素
+      const boxElement = staticTextElements[0].querySelector('box');
+      expect(boxElement).toBeDefined();
+      
+      const penElement = boxElement!.querySelector('pen');
+      expect(penElement).toBeDefined();
+      expect(penElement!.getAttribute('lineWidth')).toBe('1');
+      expect(penElement!.getAttribute('lineColor')).toBe('#000000');
     });
 
     it('应该将过时的isStretchWithOverflow属性转换为textAdjust属性', () => {
@@ -78,12 +98,17 @@ describe('JRXML过时标签和属性转换测试', () => {
       ];
 
       const jrxmlContent = generateJRXMLContent(properties, bands, []);
+      const doc = parseJRXMLToDOM(jrxmlContent);
       
-      // 检查是否没有使用过时的isStretchWithOverflow属性
-      expect(jrxmlContent).not.toContain('isStretchWithOverflow=');
+      // 检查是否没有使用过时的isStretchWithOverflow属性，而是使用了textAdjust属性
+      const textFieldElements = doc.querySelectorAll('textField');
+      expect(textFieldElements.length).toBeGreaterThan(0);
       
-      // 检查是否使用了textAdjust属性
-      expect(jrxmlContent).toContain('textAdjust="StretchHeight"');
+      // 检查textField是否没有过时的isStretchWithOverflow属性
+      expect(textFieldElements[0].getAttribute('isStretchWithOverflow')).toBeNull();
+      
+      // 检查textField是否使用了textAdjust属性
+      expect(textFieldElements[0].getAttribute('textAdjust')).toBe('StretchHeight');
     });
 
     it('应该将过时的isSplitAllowed属性转换为splitType属性', () => {
@@ -107,12 +132,17 @@ describe('JRXML过时标签和属性转换测试', () => {
       ];
 
       const jrxmlContent = generateJRXMLContent(properties, bands, []);
+      const doc = parseJRXMLToDOM(jrxmlContent);
       
-      // 检查是否没有使用过时的isSplitAllowed属性
-      expect(jrxmlContent).not.toContain('isSplitAllowed=');
+      // 检查是否没有使用过时的isSplitAllowed属性，而是使用了splitType属性
+      const bandElements = doc.querySelectorAll('band');
+      expect(bandElements.length).toBeGreaterThan(0);
       
-      // 检查是否使用了splitType属性
-      expect(jrxmlContent).toContain('splitType="Prevent"');
+      // 检查band是否没有过时的isSplitAllowed属性
+      expect(bandElements[0].getAttribute('isSplitAllowed')).toBeNull();
+      
+      // 检查band是否使用了splitType属性
+      expect(bandElements[0].getAttribute('splitType')).toBe('Prevent');
     });
 
     it('应该将过时的isStyledText属性转换为markup属性', () => {
@@ -145,12 +175,20 @@ describe('JRXML过时标签和属性转换测试', () => {
       ];
 
       const jrxmlContent = generateJRXMLContent(properties, bands, []);
+      const doc = parseJRXMLToDOM(jrxmlContent);
       
-      // 检查是否没有使用过时的isStyledText属性
-      expect(jrxmlContent).not.toContain('isStyledText=');
+      // 检查是否没有使用过时的isStyledText属性，而是使用了markup属性
+      const staticTextElements = doc.querySelectorAll('staticText');
+      expect(staticTextElements.length).toBeGreaterThan(0);
       
-      // 检查是否使用了markup属性
-      expect(jrxmlContent).toContain('markup="styled"');
+      const textElement = staticTextElements[0].querySelector('textElement');
+      expect(textElement).toBeDefined();
+      
+      // 检查textElement是否没有过时的isStyledText属性
+      expect(textElement!.getAttribute('isStyledText')).toBeNull();
+      
+      // 检查textElement是否使用了markup属性
+      expect(textElement!.getAttribute('markup')).toBe('styled');
     });
 
     it('当全局边框样式为空且没有设置边框宽度时，不应该生成box标签', () => {
@@ -187,10 +225,14 @@ describe('JRXML过时标签和属性转换测试', () => {
       ];
 
       const jrxmlContent = generateJRXMLContent(properties, bands, []);
+      const doc = parseJRXMLToDOM(jrxmlContent);
       
       // 检查是否没有生成box标签
-      expect(jrxmlContent).not.toContain('<box');
-      expect(jrxmlContent).not.toContain('</box>');
+      const staticTextElements = doc.querySelectorAll('staticText');
+      expect(staticTextElements.length).toBeGreaterThan(0);
+      
+      const boxElement = staticTextElements[0].querySelector('box');
+      expect(boxElement).toBeNull();
     });
 
     it('当全局边框样式不为空时，应该生成box标签', () => {
@@ -227,15 +269,21 @@ describe('JRXML过时标签和属性转换测试', () => {
       ];
 
       const jrxmlContent = generateJRXMLContent(properties, bands, []);
+      const doc = parseJRXMLToDOM(jrxmlContent);
       
       // 检查是否生成了box标签
-      expect(jrxmlContent).toContain('<box');
-      expect(jrxmlContent).toContain('</box>');
+      const staticTextElements = doc.querySelectorAll('staticText');
+      expect(staticTextElements.length).toBeGreaterThan(0);
+      
+      const boxElement = staticTextElements[0].querySelector('box');
+      expect(boxElement).toBeDefined();
+      
       // 检查是否包含边框设置
-      expect(jrxmlContent).toContain('<pen');
-      expect(jrxmlContent).toContain('lineWidth="1"');
-      expect(jrxmlContent).toContain('lineStyle="Solid"');
-      expect(jrxmlContent).toContain('lineColor="#000000"');
+      const penElement = boxElement!.querySelector('pen');
+      expect(penElement).toBeDefined();
+      expect(penElement!.getAttribute('lineWidth')).toBe('1');
+      expect(penElement!.getAttribute('lineStyle')).toBe('Solid');
+      expect(penElement!.getAttribute('lineColor')).toBe('#000000');
     });
 
     it('当没有设置边框样式但有边框宽度时，应该生成box标签', () => {
@@ -271,13 +319,19 @@ describe('JRXML过时标签和属性转换测试', () => {
       ];
 
       const jrxmlContent = generateJRXMLContent(properties, bands, []);
+      const doc = parseJRXMLToDOM(jrxmlContent);
       
       // 检查是否生成了box标签
-      expect(jrxmlContent).toContain('<box');
-      expect(jrxmlContent).toContain('</box>');
+      const staticTextElements = doc.querySelectorAll('staticText');
+      expect(staticTextElements.length).toBeGreaterThan(0);
+      
+      const boxElement = staticTextElements[0].querySelector('box');
+      expect(boxElement).toBeDefined();
+      
       // 检查是否包含边框设置
-      expect(jrxmlContent).toContain('<pen');
-      expect(jrxmlContent).toContain('lineWidth="1"');
+      const penElement = boxElement!.querySelector('pen');
+      expect(penElement).toBeDefined();
+      expect(penElement!.getAttribute('lineWidth')).toBe('1');
     });
 
     it('当只设置边距时，应该生成box标签', () => {
@@ -312,12 +366,17 @@ describe('JRXML过时标签和属性转换测试', () => {
       ];
 
       const jrxmlContent = generateJRXMLContent(properties, bands, []);
+      const doc = parseJRXMLToDOM(jrxmlContent);
       
       // 检查是否生成了box标签
-      expect(jrxmlContent).toContain('<box');
-      expect(jrxmlContent).toContain('</box>');
+      const staticTextElements = doc.querySelectorAll('staticText');
+      expect(staticTextElements.length).toBeGreaterThan(0);
+      
+      const boxElement = staticTextElements[0].querySelector('box');
+      expect(boxElement).toBeDefined();
+      
       // 检查是否包含边距设置
-      expect(jrxmlContent).toContain('padding="5"');
+      expect(boxElement!.getAttribute('padding')).toBe('5');
     });
   });
 
@@ -437,6 +496,39 @@ describe('JRXML过时标签和属性转换测试', () => {
       // 重新生成JRXML
       const regeneratedJrxml = generateJRXMLContent(properties, bands, []);
       
+      // 验证重新生成的JRXML结构
+      const doc = parseJRXMLToDOM(regeneratedJrxml);
+      
+      // 检查band是否有正确的splitType属性
+      const bandElements = doc.querySelectorAll('band');
+      expect(bandElements.length).toBeGreaterThan(0);
+      expect(bandElements[0].getAttribute('splitType')).toBe('Prevent');
+      expect(bandElements[0].getAttribute('isSplitAllowed')).toBeNull();
+      
+      // 检查staticText元素
+      const staticTextElements = doc.querySelectorAll('staticText');
+      expect(staticTextElements.length).toBeGreaterThan(0);
+      
+      const staticText = staticTextElements[0];
+      const boxElement = staticText.querySelector('box');
+      expect(boxElement).toBeDefined();
+      
+      const penElement = boxElement!.querySelector('pen');
+      expect(penElement).toBeDefined();
+      expect(penElement!.getAttribute('lineWidth')).toBe('1');
+      expect(penElement!.getAttribute('lineColor')).toBe('#000000');
+      
+      const textElement = staticText.querySelector('textElement');
+      expect(textElement).toBeDefined();
+      expect(textElement!.getAttribute('markup')).toBe('styled');
+      expect(textElement!.getAttribute('isStyledText')).toBeNull();
+      
+      // 检查textField元素
+      const textFieldElements = doc.querySelectorAll('textField');
+      expect(textFieldElements.length).toBeGreaterThan(0);
+      expect(textFieldElements[0].getAttribute('textAdjust')).toBe('StretchHeight');
+      expect(textFieldElements[0].getAttribute('isStretchWithOverflow')).toBeNull();
+      
       // 再次解析重新生成的JRXML
       const { bands: finalBands } = parseJRXMLContent(regeneratedJrxml);
       
@@ -475,7 +567,11 @@ describe('JRXML过时标签和属性转换测试', () => {
       const regeneratedJrxml = generateJRXMLContent(properties, bands, []);
       
       // 验证重新生成的JRXML包含了splitType属性
-      expect(regeneratedJrxml).toContain('splitType="Prevent"');
+      const doc = parseJRXMLToDOM(regeneratedJrxml);
+      const bandElements = doc.querySelectorAll('band');
+      expect(bandElements.length).toBeGreaterThan(0);
+      expect(bandElements[0].getAttribute('splitType')).toBe('Prevent');
+      expect(bandElements[0].getAttribute('isSplitAllowed')).toBeNull();
       
       // 再次解析重新生成的JRXML
       const { bands: finalBands } = parseJRXMLContent(regeneratedJrxml);
@@ -511,10 +607,12 @@ describe('JRXML过时标签和属性转换测试', () => {
       // 重新生成JRXML
       const regeneratedJrxml = generateJRXMLContent(properties, bands, []);
       
-      // 验证重新生成的JRXML包含了splitType="Stretch"属性
-      expect(regeneratedJrxml).toContain('splitType="Stretch"');
-      // 验证重新生成的JRXML不包含过时的isSplitAllowed属性
-      expect(regeneratedJrxml).not.toContain('isSplitAllowed=');
+      // 验证重新生成的JRXML包含了splitType="Stretch"属性，不包含过时的isSplitAllowed属性
+      const doc = parseJRXMLToDOM(regeneratedJrxml);
+      const bandElements = doc.querySelectorAll('band');
+      expect(bandElements.length).toBeGreaterThan(0);
+      expect(bandElements[0].getAttribute('splitType')).toBe('Stretch');
+      expect(bandElements[0].getAttribute('isSplitAllowed')).toBeNull();
     });
 
     test('应该优先使用非过时属性而不是过时属性', () => {
@@ -569,21 +667,38 @@ describe('JRXML过时标签和属性转换测试', () => {
 
       // 生成JRXML
       const generatedXml = generateJRXMLContent(properties, [bandWithElement], []);
+      const doc = parseJRXMLToDOM(generatedXml);
 
       // 验证优先使用新属性而不是过时属性
-      expect(generatedXml).toContain('markup="html"');
-      expect(generatedXml).not.toContain('isStyledText=');
       
-      expect(generatedXml).toContain('textAdjust="StretchHeight"');
-      expect(generatedXml).not.toContain('isStretchWithOverflow=');
+      // 检查band属性
+      const bandElements = doc.querySelectorAll('band');
+      expect(bandElements.length).toBeGreaterThan(0);
+      expect(bandElements[0].getAttribute('splitType')).toBe('Prevent');
+      expect(bandElements[0].getAttribute('isSplitAllowed')).toBeNull();
       
-      expect(generatedXml).toContain('splitType="Prevent"');
-      expect(generatedXml).not.toContain('isSplitAllowed=');
+      // 检查staticText元素
+      const staticTextElements = doc.querySelectorAll('staticText');
+      expect(staticTextElements.length).toBeGreaterThan(0);
       
-      // 验证box属性优先使用pen而不是border
-      expect(generatedXml).toContain('<pen lineWidth="2" lineColor="#FF0000"/>');
-      expect(generatedXml).not.toContain('border=');
-      expect(generatedXml).not.toContain('borderColor=');
+      const textElement = staticTextElements[0].querySelector('textElement');
+      expect(textElement).toBeDefined();
+      expect(textElement!.getAttribute('markup')).toBe('html');
+      expect(textElement!.getAttribute('isStyledText')).toBeNull();
+      
+      const boxElement = staticTextElements[0].querySelector('box');
+      expect(boxElement).toBeDefined();
+      
+      const penElement = boxElement!.querySelector('pen');
+      expect(penElement).toBeDefined();
+      expect(penElement!.getAttribute('lineWidth')).toBe('2');
+      expect(penElement!.getAttribute('lineColor')).toBe('#FF0000');
+      
+      // 检查textField元素
+      const textFieldElements = doc.querySelectorAll('textField');
+      expect(textFieldElements.length).toBeGreaterThan(0);
+      expect(textFieldElements[0].getAttribute('textAdjust')).toBe('StretchHeight');
+      expect(textFieldElements[0].getAttribute('isStretchWithOverflow')).toBeNull();
     });
   });
 
