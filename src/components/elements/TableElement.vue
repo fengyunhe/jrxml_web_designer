@@ -9,10 +9,17 @@
     >
       <div 
         class="menu-item"
+        @click="addSelectedColumnsToGroup"
+        :disabled="selectedColumns.length < 2"
+      >
+        添加列分组
+      </div>
+      <div 
+        class="menu-item"
         @click="joinSelectedColumnsToExistingGroup"
         :disabled="selectedColumns.length < 1"
       >
-        {{ t('properties.addColumnsToGroup') }}
+        加入现有组
       </div>
     </div>
     <BaseElement
@@ -36,7 +43,7 @@
         <thead>
           <!-- 表格头部 -->
           <template v-if="hasTableHeader && tableHeaderHeight > 0">
-            <template v-if="hasColumnGroups">
+            <template v-if="hasTableHeaderGroups">
               <!-- 直接渲染分组生成的行，不添加外层tr -->
               <render-column-group 
             :group="rootGroup" 
@@ -116,10 +123,22 @@
             </template>
           </template>
           <!-- 列头部 -->
-          <template v-if="!hasColumnGroups && columnHeaderHeight > 0">
-            <!-- 普通列的列头 -->
-            <tr class="columnHeader" :style="{ height: `${columnHeaderHeight}px`, ...getRowStyle('columnHeader') }">
-              <n-tooltip 
+          <template v-if="columnHeaderHeight > 0">
+            <template v-if="hasColumnHeaderGroups">
+              <!-- 直接渲染分组生成的行，不添加外层tr -->
+              <render-column-group 
+            :group="rootGroup" 
+            :level="0" 
+            :type="'columnHeader'"
+            :report-styles="reportStyles"
+            :table-styles="tableStyles"
+            @column-click="handleRenderColumnClick"
+          />
+            </template>
+            <template v-else>
+              <!-- 普通列的列头 -->
+              <tr class="columnHeader" :style="{ height: `${columnHeaderHeight}px`, ...getRowStyle('columnHeader') }">
+                <n-tooltip 
                   v-for="(column, index) in columns" 
                   :key="column.uuid"
                   placement="top"
@@ -137,11 +156,11 @@
                         <!-- 渲染列头内容，从columnHeader获取实际的静态文本或动态文本表达式 -->
                         <template v-if="column.columnHeader">
                           <template v-if="column.columnHeader.element?.type === 'staticText'">
-                             <div class="static-text">{{ column.columnHeader.element?.text || '' }}</div>
-                           </template>
-                           <template v-else-if="column.columnHeader.element?.type === 'textField'">
-                             <div class="text-field">{{ column.columnHeader.element?.expression || '' }}</div>
-                           </template>
+                            <div class="static-text">{{ column.columnHeader.element?.text || '' }}</div>
+                          </template>
+                          <template v-else-if="column.columnHeader.element?.type === 'textField'">
+                            <div class="text-field">{{ column.columnHeader.element?.expression || '' }}</div>
+                          </template>
                           <template v-else>
                             <div class="column-name">{{ column.name }}</div>
                           </template>
@@ -156,6 +175,85 @@
                     Width: {{ column.width }}px
                   </template>
                 </n-tooltip>
+              </tr>
+            </template>
+          </template>
+          <!-- 列尾部 -->
+          <template v-if="columnFooterHeight > 0">
+            <!-- 普通列的列尾 -->
+            <tr class="columnFooter" :style="{ height: `${columnFooterHeight}px`, ...getRowStyle('columnFooter') }">
+              <n-tooltip 
+                v-for="(column, index) in columns" 
+                :key="column.uuid"
+                placement="top"
+                trigger="hover"
+              >
+                <template #trigger>
+                  <th 
+                    :style="{ width: `${column.width}px` }"
+                    class="table-column column-footer-cell"
+                    :class="{ 'column-selected': isColumnSelected(index) }"
+                    @click.stop="handleColumnClick(index, $event)"
+                    @contextmenu.stop="handleColumnContextMenu(index, $event)"
+                  >
+                    <div class="cell-content" :style="getCellStyle(column.columnFooter, 'columnFooter')">
+                      <!-- 渲染列尾内容 -->
+                      <template v-if="column.columnFooter && column.columnFooter.element">
+                        <template v-if="column.columnFooter.element.type === 'staticText'">
+                          <div class="static-text">{{ column.columnFooter.element.text || '' }}</div>
+                        </template>
+                        <template v-else-if="column.columnFooter.element.type === 'textField'">
+                          <div class="text-field">{{ column.columnFooter.element.expression || '' }}</div>
+                        </template>
+                      </template>
+                      <div v-else class="cell-content empty">
+                      </div>
+                    </div>
+                  </th>
+                </template>
+                <template #default>
+                  Width: {{ column.width }}px
+                </template>
+              </n-tooltip>
+            </tr>
+          </template>
+          <!-- 表格尾部 -->
+          <template v-if="tableFooterHeight > 0">
+            <!-- 普通列的表格尾部 -->
+            <tr class="tableFooter" :style="{ height: `${tableFooterHeight}px`, ...getRowStyle('tableFooter') }">
+              <n-tooltip 
+                v-for="(column, index) in columns" 
+                :key="column.uuid"
+                placement="top"
+                trigger="hover"
+              >
+                <template #trigger>
+                  <th 
+                    :style="{ width: `${column.width}px` }"
+                    class="table-column table-footer-cell"
+                    :class="{ 'column-selected': isColumnSelected(index) }"
+                    @click.stop="handleColumnClick(index, $event)"
+                    @contextmenu.stop="handleColumnContextMenu(index, $event)"
+                  >
+                    <div class="cell-content" :style="getCellStyle(column.tableFooter, 'tableFooter')">
+                      <!-- 渲染表格尾部内容 -->
+                      <template v-if="column.tableFooter && column.tableFooter.element">
+                        <template v-if="column.tableFooter.element.type === 'staticText'">
+                          <div class="static-text">{{ column.tableFooter.element.text || '' }}</div>
+                        </template>
+                        <template v-else-if="column.tableFooter.element.type === 'textField'">
+                          <div class="text-field">{{ column.tableFooter.element.expression || '' }}</div>
+                        </template>
+                      </template>
+                      <div v-else class="cell-content empty">
+                      </div>
+                    </div>
+                  </th>
+                </template>
+                <template #default>
+                  Width: {{ column.width }}px
+                </template>
+              </n-tooltip>
             </tr>
           </template>
           

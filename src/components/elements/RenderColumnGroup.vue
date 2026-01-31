@@ -17,14 +17,14 @@
             >
               <div class="cell-content" :style="getCellContentStyle(cell, type)">
                 <template v-if="cell.content.tableHeader">
-                  <template v-if="cell.content.tableHeader.type === 'staticText'">
-                    <div class="static-text">{{ cell.content.tableHeader.text || '' }}</div>
+                  <template v-if="cell.content.tableHeader.element?.type === 'staticText'">
+                    <div class="static-text">{{ cell.content.tableHeader.element?.text || '' }}</div>
                   </template>
-                  <template v-else-if="cell.content.tableHeader.type === 'textField'">
-                    <div class="text-field">{{ cell.content.tableHeader.expression || '' }}</div>
+                  <template v-else-if="cell.content.tableHeader.element?.type === 'textField'">
+                    <div class="text-field">{{ cell.content.tableHeader.element?.expression || '' }}</div>
                   </template>
                   <template v-else>
-                    <div class="static-text">{{ cell.content.tableHeader.text || '' }}</div>
+                    <div class="static-text">{{ cell.content.tableHeader.element?.text || '' }}</div>
                   </template>
                 </template>
                 <template v-else>
@@ -33,7 +33,7 @@
               </div>
             </th>
           </template>
-          <template v-else>
+          <template v-else-if="type === 'columnHeader'">
             <th 
               :class="['column-group-cell', { 'column-selected': isCellSelected(cell) }]"
               :colspan="cell.colspan"
@@ -44,14 +44,68 @@
             >
               <div class="cell-content" :style="getCellContentStyle(cell, type)">
                 <template v-if="cell.content.columnHeader">
-                  <template v-if="cell.content.columnHeader.type === 'staticText'">
-                    <div class="static-text">{{ cell.content.columnHeader.text || '' }}</div>
+                  <template v-if="cell.content.columnHeader.element?.type === 'staticText'">
+                    <div class="static-text">{{ cell.content.columnHeader.element?.text || '' }}</div>
                   </template>
-                  <template v-else-if="cell.content.columnHeader.type === 'textField'">
-                    <div class="text-field">{{ cell.content.columnHeader.expression || '' }}</div>
+                  <template v-else-if="cell.content.columnHeader.element?.type === 'textField'">
+                    <div class="text-field">{{ cell.content.columnHeader.element?.expression || '' }}</div>
                   </template>
                   <template v-else>
-                    <div class="static-text">{{ cell.content.columnHeader.text || '' }}</div>
+                    <div class="column-name">{{ cell.content.name }}</div>
+                  </template>
+                </template>
+                <template v-else>
+                  <div class="static-text"></div>
+                </template>
+              </div>
+            </th>
+          </template>
+          <template v-else-if="type === 'columnFooter'">
+            <th 
+              :class="['column-group-cell', { 'column-selected': isCellSelected(cell) }]"
+              :colspan="cell.colspan"
+              :rowspan="cell.rowspan"
+              :style="getCellContainerStyle(cell, type)"
+              @click="handleCellClick(cell, $event)"
+              @contextmenu.stop="handleCellContextMenu(cell, $event)"
+            >
+              <div class="cell-content" :style="getCellContentStyle(cell, type)">
+                <template v-if="cell.content.columnFooter">
+                  <template v-if="cell.content.columnFooter.element?.type === 'staticText'">
+                    <div class="static-text">{{ cell.content.columnFooter.element?.text || '' }}</div>
+                  </template>
+                  <template v-else-if="cell.content.columnFooter.element?.type === 'textField'">
+                    <div class="text-field">{{ cell.content.columnFooter.element?.expression || '' }}</div>
+                  </template>
+                  <template v-else>
+                    <div class="static-text">{{ cell.content.columnFooter.element?.text || '' }}</div>
+                  </template>
+                </template>
+                <template v-else>
+                  <div class="static-text"></div>
+                </template>
+              </div>
+            </th>
+          </template>
+          <template v-else-if="type === 'tableFooter'">
+            <th 
+              :class="['column-group-cell', { 'column-selected': isCellSelected(cell) }]"
+              :colspan="cell.colspan"
+              :rowspan="cell.rowspan"
+              :style="getCellContainerStyle(cell, type)"
+              @click="handleCellClick(cell, $event)"
+              @contextmenu.stop="handleCellContextMenu(cell, $event)"
+            >
+              <div class="cell-content" :style="getCellContentStyle(cell, type)">
+                <template v-if="cell.content.tableFooter">
+                  <template v-if="cell.content.tableFooter.element?.type === 'staticText'">
+                    <div class="static-text">{{ cell.content.tableFooter.element?.text || '' }}</div>
+                  </template>
+                  <template v-else-if="cell.content.tableFooter.element?.type === 'textField'">
+                    <div class="text-field">{{ cell.content.tableFooter.element?.expression || '' }}</div>
+                  </template>
+                  <template v-else>
+                    <div class="static-text">{{ cell.content.tableFooter.element?.text || '' }}</div>
                   </template>
                 </template>
                 <template v-else>
@@ -73,7 +127,7 @@ import { computed } from 'vue';
 const props = defineProps<{
   group: any;
   level: number;
-  type: string;
+  type: 'tableHeader' | 'columnHeader' | 'columnFooter' | 'tableFooter';
   columns?: any[];
   reportStyles?: any[];
   tableStyles?: {
@@ -175,18 +229,28 @@ function buildGroupRows(group: any): any[][] {
       // 对于Column Header，检查是否实际定义了columnHeader
       if (node.children && node.children.length > 0) {
         // 有子节点的分组单元格
-        // 只有当分组实际定义了columnHeader时，才渲染为组合单元格
-        if (node.columnHeader) {
-          rowspan = 1;
-        } else {
-          // 没有定义columnHeader，递归渲染子节点
-          let currentColumn = startColumn;
-          for (const child of node.children) {
-            buildTable(child, currentColumn, depth);
-            currentColumn += countLeafColumns(child);
-          }
-          return; // 跳过当前节点的渲染
-        }
+        // 总是渲染为组合单元格，即使没有定义columnHeader
+        rowspan = 1;
+      } else {
+        // 叶子节点，rowspan为从当前深度到最大深度的行数
+        rowspan = maxDepth - depth + 1;
+      }
+    } else if (props.type === 'columnFooter') {
+      // 对于Column Footer，检查是否实际定义了columnFooter
+      if (node.children && node.children.length > 0) {
+        // 有子节点的分组单元格
+        // 总是渲染为组合单元格，即使没有定义columnFooter
+        rowspan = 1;
+      } else {
+        // 叶子节点，rowspan为从当前深度到最大深度的行数
+        rowspan = maxDepth - depth + 1;
+      }
+    } else if (props.type === 'tableFooter') {
+      // 对于Table Footer，检查是否实际定义了tableFooter
+      if (node.children && node.children.length > 0) {
+        // 有子节点的分组单元格
+        // 总是渲染为组合单元格，即使没有定义tableFooter
+        rowspan = 1;
       } else {
         // 叶子节点，rowspan为从当前深度到最大深度的行数
         rowspan = maxDepth - depth + 1;
@@ -195,18 +259,8 @@ function buildGroupRows(group: any): any[][] {
       // 对于Table Header，检查是否实际定义了tableHeader
       if (node.children && node.children.length > 0) {
         // 有子节点的分组单元格
-        // 只有当分组实际定义了tableHeader时，才渲染为组合单元格
-        if (node.tableHeader) {
-          rowspan = 1;
-        } else {
-          // 没有定义tableHeader，递归渲染子节点
-          let currentColumn = startColumn;
-          for (const child of node.children) {
-            buildTable(child, currentColumn, depth);
-            currentColumn += countLeafColumns(child);
-          }
-          return; // 跳过当前节点的渲染
-        }
+        // 总是渲染为组合单元格，即使没有定义tableHeader
+        rowspan = 1;
       } else {
         // 叶子节点，rowspan为从当前深度到最大深度的行数
         rowspan = maxDepth - depth + 1;
@@ -240,8 +294,10 @@ function buildGroupRows(group: any): any[][] {
   }
   
   // 开始构建表格，处理根分组的所有子节点
+  let currentColumn = 0;
   for (const child of group.children) {
-    buildTable(child, 0, 0);
+    buildTable(child, currentColumn, 0);
+    currentColumn += countLeafColumns(child);
   }
   
   // 移除空行

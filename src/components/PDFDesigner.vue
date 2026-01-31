@@ -173,6 +173,7 @@
           @update-jrxml="updateJRXML"
           @save-state="saveStateToHistory"
           @update:reportStyles="reportStyles = $event"
+          @add-columns-to-group="handleAddColumnsToGroup"
         />
       </ResizablePanel>
     </div>
@@ -263,6 +264,15 @@
         </div>
       </div>
     </BaseModal>
+
+    <!-- 列选择对话框 -->
+    <ColumnSelectionModal
+      v-model:visible="showColumnSelectionModal"
+      :columns="columnSelectionState.columns"
+      :children="columnSelectionState.children"
+      @confirm="(selectedColumnIndices, selectedRegion, groupText) => handleColumnSelectionConfirm(selectedColumnIndices, selectedRegion, groupText)"
+    />
+
   </div>
 </template>
 
@@ -278,6 +288,7 @@ import PdfPreviewModal from './modals/PdfPreviewModal.vue';
 import PreviewServerSettingsModal from './modals/PreviewServerSettingsModal.vue';
 import SubDatasetManagementModal from './modals/SubDatasetManagementModal.vue';
 import BaseModal from './modals/BaseModal.vue';
+import ColumnSelectionModal from './modals/ColumnSelectionModal.vue';
 import BottomPanel from './panels/BottomPanel.vue';
 import ElementLibrary from './ElementLibrary.vue';
 import FileManager from './designer/controls/FileManager.vue';
@@ -892,6 +903,16 @@ const groupDialogState = ref({
   parentFrameIndex: undefined as number | undefined,
   existingGroups: [] as any[],
   selectedGroupName: ''
+});
+
+// 列选择对话框状态
+const showColumnSelectionModal = ref(false);
+const columnSelectionState = ref({
+  elementIndex: 0,
+  bandIndex: 0,
+  parentFrameIndex: undefined as number | undefined,
+  columns: [] as any[],
+  children: [] as any[]
 });
 
 
@@ -4113,7 +4134,70 @@ const handleMoveColumn = (elementIndex: number, fromIndex: number, toIndex: numb
 };
 
 // 处理将选中的列加入组
-const handleAddColumnsToGroup = (elementIndex: number, columnIndices: number[], bandIndex: number, parentFrameIndex?: number): void => {
+const handleAddColumnsToGroup = (params: { elementIndex: number; columnIndices: number[]; bandIndex: number; parentFrameIndex?: number }): void => {
+  const { elementIndex, columnIndices, bandIndex, parentFrameIndex } = params;
+  
+  // 获取当前band
+  const band = bands.value[bandIndex];
+  if (!band) return;
+  
+  // 获取要操作的元素
+  let element;
+  if (parentFrameIndex !== undefined) {
+    // 处理Frame内的元素
+    const frame = band.elements[parentFrameIndex];
+    if (frame && frame.type === 'frame' && frame.elements) {
+      element = frame.elements[elementIndex];
+    }
+  } else {
+    // 处理直接在Band中的元素
+    element = band.elements[elementIndex];
+  }
+  
+  // 确保是表格元素
+  if (!element || element.type !== 'table') return;
+  
+  const tableElement = element as any;
+  if (!tableElement.columns || !Array.isArray(tableElement.columns)) return;
+  
+  // 收集所有现有的列分组
+  const existingGroups: any[] = [];
+  
+  // 递归收集所有分组
+  const collectGroups = (items: any[]): void => {
+    items.forEach(item => {
+      if (item.children) {
+        existingGroups.push(item);
+        collectGroups(item.children);
+      }
+    });
+  };
+  
+  // 初始化children属性（如果不存在）
+  if (!tableElement.children) {
+    tableElement.children = [...tableElement.columns];
+  }
+  
+  // 收集现有分组
+  collectGroups(tableElement.children);
+  
+  // 更新列选择对话框状态
+  columnSelectionState.value = {
+    elementIndex,
+    bandIndex,
+    parentFrameIndex,
+    columns: tableElement.columns,
+    children: tableElement.children || tableElement.columns
+  };
+  
+  // 显示列选择对话框
+  showColumnSelectionModal.value = true;
+};
+
+// 处理列选择确认
+const handleColumnSelectionConfirm = (selectedColumnIndices: number[], selectedRegion: string, groupText: string): void => {
+  const { elementIndex, bandIndex, parentFrameIndex } = columnSelectionState.value;
+  
   // 获取当前band
   const band = bands.value[bandIndex];
   if (!band) return;
@@ -4138,31 +4222,101 @@ const handleAddColumnsToGroup = (elementIndex: number, columnIndices: number[], 
   if (!tableElement.columns || !Array.isArray(tableElement.columns)) return;
   
   // 确保至少选择了2列
-  if (columnIndices.length < 2) return;
+  if (selectedColumnIndices.length < 2) return;
   
   // 保存状态到历史记录
   saveStateToHistory();
   
   // 排序选中的列索引，确保从左到右处理
-  const sortedIndices = [...columnIndices].sort((a, b) => a - b);
+  const sortedIndices = [...selectedColumnIndices].sort((a, b) => a - b);
   
   // 确保sortedIndices不为空
   if (sortedIndices.length === 0) return;
   
-  // 获取选中的列
-  const selectedColumns = sortedIndices.map(index => tableElement.columns[index]);
+  // 获取选中的列或组（从children数组中获取，因为它包含组合列）
+  const selectedColumns = sortedIndices.map(index => tableElement.children[index]);
   
-  // 计算分组宽度
-  const groupWidth = selectedColumns.reduce((sum, column) => sum + column.width, 0);
+  // 计算分组宽度（递归计算，处理组合列）
+  function calculateWidth(item: any): number {
+    if (item.children) {
+      // 组合列，递归计算所有子列的宽度之和
+      return item.children.reduce((sum: number, child: any) => sum + calculateWidth(child), 0);
+    } else {
+      // 普通列，直接使用宽度
+      return item.width || 0;
+    }
+  }
   
-  // 创建新的列分组
-  const newGroup = {
+  const groupWidth = selectedColumns.reduce((sum: number, column: any) => sum + calculateWidth(column), 0);
+  
+  // 创建新的列分组（保留原来的组合列结构）
+  const newGroup: any = {
     uuid: crypto.randomUUID(),
     name: `Group_${Date.now()}`,
     width: groupWidth,
-    hasTableHeader: true,
-    children: selectedColumns
+    children: selectedColumns // 直接使用选中的项目（包括组合列），而不是展开子列
   };
+  
+  // 根据选择的区域设置相应的属性
+  const textContent = groupText || newGroup.name;
+  if (selectedRegion === 'tableHeader') {
+    newGroup.hasTableHeader = true;
+    newGroup.tableHeader = {
+      enable: true,
+      element: {
+        type: 'staticText',
+        text: textContent,
+        x: 0,
+        y: 0,
+        width: groupWidth,
+        height: 30,
+        textAlignment: 'Center',
+        verticalAlignment: 'Middle'
+      }
+    };
+  } else if (selectedRegion === 'columnHeader') {
+    newGroup.columnHeader = {
+      enable: true,
+      element: {
+        type: 'staticText',
+        text: textContent,
+        x: 0,
+        y: 0,
+        width: groupWidth,
+        height: 30,
+        textAlignment: 'Center',
+        verticalAlignment: 'Middle'
+      }
+    };
+  } else if (selectedRegion === 'columnFooter') {
+    newGroup.columnFooter = {
+      enable: true,
+      element: {
+        type: 'staticText',
+        text: textContent,
+        x: 0,
+        y: 0,
+        width: groupWidth,
+        height: 30,
+        textAlignment: 'Center',
+        verticalAlignment: 'Middle'
+      }
+    };
+  } else if (selectedRegion === 'tableFooter') {
+    newGroup.tableFooter = {
+      enable: true,
+      element: {
+        type: 'staticText',
+        text: textContent,
+        x: 0,
+        y: 0,
+        width: groupWidth,
+        height: 30,
+        textAlignment: 'Center',
+        verticalAlignment: 'Middle'
+      }
+    };
+  }
   
   // 初始化children属性（如果不存在）
   if (!tableElement.children) {
@@ -4184,6 +4338,38 @@ const handleAddColumnsToGroup = (elementIndex: number, columnIndices: number[], 
   
   // 更新表格元素
   tableElement.children = newChildren;
+  
+  // 计算表格中组合列的最大嵌套层级
+  function calculateMaxDepth(node: any, depth: number = 0): number {
+    if (!node.children || node.children.length === 0) {
+      return depth;
+    }
+    let maxDepth = depth;
+    for (const child of node.children) {
+      const childDepth = calculateMaxDepth(child, depth + 1);
+      if (childDepth > maxDepth) {
+        maxDepth = childDepth;
+      }
+    }
+    return maxDepth;
+  }
+  
+  // 计算最大嵌套层级
+  const maxDepth = calculateMaxDepth({ children: tableElement.children });
+  const requiredRowSpan = maxDepth;
+  
+  // 更新未分组列的rowSpan值
+  tableElement.children.forEach((child: any) => {
+    if (!child.children) {
+      // 这是一个未分组的列
+      if (child.tableHeader) {
+        child.tableHeader.rowSpan = requiredRowSpan;
+      }
+      if (child.columnHeader) {
+        child.columnHeader.rowSpan = requiredRowSpan;
+      }
+    }
+  });
   
   // 更新JRXML
   updateJRXML();
@@ -4387,6 +4573,39 @@ const confirmJoinColumnsToGroup = (): void => {
   // 更新表格元素
   tableElement.children = newChildren;
   console.log('更新后的表格元素:', tableElement);
+  
+  // 计算最大嵌套层级并更新未分组列的rowSpan值
+  function calculateMaxDepth(node: any, depth: number = 0): number {
+    if (!node.children || node.children.length === 0) {
+      return depth;
+    }
+    let maxDepth = depth;
+    for (const child of node.children) {
+      const childDepth = calculateMaxDepth(child, depth + 1);
+      if (childDepth > maxDepth) {
+        maxDepth = childDepth;
+      }
+    }
+    return maxDepth;
+  }
+  
+  // 计算最大嵌套层级
+  const maxDepth = calculateMaxDepth({ children: tableElement.children });
+  const requiredRowSpan = maxDepth;
+  console.log('最大嵌套层级:', maxDepth, '需要的rowSpan:', requiredRowSpan);
+  
+  // 更新未分组列的rowSpan值
+  tableElement.children.forEach((child: any) => {
+    if (!child.children) {
+      // 这是一个未分组的列
+      if (child.tableHeader) {
+        child.tableHeader.rowSpan = requiredRowSpan;
+      }
+      if (child.columnHeader) {
+        child.columnHeader.rowSpan = requiredRowSpan;
+      }
+    }
+  });
   
   // 不再从columns数组中移除列，而是让generateTableXML函数通过uuid来避免重复处理
   // 这样可以确保JRXML生成正确，同时保持数据结构的一致性

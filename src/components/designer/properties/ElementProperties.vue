@@ -232,6 +232,7 @@
               <div class="table-column-actions">
                 <n-button 
                   class="add-column-btn" 
+                  @click="addColumnGroup"
                   :title="t('properties.addColumnGroup')"
                   type="primary"
                 >
@@ -1092,6 +1093,7 @@ interface Emits {
   (e: 'update-jrxml'): void;
   (e: 'save-state'): void;
   (e: 'update:reportStyles', styles: any[]): void;
+  (e: 'add-columns-to-group', params: { elementIndex: number; columnIndices: number[]; bandIndex: number; parentFrameIndex?: number }): void;
 }
 
 const props = defineProps<Props>();
@@ -2500,6 +2502,20 @@ function addTableColumn() {
   currentElement.value.width = totalWidth;
   
   emit('update-jrxml');
+}
+
+// 添加列分组
+function addColumnGroup() {
+  if (!currentElement.value || currentElement.value.type !== 'table' || !props.selectedElement) return;
+  
+  const { elementIndex, bandIndex, parentFrameIndex } = props.selectedElement;
+  // 修复TypeScript错误：使用正确的参数格式
+  emit('add-columns-to-group', {
+    elementIndex,
+    columnIndices: [],
+    bandIndex,
+    parentFrameIndex
+  });
 }
 
 function removeTableColumn(index: number) {

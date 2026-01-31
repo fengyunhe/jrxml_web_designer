@@ -977,4 +977,156 @@ describe('jrxmlGenerator', () => {
     expect(columnUuids).toContain('column2-uuid');
     expect(columnUuids).toContain('column3-uuid');
   })
+
+  it('should set correct rowSpan for ungrouped columns', () => {
+    // 创建一个表格元素，其中A和B列合并，C列未合并
+    const tableElement: any = {
+      type: 'table',
+      x: 0,
+      y: 0,
+      width: 500,
+      height: 300,
+      uuid: 'test-table-uuid',
+      dataset: {
+        name: 'testDataset',
+        uuid: 'test-dataset-uuid'
+      },
+      children: [
+        {
+          // A和B的组合列
+          name: 'Group1',
+          uuid: 'group1-uuid',
+          width: 200,
+          columnHeader: {
+            enable: true,
+            element: {
+              type: 'staticText',
+              text: 'Group1',
+              x: 0,
+              y: 0,
+              width: 200,
+              height: 30
+            }
+          },
+          children: [
+            {
+              // A列
+              name: 'A',
+              uuid: 'column-a-uuid',
+              width: 100,
+              columnHeader: {
+                enable: true,
+                element: {
+                  type: 'staticText',
+                  text: 'A',
+                  x: 0,
+                  y: 0,
+                  width: 100,
+                  height: 30
+                }
+              },
+              detailCell: {
+                enable: true,
+                element: {
+                  type: 'textField',
+                  expression: '$F{fieldA}',
+                  x: 0,
+                  y: 0,
+                  width: 100,
+                  height: 30
+                }
+              }
+            },
+            {
+              // B列
+              name: 'B',
+              uuid: 'column-b-uuid',
+              width: 100,
+              columnHeader: {
+                enable: true,
+                element: {
+                  type: 'staticText',
+                  text: 'B',
+                  x: 0,
+                  y: 0,
+                  width: 100,
+                  height: 30
+                }
+              },
+              detailCell: {
+                enable: true,
+                element: {
+                  type: 'textField',
+                  expression: '$F{fieldB}',
+                  x: 0,
+                  y: 0,
+                  width: 100,
+                  height: 30
+                }
+              }
+            }
+          ]
+        },
+        {
+          // C列（未合并）
+          name: 'C',
+          uuid: 'column-c-uuid',
+          width: 100,
+          columnHeader: {
+            enable: true,
+            element: {
+              type: 'staticText',
+              text: 'C',
+              x: 0,
+              y: 0,
+              width: 100,
+              height: 30
+            }
+          },
+          detailCell: {
+            enable: true,
+            element: {
+              type: 'textField',
+              expression: '$F{fieldC}',
+              x: 0,
+              y: 0,
+              width: 100,
+              height: 30
+            }
+          }
+        }
+      ]
+    }
+
+    const bands: Band[] = [
+      {
+        type: 'detail',
+        height: 300,
+        elements: [tableElement as DesignElement]
+      }
+    ]
+
+    const fields = [
+      { name: 'fieldA', class: 'java.lang.String' },
+      { name: 'fieldB', class: 'java.lang.String' },
+      { name: 'fieldC', class: 'java.lang.String' }
+    ]
+
+    const generatedJRXML = generateJRXMLContent(mockReportProperties, bands, fields)
+
+    // 调试信息
+    console.log('Generated JRXML:', generatedJRXML);
+
+    // 验证生成的JRXML中C列的columnHeader的rowSpan为2
+    const columnCHeaderMatch = generatedJRXML.match(/<jr:columnHeader[^>]*rowSpan="([^"]+)"[^>]*>.*?Column C.*?<\/jr:columnHeader>/s);
+    console.log('Column C Header Match:', columnCHeaderMatch);
+
+    // 直接搜索C列的columnHeader的rowSpan
+    const columnCRowSpanMatch = generatedJRXML.match(/<jr:column[^>]*uuid="column-c-uuid"[^>]*>.*?<jr:columnHeader[^>]*rowSpan="([^"]+)"/s);
+    console.log('Column C rowSpan Match:', columnCRowSpanMatch);
+
+    // 验证rowSpan为2
+    expect(columnCRowSpanMatch).toBeDefined();
+    expect(columnCRowSpanMatch?.[1]).toBe('2');
+  })
 })
