@@ -1017,11 +1017,72 @@ function getRowStyle(rowType: string) {
   height: 100%;
   display: flex;
   flex-direction: column;
+  overflow: hidden;
 }
 
 .designer-table {
   width: 100%;
+  flex: 1;
   border-collapse: collapse;
+  display: flex;
+  flex-direction: column;
+}
+
+.designer-table thead,
+.designer-table tbody,
+.designer-table tfoot {
+  width: 100%;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.designer-table thead {
+  flex: 0 0 auto;
+}
+
+.designer-table tbody {
+  flex: 1;
+  min-height: 0;
+}
+
+.designer-table tfoot {
+  flex: 0 0 auto;
+}
+
+/* 确保tr和td/th元素能够正确显示高度 */
+.designer-table tr {
+  width: 100%;
+  display: flex;
+  flex: 1;
+}
+
+.designer-table th,
+.designer-table td {
+  flex: 1;
+  height: 100%;
+  min-height: 30px;
+}
+
+/* 确保单元格内容占满整个单元格 */
+.cell-content {
+  width: 100%;
+  height: 100%;
+  min-height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 5px;
+  box-sizing: border-box;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: inherit;
+  font-size: inherit;
+  font-weight: inherit;
+  font-style: inherit;
+  color: inherit;
+  background-color: transparent;
 }
 
 .tableHeader,
@@ -1054,7 +1115,7 @@ function getRowStyle(rowType: string) {
   margin: 0;
   box-sizing: border-box;
   overflow: visible;
-  border: 1px solid rgba(201, 84, 216, 0.337);
+ 
 }
 
 /* 列选中样式 */

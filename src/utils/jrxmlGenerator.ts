@@ -948,7 +948,7 @@ function generateColumnXML(column: any, index: number, hasColumnGroups: boolean 
 `;
   
   // 生成tableHeader
-  if (column.tableHeader) {
+  if (column.tableHeader && column.tableHeader.enable !== false) {
     if (column.tableHeader.element) {
       // 如果有element对象，则生成包含元素的tableHeader
       const tableHeaderElement = column.tableHeader.element;
@@ -1106,8 +1106,8 @@ function generateColumnGroupXML(group: any, processedColumnUuids?: Set<string>, 
   xml += `            <property name="com.jaspersoft.studio.components.table.model.column.name" value="${escapedGroupName}"/>
 `;
   
-  // 生成tableHeader - 无论enable属性如何，都生成标签
-  if (group.tableHeader) {
+  // 生成tableHeader
+  if (group.tableHeader && group.tableHeader.enable !== false) {
     // 如果没有边框设置，添加默认的边框
     if (!group.tableHeader.box || !group.tableHeader.box.pen) {
       group.tableHeader.box = {
@@ -1196,7 +1196,7 @@ function generateColumnGroupXML(group: any, processedColumnUuids?: Set<string>, 
   return xml;
 }
 
-// 预处理表格元素，确保多列组合的单元格中的元素宽度与聚合列的总宽度一致
+// 预处理表格元素，确保单元格中的元素尺寸与单元格尺寸一致
 function preprocessTableElements(element: any) {
   // 处理列分组
   function processColumnGroup(group: any) {
@@ -1214,24 +1214,48 @@ function preprocessTableElements(element: any) {
     const totalWidth = calculateGroupWidth(group);
     group.width = totalWidth; // 更新group的width属性，确保一致性
     
-    // 确保group的tableHeader宽度始终等于聚合列总宽度
+    // 确保group的tableHeader尺寸始终等于聚合列尺寸
     if (group.tableHeader) {
       group.tableHeader.width = totalWidth;
+      group.tableHeader.height = group.tableHeader.height || 30;
+      // 确保tableHeader中的元素尺寸等于tableHeader尺寸
+      if (group.tableHeader.element) {
+        group.tableHeader.element.width = totalWidth;
+        group.tableHeader.element.height = group.tableHeader.height;
+      }
     }
     
-    // 确保group的columnHeader宽度始终等于聚合列总宽度
+    // 确保group的columnHeader尺寸始终等于聚合列尺寸
     if (group.columnHeader) {
       group.columnHeader.width = totalWidth;
+      group.columnHeader.height = group.columnHeader.height || 30;
+      // 确保columnHeader中的元素尺寸等于columnHeader尺寸
+      if (group.columnHeader.element) {
+        group.columnHeader.element.width = totalWidth;
+        group.columnHeader.element.height = group.columnHeader.height;
+      }
     }
     
-    // 确保group的columnFooter宽度始终等于聚合列总宽度
+    // 确保group的columnFooter尺寸始终等于聚合列尺寸
     if (group.columnFooter) {
       group.columnFooter.width = totalWidth;
+      group.columnFooter.height = group.columnFooter.height || 30;
+      // 确保columnFooter中的元素尺寸等于columnFooter尺寸
+      if (group.columnFooter.element) {
+        group.columnFooter.element.width = totalWidth;
+        group.columnFooter.element.height = group.columnFooter.height;
+      }
     }
     
-    // 确保group的tableFooter宽度始终等于聚合列总宽度
+    // 确保group的tableFooter尺寸始终等于聚合列尺寸
     if (group.tableFooter) {
       group.tableFooter.width = totalWidth;
+      group.tableFooter.height = group.tableFooter.height || 30;
+      // 确保tableFooter中的元素尺寸等于tableFooter尺寸
+      if (group.tableFooter.element) {
+        group.tableFooter.element.width = totalWidth;
+        group.tableFooter.element.height = group.tableFooter.height;
+      }
     }
     
     // 递归处理子分组或列
@@ -1251,39 +1275,60 @@ function preprocessTableElements(element: any) {
   // 处理普通列
   function processColumn(column: any) {
     const columnWidth = column.width;
+    const defaultCellHeight = 30;
     
-    // 检查并调整column的tableHeader宽度
+    // 确保column的tableHeader尺寸始终等于列尺寸
     if (column.tableHeader) {
-      if (column.tableHeader.width > columnWidth) {
-        column.tableHeader.width = columnWidth;
+      column.tableHeader.width = columnWidth;
+      column.tableHeader.height = column.tableHeader.height || defaultCellHeight;
+      // 确保tableHeader中的元素尺寸等于tableHeader尺寸
+      if (column.tableHeader.element) {
+        column.tableHeader.element.width = columnWidth;
+        column.tableHeader.element.height = column.tableHeader.height;
       }
     }
     
-    // 检查并调整column的columnHeader宽度
+    // 确保column的columnHeader尺寸始终等于列尺寸
     if (column.columnHeader) {
-      if (column.columnHeader.width > columnWidth) {
-        column.columnHeader.width = columnWidth;
+      column.columnHeader.width = columnWidth;
+      column.columnHeader.height = column.columnHeader.height || defaultCellHeight;
+      // 确保columnHeader中的元素尺寸等于columnHeader尺寸
+      if (column.columnHeader.element) {
+        column.columnHeader.element.width = columnWidth;
+        column.columnHeader.element.height = column.columnHeader.height;
       }
     }
     
-    // 检查并调整column的detailCell宽度
+    // 确保column的detailCell尺寸始终等于列尺寸
     if (column.detailCell) {
-      if (column.detailCell.width > columnWidth) {
-        column.detailCell.width = columnWidth;
+      column.detailCell.width = columnWidth;
+      column.detailCell.height = column.detailCell.height || defaultCellHeight;
+      // 确保detailCell中的元素尺寸等于detailCell尺寸
+      if (column.detailCell.element) {
+        column.detailCell.element.width = columnWidth;
+        column.detailCell.element.height = column.detailCell.height;
       }
     }
     
-    // 检查并调整column的columnFooter宽度
+    // 确保column的columnFooter尺寸始终等于列尺寸
     if (column.columnFooter) {
-      if (column.columnFooter.width > columnWidth) {
-        column.columnFooter.width = columnWidth;
+      column.columnFooter.width = columnWidth;
+      column.columnFooter.height = column.columnFooter.height || defaultCellHeight;
+      // 确保columnFooter中的元素尺寸等于columnFooter尺寸
+      if (column.columnFooter.element) {
+        column.columnFooter.element.width = columnWidth;
+        column.columnFooter.element.height = column.columnFooter.height;
       }
     }
     
-    // 检查并调整column的tableFooter宽度
+    // 确保column的tableFooter尺寸始终等于列尺寸
     if (column.tableFooter) {
-      if (column.tableFooter.width > columnWidth) {
-        column.tableFooter.width = columnWidth;
+      column.tableFooter.width = columnWidth;
+      column.tableFooter.height = column.tableFooter.height || defaultCellHeight;
+      // 确保tableFooter中的元素尺寸等于tableFooter尺寸
+      if (column.tableFooter.element) {
+        column.tableFooter.element.width = columnWidth;
+        column.tableFooter.element.height = column.tableFooter.height;
       }
     }
   }

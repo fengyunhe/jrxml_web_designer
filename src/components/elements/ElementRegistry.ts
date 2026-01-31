@@ -172,7 +172,7 @@ export class ElementRegistry {
         x: 0,
         y: 0,
         width: 555,
-        height: 200,
+        height: 60,
         dataset: {
           uuid: crypto.randomUUID(),
           name: 'tableDataset'
