@@ -674,6 +674,8 @@ function getCellStyle(cell: any, cellType?: string) {
   }
   if (cell.isBold) {
     styles.fontWeight = 'bold';
+  } else {
+    styles.fontWeight = 'normal';
   }
   if (cell.isItalic) {
     styles.fontStyle = 'italic';
@@ -734,6 +736,8 @@ function getCellStyle(cell: any, cellType?: string) {
     }
     if (cell.element.isBold) {
       styles.fontWeight = 'bold';
+    } else {
+      styles.fontWeight = 'normal';
     }
     if (cell.element.isItalic) {
       styles.fontStyle = 'italic';
