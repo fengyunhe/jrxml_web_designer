@@ -23,7 +23,7 @@
     "@codemirror/language": "^6.12.1",
     "@codemirror/lint": "^6.9.3",
     "@codemirror/state": "^6.5.4",
-    "@codemirror/view": "^6.39.11",
+    "@codemirror/view": "^6.39.12",
     "naive-ui": "^2.43.2",
     "vscode-languageserver-types": "^3.17.5",
     "vue": "^3.5.27",
