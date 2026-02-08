@@ -1,27 +1,6 @@
 <template>
   <div class="table-element-container">
-    <!-- 列右键菜单 -->
-    <div 
-      v-if="showColumnContextMenu" 
-      class="column-context-menu"
-      :style="{ left: contextMenuPosition.x + 'px', top: contextMenuPosition.y + 'px' }"
-      @click.stop
-    >
-      <div 
-        class="menu-item"
-        @click="addSelectedColumnsToGroup"
-        :disabled="selectedColumns.length < 2"
-      >
-        添加列分组
-      </div>
-      <div 
-        class="menu-item"
-        @click="joinSelectedColumnsToExistingGroup"
-        :disabled="selectedColumns.length < 1"
-      >
-        加入现有组
-      </div>
-    </div>
+
     <BaseElement
       :element="element"
       :band-index="bandIndex"
@@ -69,7 +48,6 @@
                       class="table-column table-header-cell"
                       :class="{ 'column-selected': isColumnSelected(index) }"
                       @click.stop="handleColumnClick(index, $event)"
-                      @contextmenu.stop="handleColumnContextMenu(index, $event)"
                     >
                       <!-- 调整列顺序的按钮 -->
                       <!-- 向左移动按钮 -->
@@ -150,7 +128,6 @@
                       class="table-column column-header-cell"
                       :class="{ 'column-selected': isColumnSelected(index) }"
                       @click.stop="handleColumnClick(index, $event)"
-                      @contextmenu.stop="handleColumnContextMenu(index, $event)"
                     >
                       <div class="cell-content" :style="getColumnHeaderStyle(column)">
                         <!-- 渲染列头内容，从columnHeader获取实际的静态文本或动态文本表达式 -->
@@ -194,7 +171,6 @@
                     class="table-column column-footer-cell"
                     :class="{ 'column-selected': isColumnSelected(index) }"
                     @click.stop="handleColumnClick(index, $event)"
-                    @contextmenu.stop="handleColumnContextMenu(index, $event)"
                   >
                     <div class="cell-content" :style="getCellStyle(column.columnFooter, 'columnFooter')">
                       <!-- 渲染列尾内容 -->
@@ -233,7 +209,6 @@
                     class="table-column table-footer-cell"
                     :class="{ 'column-selected': isColumnSelected(index) }"
                     @click.stop="handleColumnClick(index, $event)"
-                    @contextmenu.stop="handleColumnContextMenu(index, $event)"
                   >
                     <div class="cell-content" :style="getCellStyle(column.tableFooter, 'tableFooter')">
                       <!-- 渲染表格尾部内容 -->
@@ -274,7 +249,7 @@
                   class="table-column detail-cell"
                   :class="{ 'column-selected': isColumnSelected(index) }"
                   @click.stop="handleColumnClick(index, $event)"
-                  @contextmenu.stop="handleColumnContextMenu(index, $event)"
+
                 >
                   <div v-if="column.detailCell" class="cell-content" :style="getCellStyle(column.detailCell, 'detailCell')">
                     <!-- 渲染详情内容 -->
@@ -313,7 +288,6 @@
                   class="table-column column-footer-cell"
                   :class="{ 'column-selected': isColumnSelected(index) }"
                   @click.stop="handleColumnClick(index, $event)"
-                  @contextmenu.stop="handleColumnContextMenu(index, $event)"
                 >
                   <div v-if="column.columnFooter" class="cell-content" :style="getCellStyle(column.columnFooter, 'columnFooter')">
                     <!-- 渲染列尾内容 -->
@@ -346,10 +320,9 @@
               <template #trigger>
                 <td 
                   :style="{ width: `${column.width}px` }"
-                  class="table-column table-footer-cell"
+                  class="table-column detail-cell"
                   :class="{ 'column-selected': isColumnSelected(index) }"
                   @click.stop="handleColumnClick(index, $event)"
-                  @contextmenu.stop="handleColumnContextMenu(index, $event)"
                 >
                   <div v-if="column.tableFooter" class="cell-content" :style="getCellStyle(column.tableFooter, 'tableHeader')">
                     <!-- 渲染表格表尾内容 -->
@@ -436,8 +409,6 @@ const emit = defineEmits<{
   resizeEnd: [];
   contextmenu: [event: MouseEvent, bandIndex: number, elementIndex: number, parentFrameIndex?: number];
   moveColumn: [elementIndex: number, fromIndex: number, toIndex: number];
-  addColumnsToGroup: [elementIndex: number, columnIndices: number[]];
-  joinColumnsToExistingGroup: [elementIndex: number, columnIndices: number[], bandIndex: number, parentFrameIndex: number | undefined];
 
 
 }>();
@@ -458,9 +429,7 @@ const columns = computed(() => tableElement.value.columns || []);
 // 列选中状态管理
 const selectedColumns = ref<number[]>([]);
 
-// 右键菜单状态
-const showColumnContextMenu = ref(false);
-const contextMenuPosition = ref({ x: 0, y: 0 });
+
 
 
 
@@ -559,77 +528,7 @@ function handleColumnClick(index: number, event: MouseEvent) {
   }
 }
 
-// 处理列右键菜单事件
-function handleColumnContextMenu(index: number, event: MouseEvent) {
-  event.preventDefault();
-  event.stopPropagation();
-  
-  // 如果当前列没有被选中，添加到选中列表
-  if (!selectedColumns.value.includes(index)) {
-    selectedColumns.value = [index];
-  }
-  
-  // 获取table-element-container元素
-  const container = (event.currentTarget as HTMLElement)?.closest('.table-element-container');
-  if (container) {
-    // 获取容器的位置信息
-    const rect = container.getBoundingClientRect();
-    
-    // 获取当前缩放级别，默认为1
-    const zoom = props.zoomLevel || 1;
-    
-    // 计算相对于容器的坐标，并考虑缩放因子
-    // 由于DesignerCanvas中的纸张使用了transform: scale(${zoomLevel})来缩放，所以鼠标事件的坐标需要除以zoomLevel
-    showColumnContextMenu.value = true;
-    contextMenuPosition.value = {
-      x: (event.clientX - rect.left) / zoom,
-      y: (event.clientY - rect.top) / zoom
-    };
-  }
-}
 
-// 点击页面其他地方关闭右键菜单
-function handleClickOutside() {
-  showColumnContextMenu.value = false;
-}
-
-// 处理键盘事件
-function handleKeyDown(event: KeyboardEvent) {
-  // 检查是否按下了 cmd+g 或 ctrl+g 快捷键
-  if ((event.metaKey || event.ctrlKey) && event.key === 'g') {
-    event.preventDefault();
-    event.stopPropagation();
-    // 调用将选中的列加入现有组的函数
-    joinSelectedColumnsToExistingGroup();
-  }
-}
-
-// 添加事件监听器
-onMounted(() => {
-  document.addEventListener('click', handleClickOutside);
-  document.addEventListener('keydown', handleKeyDown);
-});
-
-onBeforeUnmount(() => {
-  document.removeEventListener('click', handleClickOutside);
-  document.removeEventListener('keydown', handleKeyDown);
-});
-
-// 将选中的列加入组
-function addSelectedColumnsToGroup() {
-  if (selectedColumns.value.length < 2) return;
-  
-  // Emit event to parent component
-  emit('addColumnsToGroup', props.elementIndex, selectedColumns.value);
-}
-
-// 将选中的列加入现有组
-function joinSelectedColumnsToExistingGroup() {
-  if (selectedColumns.value.length < 1) return;
-  
-  // Emit event to parent component with correct parameter order
-  emit('joinColumnsToExistingGroup', props.elementIndex, selectedColumns.value, props.bandIndex, props.parentFrameIndex);
-}
 
 // 根据style名称获取样式对象
 function getStyleByName(styleName: string) {
@@ -1330,32 +1229,5 @@ function getRowStyle(rowType: string) {
   position: relative;
 }
 
-/* 右键菜单样式 */
-.column-context-menu {
-  position: absolute;
-  z-index: 1000;
-  background-color: white;
-  border: 1px solid #d9d9d9;
-  border-radius: 4px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
-  padding: 4px 0;
-  min-width: 120px;
-}
 
-.menu-item {
-  padding: 6px 12px;
-  cursor: pointer;
-  font-size: 14px;
-  color: #333;
-  transition: background-color 0.2s;
-}
-
-.menu-item:hover:not(:disabled) {
-  background-color: #f0f0f0;
-}
-
-.menu-item:disabled {
-  color: #bfbfbf;
-  cursor: not-allowed;
-}
 </style>

@@ -12,10 +12,10 @@
       <div class="form-group">
         <label>选择要分组的区域：</label>
         <n-radio-group v-model:value="selectedRegion" name="region">
-          <n-radio value="tableHeader">表格头部</n-radio>
-          <n-radio value="columnHeader">列头部</n-radio>
-          <n-radio value="columnFooter">列尾部</n-radio>
-          <n-radio value="tableFooter">表格尾部</n-radio>
+          <n-radio-button value="tableHeader">表格头部</n-radio-button>
+          <n-radio-button value="columnHeader">列头部</n-radio-button>
+          <n-radio-button value="columnFooter">列尾部</n-radio-button>
+          <n-radio-button value="tableFooter">表格尾部</n-radio-button>
         </n-radio-group>
       </div>
       <div class="form-group">
@@ -167,7 +167,7 @@
 <script setup lang="ts">
 import { ref, computed, watch, defineComponent } from 'vue';
 import BaseModal from './BaseModal.vue';
-import { NCheckbox, NRadioGroup, NRadio, NInput } from 'naive-ui';
+import { NCheckbox, NRadioGroup, NRadio, NRadioButton, NInput } from 'naive-ui';
 
 // 递归组件定义
 const RecursiveColumnItem = defineComponent({
@@ -362,8 +362,6 @@ function handleCancel(): void {
 }
 
 .form-group label {
-  display: block;
-  margin-bottom: 10px;
   font-weight: 500;
   color: #333;
 }
