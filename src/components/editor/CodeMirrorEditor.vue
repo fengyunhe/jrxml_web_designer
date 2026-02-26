@@ -43,9 +43,9 @@ import { ref, onMounted, watch, onBeforeUnmount } from 'vue';
 import { EditorState } from '@codemirror/state';
 import type { Extension } from '@codemirror/state';
 import { EditorView } from '@codemirror/view';
-import { lineNumbers, keymap, highlightActiveLine, highlightActiveLineGutter } from '@codemirror/view';
+import { lineNumbers, keymap, highlightActiveLine, highlightActiveLineGutter, gutter } from '@codemirror/view';
 import { xml } from '@codemirror/lang-xml';
-import { syntaxHighlighting, defaultHighlightStyle } from '@codemirror/language';
+import { syntaxHighlighting, defaultHighlightStyle, foldGutter, indentOnInput } from '@codemirror/language';
 import type { EditorStateConfig } from '@codemirror/state';
 import { defaultKeymap } from '@codemirror/commands';
 
@@ -92,6 +92,7 @@ const createEditor = () => {
     doc: props.modelValue,
     extensions: [
       lineNumbers(),
+      foldGutter(),
       highlightActiveLineGutter(),
       highlightActiveLine(),
       syntaxHighlighting(defaultHighlightStyle),
@@ -106,6 +107,7 @@ const createEditor = () => {
           }
         }
       ]),
+      indentOnInput(),
       EditorState.readOnly.of(props.readOnly),
       EditorView.updateListener.of(update => {
         if (update.docChanged) {
@@ -139,6 +141,12 @@ const createEditor = () => {
         '.cm-search-match-selected': {
           backgroundColor: 'rgba(255, 204, 0, 0.6)',
           outline: '1px solid #ff9900'
+        },
+        '.cm-foldGutter': {
+          width: '20px'
+        },
+        '.cm-foldGutter-folded, .cm-foldGutter-open': {
+          cursor: 'pointer'
         }
       })
     ],
@@ -177,6 +185,7 @@ watch(() => props.readOnly, (newValue) => {
       doc: editorView.state.doc,
       extensions: [
         lineNumbers(),
+        foldGutter(),
         highlightActiveLineGutter(),
         highlightActiveLine(),
         syntaxHighlighting(defaultHighlightStyle),
@@ -191,6 +200,7 @@ watch(() => props.readOnly, (newValue) => {
             }
           }
         ]),
+        indentOnInput(),
         EditorState.readOnly.of(newValue),
         EditorView.updateListener.of(update => {
           if (update.docChanged) {
@@ -224,6 +234,12 @@ watch(() => props.readOnly, (newValue) => {
           '.cm-search-match-selected': {
             backgroundColor: 'rgba(255, 204, 0, 0.6)',
             outline: '1px solid #ff9900'
+          },
+          '.cm-foldGutter': {
+            width: '20px'
+          },
+          '.cm-foldGutter-folded, .cm-foldGutter-open': {
+            cursor: 'pointer'
           }
         })
       ]
