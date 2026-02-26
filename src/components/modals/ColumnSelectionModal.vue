@@ -78,7 +78,7 @@
                         :disabled="true"
                       />
                     </div>
-                    <div class="child-name">{{ child.name || `列 ${childIndex + 1}` }}</div>
+                    <div class="child-name">{{ child.name || ('列 ' + (Number(childIndex) + 1)) }}</div>
                   </div>
                   <div 
                     v-else 
@@ -92,7 +92,7 @@
                           :disabled="true"
                         />
                       </div>
-                      <div class="child-name group-name">{{ child.name || `组 ${childIndex + 1}` }}</div>
+                      <div class="child-name group-name">{{ child.name || ('组 ' + (Number(childIndex) + 1)) }}</div>
                       <div class="group-count">({{ child.children.length }} 项)</div>
                     </div>
                     <div class="nested-group-children">
@@ -108,7 +108,7 @@
                               :disabled="true"
                             />
                           </div>
-                          <div class="child-name">{{ nestedChild.name || `列 ${nestedIndex + 1}` }}</div>
+                          <div class="child-name">{{ nestedChild.name || ('列 ' + (Number(nestedIndex) + 1)) }}</div>
                         </div>
                         <div 
                           v-else 
@@ -122,7 +122,7 @@
                                 :disabled="true"
                               />
                             </div>
-                            <div class="child-name group-name">{{ nestedChild.name || `组 ${nestedIndex + 1}` }}</div>
+                            <div class="child-name group-name">{{ nestedChild.name || ('组 ' + (Number(nestedIndex) + 1)) }}</div>
                             <div class="group-count">({{ nestedChild.children.length }} 项)</div>
                           </div>
                           <div class="nested-group-children">
@@ -138,7 +138,7 @@
                                     :disabled="true"
                                   />
                                 </div>
-                                <div class="child-name">{{ deepChild.name || `列 ${deepIndex + 1}` }}</div>
+                                <div class="child-name">{{ deepChild.name || ('列 ' + (Number(deepIndex) + 1)) }}</div>
                               </div>
                             </template>
                           </div>
