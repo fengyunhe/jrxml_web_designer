@@ -205,69 +205,11 @@
         
         <!-- 表格属性标签页 -->
         <n-tab-pane v-if="currentElement && currentElement.type === 'table'" name="table" :tab="t('properties.tableProperties')">
-          <!-- 表格基本属性 -->
           <TableProperties
             :element="currentElement"
             :available-styles="reportStyles.map(s => s.name)"
             @update:element="handleTablePropertyUpdate"
           />
-
-          <!-- 分隔线 -->
-          <div style="height: 1px; background: #f0f0f0; margin: 16px 0;"></div>
-
-          <!-- 列管理 -->
-          <div class="form-group">
-            <h5>列管理</h5>
-            <div class="table-column-actions">
-              <n-button
-                class="add-column-btn"
-                @click="addColumn"
-                :title="t('properties.addColumn')"
-                type="primary"
-              >
-                + {{ t('properties.addColumn') }}
-              </n-button>
-            </div>
-
-            <!-- 列列表 -->
-            <div class="table-columns-list">
-              <div
-                v-for="(column, index) in currentElement.columns || []"
-                :key="column.uuid || index"
-                class="column-item"
-              >
-                <div class="column-header">
-                  <span class="column-name">{{ column.name || `列 ${index + 1}` }}</span>
-                  <n-button
-                    size="small"
-                    type="error"
-                    quaternary
-                    @click="removeColumn(index)"
-                  >
-                    删除
-                  </n-button>
-                </div>
-                <div class="column-properties">
-                  <div class="form-group">
-                    <label>列名</label>
-                    <input
-                      v-model="column.name"
-                      type="text"
-                      :placeholder="`列 ${index + 1}`"
-                    />
-                  </div>
-                  <div class="form-group">
-                    <label>宽度</label>
-                    <input
-                      v-model.number="column.width"
-                      type="number"
-                      min="1"
-                    />
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
         </n-tab-pane>
 
         <!-- Frame属性标签页 -->
@@ -276,6 +218,472 @@
             :element="currentElement"
             @update:element="handleFramePropertyUpdate"
           />
+        </n-tab-pane>
+          <div class="form-group">
+            <label>{{ t('properties.tableDataset') }}</label>
+            <input 
+              v-if="currentElement.dataset" 
+              v-model="(currentElement as any).dataset.name" 
+              type="text" 
+              :placeholder="t('properties.tableDataset')" 
+            />
+          </div>
+          
+          <div class="form-group">
+            <label>{{ t('properties.connectionExpression') }}</label>
+            <input 
+              v-if="currentElement.dataset" 
+              v-model="(currentElement as any).dataset.connectionExpression" 
+              type="text" 
+              placeholder="$P{REPORT_CONNECTION}" 
+            />
+          </div>
+          
+          <!-- 表格行高设置 -->
+          <div class="form-group">
+            <h5>{{ t('properties.rowHeightSettings') }}</h5>
+            <div class="band-heights-grid">
+              <div class="band-height-item">
+                <label>{{ t('properties.tableHeader') }}</label>
+                <div class="band-height-control">
+                  <input 
+                    v-model.number="tableRowHeights.tableHeader" 
+                    type="number" 
+                    min="0"
+                    step="1"
+                    class="band-height-input"
+                    @change="ensureIntegerValue(tableRowHeights, 'tableHeader'); updateAllColumnRowHeights(); emit('update-jrxml')"
+                    @blur="ensureIntegerValue(tableRowHeights, 'tableHeader'); updateAllColumnRowHeights(); emit('update-jrxml')"
+                  />
+                  <span class="band-height-unit">px</span>
+                </div>
+              </div>
+              <div class="band-height-item">
+                <label>{{ t('properties.columnHeader') }}</label>
+                <div class="band-height-control">
+                  <input 
+                    v-model.number="tableRowHeights.columnHeader" 
+                    type="number" 
+                    min="0"
+                    step="1"
+                    class="band-height-input"
+                    @change="ensureIntegerValue(tableRowHeights, 'columnHeader'); updateAllColumnRowHeights(); emit('update-jrxml')"
+                    @blur="ensureIntegerValue(tableRowHeights, 'columnHeader'); updateAllColumnRowHeights(); emit('update-jrxml')"
+                  />
+                  <span class="band-height-unit">px</span>
+                </div>
+              </div>
+              <div class="band-height-item">
+                <label>{{ t('properties.detailCell') }}</label>
+                <div class="band-height-control">
+                  <input 
+                    v-model.number="tableRowHeights.detailCell" 
+                    type="number" 
+                    min="0"
+                    step="1"
+                    class="band-height-input"
+                    @change="ensureIntegerValue(tableRowHeights, 'detailCell'); updateAllColumnRowHeights(); emit('update-jrxml')"
+                    @blur="ensureIntegerValue(tableRowHeights, 'detailCell'); updateAllColumnRowHeights(); emit('update-jrxml')"
+                  />
+                  <span class="band-height-unit">px</span>
+                </div>
+              </div>
+              <div class="band-height-item">
+                <label>{{ t('properties.columnFooter') }}</label>
+                <div class="band-height-control">
+                  <input 
+                    v-model.number="tableRowHeights.columnFooter" 
+                    type="number" 
+                    min="0"
+                    step="1"
+                    class="band-height-input"
+                    @change="ensureIntegerValue(tableRowHeights, 'columnFooter'); updateAllColumnRowHeights(); emit('update-jrxml')"
+                    @blur="ensureIntegerValue(tableRowHeights, 'columnFooter'); updateAllColumnRowHeights(); emit('update-jrxml')"
+                  />
+                  <span class="band-height-unit">px</span>
+                </div>
+              </div>
+              <div class="band-height-item">
+                <label>{{ t('properties.tableFooter') }}</label>
+                <div class="band-height-control">
+                  <input 
+                    v-model.number="tableRowHeights.tableFooter" 
+                    type="number" 
+                    min="0"
+                    step="1"
+                    class="band-height-input"
+                    @change="ensureIntegerValue(tableRowHeights, 'tableFooter'); updateAllColumnRowHeights(); emit('update-jrxml')"
+                    @blur="ensureIntegerValue(tableRowHeights, 'tableFooter'); updateAllColumnRowHeights(); emit('update-jrxml')"
+                  />
+                  <span class="band-height-unit">px</span>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <div class="form-group">
+            <label>{{ t('properties.whenNoDataType') }}</label>
+            <select 
+              v-model="(currentElement as any).whenNoDataType" 
+              @change="emit('update-jrxml')"
+            >
+              <option :value="undefined">{{ t('properties.default') }}</option>
+              <option value="Blank">{{ t('properties.whenNoDataTypeOptions.Blank') }}</option>
+              <option value="NoDataCell">{{ t('properties.whenNoDataTypeOptions.NoDataCell') }}</option>
+              <option value="AllSectionsNoDetail">{{ t('properties.whenNoDataTypeOptions.AllSectionsNoDetail') }}</option>
+            </select>
+          </div>
+          
+
+
+                      <!-- 组合列设置 -->
+            <div class="form-group">
+              <label>{{ t('properties.columnGroups') }}</label>
+              <div class="table-column-actions">
+                <n-button 
+                  class="add-column-btn" 
+                  @click="addColumnGroup"
+                  :title="t('properties.addColumnGroup')"
+                  type="primary"
+                >
+                  + {{ t('properties.addColumnGroup') }}
+                </n-button>
+              </div>
+              
+              <!-- 渲染所有组合列，包括子级组 -->
+              <div class="table-column-groups" v-if="allColumnGroups.length > 0">
+                <div 
+                  v-for="(groupInfo, groupIndex) in allColumnGroups" 
+                  :key="groupInfo.uuid || groupIndex" 
+                  class="column-group-item"
+                >
+                  <div class="column-group-header">
+                    <span class="column-group-name">
+                      <!-- 显示组合列路径 -->
+                      {{ `第${groupInfo.path.length + 1}行，第${groupInfo.path[groupInfo.path.length - 1] + 1}格`  }} 
+                    </span>
+                  </div>
+                  <div class="column-group-properties">
+                    <n-tabs type="card" size="small" style="font-size: 11px;">
+                      <!-- 组合列基本属性标签页 -->
+                      <n-tab-pane name="groupBasic" :tab="t('properties.basicProperties')">
+                        <div class="table-column-properties">
+                          <!-- 表格头部设置 -->
+                          <div class="form-group small full-width">
+                            <div v-if="groupInfo.hasTableHeader && groupInfo.tableHeader" class="inline-input">
+                              <label>{{ t('properties.tableHeader') }}</label>
+                              <input 
+                                v-model="(groupInfo.tableHeader as any).text" 
+                                type="text" 
+                                class="small-input"
+                                :placeholder="t('properties.tableHeaderPlaceholder')"
+                                @change="emit('update-jrxml')"
+                              />
+                            </div>
+                          </div>
+                          
+                          <!-- 组合列宽度显示 -->
+                          <div class="form-group small" style="flex: 0 0 120px;">
+                            <label style="font-size: 10px;">{{ t('properties.width') }}</label>
+                            <div class="inline-input">
+                              <span class="small-input readonly-input">{{ calculateMaxGroupWidth(groupInfo) }}</span>
+                            </div>
+                            <div class="width-hint">{{ t('properties.autoCalculated') }}</div>
+                          </div>
+                          
+                          <!-- 组合列高度设置 -->
+                          <div class="form-group small" style="flex: 0 0 120px;">
+                            <label style="font-size: 10px;">{{ t('properties.height') }}</label>
+                            <div class="inline-input">
+                              <input 
+                                v-model.number="groupInfo.height" 
+                                type="number" 
+                                min="10"
+                                step="1"
+                                class="small-input"
+                                @change="updateGroupHeaderHeights(groupInfo); emit('update-jrxml')"
+                                @blur="updateGroupHeaderHeights(groupInfo); emit('update-jrxml')"
+                              />
+                            </div>
+                          </div>
+                        </div>
+                      </n-tab-pane>
+                      
+                      <!-- 组合列表头设置标签页 -->
+                      <n-tab-pane v-if="groupInfo.hasTableHeader && groupInfo.tableHeader" name="groupTableHeader" :tab="t('properties.styleSettings')">
+                        <FontStyleSettings 
+                          v-model="groupInfo.tableHeader"
+                          @update:modelValue="emit('update-jrxml')"
+                        />
+
+                        <BorderStyleSettings 
+                          v-model="groupInfo.tableHeader" 
+                          :label="t('properties.borderStyle')"
+                          @change="emit('update-jrxml')"
+                        />
+                      </n-tab-pane>
+                    </n-tabs>
+                  </div>
+                </div>
+              </div>
+            </div>
+          
+          <div class="form-group">
+            <label>{{ t('properties.tableColumns') }}</label>
+            <div class="table-column-actions">
+              <n-button 
+                class="add-column-btn" 
+                @click="addTableColumn"
+                :title="t('properties.addColumn')"
+                type="primary"
+              >
+                + {{ t('properties.addColumn') }}
+              </n-button>
+              <n-button 
+                class="add-column-btn" 
+                @click="openFieldSelectionModal"
+                :title="t('properties.addColumnFromDataset')"
+                type="default"
+              >
+                ↓ {{ t('properties.addColumnFromDataset') }}
+                </n-button>
+              </div>
+              <div v-if="currentElement.columns" class="table-columns-list">
+                <div 
+                  v-for="(column, index) in (currentElement as any).columns" 
+                  :key="column.uuid || index" 
+                  class="table-column-item"
+                >
+                  <div class="table-column-header">
+                    <span>{{ column.name }}</span>
+                    <n-button 
+                      class="remove-column-btn" 
+                      @click="removeTableColumn(Number(index))"
+                      :title="t('properties.removeColumn')"
+                      type="error"
+                      quaternary
+                      circle
+                      size="small"
+                    >
+                      ✕
+                    </n-button>
+                  </div>
+                  <n-tabs type="card" size="small" style="font-size: 11px;">
+                  <!-- 基本属性标签页 -->
+                  <n-tab-pane name="basic" :tab="t('properties.basic')">
+                    <div class="table-column-properties">
+                      <div class="form-group small full-width">
+                        <div class="inline-checkbox">
+                          <input 
+                            v-model="column.hasTableHeader" 
+                            type="checkbox" 
+                            @change="toggleTableHeader(column, $event)"
+                          />
+                          <label>{{ t('properties.includeTableHeader') }}</label>
+                        </div>
+                        <div v-if="column.hasTableHeader" class="inline-input">
+                          <label>{{ t('properties.tableHeader') }}</label>
+                          <input 
+                            v-model="column.tableHeader.text" 
+                            type="text" 
+                            class="small-input"
+                            :placeholder="t('properties.tableHeaderPlaceholder')"
+                            @change="updateTableHeaderText(column, Number(index)); emit('update-jrxml')"
+                          />
+                        </div>
+                      </div>
+                      <div class="form-group small">
+                        <label>{{ t('properties.columnName') }}</label>
+                        <input 
+                          v-model="column.name" 
+                          type="text" 
+                          class="small-input"
+                          @change="updateColumnName(column, Number(index)); emit('update-jrxml')"
+                        />
+                      </div>
+                      <div class="form-group small">
+                        <label>{{ t('properties.columnWidth') }}</label>
+                        <input 
+                          v-model.number="column.width" 
+                          type="number" 
+                          min="10"
+                          step="1"
+                          class="small-input"
+                          @change="updateColumnWidth(column, Number(index)); emit('update-jrxml')"
+                        />
+                      </div>
+                      <div class="form-group small">
+                        <label>{{ t('properties.height') }}</label>
+                        <input 
+                          v-model.number="column.height" 
+                          type="number" 
+                          min="10"
+                          step="1"
+                          class="small-input"
+                          @change="emit('update-jrxml')"
+                        />
+                      </div>
+                      <div class="form-group small full-width">
+                        <label>{{ t('properties.fieldExpression') }}</label>
+                        <input 
+                          v-model="column.detailCell.expression" 
+                          type="text" 
+                          class="small-input"
+                          :placeholder="t('properties.expressionHint', { fieldHolder: '$F{fieldName}' })"
+                          @change="updateFieldExpression(column, Number(index)); emit('update-jrxml')"
+                        />
+                      </div>
+                      
+                      <div class="form-group small full-width">
+                        <label>{{ t('properties.columnFooter') }}</label>
+                        <input 
+                          :value="column.columnFooter?.expression || ''"
+                          @input="(e) => {
+                            initTableCell(column, 'columnFooter');
+                            column.columnFooter.expression = (e.target as HTMLInputElement).value;
+                            emit('update-jrxml');
+                          }"
+                          type="text" 
+                          class="small-input"
+                          :placeholder="t('properties.columnFooterPlaceholder')"
+                        />
+                      </div>
+                      <div class="form-group small full-width">
+                        <label>{{ t('properties.tableFooter') }}</label>
+                        <input 
+                          :value="column.tableFooter?.expression || ''"
+                          @input="(e) => {
+                            initTableCell(column, 'tableFooter');
+                            column.tableFooter.expression = (e.target as HTMLInputElement).value;
+                            emit('update-jrxml');
+                          }"
+                          type="text" 
+                          class="small-input"
+                          :placeholder="t('properties.tableFooterPlaceholder')"
+                        />
+                      </div>
+                    </div>
+                  </n-tab-pane>
+                  
+                  <!-- 表头行设置标签页 -->
+                   <n-tab-pane v-if="column.hasTableHeader" name="tableHeader" :tab="t('properties.tableHeader')">
+                        <!-- 使用通用的元素类型设置组件 -->
+                        <div v-if="column.tableHeader.element">
+                          <ElementTypeBasedSettings 
+                            v-model="column.tableHeader.element"
+                            @update:modelValue="emit('update-jrxml')"
+                          />
+                        </div>
+                   </n-tab-pane>
+
+                  <!-- 列头单元格设置标签页 -->
+                   <n-tab-pane name="columnHeader" :tab="t('properties.columnHeader')">
+                        <!-- 使用通用的元素类型设置组件 -->
+                        <div v-if="column.columnHeader.element">
+                          <ElementTypeBasedSettings 
+                            v-model="column.columnHeader.element"
+                            @update:modelValue="emit('update-jrxml')"
+                          />
+                        </div>
+                   </n-tab-pane>
+
+                  <!-- 详情单元格设置标签页 -->
+                  <n-tab-pane name="detailCell" :tab="t('properties.detailCell')">
+                      <!-- 使用通用的元素类型设置组件 -->
+                      <div v-if="column.detailCell.element">
+                        <ElementTypeBasedSettings 
+                          v-model="column.detailCell.element"
+                          @update:modelValue="emit('update-jrxml')"
+                        />
+                      </div>
+                  </n-tab-pane>
+                  <!-- 列尾行设置标签页 -->
+                   <n-tab-pane v-if="column.columnFooter && column.columnFooter.expression" name="columnFooter" :tab="t('properties.columnFooter')">
+                        <!-- 使用通用的元素类型设置组件 -->
+                        <div v-if="column.columnFooter.element">
+                          <ElementTypeBasedSettings 
+                            v-model="column.columnFooter.element"
+                            @update:modelValue="emit('update-jrxml')"
+                          />
+                        </div>
+                   </n-tab-pane>
+
+                  <!-- 表尾行设置标签页 -->
+                   <n-tab-pane v-if="column.tableFooter && column.tableFooter.expression" name="tableFooter" :tab="t('properties.tableFooter')">
+                        <!-- 使用通用的元素类型设置组件 -->
+                        <div v-if="column.tableFooter.element">
+                          <ElementTypeBasedSettings 
+                            v-model="column.tableFooter.element"
+                            @update:modelValue="emit('update-jrxml')"
+                          />
+                        </div>
+                   </n-tab-pane>
+                </n-tabs>
+                </div>
+              </div>
+            </div>
+            <!-- 从数据集选择字段的模态框 -->
+            <BaseModal
+              :visible="showFieldSelectionModal"
+              :title="t('properties.selectFieldsFromDataset')"
+              @update:visible="showFieldSelectionModal = $event"
+              @confirm="addSelectedFieldsAsColumns"
+              @cancel="showFieldSelectionModal = false"
+            >
+              <div class="field-selection-content">
+                <div class="available-fields">
+                  <h4>{{ t('properties.availableFields') }}</h4>
+                  <div class="fields-list">
+                    <div 
+                      v-for="(field, index) in availableFields" 
+                      :key="index"
+                      class="field-item"
+                      :class="{ selected: selectedFields.includes(field.name) }"
+                      @click="toggleFieldSelection(field.name)"
+                    >
+                      <input 
+                        type="checkbox" 
+                        v-model="selectedFields"
+                        :value="field.name"
+                      />
+                      <span class="field-name">{{ field.name }}</span>
+                      <span class="field-type">{{ field.class }}</span>
+                    </div>
+                  </div>
+                </div>
+                <div class="selected-fields">
+                  <h4>{{ t('properties.selectedFields') }}</h4>
+                  <div class="fields-list">
+                    <div 
+                      v-for="(fieldName, index) in selectedFields" 
+                      :key="index"
+                      class="field-item selected"
+                    >
+                      <span class="field-name">{{ fieldName }}</span>
+                      <n-button
+                        class="remove-field-btn"
+                        @click="toggleFieldSelection(fieldName)"
+                        type="error"
+                        quaternary
+                        circle
+                        size="small"
+                      >
+                        ✕
+                      </n-button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </BaseModal>
+          
+          
+          <!-- 使用通用的元素类型设置组件 -->
+          <div v-if="currentElement">
+            <ElementTypeBasedSettings 
+              v-model="currentElement"
+              @update:modelValue="emit('update-jrxml')"
+            />
+          </div>
         </n-tab-pane>
         
 
@@ -893,56 +1301,6 @@ const handleTablePropertyUpdate = (updatedElement: any) => {
       emit('update:bands', props.bands);
       emit('update-jrxml');
     }
-  }
-};
-
-// 添加列
-const addColumn = () => {
-  if (currentElement.value && currentElement.value.type === 'table') {
-    if (!currentElement.value.columns) {
-      currentElement.value.columns = [];
-    }
-    const newColumn = {
-      uuid: crypto.randomUUID(),
-      name: `列 ${currentElement.value.columns.length + 1}`,
-      width: 100,
-      columnHeader: {
-        enable: true,
-        element: {
-          type: 'staticText',
-          x: 0,
-          y: 0,
-          width: 100,
-          height: 30,
-          text: `列 ${currentElement.value.columns.length + 1}`,
-          textAlignment: 'Center',
-          verticalAlignment: 'Middle'
-        }
-      },
-      detailCell: {
-        enable: true,
-        element: {
-          type: 'textField',
-          x: 0,
-          y: 0,
-          width: 100,
-          height: 30,
-          expression: '',
-          textAlignment: 'Center',
-          verticalAlignment: 'Middle'
-        }
-      }
-    };
-    currentElement.value.columns.push(newColumn);
-    emit('update-jrxml');
-  }
-};
-
-// 删除列
-const removeColumn = (index: number) => {
-  if (currentElement.value && currentElement.value.type === 'table' && currentElement.value.columns) {
-    currentElement.value.columns.splice(index, 1);
-    emit('update-jrxml');
   }
 };
 
