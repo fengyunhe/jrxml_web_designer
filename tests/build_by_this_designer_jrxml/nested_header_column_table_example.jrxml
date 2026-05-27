@@ -40,7 +40,7 @@
   </style>
 
   <!-- 子数据集定义 -->
-  <subDataset name="tableDataset" uuid="f9ae5214-a1ee-4592-9a70-f1200f576fc0">
+  <subDataset name="tableDataset" uuid="f7823d82-26ba-426e-9a1f-24c89228c26a">
     <field name="FIELD_NAME" class="java.lang.String">
     </field>
     <field name="FIELD_NAME2" class="java.lang.String">
@@ -69,13 +69,33 @@
           <datasetRun subDataset="tableDataset" uuid="54ad30fb-b17a-435c-887d-f9030f22259d">
             <connectionExpression><![CDATA[$P{REPORT_CONNECTION}]]></connectionExpression>
           </datasetRun>
-          <jr:columnGroup width="555" uuid="7e7c30a8-d78d-4cb5-94a2-0d6d3bd267bf">
+          <jr:columnGroup width="555" uuid="a36d66e7-5aef-4f50-b7c2-101b93bbf6f0">
             <property name="com.jaspersoft.studio.components.table.model.column.name" value="OuterGroup"/>
             <jr:columnHeader height="30" rowSpan="1" style="Table_CH">
+                <staticText>
+                  <reportElement x="0" y="0" width="555" height="30"/>
+                  <box>
+                    <pen lineWidth="1" lineStyle="Solid" lineColor="#000000"/>
+                  </box>
+                  <textElement textAlignment="Center" verticalAlignment="Middle">
+                    <font/>
+                  </textElement>
+                  <text><![CDATA[Outer Group]]></text>
+                </staticText>
             </jr:columnHeader>
-          <jr:columnGroup width="370" uuid="bbd83ad5-7ae6-4949-8115-12e70a9df240">
+          <jr:columnGroup width="370" uuid="957134ba-8849-416c-a842-87f0ba8b614c">
             <property name="com.jaspersoft.studio.components.table.model.column.name" value="InnerGroup"/>
             <jr:columnHeader height="30" rowSpan="1" style="Table_CH">
+                <staticText>
+                  <reportElement x="0" y="0" width="370" height="30"/>
+                  <box>
+                    <pen lineWidth="1" lineStyle="Solid" lineColor="#000000"/>
+                  </box>
+                  <textElement textAlignment="Center" verticalAlignment="Middle">
+                    <font/>
+                  </textElement>
+                  <text><![CDATA[Inner Group]]></text>
+                </staticText>
             </jr:columnHeader>
           <jr:column width="185" uuid="01374914-b872-4c76-9930-67327bf5f956">
             <property name="com.jaspersoft.studio.components.table.model.column.name" value="FIELD_NAME123"/>

@@ -14,6 +14,7 @@
     "test:ui": "vitest --ui",
     "update-changelog": "echo '## [Unreleased]\n\n### Added\n- ' >> CHANGELOG.md && echo '请手动编辑CHANGELOG.md文件添加具体变更内容'",
     "release": "node scripts/release.js",
+    "verify:jrxml": "bash quick-verify.sh",
     "tauri:dev": "tauri dev",
     "tauri:build": "tauri build"
   },

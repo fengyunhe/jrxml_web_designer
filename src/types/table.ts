@@ -92,12 +92,47 @@ export interface TableElement {
   shrinkWidth?: string;
   printOrder?: string;
   ignoreWidth?: string;
-  datasetRun?: {
-    datasetName: string;
-    parameters?: any[];
+  dataset?: {
+    name: string;
+    uuid?: string;
     connectionExpression?: string;
+    parameters?: any[];
   };
-  noData?: Cell;
+  tableHeader?: {
+    height?: number;
+    printWhenExpression?: string;
+  };
+  columnHeader?: {
+    height?: number;
+    printWhenExpression?: string;
+  };
+  groupHeaders?: {
+    groupName: string;
+    height?: number;
+    printWhenExpression?: string;
+  }[];
+  detail?: {
+    height?: number;
+    printWhenExpression?: string;
+  };
+  groupFooters?: {
+    groupName: string;
+    height?: number;
+    printWhenExpression?: string;
+  }[];
+  columnFooter?: {
+    height?: number;
+    printWhenExpression?: string;
+  };
+  tableFooter?: {
+    height?: number;
+    printWhenExpression?: string;
+  };
+  noData?: {
+    height?: number;
+    style?: string;
+    elements?: any[];
+  };
 }
 
 // 列访问者接口（用于访问者模式）

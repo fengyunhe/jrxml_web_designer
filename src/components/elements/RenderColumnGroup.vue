@@ -221,6 +221,9 @@ function buildGroupRows(group: any): any[][] {
     // 计算该节点应该跨越的列数（colspan）
     const colspan = countLeafColumns(node);
     
+    // 检查节点是否定义了对应的 header
+    const hasHeader = node[props.type];
+    
     // 计算该节点应该跨越的行数（rowspan）
     let rowspan: number;
     
@@ -228,9 +231,18 @@ function buildGroupRows(group: any): any[][] {
     if (props.type === 'columnHeader') {
       // 对于Column Header，检查是否实际定义了columnHeader
       if (node.children && node.children.length > 0) {
-        // 有子节点的分组单元格
-        // 总是渲染为组合单元格，即使没有定义columnHeader
-        rowspan = 1;
+        if (hasHeader) {
+          // 有子节点且定义了columnHeader，渲染为组合单元格
+          rowspan = 1;
+        } else {
+          // 有子节点但没有定义columnHeader，不创建单元格，直接递归子节点
+          let currentColumn = startColumn;
+          for (const child of node.children) {
+            buildTable(child, currentColumn, depth);
+            currentColumn += countLeafColumns(child);
+          }
+          return;
+        }
       } else {
         // 叶子节点，rowspan为从当前深度到最大深度的行数
         rowspan = maxDepth - depth + 1;
@@ -238,31 +250,49 @@ function buildGroupRows(group: any): any[][] {
     } else if (props.type === 'columnFooter') {
       // 对于Column Footer，检查是否实际定义了columnFooter
       if (node.children && node.children.length > 0) {
-        // 有子节点的分组单元格
-        // 总是渲染为组合单元格，即使没有定义columnFooter
-        rowspan = 1;
+        if (hasHeader) {
+          rowspan = 1;
+        } else {
+          let currentColumn = startColumn;
+          for (const child of node.children) {
+            buildTable(child, currentColumn, depth);
+            currentColumn += countLeafColumns(child);
+          }
+          return;
+        }
       } else {
-        // 叶子节点，rowspan为从当前深度到最大深度的行数
         rowspan = maxDepth - depth + 1;
       }
     } else if (props.type === 'tableFooter') {
       // 对于Table Footer，检查是否实际定义了tableFooter
       if (node.children && node.children.length > 0) {
-        // 有子节点的分组单元格
-        // 总是渲染为组合单元格，即使没有定义tableFooter
-        rowspan = 1;
+        if (hasHeader) {
+          rowspan = 1;
+        } else {
+          let currentColumn = startColumn;
+          for (const child of node.children) {
+            buildTable(child, currentColumn, depth);
+            currentColumn += countLeafColumns(child);
+          }
+          return;
+        }
       } else {
-        // 叶子节点，rowspan为从当前深度到最大深度的行数
         rowspan = maxDepth - depth + 1;
       }
     } else {
       // 对于Table Header，检查是否实际定义了tableHeader
       if (node.children && node.children.length > 0) {
-        // 有子节点的分组单元格
-        // 总是渲染为组合单元格，即使没有定义tableHeader
-        rowspan = 1;
+        if (hasHeader) {
+          rowspan = 1;
+        } else {
+          let currentColumn = startColumn;
+          for (const child of node.children) {
+            buildTable(child, currentColumn, depth);
+            currentColumn += countLeafColumns(child);
+          }
+          return;
+        }
       } else {
-        // 叶子节点，rowspan为从当前深度到最大深度的行数
         rowspan = maxDepth - depth + 1;
       }
     }
