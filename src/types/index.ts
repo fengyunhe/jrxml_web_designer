@@ -239,18 +239,38 @@ export interface RectangleElement extends DesignElementBase {
   type: 'rectangle';
   radius?: number; // 圆角半径
   pen?: Pen; // 边框样式
+  // 新增属性
+  isPrintRepeatedValues?: boolean;
+  isRemoveLineWhenBlank?: boolean;
+  printWhenExpression?: string;
 }
 
 // 椭圆元素接口
 export interface EllipseElement extends DesignElementBase {
   type: 'ellipse';
   pen?: Pen; // 边框样式
+  // 新增属性
+  isPrintRepeatedValues?: boolean;
+  isRemoveLineWhenBlank?: boolean;
+  printWhenExpression?: string;
+}
+
+// 线条元素接口
+export interface LineElement extends DesignElementBase {
+  type: 'line';
+  lineDirection?: 'TopDown' | 'BottomUp';
+  lineWidth?: number;
+  // 新增属性
+  isPrintRepeatedValues?: boolean;
+  printWhenExpression?: string;
 }
 
 // 分页符元素接口
 export interface BreakElement extends DesignElementBase {
   type: 'break';
   breakType?: 'Page' | 'Column';
+  // 新增属性
+  isResetPageNumber?: boolean;
 }
 
 // 容器元素接口
@@ -258,6 +278,27 @@ export interface FrameElement extends DesignElementBase {
   type: 'frame';
   elements?: DesignElement[]; // 容器内的子元素
   layout?: 'FreeLayout' | 'HorizontalLayout' | 'VerticalLayout'; // 布局属性
+  // 条件打印
+  printWhenExpression?: string;
+  // 分页控制
+  isIgnorePagination?: boolean;
+  isSplitAllowed?: boolean;
+  splitType?: 'Stretch' | 'Prevent' | 'Immediate';
+  // 框架特有属性
+  isRemoveLineWhenBlank?: boolean;
+  isPrintRepeatedValues?: boolean;
+}
+
+// 行分组接口
+export interface RowGroup {
+  uuid: string;
+  name: string;
+  height: number;
+  header?: TableCell;
+  footer?: TableCell;
+  isStartNewPage?: boolean;
+  isRepeatHeader?: boolean;
+  expression?: string;
 }
 
 // 表格元素接口
@@ -268,12 +309,25 @@ export interface TableElement extends DesignElementBase {
   children?: (ColumnGroup | TableColumn)[];
   // 保持向后兼容，支持传统的columns数组
   columns: TableColumn[];
+  // 行分组
+  rowGroups?: RowGroup[];
   styles?: {
     tableHeader?: string;
     columnHeader?: string;
     detail?: string;
+    columnFooter?: string;
+    tableFooter?: string;
   };
-  whenNoDataType?: 'Blank' | 'NoDataCell' | 'AllSectionsNoDetail';
+  whenNoDataType?: 'Blank' | 'NoDataCell' | 'AllSectionsNoDetail' | 'AllSectionsWithDetail';
+  // 表格级属性
+  printHeaders?: boolean;
+  ignoreWidth?: boolean;
+  isIgnorePagination?: boolean;
+  // 样式继承
+  style?: string;
+  parentStyle?: string;
+  // 分页控制
+  splitType?: 'Stretch' | 'Prevent' | 'Immediate';
 }
 
 // 设计元素联合类型
