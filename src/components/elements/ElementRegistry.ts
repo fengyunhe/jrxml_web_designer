@@ -41,6 +41,10 @@ export class ElementRegistry {
         width: 100,
         height: 20,
         text: '静态文本',
+        markup: 'none',
+        textAdjust: 'CutText',
+        rotation: 'None',
+        // 样式属性
         fontFamily: 'SansSerif',
         fontSize: 12,
         isBold: false,
@@ -62,10 +66,16 @@ export class ElementRegistry {
         width: 100,
         height: 20,
         expression: '"文本域"',
-        isStretchWithOverflow: false,
         evaluationTime: 'Now',
+        evaluationGroup: '',
         pattern: '',
         isBlankWhenNull: false,
+        hyperlinkType: 'None',
+        bookmarkLevel: 0,
+        isIgnorePagination: false,
+        // 过时属性（向后兼容）
+        isStretchWithOverflow: false,
+        // 样式属性
         fontFamily: 'SansSerif',
         fontSize: 12,
         isBold: false,
@@ -86,7 +96,14 @@ export class ElementRegistry {
         y: 0,
         width: 100,
         height: 100,
-        imageExpression: '"https://raw.githubusercontent.com/fengyunhe/jrxml_web_designer/refs/heads/master/src/assets/FIREGOD_CN.jpg"'
+        imageExpression: '"https://raw.githubusercontent.com/fengyunhe/jrxml_web_designer/refs/heads/master/src/assets/FIREGOD_CN.jpg"',
+        scaleType: 'FillFrame',
+        hAlign: 'Center',
+        vAlign: 'Middle',
+        isUsingCache: true,
+        isLazy: false,
+        onErrorType: 'Error',
+        evaluationTime: 'Now'
       }
     });
 

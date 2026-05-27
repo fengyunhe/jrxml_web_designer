@@ -185,22 +185,46 @@ export interface DesignElementBase {
 export interface StaticTextElement extends DesignElementBase {
   type: 'staticText';
   text?: string;
+  markup?: 'none' | 'html' | 'rtf' | 'styledtext';
+  textAdjust?: 'StretchHeight' | 'CutText' | 'ShrinkToFit';
+  rotation?: 'None' | 'Left' | 'Right';
+  pattern?: string;
+  xml_lang?: string;
 }
 
 // 文本字段元素接口
 export interface TextFieldElement extends DesignElementBase {
   type: 'textField';
   expression?: string;
-  isStretchWithOverflow?: boolean;
-  evaluationTime?: string;
+  evaluationTime?: 'Now' | 'Report' | 'Page' | 'Column' | 'Group' | 'Band' | 'Auto';
+  evaluationGroup?: string;
   pattern?: string;
   isBlankWhenNull?: boolean;
+  hyperlinkType?: 'None' | 'Reference' | 'Anchor' | 'LocalAnchor' | 'LocalPage' | 'RemotePage' | 'RemoteAnchor' | 'mailto' | 'LocalPageBookmark' | 'PdfAnchor';
+  hyperlinkAnchor?: string;
+  hyperlinkPage?: number;
+  hyperlinkReferenceExpression?: string;
+  bookmarkLevel?: number;
+  isIgnorePagination?: boolean;
+  // 过时属性（向后兼容）
+  isStretchWithOverflow?: boolean;
 }
 
 // 图片元素接口
 export interface ImageElement extends DesignElementBase {
   type: 'image';
   imageExpression?: string;
+  scaleType?: 'Clip' | 'FillFrame' | 'RealHeight' | 'RealSize';
+  hAlign?: 'Left' | 'Center' | 'Right';
+  vAlign?: 'Top' | 'Middle' | 'Bottom';
+  isUsingCache?: boolean;
+  isLazy?: boolean;
+  onErrorType?: 'Error' | 'Blank' | 'Icon';
+  evaluationTime?: 'Now' | 'Report' | 'Page' | 'Column' | 'Band';
+  hyperlinkType?: string;
+  hyperlinkReferenceExpression?: string;
+  // 过时属性（向后兼容）
+  scaleImage?: 'Clip' | 'FillFrame' | 'RetainShape' | 'RealHeight' | 'RealSize';
 }
 
 // 线条元素接口
