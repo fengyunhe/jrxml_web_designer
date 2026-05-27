@@ -118,7 +118,10 @@ export class ElementRegistry {
         width: 100,
         height: 2,
         lineDirection: 'TopDown',
-        lineWidth: 1
+        lineWidth: 1,
+        // 新增属性
+        isPrintRepeatedValues: true,
+        printWhenExpression: ''
       }
     });
 
@@ -132,7 +135,11 @@ export class ElementRegistry {
         y: 0,
         width: 100,
         height: 100,
-        mode: 'Transparent'
+        mode: 'Transparent',
+        // 新增属性
+        isPrintRepeatedValues: true,
+        isRemoveLineWhenBlank: false,
+        printWhenExpression: ''
       }
     });
 
@@ -146,7 +153,11 @@ export class ElementRegistry {
         y: 0,
         width: 100,
         height: 100,
-        mode: 'Transparent'
+        mode: 'Transparent',
+        // 新增属性
+        isPrintRepeatedValues: true,
+        isRemoveLineWhenBlank: false,
+        printWhenExpression: ''
       }
     });
 
@@ -160,7 +171,9 @@ export class ElementRegistry {
         y: 0,
         width: 100,
         height: 1, // Break通常很扁
-        breakType: 'Page'
+        breakType: 'Page',
+        // 新增属性
+        isResetPageNumber: false
       }
     });
 
@@ -176,7 +189,15 @@ export class ElementRegistry {
         height: 100,
         backcolor: '#FFFFFF',
         mode: 'Transparent', // 默认为透明
-        elements: []
+        elements: [],
+        layout: 'FreeLayout',
+        // 新增属性
+        printWhenExpression: '',
+        isIgnorePagination: false,
+        isSplitAllowed: true,
+        splitType: 'Stretch',
+        isRemoveLineWhenBlank: false,
+        isPrintRepeatedValues: true
       }
     });
 
