@@ -868,40 +868,55 @@ function generateLineXML(element: any): string {
 // 生成矩形XML
 function generateRectangleXML(element: any): string {
   let xml = '    <rectangle';
-  
+
   if (element.radius !== undefined && element.radius > 0) {
     xml += ` radius="${element.radius}"`;
   }
-  
+
   xml += `>\n      <reportElement x="${toInt(element.x)}" y="${toInt(element.y)}" width="${toInt(element.width)}" height="${toInt(element.height)}"`;
-  
+
   if (element.uuid) {
     xml += ` uuid="${element.uuid}"`;
   }
-  
+
   // 处理过时的backcolor属性，转换为backcolor属性
   if (element.backcolor) {
     xml += ` backcolor="${element.backcolor}"`;
   }
-  
+
   // 使用元素设置的模式，不再自动覆盖
   if (element.mode) {
     xml += ` mode="${element.mode}"`;
   }
-  
+
+  // 新增：是否打印重复值
+  if (element.isPrintRepeatedValues !== undefined && !element.isPrintRepeatedValues) {
+    xml += ` isPrintRepeatedValues="false"`;
+  }
+
+  // 新增：是否移除空白行
+  if (element.isRemoveLineWhenBlank !== undefined && element.isRemoveLineWhenBlank) {
+    xml += ` isRemoveLineWhenBlank="true"`;
+  }
+
+  // 新增：条件打印表达式
+  if (element.printWhenExpression) {
+    xml += ` printWhenExpression="${element.printWhenExpression}"`;
+  }
+
   xml += '/>\n';
-  
+
   // 生成graphicElement
   let hasGraphicElement = false;
   let graphicElementXml = '      <graphicElement';
-  
+
   if (element.fill) {
     graphicElementXml += ` fill="${element.fill}"`;
     hasGraphicElement = true;
   }
-  
+
   graphicElementXml += '>\n';
-  
+
   // 生成pen
   if (element.pen && (element.pen.lineWidth !== undefined || element.pen.lineStyle || element.pen.lineColor)) {
     hasGraphicElement = true;
@@ -911,13 +926,13 @@ function generateRectangleXML(element: any): string {
     if (element.pen.lineColor) graphicElementXml += ` lineColor="${element.pen.lineColor}"`;
     graphicElementXml += '/>\n';
   }
-  
+
   graphicElementXml += '      </graphicElement>\n';
-  
+
   if (hasGraphicElement) {
     xml += graphicElementXml;
   }
-  
+
   xml += '    </rectangle>\n';
   return xml;
 }
@@ -925,23 +940,38 @@ function generateRectangleXML(element: any): string {
 // 生成椭圆XML
 function generateEllipseXML(element: any): string {
   let xml = '    <ellipse>\n      <reportElement x="' + toInt(element.x) + '" y="' + toInt(element.y) + '" width="' + toInt(element.width) + '" height="' + toInt(element.height) + '"';
-  
+
   if (element.uuid) {
     xml += ` uuid="${element.uuid}"`;
   }
-  
+
   // 处理backcolor属性
   if (element.backcolor) {
     xml += ` backcolor="${element.backcolor}"`;
   }
-  
+
   // 使用元素设置的模式，不再自动覆盖
   if (element.mode) {
     xml += ` mode="${element.mode}"`;
   }
-  
+
+  // 新增：是否打印重复值
+  if (element.isPrintRepeatedValues !== undefined && !element.isPrintRepeatedValues) {
+    xml += ` isPrintRepeatedValues="false"`;
+  }
+
+  // 新增：是否移除空白行
+  if (element.isRemoveLineWhenBlank !== undefined && element.isRemoveLineWhenBlank) {
+    xml += ` isRemoveLineWhenBlank="true"`;
+  }
+
+  // 新增：条件打印表达式
+  if (element.printWhenExpression) {
+    xml += ` printWhenExpression="${element.printWhenExpression}"`;
+  }
+
   xml += '/>\n';
-  
+
   // 生成graphicElement
   let hasGraphicElement = false;
   let graphicElementXml = '      <graphicElement';
@@ -976,32 +1006,52 @@ function generateEllipseXML(element: any): string {
 // 生成容器XML
 function generateFrameXML(element: any): string {
   let xml = '    <frame>\n      <reportElement x="' + toInt(element.x) + '" y="' + toInt(element.y) + '" width="' + toInt(element.width) + '" height="' + toInt(element.height) + '"';
-  
+
   if (element.uuid) {
     xml += ` uuid="${element.uuid}"`;
   }
-  
+
   if (element.backcolor) {
     xml += ` backcolor="${element.backcolor}"`;
   }
-  
+
   // 使用元素设置的模式，不再自动覆盖
   if (element.mode) {
     xml += ` mode="${element.mode}"`;
   }
-  
+
+  // 新增：条件打印表达式
+  if (element.printWhenExpression) {
+    xml += ` printWhenExpression="${element.printWhenExpression}"`;
+  }
+
+  // 新增：忽略分页
+  if (element.isIgnorePagination !== undefined && element.isIgnorePagination) {
+    xml += ` isIgnorePagination="true"`;
+  }
+
+  // 新增：是否移除空白行
+  if (element.isRemoveLineWhenBlank !== undefined && element.isRemoveLineWhenBlank) {
+    xml += ` isRemoveLineWhenBlank="true"`;
+  }
+
+  // 新增：是否打印重复值
+  if (element.isPrintRepeatedValues !== undefined && !element.isPrintRepeatedValues) {
+    xml += ` isPrintRepeatedValues="false"`;
+  }
+
   xml += '/>\n';
-  
+
   // 生成box元素
   xml += generateBoxXML(element.box, element);
-  
+
   // 生成子元素
   if (element.elements && element.elements.length > 0) {
     element.elements.forEach((child: any) => {
       xml += generateElementXML(child);
     });
   }
-  
+
   xml += '    </frame>\n';
   return xml;
 }
@@ -1010,8 +1060,15 @@ function generateFrameXML(element: any): string {
 function generateBreakXML(element: any): string {
   // 默认为Page类型
   const type = element.breakType || 'Page';
-  let xml = `    <break type="${type}">
-      <reportElement x="${toInt(element.x)}" y="${toInt(element.y)}" width="${toInt(element.width)}" height="${toInt(element.height)}"`;
+  let xml = `    <break type="${type}">`;
+
+  // 新增：是否重置页码
+  if (element.isResetPageNumber !== undefined && element.isResetPageNumber) {
+    xml += `\n      <reportElement x="${toInt(element.x)}" y="${toInt(element.y)}" width="${toInt(element.width)}" height="${toInt(element.height)}"`;
+    xml += ` isResetPageNumber="true"`;
+  } else {
+    xml += `\n      <reportElement x="${toInt(element.x)}" y="${toInt(element.y)}" width="${toInt(element.width)}" height="${toInt(element.height)}"`;
+  }
 
   if (element.uuid) {
     xml += ` uuid="${element.uuid}"`;
