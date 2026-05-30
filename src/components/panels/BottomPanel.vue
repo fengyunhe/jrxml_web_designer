@@ -5,12 +5,14 @@ import { NButton } from 'naive-ui';
 import ResizablePanel from './ResizablePanel.vue';
 import PdfPreviewModal from '../modals/PdfPreviewModal.vue';
 import CodeMirrorEditor from '../editor/CodeMirrorEditor.vue';
+import { renderToHtml, renderToMultiPageHtml } from '../../utils/jrxmlHtmlRenderer';
+import type { Band, ReportProperties } from '../../types';
 import {
   UI_CONSTANTS,
   PANEL_CONSTANTS
 } from '../../constants/constants';
 import { getAvailableFonts } from '../../utils/fontUtils';
-import type { Band, BandType } from '../../types';
+import type { BandType } from '../../types';
 
 const { t } = useI18n();
 
@@ -58,7 +60,8 @@ const emit = defineEmits<Emits>();
 const activeTab = ref('pageSettings');
 const tabs = ref([
   { id: 'pageSettings', name: t('bottomPanel.jrxmlTabs.pageSettings') },
-  { id: 'jrxml', name: t('bottomPanel.jrxmlContent') }
+  { id: 'jrxml', name: t('bottomPanel.jrxmlContent') },
+  { id: 'htmlPreview', name: 'HTML预览' }
 ]);
 
 // 底部面板高度
@@ -233,6 +236,67 @@ const localSelectedBandTypes = computed({
 const localJrxmlContent = computed({
   get: () => props.jrxmlContent,
   set: (value) => emit('update:jrxml-content', value)
+});
+
+// HTML预览相关
+const htmlPreviewScale = ref(1);
+const currentPage = ref(0);
+const totalPages = ref(1);
+const htmlPages = ref<string[]>([]);
+
+const htmlPreviewContent = computed(() => {
+  if (htmlPages.value.length > 0) {
+    return htmlPages.value[currentPage.value] || '';
+  }
+  return '';
+});
+
+// 更新多页预览
+const updateMultiPagePreview = () => {
+  const bands = props.bands;
+  const rp = props.reportProperties;
+  if (!bands || !rp) {
+    htmlPages.value = [];
+    totalPages.value = 1;
+    currentPage.value = 0;
+    return;
+  }
+  const result = renderToMultiPageHtml(bands as Band[], rp as unknown as ReportProperties, {
+    scale: htmlPreviewScale.value,
+    showBorders: true,
+    showElementBorders: true,
+    showBandLabels: false,
+  });
+  htmlPages.value = result.pages;
+  totalPages.value = result.totalPages;
+  if (currentPage.value >= result.totalPages) {
+    currentPage.value = Math.max(0, result.totalPages - 1);
+  }
+};
+
+const prevPage = () => {
+  if (currentPage.value > 0) currentPage.value--;
+};
+
+const nextPage = () => {
+  if (currentPage.value < totalPages.value - 1) currentPage.value++;
+};
+
+// Watch for changes that should trigger re-render
+watch(
+  () => [props.bands, props.reportProperties, htmlPreviewScale.value],
+  () => {
+    if (activeTab.value === 'htmlPreview') {
+      updateMultiPagePreview();
+    }
+  },
+  { deep: true }
+);
+
+watch(activeTab, (tab) => {
+  if (tab === 'htmlPreview') {
+    updateMultiPagePreview();
+  }
 });
 
 // 同步滚动
@@ -488,6 +552,32 @@ onBeforeUnmount(() => {
             @scroll="syncScroll"
           />
         </div>
+      </div>
+    </div>
+
+    <!-- HTML预览标签 -->
+    <div class="tab-content html-preview-tab" v-show="activeTab === 'htmlPreview'">
+      <div class="html-preview-toolbar">
+        <div class="preview-zoom-controls">
+          <button @click="htmlPreviewScale = 0.5" :class="{ active: htmlPreviewScale === 0.5 }">50%</button>
+          <button @click="htmlPreviewScale = 0.75" :class="{ active: htmlPreviewScale === 0.75 }">75%</button>
+          <button @click="htmlPreviewScale = 1" :class="{ active: htmlPreviewScale === 1 }">100%</button>
+          <button @click="htmlPreviewScale = 1.25" :class="{ active: htmlPreviewScale === 1.25 }">125%</button>
+          <button @click="htmlPreviewScale = 1.5" :class="{ active: htmlPreviewScale === 1.5 }">150%</button>
+        </div>
+        <div class="preview-page-nav" v-if="totalPages > 1">
+          <button @click="prevPage" :disabled="currentPage === 0">◀</button>
+          <span class="page-info">{{ currentPage + 1 }} / {{ totalPages }}</span>
+          <button @click="nextPage" :disabled="currentPage >= totalPages - 1">▶</button>
+        </div>
+      </div>
+      <div class="html-preview-container">
+        <iframe
+          :srcdoc="htmlPreviewContent"
+          class="html-preview-iframe"
+          sandbox="allow-same-origin"
+          title="HTML Preview"
+        ></iframe>
       </div>
     </div>
   </ResizablePanel>
@@ -802,6 +892,106 @@ onBeforeUnmount(() => {
 .form-group select:focus {
   border-color: #4a90e2;
   outline: none;
+}
+
+/* HTML预览标签样式 */
+.html-preview-tab {
+  background-color: white;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  padding: 0;
+}
+
+.html-preview-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 6px 12px;
+  background: #f5f5f5;
+  border-bottom: 1px solid #ddd;
+  flex-shrink: 0;
+}
+
+.preview-zoom-controls {
+  display: flex;
+  gap: 2px;
+}
+
+.preview-zoom-controls button {
+  padding: 4px 10px;
+  border: 1px solid #ccc;
+  background: white;
+  cursor: pointer;
+  font-size: 12px;
+  color: #555;
+  transition: all 0.15s;
+}
+
+.preview-zoom-controls button:first-child {
+  border-radius: 4px 0 0 4px;
+}
+
+.preview-zoom-controls button:last-child {
+  border-radius: 0 4px 4px 0;
+}
+
+.preview-zoom-controls button.active {
+  background: #4a90e2;
+  color: white;
+  border-color: #4a90e2;
+}
+
+.preview-zoom-controls button:hover:not(.active) {
+  background: #e8e8e8;
+}
+
+.preview-page-nav {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-left: auto;
+}
+
+.preview-page-nav button {
+  padding: 4px 8px;
+  border: 1px solid #ccc;
+  background: white;
+  cursor: pointer;
+  font-size: 12px;
+  color: #555;
+  border-radius: 3px;
+  transition: all 0.15s;
+}
+
+.preview-page-nav button:hover:not(:disabled) {
+  background: #e8e8e8;
+}
+
+.preview-page-nav button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.page-info {
+  font-size: 12px;
+  color: #666;
+  white-space: nowrap;
+}
+
+.html-preview-container {
+  flex: 1;
+  overflow: auto;
+  background: #e8e8e8;
+  min-height: 0;
+}
+
+.html-preview-iframe {
+  width: 100%;
+  height: 100%;
+  border: none;
+  display: block;
 }
 
 

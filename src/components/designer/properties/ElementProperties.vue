@@ -65,7 +65,27 @@
               <input v-if="currentElement" v-model.number="currentElement.height" type="number" @change="ensureIntegerValue(currentElement, 'height')" />
             </div>
           </div>
-          
+
+          <!-- 通用条件打印表达式（所有元素类型） -->
+          <div class="form-group">
+            <label>{{ t('properties.printWhenExpression') || '条件打印表达式' }}</label>
+            <ExpressionEditor
+              :model-value="currentElement.printWhenExpression || ''"
+              @update:model-value="currentElement.printWhenExpression = $event"
+              :report-fields="reportFields"
+              :report-parameters="reportParameters"
+            />
+          </div>
+
+          <!-- 样式引用 -->
+          <div class="form-group" v-if="reportStyles && reportStyles.length > 0">
+            <label>{{ t('properties.styleReference') || '样式引用' }}</label>
+            <select v-model="currentElement.style" class="form-select">
+              <option value="">{{ t('properties.noStyle') || '无样式' }}</option>
+              <option v-for="s in reportStyles" :key="s.name" :value="s.name">{{ s.name }}</option>
+            </select>
+          </div>
+
           <!-- 根据元素类型显示特定属性 -->
           <template v-if="currentElement.type === 'staticText'">
             <div class="form-group">
@@ -101,13 +121,6 @@
                 label="打印重复值"
               />
             </div>
-            <div class="form-group">
-              <label>条件打印表达式</label>
-              <ExpressionEditor
-                :model-value="currentElement.printWhenExpression || ''"
-                @update:model-value="currentElement.printWhenExpression = $event"
-              />
-            </div>
           </template>
 
           <!-- Ellipse属性 -->
@@ -117,13 +130,6 @@
                 :model-value="currentElement.isPrintRepeatedValues !== false"
                 @update:model-value="currentElement.isPrintRepeatedValues = $event"
                 label="打印重复值"
-              />
-            </div>
-            <div class="form-group">
-              <label>条件打印表达式</label>
-              <ExpressionEditor
-                :model-value="currentElement.printWhenExpression || ''"
-                @update:model-value="currentElement.printWhenExpression = $event"
               />
             </div>
           </template>
@@ -268,9 +274,60 @@
               </div>
             </div>
           </div>
-        </n-tab-pane>
 
-        <!-- Frame属性标签页 -->
+          <!-- 行高设置 -->
+          <div class="form-group" v-if="currentElement && currentElement.type === 'table'">
+            <h5>行高设置</h5>
+            <div class="column-properties">
+              <div class="form-group">
+                <label>表头行高</label>
+                <input
+                  v-model.number="tableRowHeights.tableHeader"
+                  type="number"
+                  min="1"
+                  @change="updateAllColumnRowHeights"
+                />
+              </div>
+              <div class="form-group">
+                <label>列头行高</label>
+                <input
+                  v-model.number="tableRowHeights.columnHeader"
+                  type="number"
+                  min="1"
+                  @change="updateAllColumnRowHeights"
+                />
+              </div>
+              <div class="form-group">
+                <label>数据行高</label>
+                <input
+                  v-model.number="tableRowHeights.detailCell"
+                  type="number"
+                  min="1"
+                  @change="updateAllColumnRowHeights"
+                />
+              </div>
+              <div class="form-group">
+                <label>列尾行高</label>
+                <input
+                  v-model.number="tableRowHeights.columnFooter"
+                  type="number"
+                  min="1"
+                  @change="updateAllColumnRowHeights"
+                />
+              </div>
+              <div class="form-group">
+                <label>表尾行高</label>
+                <input
+                  v-model.number="tableRowHeights.tableFooter"
+                  type="number"
+                  min="1"
+                  @change="updateAllColumnRowHeights"
+                />
+              </div>
+            </div>
+          </div>
+
+        </n-tab-pane>
         <n-tab-pane v-if="currentElement && currentElement.type === 'frame'" name="frame" :tab="'Frame属性'">
           <FrameProperties
             :element="currentElement"
@@ -780,6 +837,7 @@ import ElementTypeBasedSettings from './ElementTypeBasedSettings.vue';
 import FrameProperties from './FrameProperties.vue';
 import TableProperties from './TableProperties.vue';
 import ExpressionEditor from './common/ExpressionEditor.vue';
+import { useLivePreview } from '@/composables/useLivePreview';
 import SwitchControl from './common/SwitchControl.vue';
 
 const { t } = useI18n();
@@ -791,6 +849,8 @@ interface Props {
   reportProperties: any;
   subDatasets?: TableDataset[];
   reportStyles?: any[];
+  reportFields?: Array<{ name: string; class?: string }>;
+  reportParameters?: Array<{ name: string; class?: string }>;
 }
 
 interface Emits {
@@ -804,6 +864,12 @@ interface Emits {
 
 const props = defineProps<Props>();
 const emit = defineEmits<Emits>();
+
+// 实时预览（用于过渡动画）
+const { previewConfig, startPreview, stopPreview, confirmPreview } = useLivePreview({
+  animated: true,
+  animationDuration: 150,
+});
 
 // 可用字体列表
 const availableFonts = ref<string[]>([]);
@@ -2573,45 +2639,46 @@ function updateTableStyles() {
 
 <style scoped>
 .element-properties {
-  padding: 16px;
+  padding: var(--prop-spacing-lg);
 }
 
 .element-properties h3 {
-  margin-top: 0;
-  margin-bottom: 16px;
-  font-size: 16px;
-  font-weight: 600;
-  color: #333;
+  margin: 0 0 var(--prop-spacing-lg) 0;
+  padding: 0 0 var(--prop-spacing-sm) 0;
+  font-size: var(--prop-font-size-lg);
+  font-weight: var(--prop-font-weight-semibold);
+  color: var(--prop-text-primary);
+  border-bottom: 1px solid var(--prop-divider-color);
 }
 
 .element-properties h4 {
-  margin-top: 0;
-  margin-bottom: 12px;
-  font-size: 14px;
-  font-weight: 600;
-  color: #666;
+  margin: 0 0 var(--prop-spacing-md) 0;
+  padding: 0;
+  font-size: var(--prop-font-size-md);
+  font-weight: var(--prop-font-weight-semibold);
+  color: var(--prop-text-primary);
 }
 
 .element-properties h5 {
-  margin-top: 0;
-  margin-bottom: 8px;
-  font-size: 12px;
-  font-weight: 600;
-  color: #999;
+  margin: 0 0 var(--prop-spacing-sm) 0;
+  padding: 0;
+  font-size: var(--prop-font-size-sm);
+  font-weight: var(--prop-font-weight-semibold);
+  color: var(--prop-text-secondary);
 }
 
 .property-section {
-  margin-bottom: 24px;
+  margin-bottom: var(--prop-spacing-xl);
 }
 
 .form-group {
-  margin-bottom: 16px;
+  margin-bottom: var(--prop-spacing-lg);
 }
 
 .form-group-row {
   display: flex;
-  gap: 16px;
-  margin-bottom: 16px;
+  gap: var(--prop-spacing-lg);
+  margin-bottom: var(--prop-spacing-lg);
 }
 
 .half-width {
@@ -2621,8 +2688,8 @@ function updateTableStyles() {
 .basic-properties-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 12px;
-  margin-bottom: 16px;
+  gap: var(--prop-spacing-md);
+  margin-bottom: var(--prop-spacing-lg);
 }
 
 .basic-properties-grid .form-group {
@@ -2631,10 +2698,10 @@ function updateTableStyles() {
 
 .form-group label {
   display: block;
-  margin-bottom: 4px;
-  font-size: 12px;
-  font-weight: 500;
-  color: #666;
+  margin-bottom: var(--prop-spacing-xs);
+  font-size: var(--prop-font-size-sm);
+  font-weight: var(--prop-font-weight-medium);
+  color: var(--prop-text-secondary);
 }
 
 .form-group input:not([type="checkbox"]),
@@ -2642,29 +2709,34 @@ function updateTableStyles() {
 .form-group textarea {
   width: 100%;
   padding: 6px 8px;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  font-size: 12px;
+  border: 1px solid var(--prop-border-color);
+  border-radius: var(--prop-border-radius-md);
+  font-size: var(--prop-font-size-sm);
   box-sizing: border-box;
+  transition: border-color var(--prop-transition-fast), box-shadow var(--prop-transition-fast);
 }
 
 .form-group input[type="checkbox"] {
   padding: 6px 8px;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  font-size: 12px;
+  border: 1px solid var(--prop-border-color);
+  border-radius: var(--prop-border-radius-md);
+  font-size: var(--prop-font-size-sm);
   box-sizing: border-box;
+}
+
+.form-group input:hover,
+.form-group select:hover,
+.form-group textarea:hover {
+  border-color: var(--prop-border-hover);
 }
 
 .form-group input:focus,
 .form-group select:focus,
 .form-group textarea:focus {
   outline: none;
-  border-color: #1890ff;
-  box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.2);
+  border-color: var(--prop-border-focus);
+  box-shadow: var(--prop-focus-ring);
 }
-
-
 
 .form-group textarea {
   min-height: 80px;

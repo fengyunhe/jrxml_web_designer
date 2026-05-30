@@ -17,7 +17,9 @@ export function generateJRXMLContent(
   fields: Field[],
   parameters: Parameter[] = [],
   subDatasets: any[] = [],
-  styles: any[] = []
+  styles: any[] = [],
+  variables: any[] = [],
+  reportProperties: any[] = []
 ): string {
   // 确保页边距有默认值，如果没有设置则使用0
   const safeProperties = {
@@ -27,7 +29,7 @@ export function generateJRXMLContent(
     topMargin: properties.topMargin || 0,
     bottomMargin: properties.bottomMargin || 0
   };
-  
+
   // 创建字段名称的映射，用于快速查找
   const fieldMap = new Map<string, Field>();
   fields.forEach(field => {
@@ -35,7 +37,7 @@ export function generateJRXMLContent(
       fieldMap.set(field.name, field);
     }
   });
-  
+
   // 遍历所有元素，收集使用的字段名
   const usedFieldNames = new Set<string>();
   bands.forEach(band => {
@@ -52,17 +54,27 @@ export function generateJRXMLContent(
       }
     });
   });
-  
+
   // 添加缺失的字段到字段列表
   usedFieldNames.forEach(fieldName => {
     if (!fieldMap.has(fieldName)) {
       fieldMap.set(fieldName, { name: fieldName, class: 'java.lang.String' });
     }
   });
-  
+
   // 获取更新后的字段列表
   const updatedFields = Array.from(fieldMap.values());
   let jrxml = buildJasperReportOpenTag(safeProperties);
+
+  // 添加报表属性（property元素）
+  if (reportProperties && reportProperties.length > 0) {
+    jrxml += '\n  <!-- 报表属性 -->\n';
+    reportProperties.forEach(prop => {
+      if (prop.name && prop.value) {
+        jrxml += `  <property name="${prop.name}" value="${prop.value}"/>\n`;
+      }
+    });
+  }
 
   // 添加表格样式
   if (styles && styles.length > 0) {
@@ -152,8 +164,45 @@ export function generateJRXMLContent(
     jrxml += '\n  <!-- 数据字段定义 -->\n';
     updatedFields.forEach(field => {
       if (field.name && field.class) {
-        jrxml += `  <field name="${field.name}" class="${field.class}"/>
-`;
+        // 检查是否有字段属性需要生成
+        if (field.properties && field.properties.length > 0) {
+          jrxml += `  <field name="${field.name}" class="${field.class}">\n`;
+          field.properties.forEach(prop => {
+            if (prop.name && prop.value) {
+              jrxml += `    <property name="${prop.name}" value="${prop.value}"/>\n`;
+            }
+          });
+          jrxml += `  </field>\n`;
+        } else {
+          jrxml += `  <field name="${field.name}" class="${field.class}"/>\n`;
+        }
+      }
+    });
+  }
+
+  // 添加报表变量定义
+  if (variables.length > 0) {
+    jrxml += '\n  <!-- 报表变量定义 -->\n';
+    variables.forEach(variable => {
+      if (variable.name && variable.class) {
+        let attrs = `name="${variable.name}" class="${variable.class}"`;
+        if (variable.calculationType && variable.calculationType !== 'Nothing') {
+          attrs += ` calculation="${variable.calculationType}"`;
+        }
+        if (variable.resetType) {
+          attrs += ` resetType="${variable.resetType}"`;
+        }
+        if (variable.resetGroup) {
+          attrs += ` resetGroup="${variable.resetGroup}"`;
+        }
+        jrxml += `  <variable ${attrs}>\n`;
+        if (variable.expression) {
+          jrxml += `    <variableExpression><![CDATA[${variable.expression}]]></variableExpression>\n`;
+        }
+        if (variable.initialValueExpression) {
+          jrxml += `    <initialValueExpression><![CDATA[${variable.initialValueExpression}]]></initialValueExpression>\n`;
+        }
+        jrxml += '  </variable>\n';
       }
     });
   }
@@ -229,32 +278,41 @@ function generateDefaultTableStylesXML(): string {
 // 生成样式XML
 function generateStyleXML(style: any): string {
   if (!style.name) return '';
-  
+
   let xml = `  <style name="${style.name}"`;
-  
+
+  // 添加parentStyle属性（样式继承）
+  if (style.parentStyle) {
+    xml += ` parentStyle="${style.parentStyle}"`;
+  }
+
   // 添加模式属性
   if (style.mode) {
     xml += ` mode="${style.mode}"`;
   }
-  
+
   // 添加背景颜色属性
   if (style.backcolor) {
     xml += ` backcolor="${style.backcolor}"`;
   }
-  
+
   // 添加前景颜色属性
   if (style.forecolor) {
     xml += ` forecolor="${style.forecolor}"`;
   }
-  
-  xml += `>
-`;
-  
+
+  xml += `>\n`;
+
+  // 添加条件样式表达式
+  if (style.conditionExpression) {
+    xml += `    <conditionExpression><![CDATA[${style.conditionExpression}]]></conditionExpression>\n`;
+  }
+
   // 添加box元素
   if (style.box) {
     xml += generateBoxXML(style.box, style);
   }
-  
+
   // 添加textElement元素（如果有文本对齐或垂直对齐设置）
   if (style.textAlignment || style.verticalAlignment) {
     xml += `    <textElement`;
@@ -264,9 +322,8 @@ function generateStyleXML(style: any): string {
     if (style.verticalAlignment) {
       xml += ` verticalAlignment="${style.verticalAlignment}"`;
     }
-    xml += `>
-`;
-    
+    xml += `>\n`;
+
     // 添加font元素
     if (style.fontFamily || style.fontSize || style.isBold || style.isItalic || style.isUnderline) {
       xml += `      <font`;
@@ -285,16 +342,47 @@ function generateStyleXML(style: any): string {
       if (style.isUnderline) {
         xml += ` isUnderline="true"`;
       }
-      xml += `/>
-`;
+      xml += `/>\n`;
     }
-    
-    xml += `    </textElement>
-`;
+
+    xml += `    </textElement>\n`;
   }
-  
-  xml += `  </style>
-`;
+
+  // 添加条件样式
+  if (style.conditionalStyles && style.conditionalStyles.length > 0) {
+    style.conditionalStyles.forEach((cs: any) => {
+      let csAttrs = '';
+      if (cs.properties?.forecolor) csAttrs += ` forecolor="${cs.properties.forecolor}"`;
+      if (cs.properties?.backcolor) csAttrs += ` backcolor="${cs.properties.backcolor}"`;
+      if (cs.properties?.mode) csAttrs += ` mode="${cs.properties.mode}"`;
+      xml += `    <conditionalStyle${csAttrs}>\n`;
+      if (cs.conditionExpression) {
+        xml += `      <conditionExpression><![CDATA[${cs.conditionExpression}]]></conditionExpression>\n`;
+      }
+      if (cs.properties?.box) {
+        xml += generateBoxXML(cs.properties.box);
+      }
+      if (cs.properties?.textAlignment || cs.properties?.verticalAlignment) {
+        xml += '      <textElement';
+        if (cs.properties.textAlignment) xml += ` textAlignment="${cs.properties.textAlignment}"`;
+        if (cs.properties.verticalAlignment) xml += ` verticalAlignment="${cs.properties.verticalAlignment}"`;
+        xml += '>\n';
+        if (cs.properties.fontFamily || cs.properties.fontSize || cs.properties.isBold || cs.properties.isItalic || cs.properties.isUnderline) {
+          xml += '        <font';
+          if (cs.properties.fontFamily) xml += ` fontName="${cs.properties.fontFamily}"`;
+          if (cs.properties.fontSize) xml += ` size="${cs.properties.fontSize}"`;
+          if (cs.properties.isBold) xml += ' isBold="true"';
+          if (cs.properties.isItalic) xml += ' isItalic="true"';
+          if (cs.properties.isUnderline) xml += ' isUnderline="true"';
+          xml += '/>\n';
+        }
+        xml += '      </textElement>\n';
+      }
+      xml += '    </conditionalStyle>\n';
+    });
+  }
+
+  xml += `  </style>\n`;
   return xml;
 }
 
@@ -568,6 +656,13 @@ function generateStaticTextXML(element: any): string {
     xml += ` mode="${element.mode}"`;
   }
 
+  if (element.printWhenExpression) {
+    xml += ` printWhenExpression="${element.printWhenExpression}"`;
+  }
+  if (element.style) {
+    xml += ` style="${element.style}"`;
+  }
+
   xml += '/>\n';
 
   // 生成layout属性
@@ -705,6 +800,13 @@ function generateTextFieldXML(element: any): string {
     xml += ` positionType="${element.positionType}"`;
   }
 
+  if (element.printWhenExpression) {
+    xml += ` printWhenExpression="${element.printWhenExpression}"`;
+  }
+  if (element.style) {
+    xml += ` style="${element.style}"`;
+  }
+
   xml += '/>\n';
 
   // 生成box元素
@@ -831,6 +933,13 @@ function generateImageXML(element: any): string {
     xml += ` mode="${element.mode}"`;
   }
 
+  if (element.printWhenExpression) {
+    xml += ` printWhenExpression="${element.printWhenExpression}"`;
+  }
+  if (element.style) {
+    xml += ` style="${element.style}"`;
+  }
+
   xml += `/>
 `;
 
@@ -858,6 +967,13 @@ function generateLineXML(element: any): string {
 
   if (element.uuid) {
     xml += ` uuid="${element.uuid}"`;
+  }
+
+  if (element.printWhenExpression) {
+    xml += ` printWhenExpression="${element.printWhenExpression}"`;
+  }
+  if (element.style) {
+    xml += ` style="${element.style}"`;
   }
 
   xml += `/>
@@ -902,6 +1018,9 @@ function generateRectangleXML(element: any): string {
   // 新增：条件打印表达式
   if (element.printWhenExpression) {
     xml += ` printWhenExpression="${element.printWhenExpression}"`;
+  }
+  if (element.style) {
+    xml += ` style="${element.style}"`;
   }
 
   xml += '/>\n';
@@ -969,6 +1088,9 @@ function generateEllipseXML(element: any): string {
   if (element.printWhenExpression) {
     xml += ` printWhenExpression="${element.printWhenExpression}"`;
   }
+  if (element.style) {
+    xml += ` style="${element.style}"`;
+  }
 
   xml += '/>\n';
 
@@ -1023,6 +1145,9 @@ function generateFrameXML(element: any): string {
   // 新增：条件打印表达式
   if (element.printWhenExpression) {
     xml += ` printWhenExpression="${element.printWhenExpression}"`;
+  }
+  if (element.style) {
+    xml += ` style="${element.style}"`;
   }
 
   // 新增：忽略分页

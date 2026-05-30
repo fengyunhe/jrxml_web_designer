@@ -3,17 +3,20 @@
     <!-- 基础元素库 -->
     <div class="element-list-container">
       <h3>{{ t('elementLibrary.title') }}</h3>
-      <div class="element-list">
-        <div 
-          v-for="element in elements" 
-          :key="element.type"
-          class="element-item"
-          @dragstart="handleDragStart($event, element)"
-          @dblclick="handleElementDoubleClick(element)"
-          draggable="true"
-        >
-          <span class="element-icon">{{ getElementIcon(element.type) }}</span>
-          <span class="element-name">{{ t(element.name) }}</span>
+      <div v-for="(categoryElements, categoryKey) in groupedElements" :key="categoryKey" class="element-category">
+        <div class="category-header" @click="toggleCategory(categoryKey)">
+          <span class="category-arrow">{{ expandedCategories[categoryKey] ? '▼' : '▶' }}</span>
+          <span>{{ categoryLabels[categoryKey] || categoryKey }}</span>
+        </div>
+        <div v-if="expandedCategories[categoryKey]" class="element-list">
+          <div v-for="element in categoryElements" :key="element.type"
+               class="element-item"
+               draggable="true"
+               @dragstart="handleDragStart($event, element)"
+               @dblclick="handleElementDoubleClick(element)">
+            <span class="element-icon">{{ getElementIcon(element.type) }}</span>
+            <span class="element-name">{{ t(element.name) }}</span>
+          </div>
         </div>
       </div>
     </div>
@@ -89,6 +92,62 @@
       </div>
     </div>
     
+    <!-- 报表变量区域 -->
+    <div class="data-fields-section">
+      <div class="section-header">
+        <h4>{{ t('elementLibrary.reportVariables') }}</h4>
+        <n-button class="add-button" @click="handleAddVariable" type="default" quaternary circle size="small" :title="t('elementLibrary.addReportVariable')">+</n-button>
+      </div>
+      <div class="parameters-mini-view">
+        <div
+          v-for="(variable, index) in reportVariables"
+          :key="index"
+          class="field-mini-item"
+        >
+          <div class="field-info">
+            <span class="field-name">$V{ {{ variable.name }} }</span>
+            <span class="field-type">({{ getFieldTypeName(variable.class) }})</span>
+          </div>
+          <div class="field-actions">
+            <n-button class="action-button edit-button" @click.stop="handleEditVariable(variable)" type="default" quaternary circle size="small" :title="t('elementLibrary.editVariable')">✏️</n-button>
+            <n-button class="action-button delete-button" @click.stop="handleDeleteVariable(variable.name)" type="error" quaternary circle size="small" :title="t('elementLibrary.deleteVariable')">🗑️</n-button>
+          </div>
+        </div>
+        <div v-if="reportVariables.length === 0" class="empty-state">
+          <p>{{ t('elementLibrary.noReportVariables') }}</p>
+          <p class="empty-hint">{{ t('elementLibrary.clickToAddVariable') }}</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- 报表样式区域 -->
+    <div class="data-fields-section">
+      <div class="section-header">
+        <h4>{{ t('elementLibrary.reportStyles') }}</h4>
+        <n-button class="add-button" @click="handleAddStyle" type="default" quaternary circle size="small" :title="t('elementLibrary.addReportStyle')">+</n-button>
+      </div>
+      <div class="parameters-mini-view">
+        <div
+          v-for="(style, index) in reportStyles"
+          :key="index"
+          class="field-mini-item"
+        >
+          <div class="field-info">
+            <span class="field-name">{{ style.name }}</span>
+            <span v-if="style.parentStyle" class="field-type">({{ style.parentStyle }})</span>
+          </div>
+          <div class="field-actions">
+            <n-button class="action-button edit-button" @click.stop="handleEditStyle(style)" type="default" quaternary circle size="small" :title="t('elementLibrary.editStyle')">✏️</n-button>
+            <n-button class="action-button delete-button" @click.stop="handleDeleteStyle(style.name)" type="error" quaternary circle size="small" :title="t('elementLibrary.deleteStyle')">🗑️</n-button>
+          </div>
+        </div>
+        <div v-if="reportStyles.length === 0" class="empty-state">
+          <p>{{ t('elementLibrary.noReportStyles') }}</p>
+          <p class="empty-hint">{{ t('elementLibrary.clickToAddStyle') }}</p>
+        </div>
+      </div>
+    </div>
+
     <!-- 子数据集区域 -->
     <div class="data-fields-section">
       <div class="section-header">
@@ -159,7 +218,8 @@ import { ref, computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { NButton } from 'naive-ui';
 import ConfirmModal from './modals/ConfirmModal.vue';
-import type { DesignElement, StaticTextElement, TextFieldElement, ReportField, ReportParameter } from '../types';
+import { ElementRegistry } from './elements/ElementRegistry';
+import type { DesignElement, StaticTextElement, TextFieldElement, ReportField, ReportParameter, ReportVariable, ReportStyle } from '../types';
 import {
   getElementDisplayInfoWithoutBand,
   getElementIcon,
@@ -183,6 +243,8 @@ interface Props {
   elements: Array<{ type: string; name: string }>;
   reportFields: ReportField[];
   reportParameters: ReportParameter[];
+  reportVariables: ReportVariable[];
+  reportStyles: ReportStyle[];
   bands: Array<{ type: string; name?: string; elements: DesignElement[] }>;
   selectedElement: any;
   subDatasets?: SubDataset[];
@@ -199,6 +261,12 @@ interface Emits {
   (e: 'add-parameter'): void;
   (e: 'edit-parameter', parameter: ReportParameter): void;
   (e: 'delete-parameter', parameterName: string): void;
+  (e: 'add-variable'): void;
+  (e: 'edit-variable', variable: ReportVariable): void;
+  (e: 'delete-variable', variableName: string): void;
+  (e: 'add-style'): void;
+  (e: 'edit-style', style: ReportStyle): void;
+  (e: 'delete-style', styleName: string): void;
   (e: 'add-sub-dataset'): void;
   (e: 'edit-sub-dataset', dataset: SubDataset, index: number): void;
   (e: 'delete-sub-dataset', index: number): void;
@@ -210,6 +278,8 @@ const props = withDefaults(defineProps<Props>(), {
   elements: () => [],
   reportFields: () => [],
   reportParameters: () => [],
+  reportVariables: () => [],
+  reportStyles: () => [],
   bands: () => [],
   selectedElement: null,
   subDatasets: () => []
@@ -219,6 +289,28 @@ const emit = defineEmits<Emits>();
 
 // 元素过滤文本
 const elementFilterText = ref('');
+
+// 元素分组展开状态
+const expandedCategories = ref<Record<string, boolean>>({ text: true, shape: true, container: true });
+const toggleCategory = (key: string) => { expandedCategories.value[key] = !expandedCategories.value[key]; };
+
+const categoryLabels: Record<string, string> = {
+  text: '文本元素',
+  shape: '图形元素',
+  container: '容器元素'
+};
+
+const groupedElements = computed(() => {
+  const registry = ElementRegistry.getInstance();
+  const categories: Record<string, any[]> = { text: [], shape: [], container: [] };
+  for (const element of props.elements) {
+    const config = registry.getElementConfig(element.type);
+    const category = config?.category || 'text';
+    if (!categories[category]) categories[category] = [];
+    categories[category].push(element);
+  }
+  return categories;
+});
 
 // 计算属性：按band分组的报表元素
 const groupedReportElements = computed(() => {
@@ -374,6 +466,36 @@ function handleDeleteParameter(parameterName: string): void {
   emit('delete-parameter', parameterName);
 }
 
+// 处理添加变量
+function handleAddVariable(): void {
+  emit('add-variable');
+}
+
+// 处理编辑变量
+function handleEditVariable(variable: ReportVariable): void {
+  emit('edit-variable', variable);
+}
+
+// 处理删除变量
+function handleDeleteVariable(variableName: string): void {
+  emit('delete-variable', variableName);
+}
+
+// 处理添加样式
+function handleAddStyle(): void {
+  emit('add-style');
+}
+
+// 处理编辑样式
+function handleEditStyle(style: ReportStyle): void {
+  emit('edit-style', style);
+}
+
+// 处理删除样式
+function handleDeleteStyle(styleName: string): void {
+  emit('delete-style', styleName);
+}
+
 // 处理添加子数据集
 function handleAddSubDataset(): void {
   emit('add-sub-dataset');
@@ -489,6 +611,34 @@ function handleConfirmDelete(): void {
 
 .element-item:active {
   cursor: grabbing;
+}
+
+.element-category {
+  margin-bottom: 8px;
+}
+
+.category-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 8px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--prop-text-secondary, #666);
+  cursor: pointer;
+  border-radius: 4px;
+  transition: background-color 0.1s;
+  user-select: none;
+}
+
+.category-header:hover {
+  background-color: var(--prop-bg-hover, #f0f0f0);
+}
+
+.category-arrow {
+  font-size: 10px;
+  width: 12px;
+  color: var(--prop-text-tertiary, #999);
 }
 
 .element-icon {

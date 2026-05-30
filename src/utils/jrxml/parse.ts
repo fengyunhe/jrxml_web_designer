@@ -1,7 +1,7 @@
 import type { DesignElement, BandType, Band } from '@/types';
-import type { ReportProperties, Field, Parameter, SubDataset } from './types';
+import type { ReportProperties, Field, Parameter, SubDataset, Variable, ReportStyle, ConditionalStyle } from './types';
 
-export function parseJRXMLContent(jrxmlContent: string): { properties: ReportProperties; bands: Band[]; fields: Field[]; parameters: Parameter[]; datasets: SubDataset[] } {
+export function parseJRXMLContent(jrxmlContent: string): { properties: ReportProperties; bands: Band[]; fields: Field[]; parameters: Parameter[]; datasets: SubDataset[]; variables: Variable[]; styles: ReportStyle[] } {
   const parser = new DOMParser();
   const xmlDoc = parser.parseFromString(jrxmlContent, 'text/xml');
 
@@ -151,7 +151,90 @@ export function parseJRXMLContent(jrxmlContent: string): { properties: ReportPro
     }
   });
 
-  return { properties, bands, fields, parameters, datasets };
+  // 解析报表变量
+  const variables: Variable[] = [];
+  Array.from(jasperReportElem.children).forEach(child => {
+    if (child.tagName === 'variable' || child.localName === 'variable') {
+      const name = child.getAttribute('name');
+      const className = child.getAttribute('class') || 'java.lang.String';
+      if (name) {
+        const variable: Variable = { name, class: className };
+        const calcType = child.getAttribute('calculation');
+        if (calcType) variable.calculationType = calcType;
+        const resetType = child.getAttribute('resetType');
+        if (resetType) variable.resetType = resetType;
+        const resetGroup = child.getAttribute('resetGroup');
+        if (resetGroup) variable.resetGroup = resetGroup;
+        const exprElem = child.querySelector('variableExpression');
+        if (exprElem && exprElem.textContent) variable.expression = exprElem.textContent.trim();
+        const initExprElem = child.querySelector('initialValueExpression');
+        if (initExprElem && initExprElem.textContent) variable.initialValueExpression = initExprElem.textContent.trim();
+        variables.push(variable);
+      }
+    }
+  });
+
+  // 解析报表样式
+  const styles: ReportStyle[] = [];
+  Array.from(jasperReportElem.children).forEach(child => {
+    if (child.tagName === 'style' || child.localName === 'style') {
+      const name = child.getAttribute('name');
+      if (!name) return;
+      const style: ReportStyle = { name };
+      if (child.hasAttribute('parentStyle')) style.parentStyle = child.getAttribute('parentStyle') || undefined;
+      if (child.hasAttribute('mode')) style.mode = child.getAttribute('mode') || undefined;
+      if (child.hasAttribute('backcolor')) style.backcolor = child.getAttribute('backcolor') || undefined;
+      if (child.hasAttribute('forecolor')) style.forecolor = child.getAttribute('forecolor') || undefined;
+      const condExpr = child.querySelector('conditionExpression');
+      if (condExpr && condExpr.textContent) style.conditionExpression = condExpr.textContent.trim();
+      const boxElem = child.querySelector('box');
+      if (boxElem) style.box = parseBoxElement(boxElem);
+      const textElem = child.querySelector('textElement');
+      if (textElem) {
+        if (textElem.hasAttribute('textAlignment')) style.textAlignment = textElem.getAttribute('textAlignment') || undefined;
+        if (textElem.hasAttribute('verticalAlignment')) style.verticalAlignment = textElem.getAttribute('verticalAlignment') || undefined;
+        const fontElem = textElem.querySelector('font');
+        if (fontElem) {
+          if (fontElem.hasAttribute('fontName')) style.fontFamily = fontElem.getAttribute('fontName') || undefined;
+          if (fontElem.hasAttribute('size')) style.fontSize = parseInt(fontElem.getAttribute('size') || '12');
+          style.isBold = fontElem.getAttribute('isBold') === 'true';
+          style.isItalic = fontElem.getAttribute('isItalic') === 'true';
+          style.isUnderline = fontElem.getAttribute('isUnderline') === 'true';
+        }
+      }
+      const conditionalStyleElems = child.querySelectorAll('conditionalStyle');
+      if (conditionalStyleElems.length > 0) {
+        style.conditionalStyles = [];
+        conditionalStyleElems.forEach(csElem => {
+          const cs: ConditionalStyle = { conditionExpression: '', properties: {} };
+          const csCondExpr = csElem.querySelector('conditionExpression');
+          if (csCondExpr && csCondExpr.textContent) cs.conditionExpression = csCondExpr.textContent.trim();
+          if (csElem.hasAttribute('forecolor')) cs.properties.forecolor = csElem.getAttribute('forecolor') || undefined;
+          if (csElem.hasAttribute('backcolor')) cs.properties.backcolor = csElem.getAttribute('backcolor') || undefined;
+          if (csElem.hasAttribute('mode')) cs.properties.mode = csElem.getAttribute('mode') || undefined;
+          const csBox = csElem.querySelector('box');
+          if (csBox) cs.properties.box = parseBoxElement(csBox);
+          const csTextElem = csElem.querySelector('textElement');
+          if (csTextElem) {
+            if (csTextElem.hasAttribute('textAlignment')) cs.properties.textAlignment = csTextElem.getAttribute('textAlignment') || undefined;
+            if (csTextElem.hasAttribute('verticalAlignment')) cs.properties.verticalAlignment = csTextElem.getAttribute('verticalAlignment') || undefined;
+            const csFont = csTextElem.querySelector('font');
+            if (csFont) {
+              if (csFont.hasAttribute('fontName')) cs.properties.fontFamily = csFont.getAttribute('fontName') || undefined;
+              if (csFont.hasAttribute('size')) cs.properties.fontSize = parseInt(csFont.getAttribute('size') || '12');
+              cs.properties.isBold = csFont.getAttribute('isBold') === 'true';
+              cs.properties.isItalic = csFont.getAttribute('isItalic') === 'true';
+              cs.properties.isUnderline = csFont.getAttribute('isUnderline') === 'true';
+            }
+          }
+          style.conditionalStyles.push(cs);
+        });
+      }
+      styles.push(style);
+    }
+  });
+
+  return { properties, bands, fields, parameters, datasets, variables, styles };
 }
 
 // 解析子数据集元素
@@ -798,6 +881,20 @@ function parseElement(element: Element, type: string): any {
         resultAny.rightBorderColor = box.rightPen.lineColor;
       }
     }
+  }
+
+  // 读取 printWhenExpression 和 style 属性
+  if (reportElement.hasAttribute('printWhenExpression')) {
+    result.printWhenExpression = reportElement.getAttribute('printWhenExpression') || undefined;
+  }
+  if (reportElement.hasAttribute('style')) {
+    result.style = reportElement.getAttribute('style') || undefined;
+  }
+  if (reportElement.hasAttribute('isPrintRepeatedValues')) {
+    (result as any).isPrintRepeatedValues = reportElement.getAttribute('isPrintRepeatedValues') !== 'false';
+  }
+  if (reportElement.hasAttribute('isRemoveLineWhenBlank')) {
+    (result as any).isRemoveLineWhenBlank = reportElement.getAttribute('isRemoveLineWhenBlank') === 'true';
   }
 
   switch (type) {

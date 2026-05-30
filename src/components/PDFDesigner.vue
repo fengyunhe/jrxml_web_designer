@@ -7,6 +7,12 @@
           <n-button @click="undo" type="default" quaternary circle :title="t('actions.undo')">↩️</n-button>
           <n-button @click="redo" type="default" quaternary circle :title="t('actions.redo')">↪️</n-button>
         </div>
+        <div class="header-toolbar-ops">
+          <span class="toolbar-divider"></span>
+          <button class="toolbar-btn" @click="deleteElement" title="删除">🗑️</button>
+          <button class="toolbar-btn" @click="copyElement" title="复制">📋</button>
+          <button class="toolbar-btn" @click="pasteElement" title="粘贴">📎</button>
+        </div>
       </div>
       <div class="header-actions">
         <!-- 文件管理组件 -->
@@ -77,6 +83,8 @@
           :elements="elements"
           :report-fields="reportFields"
           :report-parameters="reportParameters"
+          :report-variables="reportVariables"
+          :report-styles="reportStyles"
           :bands="bands"
           :selected-element="selectedElement"
           :sub-datasets="subDatasets"
@@ -89,6 +97,12 @@
           @add-parameter="handleAddParameter"
           @edit-parameter="handleEditParameter"
           @delete-parameter="handleDeleteParameter"
+          @add-variable="handleAddVariable"
+          @edit-variable="handleEditVariable"
+          @delete-variable="handleDeleteVariable"
+          @add-style="handleAddStyle"
+          @edit-style="handleEditStyle"
+          @delete-style="handleDeleteStyle"
           @delete-element="deleteElement"
           @add-sub-dataset="handleAddSubDataset"
           @edit-sub-dataset="handleEditSubDataset"
@@ -97,6 +111,18 @@
       </ResizablePanel>
       
       <!-- 中间设计区域 -->
+      <div class="design-area-wrapper" style="position:relative;flex:1;overflow:auto;">
+      <MultiSelectToolbar
+        :visible="selectedElements.length > 1"
+        :count="selectedElements.length"
+        @align="handleMultiAlign"
+        @distribute="handleMultiDistribute"
+        @resize="handleMultiResize"
+      />
+      <AlignmentGuides
+        :guides="activeAlignmentGuides.map(g => ({ id: g.id, type: g.type, position: g.position, label: g.label, active: g.active }))"
+        :zoom-level="zoomLevel"
+      />
       <DesignerCanvas
         ref="designerCanvasRef"
         :paper-width="paperWidth"
@@ -140,6 +166,7 @@
         @clear-selection="clearSelection"
         @check-fields="handleCheckFields"
         @contextmenu="handleElementContextMenu"
+        @canvas-contextmenu="handleCanvasContextMenu"
         @reset-zoom="resetZoom"
         @move-column="handleMoveColumn"
         @add-columns-to-group="handleAddColumnsToGroup"
@@ -149,7 +176,8 @@
         @update:show-grid="showGrid = $event"
         @update:table-styles="tableStyles = $event"
       />
-      
+      </div>
+
       <!-- 右侧属性面板 -->
       <ResizablePanel 
         v-show="showRightPanel"
@@ -168,6 +196,8 @@
           :report-properties="reportProperties"
           :sub-datasets="subDatasets"
           :report-styles="reportStyles"
+          :report-fields="reportFields"
+          :report-parameters="reportParameters"
           @update:bands="bands = $event"
           @delete-element="deleteElement"
           @update-jrxml="updateJRXML"
@@ -199,7 +229,10 @@
       @download-jrxml="downloadJRXML"
       @band-selection-change="handleBandSelectionChange"
     />
-    
+
+    <!-- 拖拽反馈层 -->
+    <DragFeedbackLayer :feedback="dragFeedback" />
+
     <!-- 打赏弹窗 -->
     <RewardModal v-if="locale === 'zh'" v-model:visible="showReward" />
     <RewardModalEn v-else v-model:visible="showReward" />
@@ -209,11 +242,29 @@
     <HelpModalEn v-else v-model:visible="showHelp" />
     
     <!-- 字段管理弹窗 -->
-    <FieldManagementModal 
-      v-model:visible="showFieldModal" 
-      :field="isEditingParameter ? editingParameter : editingField" 
+    <FieldManagementModal
+      v-model:visible="showFieldModal"
+      :field="isEditingParameter ? editingParameter : editingField"
       :is-parameter="isEditingParameter"
-      @save="handleFieldSave" 
+      @save="handleFieldSave"
+    />
+
+    <!-- 变量管理弹窗 -->
+    <VariableManagementModal
+      v-model:visible="showVariableModal"
+      :variable="editingVariable"
+      :report-fields="reportFields"
+      :report-parameters="reportParameters"
+      :report-variables="reportVariables"
+      @save="handleVariableSave"
+    />
+
+    <!-- 样式管理弹窗 -->
+    <StyleManagementModal
+      v-model:visible="showStyleModal"
+      :style="editingStyle"
+      :all-styles="reportStyles"
+      @save="handleStyleSave"
     />
     
     <!-- PDF预览弹窗 -->
@@ -273,6 +324,36 @@
       @confirm="(selectedColumnIndices, selectedRegion, groupText) => handleColumnSelectionConfirm(selectedColumnIndices, selectedRegion, groupText)"
     />
 
+    <!-- 右键菜单 -->
+    <div v-if="contextMenu.visible" class="context-menu-overlay" @click="contextMenu.visible = false" @contextmenu.prevent="contextMenu.visible = false">
+      <div class="context-menu" :style="{ left: contextMenu.x + 'px', top: contextMenu.y + 'px' }">
+        <div v-if="contextMenu.type === 'element'" class="context-menu-items">
+          <div class="context-menu-item" @click="handleContextMenuAction('copy')">
+            <span class="menu-icon">📋</span> 复制
+          </div>
+          <div class="context-menu-item" @click="handleContextMenuAction('paste')">
+            <span class="menu-icon">📎</span> 粘贴
+          </div>
+          <div class="context-menu-divider"></div>
+          <div class="context-menu-item" @click="handleContextMenuAction('delete')">
+            <span class="menu-icon">🗑️</span> 删除
+          </div>
+          <div class="context-menu-divider"></div>
+          <div class="context-menu-item" @click="handleContextMenuAction('bringToFront')">
+            <span class="menu-icon">⬆️</span> 置顶
+          </div>
+          <div class="context-menu-item" @click="handleContextMenuAction('sendToBack')">
+            <span class="menu-icon">⬇️</span> 置底
+          </div>
+        </div>
+        <div v-else class="context-menu-items">
+          <div class="context-menu-item" @click="handleContextMenuAction('paste')">
+            <span class="menu-icon">📎</span> 粘贴
+          </div>
+        </div>
+      </div>
+    </div>
+
   </div>
 </template>
 
@@ -287,6 +368,8 @@ import FieldManagementModal from './modals/FieldManagementModal.vue';
 import PdfPreviewModal from './modals/PdfPreviewModal.vue';
 import PreviewServerSettingsModal from './modals/PreviewServerSettingsModal.vue';
 import SubDatasetManagementModal from './modals/SubDatasetManagementModal.vue';
+import VariableManagementModal from './modals/VariableManagementModal.vue';
+import StyleManagementModal from './modals/StyleManagementModal.vue';
 import BaseModal from './modals/BaseModal.vue';
 import ColumnSelectionModal from './modals/ColumnSelectionModal.vue';
 import BottomPanel from './panels/BottomPanel.vue';
@@ -295,6 +378,9 @@ import FileManager from './designer/controls/FileManager.vue';
 import ElementProperties from './designer/properties/ElementProperties.vue';
 import LanguageSwitcher from './common/LanguageSwitcher.vue';
 import SplitButton from './common/SplitButton.vue';
+import MultiSelectToolbar from './designer/MultiSelectToolbar.vue';
+import AlignmentGuides from './designer/AlignmentGuides.vue';
+import DragFeedbackLayer from './designer/DragFeedbackLayer.vue';
 import {NButton, NSelect} from 'naive-ui';
 import type {
   Band,
@@ -305,6 +391,7 @@ import type {
   FrameElement,
   ReportField,
   ReportParameter,
+  ReportVariable,
   SelectedElementInfo,
   TableDataset
 } from '../types';
@@ -337,6 +424,9 @@ import {loadFromLocalStorage, saveToLocalStorage} from '../utils/fileUtils';
 
 // 导入元素边界验证工具
 import {getOutOfBoundsElements} from '../utils/elementBoundsValidator';
+import {useBoundaryDetection} from '@/composables/useBoundaryDetection';
+import {useAlignmentSystem} from '@/composables/useAlignmentSystem';
+import {useDragFeedback} from '@/composables/useDragFeedback';
 
 // 确保浏览器环境中DOMParser可用
 // 移除未使用的getDOMParser函数
@@ -717,6 +807,12 @@ const reportStyles = ref<any[]>([
   }
 ]);
 
+// 报表变量
+const reportVariables = ref<any[]>([]);
+
+// 右键菜单状态
+const contextMenu = ref({ visible: false, x: 0, y: 0, type: 'element' as 'element' | 'canvas' });
+
 // 表格样式
 const tableStyles = ref({
   tableHeader: 'Table_TH',
@@ -838,6 +934,31 @@ type HistoryState = {
 // 超出边界的元素
 const outOfBoundsElements = ref<Array<{bandIndex: number, elementIndex: number, element: DesignElement}>>([]);
 
+// 边界检测composable
+const {
+  boundaryState: boundaryDetectionState,
+  checkAllElements: checkAllBoundaryElements,
+  autoFixElement: autoFixBoundaryElement,
+  autoFixAllElements: autoFixAllBoundaryElements,
+  getViolationSummary: boundaryViolationSummary,
+} = useBoundaryDetection({ tolerance: 5, realtime: true });
+
+// 对齐系统composable
+const {
+  activeGuides: activeAlignmentGuides,
+  calculateAlignment,
+  calculateDistribution,
+  alignElements,
+} = useAlignmentSystem();
+
+// 拖拽反馈composable
+const {
+  feedback: dragFeedback,
+  updateDroppableZones,
+  startDrag: startDragFeedback,
+  stopDrag: stopDragFeedback,
+} = useDragFeedback();
+
 // 检查并更新超出边界的元素
 function updateOutOfBoundsElements() {
   // 安全检查，确保bands和reportProperties已初始化
@@ -845,15 +966,97 @@ function updateOutOfBoundsElements() {
     console.warn('bands或reportProperties未初始化，跳过边界检查');
     return;
   }
-  
-  // 获取所有超出边界的元素
+
+  // 获取所有超出边界的元素（保持原有格式供DesignerCanvas使用）
   const outOfBounds = getOutOfBoundsElements(bands.value, reportProperties.value);
   outOfBoundsElements.value = outOfBounds;
-  
-  // 如果有超出边界的元素，在控制台输出警告
+
+  // 同时使用composable进行详细边界检测
+  checkAllBoundaryElements(
+    bands.value,
+    reportProperties.value.pageWidth,
+    reportProperties.value
+  );
+
   if (outOfBounds.length > 0) {
     console.warn(`发现 ${outOfBounds.length} 个超出边界的元素:`, outOfBounds);
   }
+}
+
+// 获取当前选中的多个元素的实际数据
+function getSelectedElementsData() {
+  const result: Array<{ x: number; y: number; width: number; height: number; bandIndex: number; elementIndex: number }> = [];
+  for (const sel of selectedElements.value) {
+    const band = bands.value[sel.bandIndex];
+    if (band && band.elements[sel.elementIndex]) {
+      const el = band.elements[sel.elementIndex];
+      result.push({ x: el.x, y: el.y, width: el.width, height: el.height, bandIndex: sel.bandIndex, elementIndex: sel.elementIndex });
+    }
+  }
+  return result;
+}
+
+// 多选对齐操作
+function handleMultiAlign(direction: 'left' | 'center' | 'right' | 'top' | 'middle' | 'bottom') {
+  const elementsData = getSelectedElementsData();
+  if (elementsData.length < 2) return;
+  saveStateToHistory();
+  const newPositions = alignElements(elementsData, direction);
+  newPositions.forEach((pos, i) => {
+    const sel = selectedElements.value[i];
+    const band = bands.value[sel.bandIndex];
+    if (band && band.elements[sel.elementIndex]) {
+      band.elements[sel.elementIndex].x = Math.round(pos.x);
+      band.elements[sel.elementIndex].y = Math.round(pos.y);
+    }
+  });
+  updateJRXML();
+}
+
+// 多选分布操作
+function handleMultiDistribute(direction: 'horizontal' | 'vertical') {
+  const elementsData = getSelectedElementsData();
+  if (elementsData.length < 3) return;
+  saveStateToHistory();
+  const newPositions = calculateDistribution(elementsData, direction);
+  newPositions.forEach((pos, i) => {
+    const sel = selectedElements.value[i];
+    const band = bands.value[sel.bandIndex];
+    if (band && band.elements[sel.elementIndex]) {
+      band.elements[sel.elementIndex].x = Math.round(pos.x);
+      band.elements[sel.elementIndex].y = Math.round(pos.y);
+    }
+  });
+  updateJRXML();
+}
+
+// 多选尺寸操作
+function handleMultiResize(type: 'sameWidth' | 'sameHeight' | 'sameSize') {
+  const elementsData = getSelectedElementsData();
+  if (elementsData.length < 2) return;
+  saveStateToHistory();
+
+  if (type === 'sameWidth' || type === 'sameSize') {
+    const maxWidth = Math.max(...elementsData.map(e => e.width));
+    elementsData.forEach((_, i) => {
+      const sel = selectedElements.value[i];
+      const band = bands.value[sel.bandIndex];
+      if (band && band.elements[sel.elementIndex]) {
+        band.elements[sel.elementIndex].width = maxWidth;
+      }
+    });
+  }
+  if (type === 'sameHeight' || type === 'sameSize') {
+    const maxHeight = Math.max(...elementsData.map(e => e.height));
+    elementsData.forEach((_, i) => {
+      const sel = selectedElements.value[i];
+      const band = bands.value[sel.bandIndex];
+      if (band && band.elements[sel.elementIndex]) {
+        band.elements[sel.elementIndex].height = maxHeight;
+      }
+    });
+  }
+  updateJRXML();
 }
 
 const {
@@ -2333,9 +2536,9 @@ const initBox = () => {
 
 // 下载JRXML文件
 const downloadJRXML = () => {
-  const content = generateJRXMLContent(reportProperties.value, bands.value, reportFields.value, reportParameters.value, subDatasets.value);
+  const content = generateJRXMLContent(reportProperties.value, bands.value, reportFields.value, reportParameters.value, subDatasets.value, [], reportVariables.value);
   jrxmlContent.value = content;
-  
+
   // 自动切换到JRXML标签页
   activeTab.value = 'jrxml';
   
@@ -2415,7 +2618,7 @@ const updateJRXML = () => {
     console.log('当前reportFields数量:', reportFields.value.length);
     console.log('当前reportParameters数量:', reportParameters.value.length);
     
-    const content = generateJRXMLContent(reportProperties.value, bands.value, reportFields.value, reportParameters.value, subDatasets.value, reportStyles.value);
+    const content = generateJRXMLContent(reportProperties.value, bands.value, reportFields.value, reportParameters.value, subDatasets.value, reportStyles.value, reportVariables.value);
     console.log('生成的JRXML内容长度:', content.length);
     console.log('生成的JRXML内容预览:', content);
     
@@ -3000,7 +3203,7 @@ const openPdfPreview = (): void => {
   try {
     if (!jrxmlContent.value) {
       // 直接生成JRXML内容，不下载
-      const content = generateJRXMLContent(reportProperties.value, bands.value, reportFields.value, reportParameters.value, subDatasets.value);
+      const content = generateJRXMLContent(reportProperties.value, bands.value, reportFields.value, reportParameters.value, subDatasets.value, [], reportVariables.value);
       jrxmlContent.value = content;
     }
     showPdfPreview.value = true;
@@ -3034,7 +3237,17 @@ const saveJRXML = (): void => {
     
     // 更新参数定义
     reportParameters.value = parsedData.parameters || [];
-    
+
+    // 更新变量定义
+    if (parsedData.variables) {
+      reportVariables.value = parsedData.variables;
+    }
+
+    // 更新样式定义
+    if (parsedData.styles) {
+      reportStyles.value = parsedData.styles;
+    }
+
     // 更新子数据集
     if (parsedData.datasets) {
       subDatasets.value = parsedData.datasets.map(dataset => ({
@@ -3945,6 +4158,10 @@ const showFieldModal = ref(false);
 const editingField = ref<ReportField | undefined>(undefined);
 const editingParameter = ref<ReportParameter | undefined>(undefined);
 
+// 变量管理相关
+const showVariableModal = ref(false);
+const editingVariable = ref<ReportVariable | undefined>(undefined);
+
 // 打开预览服务器设置
 const openPreviewServerSettings = (): void => {
   showPreviewServerSettings.value = true;
@@ -4008,6 +4225,90 @@ const handleDeleteParameter = (parameterName: string): void => {
       updateJRXML();
     }
   }
+};
+
+// 处理添加变量
+const handleAddVariable = (): void => {
+  editingVariable.value = undefined;
+  showVariableModal.value = true;
+};
+
+// 处理编辑变量
+const handleEditVariable = (variable: ReportVariable): void => {
+  editingVariable.value = { ...variable };
+  showVariableModal.value = true;
+};
+
+// 处理删除变量
+const handleDeleteVariable = (variableName: string): void => {
+  if (confirm(`确定要删除变量 "${variableName}" 吗？`)) {
+    const variableIndex = reportVariables.value.findIndex(v => v.name === variableName);
+    if (variableIndex !== -1) {
+      reportVariables.value.splice(variableIndex, 1);
+      saveStateToHistory();
+      updateJRXML();
+    }
+  }
+};
+
+// 处理变量保存
+const handleVariableSave = (variable: ReportVariable): void => {
+  const existingIndex = reportVariables.value.findIndex(v => v.name === variable.name);
+  if (existingIndex !== -1 && editingVariable.value?.name !== variable.name) {
+    alert('变量名称已存在，请使用其他名称');
+    return;
+  }
+  if (existingIndex !== -1) {
+    reportVariables.value[existingIndex] = variable;
+  } else {
+    reportVariables.value.push(variable);
+  }
+  saveStateToHistory();
+  updateJRXML();
+};
+
+// 样式管理相关
+const showStyleModal = ref(false);
+const editingStyle = ref<any | undefined>(undefined);
+
+// 处理添加样式
+const handleAddStyle = (): void => {
+  editingStyle.value = undefined;
+  showStyleModal.value = true;
+};
+
+// 处理编辑样式
+const handleEditStyle = (style: any): void => {
+  editingStyle.value = { ...style, box: style.box ? { ...style.box } : undefined };
+  showStyleModal.value = true;
+};
+
+// 处理删除样式
+const handleDeleteStyle = (styleName: string): void => {
+  if (confirm(`确定要删除样式 "${styleName}" 吗？`)) {
+    const styleIndex = reportStyles.value.findIndex(s => s.name === styleName);
+    if (styleIndex !== -1) {
+      reportStyles.value.splice(styleIndex, 1);
+      saveStateToHistory();
+      updateJRXML();
+    }
+  }
+};
+
+// 处理样式保存
+const handleStyleSave = (style: any): void => {
+  const existingIndex = reportStyles.value.findIndex(s => s.name === style.name);
+  if (existingIndex !== -1 && editingStyle.value?.name !== style.name) {
+    alert('样式名称已存在，请使用其他名称');
+    return;
+  }
+  if (existingIndex !== -1) {
+    reportStyles.value[existingIndex] = style;
+  } else {
+    reportStyles.value.push(style);
+  }
+  saveStateToHistory();
+  updateJRXML();
 };
 
 // 处理删除元素
@@ -4622,15 +4923,47 @@ const confirmJoinColumnsToGroup = (): void => {
 
 // 处理元素上下文菜单
 const handleElementContextMenu = (event: MouseEvent, bandIndex: number, elementIndex: number, parentFrameIndex?: number): void => {
-  // 可以在这里添加上下文菜单的处理逻辑
-  // 例如：显示右键菜单，提供元素操作选项
-  console.log('Context menu requested for element:', bandIndex, elementIndex, parentFrameIndex);
-  
-  // 阻止默认上下文菜单
   event.preventDefault();
-  
-  // 选中元素
+  event.stopPropagation();
   selectElement(bandIndex, elementIndex, false, parentFrameIndex);
+  contextMenu.value = { visible: true, x: event.clientX, y: event.clientY, type: 'element' };
+};
+
+// 处理画布上下文菜单
+const handleCanvasContextMenu = (event: MouseEvent): void => {
+  event.preventDefault();
+  contextMenu.value = { visible: true, x: event.clientX, y: event.clientY, type: 'canvas' };
+};
+
+// 处理上下文菜单操作
+const handleContextMenuAction = (action: string) => {
+  contextMenu.value.visible = false;
+  switch (action) {
+    case 'copy': copyElement(); break;
+    case 'paste': pasteElement(); break;
+    case 'delete': deleteElement(); break;
+    case 'bringToFront': moveElementZOrder('front'); break;
+    case 'sendToBack': moveElementZOrder('back'); break;
+  }
+};
+
+// 移动元素Z轴顺序
+const moveElementZOrder = (direction: 'front' | 'back') => {
+  if (!selectedElement.value) return;
+  saveStateToHistory();
+  const { bandIndex, elementIndex, parentFrameIndex } = selectedElement.value;
+  const band = bands.value[bandIndex];
+  if (!band) return;
+  const elements = parentFrameIndex !== undefined
+    ? (band.elements[parentFrameIndex] as any).elements
+    : band.elements;
+  if (!elements) return;
+  const [element] = elements.splice(elementIndex, 1);
+  if (direction === 'front') elements.push(element);
+  else elements.unshift(element);
+  const newIndex = direction === 'front' ? elements.length - 1 : 0;
+  selectElement(bandIndex, newIndex, false, parentFrameIndex);
+  updateJRXML();
 };
 
 // 处理Band选择变化
@@ -4814,6 +5147,92 @@ const handleBandSelectionChange = (): void => {
 
 .empty-state p {
   margin: 0 0 10px 0;
+}
+
+/* 右键菜单 */
+.context-menu-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 10000;
+}
+
+.context-menu {
+  position: fixed;
+  min-width: 160px;
+  background: var(--prop-bg-primary, #fff);
+  border: 1px solid var(--prop-border-color, #d9d9d9);
+  border-radius: var(--prop-border-radius-md, 4px);
+  box-shadow: var(--prop-shadow-md, 0 3px 6px -4px rgba(0,0,0,0.12), 0 6px 16px 0 rgba(0,0,0,0.08));
+  padding: 4px 0;
+  z-index: 10001;
+}
+
+.context-menu-items {
+  display: flex;
+  flex-direction: column;
+}
+
+.context-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  font-size: 13px;
+  color: var(--prop-text-primary, #333);
+  cursor: pointer;
+  transition: background-color 0.1s;
+}
+
+.context-menu-item:hover {
+  background-color: var(--prop-bg-hover, #f0f0f0);
+}
+
+.context-menu-divider {
+  height: 1px;
+  background-color: var(--prop-divider-color, #f0f0f0);
+  margin: 4px 0;
+}
+
+.menu-icon {
+  font-size: 14px;
+  width: 20px;
+  text-align: center;
+}
+
+/* 工具栏操作按钮 */
+.header-toolbar-ops {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: 12px;
+}
+
+.toolbar-divider {
+  width: 1px;
+  height: 20px;
+  background: var(--prop-divider-color, #f0f0f0);
+  margin: 0 4px;
+}
+
+.toolbar-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: none;
+  background: transparent;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: background-color 0.1s;
+}
+
+.toolbar-btn:hover {
+  background-color: var(--prop-bg-hover, #f0f0f0);
 }
 
 </style>

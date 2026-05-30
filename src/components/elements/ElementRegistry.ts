@@ -5,6 +5,7 @@ export interface ElementConfig {
   type: string;
   name: string;
   icon: string;
+  category?: string;
   defaultProps: Partial<DesignElement>;
   component?: any;
   validator?: (element: DesignElement) => boolean;
@@ -34,6 +35,7 @@ export class ElementRegistry {
       type: 'staticText',
       name: 'elementNames.staticText',
       icon: 'T',
+      category: 'text',
       defaultProps: {
         type: 'staticText',
         x: 0,
@@ -59,6 +61,7 @@ export class ElementRegistry {
       type: 'textField',
       name: 'elementNames.textField',
       icon: '{ }',
+      category: 'text',
       defaultProps: {
         type: 'textField',
         x: 0,
@@ -90,6 +93,7 @@ export class ElementRegistry {
       type: 'image',
       name: 'elementNames.image',
       icon: '🖼',
+      category: 'shape',
       defaultProps: {
         type: 'image',
         x: 0,
@@ -111,6 +115,7 @@ export class ElementRegistry {
       type: 'line',
       name: 'elementNames.line',
       icon: '─',
+      category: 'shape',
       defaultProps: {
         type: 'line',
         x: 0,
@@ -129,6 +134,7 @@ export class ElementRegistry {
       type: 'rectangle',
       name: 'elementNames.rectangle',
       icon: '▭',
+      category: 'shape',
       defaultProps: {
         type: 'rectangle',
         x: 0,
@@ -147,6 +153,7 @@ export class ElementRegistry {
       type: 'ellipse',
       name: 'elementNames.ellipse',
       icon: '◯',
+      category: 'shape',
       defaultProps: {
         type: 'ellipse',
         x: 0,
@@ -164,7 +171,8 @@ export class ElementRegistry {
     this.registerElement({
       type: 'break',
       name: 'elementNames.break',
-      icon: '⤓', // 或者其他合适的图标
+      icon: '⤓',
+      category: 'container',
       defaultProps: {
         type: 'break',
         x: 0,
@@ -180,7 +188,8 @@ export class ElementRegistry {
     this.registerElement({
       type: 'frame',
       name: 'elementNames.frame',
-      icon: '☐', // 框图标
+      icon: '☐',
+      category: 'container',
       defaultProps: {
         type: 'frame',
         x: 0,
@@ -204,7 +213,8 @@ export class ElementRegistry {
     this.registerElement({
       type: 'table',
       name: 'elementNames.table',
-      icon: '⊞', // 表格图标
+      icon: '⊞',
+      category: 'container',
       defaultProps: {
         type: 'table',
         x: 0,
@@ -345,6 +355,11 @@ export class ElementRegistry {
     return Array.from(this.elements.values());
   }
 
+  // 按分类获取元素配置
+  public getByCategory(category: string): ElementConfig[] {
+    return Array.from(this.elements.values()).filter(e => e.category === category);
+  }
+
   // 获取元素类型列表
   public getElementTypes(): string[] {
     return Array.from(this.elements.keys());
@@ -441,7 +456,7 @@ export class ElementRegistry {
 
       const componentPath = componentMap[type];
       if (componentPath) {
-        const module = await import(componentPath);
+        const module = await import(/* @vite-ignore */ componentPath);
         config.component = module.default;
         return module.default;
       }

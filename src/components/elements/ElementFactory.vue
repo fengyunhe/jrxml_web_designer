@@ -99,6 +99,7 @@ const emit = defineEmits<{
   moveColumn: [elementIndex: number, fromIndex: number, toIndex: number, bandIndex: number, parentFrameIndex?: number];
   addColumnsToGroup: [elementIndex: number, columnIndices: number[], bandIndex: number, parentFrameIndex?: number];
   joinColumnsToExistingGroup: [elementIndex: number, columnIndices: number[], bandIndex: number, parentFrameIndex?: number];
+  'update-jrxml': [];
 }>();
 
 // 根据元素类型获取对应的组件
@@ -174,6 +175,9 @@ const commonEvents = {
   },
   joinColumnsToExistingGroup: (elementIndex: number, columnIndices: number[]) => {
     emit('joinColumnsToExistingGroup', elementIndex, columnIndices, props.bandIndex, props.parentFrameIndex);
+  },
+  'update-jrxml': () => {
+    emit('update-jrxml');
   }
 };
 </script>

@@ -30,4 +30,37 @@ export interface SubDataset {
   query?: { language: string; text: string };
 }
 
+export interface Variable {
+  name: string;
+  class: string;
+  calculationType?: string;
+  resetType?: string;
+  resetGroup?: string;
+  expression?: string;
+  initialValueExpression?: string;
+}
+
+export interface ReportStyle {
+  name: string;
+  parentStyle?: string;
+  mode?: string;
+  backcolor?: string;
+  forecolor?: string;
+  conditionExpression?: string;
+  box?: any;
+  textAlignment?: string;
+  verticalAlignment?: string;
+  fontFamily?: string;
+  fontSize?: number;
+  isBold?: boolean;
+  isItalic?: boolean;
+  isUnderline?: boolean;
+  conditionalStyles?: ConditionalStyle[];
+}
+
+export interface ConditionalStyle {
+  conditionExpression: string;
+  properties: Partial<ReportStyle>;
+}
+
 

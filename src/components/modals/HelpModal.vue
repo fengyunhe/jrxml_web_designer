@@ -31,17 +31,23 @@
       </ul>
       
       <h4>4. 快捷键</h4>
-      <ul>
-        <li><strong>Ctrl+S (Mac: Cmd+S)</strong>：保存当前文件</li>
-        <li><strong>Ctrl+B (Mac: Cmd+B)</strong>：切换底部JRXML面板显示</li>
-        <li><strong>Ctrl+Z (Mac: Cmd+Z)</strong>：撤销操作</li>
-        <li><strong>Ctrl+Y (Mac: Cmd+Y)</strong>：重做操作</li>
-        <li><strong>Ctrl+C (Mac: Cmd+C)</strong>：复制选中元素或文本</li>
-        <li><strong>Ctrl+V (Mac: Cmd+V)</strong>：粘贴元素或文本</li>
-        <li><strong>Delete/Backspace</strong>：删除选中元素（非编辑模式）</li>
-        <li><strong>方向键</strong>：选择周围元素</li>
-        <li><strong>Shift+方向键</strong>：微调选中元素的位置（每次移动1像素）</li>
-      </ul>
+      <table class="shortcuts-table">
+        <thead>
+          <tr><th>快捷键</th><th>功能</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><kbd>Ctrl/⌘</kbd> + <kbd>S</kbd></td><td>保存当前文件</td></tr>
+          <tr><td><kbd>Ctrl/⌘</kbd> + <kbd>Z</kbd></td><td>撤销操作</td></tr>
+          <tr><td><kbd>Ctrl/⌘</kbd> + <kbd>Y</kbd></td><td>重做操作</td></tr>
+          <tr><td><kbd>Ctrl/⌘</kbd> + <kbd>C</kbd></td><td>复制选中元素</td></tr>
+          <tr><td><kbd>Ctrl/⌘</kbd> + <kbd>V</kbd></td><td>粘贴元素</td></tr>
+          <tr><td><kbd>Ctrl/⌘</kbd> + <kbd>B</kbd></td><td>切换底部JRXML面板</td></tr>
+          <tr><td><kbd>Delete</kbd> / <kbd>Backspace</kbd></td><td>删除选中元素</td></tr>
+          <tr><td><kbd>↑</kbd> <kbd>↓</kbd> <kbd>←</kbd> <kbd>→</kbd></td><td>选择周围元素</td></tr>
+          <tr><td><kbd>Shift</kbd> + <kbd>方向键</kbd></td><td>微调元素位置（1px）</td></tr>
+          <tr><td><kbd>Ctrl/⌘</kbd> + <kbd>0</kbd></td><td>重置缩放</td></tr>
+        </tbody>
+      </table>
       
       <h4>5. 高级功能</h4>
       <ul>
@@ -128,5 +134,40 @@ const closeModal = () => {
 
 .help-content-scroll strong {
   color: #333;
+}
+
+.shortcuts-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 16px;
+  font-size: 13px;
+}
+
+.shortcuts-table th,
+.shortcuts-table td {
+  border: 1px solid #e0e0e0;
+  padding: 6px 12px;
+  text-align: left;
+}
+
+.shortcuts-table th {
+  background: #f5f5f5;
+  font-weight: 600;
+  color: #444;
+}
+
+.shortcuts-table td {
+  color: #555;
+}
+
+.shortcuts-table kbd {
+  display: inline-block;
+  padding: 2px 6px;
+  font-family: monospace;
+  font-size: 12px;
+  background: #f0f0f0;
+  border: 1px solid #ccc;
+  border-radius: 3px;
+  box-shadow: 0 1px 0 rgba(0,0,0,0.1);
 }
 </style>

@@ -1,5 +1,8 @@
 <template>
   <div class="designer-canvas" @click="setDesignAreaFocused">
+    <!-- 拖拽反馈层 -->
+    <DragFeedbackLayer :feedback="dragFeedback" />
+
     <!-- 顶部标尺容器 -->
     <div class="top-ruler-container">
       <!-- 左上角空白区域 -->
@@ -54,7 +57,7 @@
       </div>
       
       <!-- 纸张容器 -->
-      <div class="paper-container" ref="paperContainerRef">
+      <div class="paper-container" ref="paperContainerRef" @contextmenu="handleCanvasContextMenu">
         <!-- 纸张 -->
         <div class="paper" 
              :style="{ 
@@ -130,7 +133,11 @@
             @move-column="handleMoveColumn"
             @add-columns-to-group="handleAddColumnsToGroup"
             @join-columns-to-existing-group="handleJoinColumnsToExistingGroup"
+            @update-jrxml="emit('update-jrxml')"
           />
+            <div v-if="band.elements.length === 0 && band.type === 'detail'" class="canvas-empty-state">
+              <div class="empty-state-text">从左侧拖拽元素到画布</div>
+            </div>
           </div>
           <!-- 区域高度调整手柄 -->
           <div class="band-resize-handle" @mousedown.stop="startResizingBand($event, bandIndex)"></div>
@@ -209,9 +216,11 @@ import { onMounted, onBeforeUnmount, ref } from 'vue';
 import ElementFactory from '../elements/ElementFactory.vue';
 import SelectionBox from './SelectionBox.vue';
 import ZoomControls from './controls/ZoomControls.vue';
+import DragFeedbackLayer from './DragFeedbackLayer.vue';
 import { BAND_CONSTANTS } from '@/constants/constants';
 import { getBandDisplayName } from '@/utils/bandUtils';
 import type { Band } from '@/types';
+import type { DragFeedback } from '@/composables/useDragFeedback';
 import { useI18n } from 'vue-i18n';
 import { NCheckbox, NSpace } from 'naive-ui';
 
@@ -248,6 +257,7 @@ interface Props {
     columnFooter: string;
     detailCell: string;
   };
+  dragFeedback?: DragFeedback; // 新增：拖拽反馈
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -279,7 +289,17 @@ const props = withDefaults(defineProps<Props>(), {
     columnHeader: 'Table_CH',
     columnFooter: 'Table_CH',
     detailCell: 'Table_TD'
-  })
+  }),
+  dragFeedback: () => ({
+    previewElement: null,
+    previewPosition: null,
+    previewSize: null,
+    droppableZones: [],
+    snapPoints: [],
+    snapLines: [],
+    isDragging: false,
+    draggedElementInfo: null,
+  }), // 新增：拖拽反馈默认值
 });
 
 // Emits
@@ -308,7 +328,9 @@ const emit = defineEmits([
   'update:enableSnapToAlignment', // 添加自动吸附对齐事件
   'update:showGrid', // 添加显示/隐藏网格事件
   'update:table-styles', // 添加表格样式更新事件
-  'reset-zoom' // 添加重置缩放事件
+  'reset-zoom', // 添加重置缩放事件
+  'update-jrxml', // 添加JRXML更新事件
+  'canvas-contextmenu' // 添加画布上下文菜单事件
 ]);
 
 // 框选状态
@@ -399,6 +421,11 @@ const handleJoinColumnsToExistingGroup = (elementIndex: number, columnIndices: n
 // 处理元素上下文菜单
 const handleElementContextMenu = (event: MouseEvent, bandIndex: number, elementIndex: number, parentFrameIndex?: number) => {
   emit('contextmenu', event, bandIndex, elementIndex, parentFrameIndex);
+};
+
+// 处理画布上下文菜单
+const handleCanvasContextMenu = (event: MouseEvent) => {
+  emit('canvas-contextmenu', event);
 };
 
 const startResizingBand = (event: MouseEvent, bandIndex: number) => {
@@ -835,6 +862,22 @@ onBeforeUnmount(() => {
   width: 1px;
   top: 0;
   bottom: 0;
+}
+
+.canvas-empty-state {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  min-height: 60px;
+}
+
+.empty-state-text {
+  font-size: 13px;
+  color: var(--prop-text-tertiary, #999);
+  text-align: center;
+  pointer-events: none;
 }
 
 .tick {

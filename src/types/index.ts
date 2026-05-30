@@ -49,10 +49,23 @@ export interface TableDataset {
   fields?: Field[];
 }
 
+// 字段属性接口
+export interface FieldProperty {
+  name: string;
+  value: string;
+}
+
 // 字段接口
 export interface Field {
   name: string;
   class: string;
+  properties?: FieldProperty[];
+}
+
+// 报表属性接口
+export interface ReportProperty {
+  name: string;
+  value: string;
 }
 
 // Band类型枚举
@@ -131,6 +144,42 @@ export interface ReportParameter {
   defaultValue?: string;
 }
 
+// 报表变量接口
+export interface ReportVariable {
+  name: string;
+  class: string;
+  calculationType?: 'Nothing' | 'Count' | 'DistinctCount' | 'Sum' | 'Average' | 'First' | 'Min' | 'Max' | 'StDev' | 'Variance';
+  resetType?: 'Report' | 'Page' | 'Column' | 'Group';
+  resetGroup?: string;
+  expression?: string;
+  initialValueExpression?: string;
+}
+
+// 条件样式接口
+export interface ConditionalStyle {
+  conditionExpression: string;
+  properties: Partial<ReportStyle>;
+}
+
+// 报表样式接口
+export interface ReportStyle {
+  name: string;
+  parentStyle?: string;
+  mode?: string;
+  backcolor?: string;
+  forecolor?: string;
+  conditionExpression?: string;
+  box?: Box;
+  textAlignment?: string;
+  verticalAlignment?: string;
+  fontFamily?: string;
+  fontSize?: number;
+  isBold?: boolean;
+  isItalic?: boolean;
+  isUnderline?: boolean;
+  conditionalStyles?: ConditionalStyle[];
+}
+
 // 字体设置接口
 export interface FontSettings {
   name: string;
@@ -179,6 +228,7 @@ export interface DesignElementBase {
   textAdjust?: string; // 添加textAdjust属性
   isStyledText?: boolean; // 添加过时的isStyledText属性以保持兼容性
   isStretchWithOverflow?: boolean; // 添加过时的isStretchWithOverflow属性以保持兼容性
+  style?: string; // 样式引用名称
 }
 
 // 静态文本元素接口
@@ -190,6 +240,7 @@ export interface StaticTextElement extends DesignElementBase {
   rotation?: 'None' | 'Left' | 'Right';
   pattern?: string;
   xml_lang?: string;
+  printWhenExpression?: string;
 }
 
 // 文本字段元素接口
@@ -206,6 +257,7 @@ export interface TextFieldElement extends DesignElementBase {
   hyperlinkReferenceExpression?: string;
   bookmarkLevel?: number;
   isIgnorePagination?: boolean;
+  printWhenExpression?: string;
   // 过时属性（向后兼容）
   isStretchWithOverflow?: boolean;
 }
@@ -223,6 +275,7 @@ export interface ImageElement extends DesignElementBase {
   evaluationTime?: 'Now' | 'Report' | 'Page' | 'Column' | 'Band';
   hyperlinkType?: string;
   hyperlinkReferenceExpression?: string;
+  printWhenExpression?: string;
   // 过时属性（向后兼容）
   scaleImage?: 'Clip' | 'FillFrame' | 'RetainShape' | 'RealHeight' | 'RealSize';
 }
