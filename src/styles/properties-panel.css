@@ -1,0 +1,576 @@
+/* 属性面板统一设计系统 */
+
+:root {
+  /* 颜色系统 */
+  --prop-primary-color: #1890ff;
+  --prop-primary-hover: #40a9ff;
+  --prop-primary-active: #096dd9;
+
+  /* 文本颜色 */
+  --prop-text-primary: #333;
+  --prop-text-secondary: #666;
+  --prop-text-tertiary: #999;
+  --prop-text-placeholder: #bfbfbf;
+
+  /* 边框颜色 */
+  --prop-border-color: #d9d9d9;
+  --prop-border-hover: #40a9ff;
+  --prop-border-focus: #1890ff;
+
+  /* 背景颜色 */
+  --prop-bg-primary: #fff;
+  --prop-bg-secondary: #fafafa;
+  --prop-bg-tertiary: #f5f5f5;
+  --prop-bg-hover: #f0f0f0;
+  --prop-bg-disabled: #f5f5f5;
+
+  /* 分割线 */
+  --prop-divider-color: #f0f0f0;
+
+  /* 危险/删除 */
+  --prop-danger-color: #ff4d4f;
+  --prop-danger-hover: #ff7875;
+
+  /* 成功/启用 */
+  --prop-success-color: #52c41a;
+
+  /* 字体系统 */
+  --prop-font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  --prop-font-size-xs: 10px;
+  --prop-font-size-sm: 12px;
+  --prop-font-size-md: 14px;
+  --prop-font-size-lg: 16px;
+
+  /* 字体粗细 */
+  --prop-font-weight-normal: 400;
+  --prop-font-weight-medium: 500;
+  --prop-font-weight-semibold: 600;
+
+  /* 间距系统 */
+  --prop-spacing-xs: 4px;
+  --prop-spacing-sm: 8px;
+  --prop-spacing-md: 12px;
+  --prop-spacing-lg: 16px;
+  --prop-spacing-xl: 24px;
+
+  /* 边框圆角 */
+  --prop-border-radius-sm: 2px;
+  --prop-border-radius-md: 4px;
+  --prop-border-radius-lg: 6px;
+
+  /* 阴影 */
+  --prop-shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.03), 0 1px 6px -1px rgba(0, 0, 0, 0.02), 0 2px 4px 0 rgba(0, 0, 0, 0.02);
+  --prop-shadow-md: 0 3px 6px -4px rgba(0, 0, 0, 0.12), 0 6px 16px 0 rgba(0, 0, 0, 0.08), 0 9px 28px 8px rgba(0, 0, 0, 0.05);
+
+  /* 焦点状态 */
+  --prop-focus-ring: 0 0 0 2px rgba(24, 144, 255, 0.2);
+
+  /* 过渡动画 */
+  --prop-transition-fast: 0.1s ease;
+  --prop-transition-normal: 0.2s ease;
+  --prop-transition-slow: 0.3s ease;
+}
+
+/* ==================== 通用组件样式 ==================== */
+
+/* 属性面板容器 */
+.prop-panel {
+  padding: var(--prop-spacing-lg);
+  font-family: var(--prop-font-family);
+  font-size: var(--prop-font-size-sm);
+  color: var(--prop-text-primary);
+  line-height: 1.5;
+}
+
+/* 表单组 */
+.prop-form-group {
+  margin-bottom: var(--prop-spacing-lg);
+}
+
+.prop-form-group:last-child {
+  margin-bottom: 0;
+}
+
+/* 标签 */
+.prop-label {
+  display: block;
+  margin-bottom: var(--prop-spacing-xs);
+  font-size: var(--prop-font-size-sm);
+  font-weight: var(--prop-font-weight-medium);
+  color: var(--prop-text-secondary);
+}
+
+/* 输入框 */
+.prop-input {
+  width: 100%;
+  padding: 6px 8px;
+  font-size: var(--prop-font-size-sm);
+  color: var(--prop-text-primary);
+  background-color: var(--prop-bg-primary);
+  border: 1px solid var(--prop-border-color);
+  border-radius: var(--prop-border-radius-md);
+  outline: none;
+  transition: border-color var(--prop-transition-fast), box-shadow var(--prop-transition-fast);
+  box-sizing: border-box;
+}
+
+.prop-input:hover {
+  border-color: var(--prop-border-hover);
+}
+
+.prop-input:focus {
+  border-color: var(--prop-border-focus);
+  box-shadow: var(--prop-focus-ring);
+}
+
+.prop-input::placeholder {
+  color: var(--prop-text-placeholder);
+}
+
+.prop-input:disabled {
+  color: var(--prop-text-tertiary);
+  background-color: var(--prop-bg-disabled);
+  cursor: not-allowed;
+}
+
+/* 数字输入框 */
+.prop-input[type="number"] {
+  -moz-appearance: textfield;
+}
+
+.prop-input[type="number"]::-webkit-outer-spin-button,
+.prop-input[type="number"]::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+/* 文本域 */
+.prop-textarea {
+  width: 100%;
+  padding: 6px 8px;
+  font-size: var(--prop-font-size-sm);
+  color: var(--prop-text-primary);
+  background-color: var(--prop-bg-primary);
+  border: 1px solid var(--prop-border-color);
+  border-radius: var(--prop-border-radius-md);
+  outline: none;
+  resize: vertical;
+  min-height: 60px;
+  font-family: inherit;
+  transition: border-color var(--prop-transition-fast), box-shadow var(--prop-transition-fast);
+  box-sizing: border-box;
+}
+
+.prop-textarea:hover {
+  border-color: var(--prop-border-hover);
+}
+
+.prop-textarea:focus {
+  border-color: var(--prop-border-focus);
+  box-shadow: var(--prop-focus-ring);
+}
+
+/* 选择框 */
+.prop-select {
+  width: 100%;
+  padding: 6px 8px;
+  font-size: var(--prop-font-size-sm);
+  color: var(--prop-text-primary);
+  background-color: var(--prop-bg-primary);
+  border: 1px solid var(--prop-border-color);
+  border-radius: var(--prop-border-radius-md);
+  outline: none;
+  cursor: pointer;
+  transition: border-color var(--prop-transition-fast), box-shadow var(--prop-transition-fast);
+  box-sizing: border-box;
+  appearance: none;
+  -webkit-appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23666' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 8px center;
+  padding-right: 28px;
+}
+
+.prop-select:hover {
+  border-color: var(--prop-border-hover);
+}
+
+.prop-select:focus {
+  border-color: var(--prop-border-focus);
+  box-shadow: var(--prop-focus-ring);
+}
+
+/* ==================== 标题样式 ==================== */
+
+/* 主标题 (h3) */
+.prop-heading-lg {
+  margin: 0 0 var(--prop-spacing-lg) 0;
+  padding: 0 0 var(--prop-spacing-sm) 0;
+  font-size: var(--prop-font-size-lg);
+  font-weight: var(--prop-font-weight-semibold);
+  color: var(--prop-text-primary);
+  border-bottom: 1px solid var(--prop-divider-color);
+}
+
+/* 副标题 (h4) */
+.prop-heading-md {
+  margin: 0 0 var(--prop-spacing-md) 0;
+  padding: 0;
+  font-size: var(--prop-font-size-md);
+  font-weight: var(--prop-font-weight-semibold);
+  color: var(--prop-text-primary);
+}
+
+/* 小标题 (h5) */
+.prop-heading-sm {
+  margin: 0 0 var(--prop-spacing-sm) 0;
+  padding: 0;
+  font-size: var(--prop-font-size-sm);
+  font-weight: var(--prop-font-weight-semibold);
+  color: var(--prop-text-secondary);
+}
+
+/* ==================== 分割线 ==================== */
+
+.prop-divider {
+  height: 1px;
+  margin: var(--prop-spacing-lg) 0;
+  background-color: var(--prop-divider-color);
+}
+
+/* ==================== 按钮样式 ==================== */
+
+/* 主要按钮 */
+.prop-btn-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px 12px;
+  font-size: var(--prop-font-size-sm);
+  font-weight: var(--prop-font-weight-medium);
+  color: #fff;
+  background-color: var(--prop-primary-color);
+  border: none;
+  border-radius: var(--prop-border-radius-md);
+  cursor: pointer;
+  transition: background-color var(--prop-transition-fast);
+}
+
+.prop-btn-primary:hover {
+  background-color: var(--prop-primary-hover);
+}
+
+.prop-btn-primary:active {
+  background-color: var(--prop-primary-active);
+}
+
+/* 默认按钮 */
+.prop-btn-default {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px 12px;
+  font-size: var(--prop-font-size-sm);
+  font-weight: var(--prop-font-weight-medium);
+  color: var(--prop-text-primary);
+  background-color: var(--prop-bg-primary);
+  border: 1px solid var(--prop-border-color);
+  border-radius: var(--prop-border-radius-md);
+  cursor: pointer;
+  transition: border-color var(--prop-transition-fast), color var(--prop-transition-fast);
+}
+
+.prop-btn-default:hover {
+  border-color: var(--prop-primary-color);
+  color: var(--prop-primary-color);
+}
+
+/* 危险按钮 */
+.prop-btn-danger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px 12px;
+  font-size: var(--prop-font-size-sm);
+  font-weight: var(--prop-font-weight-medium);
+  color: var(--prop-danger-color);
+  background-color: var(--prop-bg-primary);
+  border: 1px solid var(--prop-danger-color);
+  border-radius: var(--prop-border-radius-md);
+  cursor: pointer;
+  transition: background-color var(--prop-transition-fast), color var(--prop-transition-fast);
+}
+
+.prop-btn-danger:hover {
+  background-color: var(--prop-danger-color);
+  color: #fff;
+}
+
+/* 小按钮 */
+.prop-btn-sm {
+  padding: 2px 8px;
+  font-size: var(--prop-font-size-xs);
+}
+
+/* ==================== 列表样式 ==================== */
+
+/* 列表容器 */
+.prop-list {
+  background-color: var(--prop-bg-secondary);
+  border: 1px solid var(--prop-border-color);
+  border-radius: var(--prop-border-radius-md);
+  overflow: hidden;
+}
+
+/* 列表项 */
+.prop-list-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--prop-spacing-sm) var(--prop-spacing-md);
+  border-bottom: 1px solid var(--prop-divider-color);
+  transition: background-color var(--prop-transition-fast);
+}
+
+.prop-list-item:last-child {
+  border-bottom: none;
+}
+
+.prop-list-item:hover {
+  background-color: var(--prop-bg-hover);
+}
+
+/* 列表项名称 */
+.prop-list-item-name {
+  font-size: var(--prop-font-size-sm);
+  color: var(--prop-text-primary);
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* 列表项操作 */
+.prop-list-item-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--prop-spacing-xs);
+  margin-left: var(--prop-spacing-sm);
+}
+
+/* ==================== 提示文本 ==================== */
+
+.prop-hint {
+  margin-top: var(--prop-spacing-xs);
+  font-size: var(--prop-font-size-xs);
+  color: var(--prop-text-tertiary);
+  line-height: 1.4;
+}
+
+/* ==================== 表格管理样式 ==================== */
+
+/* 表格列列表 */
+.prop-table-columns {
+  margin-top: var(--prop-spacing-sm);
+}
+
+/* 表格列项 */
+.prop-table-column-item {
+  padding: var(--prop-spacing-sm) var(--prop-spacing-md);
+  background-color: var(--prop-bg-secondary);
+  border: 1px solid var(--prop-border-color);
+  border-radius: var(--prop-border-radius-md);
+  margin-bottom: var(--prop-spacing-sm);
+}
+
+.prop-table-column-item:last-child {
+  margin-bottom: 0;
+}
+
+/* 表格列头部 */
+.prop-table-column-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--prop-spacing-sm);
+}
+
+/* 表格列属性 */
+.prop-table-column-props {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--prop-spacing-sm);
+}
+
+/* ==================== 行高设置 ==================== */
+
+.prop-row-heights {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--prop-spacing-sm);
+}
+
+.prop-row-height-item {
+  display: flex;
+  flex-direction: column;
+  gap: var(--prop-spacing-xs);
+}
+
+/* ==================== 样式选择 ==================== */
+
+.prop-style-select {
+  display: flex;
+  flex-direction: column;
+  gap: var(--prop-spacing-xs);
+}
+
+.prop-style-select label {
+  font-size: var(--prop-font-size-sm);
+  color: var(--prop-text-secondary);
+}
+
+/* ==================== 开关控件 ==================== */
+
+.prop-switch {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--prop-spacing-sm);
+  cursor: pointer;
+}
+
+.prop-switch input[type="checkbox"] {
+  width: 36px;
+  height: 20px;
+  appearance: none;
+  -webkit-appearance: none;
+  background-color: var(--prop-bg-tertiary);
+  border: 1px solid var(--prop-border-color);
+  border-radius: 10px;
+  position: relative;
+  cursor: pointer;
+  transition: background-color var(--prop-transition-fast), border-color var(--prop-transition-fast);
+}
+
+.prop-switch input[type="checkbox"]::before {
+  content: '';
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 14px;
+  height: 14px;
+  background-color: #fff;
+  border-radius: 50%;
+  transition: transform var(--prop-transition-fast);
+}
+
+.prop-switch input[type="checkbox"]:checked {
+  background-color: var(--prop-primary-color);
+  border-color: var(--prop-primary-color);
+}
+
+.prop-switch input[type="checkbox"]:checked::before {
+  transform: translateX(16px);
+}
+
+.prop-switch-label {
+  font-size: var(--prop-font-size-sm);
+  color: var(--prop-text-primary);
+}
+
+/* ==================== 复选框组 ==================== */
+
+.prop-checkbox-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--prop-spacing-md);
+}
+
+.prop-checkbox {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--prop-spacing-xs);
+  cursor: pointer;
+}
+
+.prop-checkbox input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  margin: 0;
+  cursor: pointer;
+}
+
+.prop-checkbox-label {
+  font-size: var(--prop-font-size-sm);
+  color: var(--prop-text-primary);
+}
+
+/* ==================== 对齐按钮组 ==================== */
+
+.prop-alignment-group {
+  display: flex;
+  gap: 2px;
+}
+
+.prop-alignment-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 28px;
+  padding: 0;
+  font-size: var(--prop-font-size-md);
+  color: var(--prop-text-secondary);
+  background-color: var(--prop-bg-primary);
+  border: 1px solid var(--prop-border-color);
+  border-radius: var(--prop-border-radius-md);
+  cursor: pointer;
+  transition: all var(--prop-transition-fast);
+}
+
+.prop-alignment-btn:hover {
+  color: var(--prop-primary-color);
+  border-color: var(--prop-primary-color);
+}
+
+.prop-alignment-btn.active {
+  color: #fff;
+  background-color: var(--prop-primary-color);
+  border-color: var(--prop-primary-color);
+}
+
+/* ==================== 颜色选择器 ==================== */
+
+.prop-color-picker {
+  display: flex;
+  align-items: center;
+  gap: var(--prop-spacing-sm);
+}
+
+.prop-color-input {
+  width: 32px;
+  height: 32px;
+  padding: 2px;
+  border: 1px solid var(--prop-border-color);
+  border-radius: var(--prop-border-radius-md);
+  cursor: pointer;
+}
+
+.prop-color-text {
+  flex: 1;
+}
+
+/* ==================== 响应式调整 ==================== */
+
+@media (max-width: 768px) {
+  .prop-panel {
+    padding: var(--prop-spacing-md);
+  }
+
+  .prop-table-column-props {
+    grid-template-columns: 1fr;
+  }
+
+  .prop-row-heights {
+    grid-template-columns: 1fr;
+  }
+}

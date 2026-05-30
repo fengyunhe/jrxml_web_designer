@@ -280,111 +280,124 @@ const removeRowGroup = (index: number) => {
 
 <style scoped>
 .table-properties {
-  padding: 12px;
+  padding: var(--prop-spacing-lg);
 }
 
 .table-properties h4 {
-  margin: 0 0 16px 0;
-  font-size: 14px;
-  color: #333;
-  font-weight: 600;
-  border-bottom: 1px solid #f0f0f0;
-  padding-bottom: 8px;
+  margin: 0 0 var(--prop-spacing-lg) 0;
+  padding: 0 0 var(--prop-spacing-sm) 0;
+  font-size: var(--prop-font-size-md);
+  color: var(--prop-text-primary);
+  font-weight: var(--prop-font-weight-semibold);
+  border-bottom: 1px solid var(--prop-divider-color);
 }
 
 .form-group {
-  margin-bottom: 16px;
+  margin-bottom: var(--prop-spacing-lg);
 }
 
 .form-group label {
   display: block;
-  margin-bottom: 4px;
-  font-size: 13px;
-  color: #666;
-  font-weight: 500;
+  margin-bottom: var(--prop-spacing-xs);
+  font-size: var(--prop-font-size-sm);
+  color: var(--prop-text-secondary);
+  font-weight: var(--prop-font-weight-medium);
 }
 
 .form-group h5 {
-  margin: 0 0 12px 0;
-  font-size: 13px;
-  color: #333;
-  font-weight: 600;
+  margin: 0 0 var(--prop-spacing-md) 0;
+  font-size: var(--prop-font-size-sm);
+  color: var(--prop-text-primary);
+  font-weight: var(--prop-font-weight-semibold);
 }
 
 .form-divider {
   height: 1px;
-  background: #f0f0f0;
-  margin: 16px 0;
+  background: var(--prop-divider-color);
+  margin: var(--prop-spacing-lg) 0;
 }
 
 .style-item {
   display: flex;
   align-items: center;
-  gap: 8px;
-  margin-bottom: 8px;
+  gap: var(--prop-spacing-sm);
+  margin-bottom: var(--prop-spacing-sm);
 }
 
 .style-item label {
   min-width: 80px;
-  font-size: 12px;
-  color: #666;
+  font-size: var(--prop-font-size-sm);
+  color: var(--prop-text-secondary);
 }
 
 .style-item select {
   flex: 1;
   padding: 4px 8px;
-  border: 1px solid #d9d9d9;
-  border-radius: 4px;
-  font-size: 12px;
+  border: 1px solid var(--prop-border-color);
+  border-radius: var(--prop-border-radius-md);
+  font-size: var(--prop-font-size-sm);
+  transition: border-color var(--prop-transition-fast), box-shadow var(--prop-transition-fast);
+}
+
+.style-item select:hover {
+  border-color: var(--prop-border-hover);
+}
+
+.style-item select:focus {
+  border-color: var(--prop-border-focus);
+  box-shadow: var(--prop-focus-ring);
+  outline: none;
 }
 
 .row-groups-list {
-  margin-bottom: 8px;
+  margin-bottom: var(--prop-spacing-sm);
 }
 
 .row-group-item {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 8px;
-  background: #f5f5f5;
-  border-radius: 4px;
-  margin-bottom: 4px;
+  padding: var(--prop-spacing-sm);
+  background: var(--prop-bg-tertiary);
+  border-radius: var(--prop-border-radius-md);
+  margin-bottom: var(--prop-spacing-xs);
 }
 
 .row-group-name {
-  font-size: 12px;
-  color: #333;
+  font-size: var(--prop-font-size-sm);
+  color: var(--prop-text-primary);
 }
 
 .remove-button {
   padding: 4px 8px;
-  border: 1px solid #ff4d4f;
-  border-radius: 4px;
-  background: white;
-  color: #ff4d4f;
+  border: 1px solid var(--prop-danger-color);
+  border-radius: var(--prop-border-radius-md);
+  background: var(--prop-bg-primary);
+  color: var(--prop-danger-color);
   cursor: pointer;
-  font-size: 12px;
+  font-size: var(--prop-font-size-sm);
+  transition: background-color var(--prop-transition-fast), color var(--prop-transition-fast);
 }
 
 .remove-button:hover {
-  background: #ff4d4f;
+  background: var(--prop-danger-color);
   color: white;
 }
 
 .add-button {
   width: 100%;
-  padding: 8px;
-  border: 1px dashed #d9d9d9;
-  border-radius: 4px;
-  background: white;
-  color: #666;
+  padding: var(--prop-spacing-sm);
+  border: 1px dashed var(--prop-border-color);
+  border-radius: var(--prop-border-radius-md);
+  background: var(--prop-bg-primary);
+  color: var(--prop-text-secondary);
   cursor: pointer;
-  font-size: 12px;
+  font-size: var(--prop-font-size-sm);
+  transition: border-color var(--prop-transition-fast), color var(--prop-transition-fast);
 }
 
 .add-button:hover {
-  border-color: #1890ff;
-  color: #1890ff;
+  border-color: var(--prop-primary-color);
+  color: var(--prop-primary-color);
 }
 </style>

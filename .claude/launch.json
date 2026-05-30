@@ -1,0 +1,17 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "wasm-test",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": ["serve", "wasm-test/public", "-l", "3456", "--no-clipboard"],
+      "port": 3456
+    },
+    {
+      "name": "designer",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": ["vite", "--port", "5174", "--host"],
+      "port": 5174
+    }
+  ]
+}

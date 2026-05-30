@@ -147,48 +147,48 @@ const updateProperty = (property: string, value: any) => {
 
 <style scoped>
 .frame-properties {
-  padding: 12px;
+  padding: var(--prop-spacing-lg);
 }
 
 .frame-properties h4 {
-  margin: 0 0 16px 0;
-  font-size: 14px;
-  color: #333;
-  font-weight: 600;
-  border-bottom: 1px solid #f0f0f0;
-  padding-bottom: 8px;
+  margin: 0 0 var(--prop-spacing-lg) 0;
+  padding: 0 0 var(--prop-spacing-sm) 0;
+  font-size: var(--prop-font-size-md);
+  color: var(--prop-text-primary);
+  font-weight: var(--prop-font-weight-semibold);
+  border-bottom: 1px solid var(--prop-divider-color);
 }
 
 .form-group {
-  margin-bottom: 16px;
+  margin-bottom: var(--prop-spacing-lg);
 }
 
 .form-group label {
   display: block;
-  margin-bottom: 4px;
-  font-size: 13px;
-  color: #666;
-  font-weight: 500;
+  margin-bottom: var(--prop-spacing-xs);
+  font-size: var(--prop-font-size-sm);
+  color: var(--prop-text-secondary);
+  font-weight: var(--prop-font-weight-medium);
 }
 
 .form-hint {
   display: block;
-  margin-top: 4px;
-  font-size: 11px;
-  color: #999;
+  margin-top: var(--prop-spacing-xs);
+  font-size: var(--prop-font-size-xs);
+  color: var(--prop-text-tertiary);
 }
 
 .color-input-group {
   display: flex;
-  gap: 8px;
+  gap: var(--prop-spacing-sm);
   align-items: center;
 }
 
 .color-input {
   width: 32px;
   height: 32px;
-  border: 1px solid #d9d9d9;
-  border-radius: 4px;
+  border: 1px solid var(--prop-border-color);
+  border-radius: var(--prop-border-radius-md);
   cursor: pointer;
   padding: 2px;
 }
@@ -196,15 +196,20 @@ const updateProperty = (property: string, value: any) => {
 .color-text {
   flex: 1;
   padding: 6px 8px;
-  border: 1px solid #d9d9d9;
-  border-radius: 4px;
+  border: 1px solid var(--prop-border-color);
+  border-radius: var(--prop-border-radius-md);
   font-family: monospace;
-  font-size: 12px;
+  font-size: var(--prop-font-size-sm);
+  transition: border-color var(--prop-transition-fast), box-shadow var(--prop-transition-fast);
+}
+
+.color-text:hover {
+  border-color: var(--prop-border-hover);
 }
 
 .color-text:focus {
   outline: none;
-  border-color: #1890ff;
-  box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.2);
+  border-color: var(--prop-border-focus);
+  box-shadow: var(--prop-focus-ring);
 }
 </style>

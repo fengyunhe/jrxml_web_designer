@@ -40,7 +40,7 @@
   </style>
 
   <!-- 子数据集定义 -->
-  <subDataset name="tableDataset" uuid="53d2d418-c6b2-4484-9da6-f78dd19a2972">
+  <subDataset name="tableDataset" uuid="8fe33bae-f172-4daf-84de-26ed910a1485">
     <field name="FIELD_NAME" class="java.lang.String">
     </field>
     <field name="FIELD_NAME2" class="java.lang.String">
@@ -69,7 +69,7 @@
           <datasetRun subDataset="tableDataset" uuid="54ad30fb-b17a-435c-887d-f9030f22259d">
             <connectionExpression><![CDATA[$P{REPORT_CONNECTION}]]></connectionExpression>
           </datasetRun>
-          <jr:columnGroup width="370" uuid="1d2624b1-a02c-4d65-9b6f-540bac8b5b8f">
+          <jr:columnGroup width="370" uuid="a184fa1e-96ea-4a50-bdcc-77af893ff1c3">
             <property name="com.jaspersoft.studio.components.table.model.column.name" value="Group1"/>
             <jr:columnHeader height="30" rowSpan="1" style="Table_CH">
                 <staticText>

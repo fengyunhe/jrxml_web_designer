@@ -91,6 +91,12 @@
                       </div>
                       <div v-else class="cell-content empty">
                       </div>
+                      <!-- 列宽拖拽手柄 -->
+                      <div
+                        v-if="index < columns.length - 1"
+                        class="column-resize-handle"
+                        @mousedown.stop.prevent="startColumnResize(index, $event)"
+                      ></div>
                     </th>
                   </template>
                   <template #default>
@@ -123,13 +129,25 @@
                   trigger="hover"
                 >
                   <template #trigger>
-                    <th 
+                    <th
                       :style="{ width: `${column.width}px` }"
                       class="table-column column-header-cell"
                       :class="{ 'column-selected': isColumnSelected(index) }"
                       @click.stop="handleColumnClick(index, $event)"
+                      @dblclick.stop="startCellEditing(index, 'columnHeader')"
                     >
-                      <div class="cell-content" :style="getColumnHeaderStyle(column)">
+                      <div v-if="editingCell && editingCell.columnIndex === index && editingCell.cellType === 'columnHeader'" class="cell-edit-input">
+                        <input
+                          ref="cellEditInput"
+                          :value="column.columnHeader?.element?.type === 'staticText' ? column.columnHeader.element.text : (column.columnHeader?.element?.type === 'textField' ? column.columnHeader.element.expression : '')"
+                          @input="updateCellEditingValue($event)"
+                          @blur="finishCellEditing"
+                          @keydown.enter="finishCellEditing"
+                          @keydown.escape="cancelCellEditing"
+                          class="inline-edit-input"
+                        />
+                      </div>
+                      <div v-else class="cell-content" :style="getColumnHeaderStyle(column)">
                         <!-- 渲染列头内容，从columnHeader获取实际的静态文本或动态文本表达式 -->
                         <template v-if="column.columnHeader">
                           <template v-if="column.columnHeader.element?.type === 'staticText'">
@@ -146,6 +164,12 @@
                           <div class="column-name">{{ column.name }}</div>
                         </template>
                       </div>
+                      <!-- 列宽拖拽手柄 -->
+                      <div
+                        v-if="index < columns.length - 1"
+                        class="column-resize-handle"
+                        @mousedown.stop.prevent="startColumnResize(index, $event)"
+                      ></div>
                     </th>
                   </template>
                   <template #default>
@@ -155,83 +179,7 @@
               </tr>
             </template>
           </template>
-          <!-- 列尾部 -->
-          <template v-if="columnFooterHeight > 0">
-            <!-- 普通列的列尾 -->
-            <tr class="columnFooter" :style="{ height: `${columnFooterHeight}px`, ...getRowStyle('columnFooter') }">
-              <n-tooltip 
-                v-for="(column, index) in columns" 
-                :key="column.uuid"
-                placement="top"
-                trigger="hover"
-              >
-                <template #trigger>
-                  <th 
-                    :style="{ width: `${column.width}px` }"
-                    class="table-column column-footer-cell"
-                    :class="{ 'column-selected': isColumnSelected(index) }"
-                    @click.stop="handleColumnClick(index, $event)"
-                  >
-                    <div class="cell-content" :style="getCellStyle(column.columnFooter, 'columnFooter')">
-                      <!-- 渲染列尾内容 -->
-                      <template v-if="column.columnFooter && column.columnFooter.element">
-                        <template v-if="column.columnFooter.element.type === 'staticText'">
-                          <div class="static-text">{{ column.columnFooter.element.text || '' }}</div>
-                        </template>
-                        <template v-else-if="column.columnFooter.element.type === 'textField'">
-                          <div class="text-field">{{ column.columnFooter.element.expression || '' }}</div>
-                        </template>
-                      </template>
-                      <div v-else class="cell-content empty">
-                      </div>
-                    </div>
-                  </th>
-                </template>
-                <template #default>
-                  Width: {{ column.width }}px
-                </template>
-              </n-tooltip>
-            </tr>
-          </template>
-          <!-- 表格尾部 -->
-          <template v-if="tableFooterHeight > 0">
-            <!-- 普通列的表格尾部 -->
-            <tr class="tableFooter" :style="{ height: `${tableFooterHeight}px`, ...getRowStyle('tableFooter') }">
-              <n-tooltip 
-                v-for="(column, index) in columns" 
-                :key="column.uuid"
-                placement="top"
-                trigger="hover"
-              >
-                <template #trigger>
-                  <th 
-                    :style="{ width: `${column.width}px` }"
-                    class="table-column table-footer-cell"
-                    :class="{ 'column-selected': isColumnSelected(index) }"
-                    @click.stop="handleColumnClick(index, $event)"
-                  >
-                    <div class="cell-content" :style="getCellStyle(column.tableFooter, 'tableFooter')">
-                      <!-- 渲染表格尾部内容 -->
-                      <template v-if="column.tableFooter && column.tableFooter.element">
-                        <template v-if="column.tableFooter.element.type === 'staticText'">
-                          <div class="static-text">{{ column.tableFooter.element.text || '' }}</div>
-                        </template>
-                        <template v-else-if="column.tableFooter.element.type === 'textField'">
-                          <div class="text-field">{{ column.tableFooter.element.expression || '' }}</div>
-                        </template>
-                      </template>
-                      <div v-else class="cell-content empty">
-                      </div>
-                    </div>
-                  </th>
-                </template>
-                <template #default>
-                  Width: {{ column.width }}px
-                </template>
-              </n-tooltip>
-            </tr>
-          </template>
-          
+
         </thead>
         <!-- 表格主体区域 -->
         <tbody>
@@ -244,14 +192,25 @@
               trigger="hover"
             >
               <template #trigger>
-                <td 
+                <td
                   :style="{ width: `${column.width}px` }"
                   class="table-column detail-cell"
                   :class="{ 'column-selected': isColumnSelected(index) }"
                   @click.stop="handleColumnClick(index, $event)"
-
+                  @dblclick.stop="startCellEditing(index, 'detailCell')"
                 >
-                  <div v-if="column.detailCell" class="cell-content" :style="getCellStyle(column.detailCell, 'detailCell')">
+                  <div v-if="editingCell && editingCell.columnIndex === index && editingCell.cellType === 'detailCell'" class="cell-edit-input">
+                    <input
+                      ref="cellEditInput"
+                      :value="column.detailCell?.element?.type === 'staticText' ? column.detailCell.element.text : (column.detailCell?.element?.type === 'textField' ? column.detailCell.element.expression : '')"
+                      @input="updateCellEditingValue($event)"
+                      @blur="finishCellEditing"
+                      @keydown.enter="finishCellEditing"
+                      @keydown.escape="cancelCellEditing"
+                      class="inline-edit-input"
+                    />
+                  </div>
+                  <div v-else-if="column.detailCell" class="cell-content" :style="getCellStyle(column.detailCell, 'detailCell')">
                     <!-- 渲染详情内容 -->
                     <template v-if="column.detailCell.element">
                       <template v-if="column.detailCell.element.type === 'staticText'">
@@ -275,7 +234,7 @@
         <!-- 表格尾部区域 -->
         <tfoot>
           <!-- 列尾 -->
-          <tr v-if="columnFooterHeight > 0 && columns.some(column => column.columnFooter && (column.columnFooter.element?.type === 'textField' && (column.columnFooter.element as TextFieldElement).expression || column.columnFooter.element?.type === 'staticText'))" class="columnFooter" :style="{ height: `${columnFooterHeight}px`, ...getRowStyle('columnFooter') }">
+          <tr v-if="columnFooterHeight > 0" class="columnFooter" :style="{ height: `${columnFooterHeight}px`, ...getRowStyle('columnFooter') }">
             <n-tooltip 
               v-for="(column, index) in columns" 
               :key="column.uuid"
@@ -310,7 +269,7 @@
             </n-tooltip>
           </tr>
           <!-- 表格表尾 -->
-          <tr v-if="tableFooterHeight > 0 && columns.some(column => column.tableFooter && (column.tableFooter.element?.type === 'textField' && (column.tableFooter.element as TextFieldElement).expression || column.tableFooter.element?.type === 'staticText'))" class="tableFooter" :style="{ height: `${tableFooterHeight}px`, ...getRowStyle('tableFooter') }">
+          <tr v-if="tableFooterHeight > 0" class="tableFooter" :style="{ height: `${tableFooterHeight}px`, ...getRowStyle('tableFooter') }">
             <n-tooltip 
               v-for="(column, index) in columns" 
               :key="column.uuid"
@@ -324,7 +283,7 @@
                   :class="{ 'column-selected': isColumnSelected(index) }"
                   @click.stop="handleColumnClick(index, $event)"
                 >
-                  <div v-if="column.tableFooter" class="cell-content" :style="getCellStyle(column.tableFooter, 'tableHeader')">
+                  <div v-if="column.tableFooter" class="cell-content" :style="getCellStyle(column.tableFooter, 'tableFooter')">
                     <!-- 渲染表格表尾内容 -->
                     <template v-if="column.tableFooter.element">
                       <template v-if="column.tableFooter.element.type === 'staticText'">
@@ -365,7 +324,7 @@
 
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onBeforeUnmount } from 'vue';
+import { ref, computed, onMounted, onBeforeUnmount, nextTick } from 'vue';
 import { NButton, NTooltip } from 'naive-ui';
 import { useI18n } from 'vue-i18n';
 import BaseElement from './BaseElement.vue';
@@ -409,8 +368,7 @@ const emit = defineEmits<{
   resizeEnd: [];
   contextmenu: [event: MouseEvent, bandIndex: number, elementIndex: number, parentFrameIndex?: number];
   moveColumn: [elementIndex: number, fromIndex: number, toIndex: number];
-
-
+  'update-jrxml': [];
 }>();
 
 // Move column left or right
@@ -429,8 +387,154 @@ const columns = computed(() => tableElement.value.columns || []);
 // 列选中状态管理
 const selectedColumns = ref<number[]>([]);
 
+// ========== 列宽拖拽 ==========
+const columnResizeState = ref<{
+  columnIndex: number;
+  startX: number;
+  originalWidthLeft: number;
+  originalWidthRight: number;
+} | null>(null);
 
+function startColumnResize(columnIndex: number, event: MouseEvent) {
+  const leftCol = columns.value[columnIndex];
+  const rightCol = columns.value[columnIndex + 1];
+  if (!leftCol || !rightCol) return;
 
+  columnResizeState.value = {
+    columnIndex,
+    startX: event.clientX,
+    originalWidthLeft: leftCol.width,
+    originalWidthRight: rightCol.width,
+  };
+
+  document.addEventListener('mousemove', handleColumnResizeMove);
+  document.addEventListener('mouseup', handleColumnResizeEnd);
+  document.body.style.cursor = 'col-resize';
+  document.body.style.userSelect = 'none';
+}
+
+function handleColumnResizeMove(e: MouseEvent) {
+  const state = columnResizeState.value;
+  if (!state) return;
+
+  const delta = e.clientX - state.startX;
+  const leftCol = columns.value[state.columnIndex];
+  const rightCol = columns.value[state.columnIndex + 1];
+  if (!leftCol || !rightCol) return;
+
+  const minW = 30;
+  let newLeft = state.originalWidthLeft + delta;
+  let newRight = state.originalWidthRight - delta;
+
+  if (newLeft < minW) { newLeft = minW; newRight = state.originalWidthLeft + state.originalWidthRight - minW; }
+  if (newRight < minW) { newRight = minW; newLeft = state.originalWidthLeft + state.originalWidthRight - minW; }
+
+  leftCol.width = Math.round(newLeft);
+  rightCol.width = Math.round(newRight);
+
+  // 同步更新 element.children 中对应列的宽度
+  updateChildrenColumnWidth(leftCol.uuid, leftCol.width);
+  updateChildrenColumnWidth(rightCol.uuid, rightCol.width);
+
+  // 重新计算表格总宽度
+  const total = columns.value.reduce((sum, c) => sum + c.width, 0);
+  tableElement.value.width = total;
+}
+
+function handleColumnResizeEnd() {
+  columnResizeState.value = null;
+  document.removeEventListener('mousemove', handleColumnResizeMove);
+  document.removeEventListener('mouseup', handleColumnResizeEnd);
+  document.body.style.cursor = '';
+  document.body.style.userSelect = '';
+  emit('update-jrxml');
+}
+
+// 递归在 children 树中查找并更新列宽
+function updateChildrenColumnWidth(uuid: string, width: number) {
+  const children = tableElement.value.children;
+  if (!children) return;
+  for (const child of children) {
+    if ((child as any).uuid === uuid) {
+      (child as any).width = width;
+      // 同步更新单元格宽度
+      const cells = [(child as any).tableHeader, (child as any).columnHeader, (child as any).detailCell, (child as any).columnFooter, (child as any).tableFooter];
+      cells.forEach((cell: any) => { if (cell?.element) cell.element.width = width; });
+    }
+    if ((child as any).children) {
+      updateChildrenColumnWidthInGroup((child as any).children, uuid, width);
+    }
+  }
+}
+
+function updateChildrenColumnWidthInGroup(children: any[], uuid: string, width: number) {
+  for (const child of children) {
+    if (child.uuid === uuid) {
+      child.width = width;
+      const cells = [child.tableHeader, child.columnHeader, child.detailCell, child.columnFooter, child.tableFooter];
+      cells.forEach((cell: any) => { if (cell?.element) cell.element.width = width; });
+    }
+    if (child.children) {
+      updateChildrenColumnWidthInGroup(child.children, uuid, width);
+    }
+  }
+}
+
+// ========== 单元格内联编辑 ==========
+const editingCell = ref<{ columnIndex: number; cellType: string } | null>(null);
+const cellEditInput = ref<HTMLInputElement | null>(null);
+const cellEditValue = ref('');
+
+function startCellEditing(columnIndex: number, cellType: string) {
+  const column = columns.value[columnIndex];
+  if (!column) return;
+
+  let cell: any;
+  if (cellType === 'columnHeader') cell = column.columnHeader;
+  else if (cellType === 'detailCell') cell = column.detailCell;
+  else return;
+
+  const elem = cell?.element;
+  if (!elem) return;
+
+  editingCell.value = { columnIndex, cellType };
+  cellEditValue.value = elem.type === 'staticText' ? (elem.text || '') : (elem.expression || '');
+
+  nextTick(() => {
+    if (cellEditInput.value) {
+      cellEditInput.value.focus();
+      cellEditInput.value.select();
+    }
+  });
+}
+
+function updateCellEditingValue(event: Event) {
+  cellEditValue.value = (event.target as HTMLInputElement).value;
+}
+
+function finishCellEditing() {
+  if (!editingCell.value) return;
+
+  const column = columns.value[editingCell.value.columnIndex];
+  if (!column) { editingCell.value = null; return; }
+
+  let cell: any;
+  if (editingCell.value.cellType === 'columnHeader') cell = column.columnHeader;
+  else if (editingCell.value.cellType === 'detailCell') cell = column.detailCell;
+
+  const elem = cell?.element;
+  if (elem) {
+    if (elem.type === 'staticText') elem.text = cellEditValue.value;
+    else if (elem.type === 'textField') elem.expression = cellEditValue.value;
+  }
+
+  editingCell.value = null;
+  emit('update-jrxml');
+}
+
+function cancelCellEditing() {
+  editingCell.value = null;
+}
 
 
 // 计算元素是否被选中，与BaseElement保持一致的逻辑
@@ -918,41 +1022,24 @@ const hasTableHeader = computed(() => {
   }
 });
 
-// 计算行高
-const tableHeaderHeight = computed(() => {
-  if (columns.value.length === 0) return 30;
-  const firstColumn = columns.value[0];
-  if (!firstColumn) return 30;
-  return firstColumn.tableHeader?.element?.height || 30;
-});
+// 计算行高 - 取所有列中的最大值
+function getMaxCellHeight(getCell: (col: any) => any): number {
+  const cols = columns.value;
+  if (cols.length === 0) return 30;
+  let maxH = 0;
+  for (const col of cols) {
+    const cell = getCell(col);
+    const h = cell?.element?.height;
+    if (h && h > maxH) maxH = h;
+  }
+  return maxH || 30;
+}
 
-const columnHeaderHeight = computed(() => {
-  if (columns.value.length === 0) return 30;
-  const firstColumn = columns.value[0];
-  if (!firstColumn) return 30;
-  return firstColumn.columnHeader?.element?.height || 30;
-});
-
-const detailCellHeight = computed(() => {
-  if (columns.value.length === 0) return 30;
-  const firstColumn = columns.value[0];
-  if (!firstColumn) return 30;
-  return firstColumn.detailCell?.element?.height || 30;
-});
-
-const columnFooterHeight = computed(() => {
-  if (columns.value.length === 0) return 30;
-  const firstColumn = columns.value[0];
-  if (!firstColumn) return 30;
-  return firstColumn.columnFooter?.element?.height || 30;
-});
-
-const tableFooterHeight = computed(() => {
-  if (columns.value.length === 0) return 30;
-  const firstColumn = columns.value[0];
-  if (!firstColumn) return 30;
-  return firstColumn.tableFooter?.element?.height || 30;
-});
+const tableHeaderHeight = computed(() => getMaxCellHeight(col => col.tableHeader));
+const columnHeaderHeight = computed(() => getMaxCellHeight(col => col.columnHeader));
+const detailCellHeight = computed(() => getMaxCellHeight(col => col.detailCell));
+const columnFooterHeight = computed(() => getMaxCellHeight(col => col.columnFooter));
+const tableFooterHeight = computed(() => getMaxCellHeight(col => col.tableFooter));
 
 // 根据列UUID获取列索引
 function getColumnIndex(column: any): number {
@@ -1229,5 +1316,47 @@ function getRowStyle(rowType: string) {
   position: relative;
 }
 
+/* 列宽拖拽手柄 */
+.column-resize-handle {
+  position: absolute;
+  right: -2px;
+  top: 0;
+  width: 5px;
+  height: 100%;
+  cursor: col-resize;
+  z-index: 10;
+  background: transparent;
+}
+
+.column-resize-handle:hover {
+  background: rgba(64, 158, 255, 0.5);
+}
+
+.column-resize-handle:active {
+  background: rgba(64, 158, 255, 0.8);
+}
+
+/* 单元格内联编辑 */
+.cell-edit-input {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+}
+
+.inline-edit-input {
+  width: 100%;
+  height: 100%;
+  border: 1px solid #409eff;
+  background: white;
+  padding: 0 4px;
+  font-family: inherit;
+  font-size: inherit;
+  font-weight: inherit;
+  font-style: inherit;
+  color: inherit;
+  outline: none;
+  box-sizing: border-box;
+}
 
 </style>

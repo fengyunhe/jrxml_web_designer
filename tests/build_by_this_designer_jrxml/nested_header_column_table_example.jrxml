@@ -40,7 +40,7 @@
   </style>
 
   <!-- 子数据集定义 -->
-  <subDataset name="tableDataset" uuid="f7823d82-26ba-426e-9a1f-24c89228c26a">
+  <subDataset name="tableDataset" uuid="3a4312c0-8f49-4269-8bf3-fe5b68bd10aa">
     <field name="FIELD_NAME" class="java.lang.String">
     </field>
     <field name="FIELD_NAME2" class="java.lang.String">
@@ -69,7 +69,7 @@
           <datasetRun subDataset="tableDataset" uuid="54ad30fb-b17a-435c-887d-f9030f22259d">
             <connectionExpression><![CDATA[$P{REPORT_CONNECTION}]]></connectionExpression>
           </datasetRun>
-          <jr:columnGroup width="555" uuid="a36d66e7-5aef-4f50-b7c2-101b93bbf6f0">
+          <jr:columnGroup width="555" uuid="056aaa4d-c7d3-4a10-9772-558accd3b7ba">
             <property name="com.jaspersoft.studio.components.table.model.column.name" value="OuterGroup"/>
             <jr:columnHeader height="30" rowSpan="1" style="Table_CH">
                 <staticText>
@@ -83,7 +83,7 @@
                   <text><![CDATA[Outer Group]]></text>
                 </staticText>
             </jr:columnHeader>
-          <jr:columnGroup width="370" uuid="957134ba-8849-416c-a842-87f0ba8b614c">
+          <jr:columnGroup width="370" uuid="6a0a5e28-9461-417b-abf9-defd8f9c52c8">
             <property name="com.jaspersoft.studio.components.table.model.column.name" value="InnerGroup"/>
             <jr:columnHeader height="30" rowSpan="1" style="Table_CH">
                 <staticText>
