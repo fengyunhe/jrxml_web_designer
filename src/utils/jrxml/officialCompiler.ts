@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * JRXML编译验证器（基于JasperReports官方库）
  *

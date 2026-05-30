@@ -82,13 +82,13 @@
         <input
           type="color"
           :value="element.backcolor || '#FFFFFF'"
-          @input="updateProperty('backcolor', $event.target.value)"
+          @input="updateProperty('backcolor', ($event.target as HTMLInputElement).value)"
           class="color-input"
         />
         <input
           type="text"
           :value="element.backcolor || '#FFFFFF'"
-          @input="updateProperty('backcolor', $event.target.value)"
+          @input="updateProperty('backcolor', ($event.target as HTMLInputElement).value)"
           class="color-text"
           placeholder="#FFFFFF"
         />

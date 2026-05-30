@@ -3,7 +3,7 @@
     <label v-if="label" class="select-label">{{ label }}</label>
     <select
       :value="modelValue"
-      @change="$emit('update:modelValue', $event.target.value)"
+      @change="$emit('update:modelValue', ($event.target as HTMLSelectElement).value)"
       class="select-input"
     >
       <option

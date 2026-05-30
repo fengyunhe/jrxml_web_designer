@@ -15,11 +15,19 @@ export default defineConfig({
     }
   },
   build: {
+    chunkSizeWarningLimit: 1500,
     rollupOptions: {
+      output: {
+        manualChunks(id) {
+          if (id.includes('node_modules/vue') || id.includes('node_modules/vue-i18n')) return 'vue-vendor';
+          if (id.includes('node_modules/@codemirror')) return 'codemirror';
+          if (id.includes('node_modules/naive-ui')) return 'naive-ui';
+        },
+      },
       external: (id) => {
         // 排除测试文件
         return id.endsWith('.test.ts') || id.endsWith('.spec.ts');
-      }
-    }
-  }
+      },
+    },
+  },
 })

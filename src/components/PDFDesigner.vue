@@ -990,6 +990,7 @@ function getSelectedElementsData() {
     const band = bands.value[sel.bandIndex];
     if (band && band.elements[sel.elementIndex]) {
       const el = band.elements[sel.elementIndex];
+      if (!el) continue;
       result.push({ x: el.x, y: el.y, width: el.width, height: el.height, bandIndex: sel.bandIndex, elementIndex: sel.elementIndex });
     }
   }
@@ -1004,10 +1005,12 @@ function handleMultiAlign(direction: 'left' | 'center' | 'right' | 'top' | 'midd
   const newPositions = alignElements(elementsData, direction);
   newPositions.forEach((pos, i) => {
     const sel = selectedElements.value[i];
+    if (!sel) return;
     const band = bands.value[sel.bandIndex];
-    if (band && band.elements[sel.elementIndex]) {
-      band.elements[sel.elementIndex].x = Math.round(pos.x);
-      band.elements[sel.elementIndex].y = Math.round(pos.y);
+    const el = band?.elements[sel.elementIndex];
+    if (el) {
+      el.x = Math.round(pos.x);
+      el.y = Math.round(pos.y);
     }
   });
   updateJRXML();
@@ -1021,10 +1024,12 @@ function handleMultiDistribute(direction: 'horizontal' | 'vertical') {
   const newPositions = calculateDistribution(elementsData, direction);
   newPositions.forEach((pos, i) => {
     const sel = selectedElements.value[i];
+    if (!sel) return;
     const band = bands.value[sel.bandIndex];
-    if (band && band.elements[sel.elementIndex]) {
-      band.elements[sel.elementIndex].x = Math.round(pos.x);
-      band.elements[sel.elementIndex].y = Math.round(pos.y);
+    const el = band?.elements[sel.elementIndex];
+    if (el) {
+      el.x = Math.round(pos.x);
+      el.y = Math.round(pos.y);
     }
   });
   updateJRXML();
@@ -1040,9 +1045,11 @@ function handleMultiResize(type: 'sameWidth' | 'sameHeight' | 'sameSize') {
     const maxWidth = Math.max(...elementsData.map(e => e.width));
     elementsData.forEach((_, i) => {
       const sel = selectedElements.value[i];
+      if (!sel) return;
       const band = bands.value[sel.bandIndex];
-      if (band && band.elements[sel.elementIndex]) {
-        band.elements[sel.elementIndex].width = maxWidth;
+      const el = band?.elements[sel.elementIndex];
+      if (el) {
+        el.width = maxWidth;
       }
     });
   }
@@ -1050,9 +1057,11 @@ function handleMultiResize(type: 'sameWidth' | 'sameHeight' | 'sameSize') {
     const maxHeight = Math.max(...elementsData.map(e => e.height));
     elementsData.forEach((_, i) => {
       const sel = selectedElements.value[i];
+      if (!sel) return;
       const band = bands.value[sel.bandIndex];
-      if (band && band.elements[sel.elementIndex]) {
-        band.elements[sel.elementIndex].height = maxHeight;
+      const el = band?.elements[sel.elementIndex];
+      if (el) {
+        el.height = maxHeight;
       }
     });
   }
@@ -3254,9 +3263,8 @@ const saveJRXML = (): void => {
         uuid: crypto.randomUUID(),
         name: dataset.name,
         fields: dataset.fields,
-        parameters: dataset.parameters,
         query: dataset.query
-      }));
+      })) as any;
     }
     
     // 更新bands

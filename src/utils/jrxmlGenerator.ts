@@ -165,11 +165,11 @@ export function generateJRXMLContent(
     updatedFields.forEach(field => {
       if (field.name && field.class) {
         // 检查是否有字段属性需要生成
-        if (field.properties && field.properties.length > 0) {
+        if (field.properties && typeof field.properties === 'object' && !Array.isArray(field.properties)) {
           jrxml += `  <field name="${field.name}" class="${field.class}">\n`;
-          field.properties.forEach(prop => {
-            if (prop.name && prop.value) {
-              jrxml += `    <property name="${prop.name}" value="${prop.value}"/>\n`;
+          Object.entries(field.properties).forEach(([key, value]) => {
+            if (key && value) {
+              jrxml += `    <property name="${key}" value="${value}"/>\n`;
             }
           });
           jrxml += `  </field>\n`;

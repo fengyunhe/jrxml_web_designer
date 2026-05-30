@@ -7,7 +7,7 @@
       <label>数据集名称</label>
       <input
         :value="element.dataset?.name || ''"
-        @input="updateDatasetProperty('name', $event.target.value)"
+        @input="updateDatasetProperty('name', ($event.target as HTMLInputElement).value)"
         type="text"
         placeholder="tableDataset"
       />
@@ -28,7 +28,7 @@
       <label>查询语句</label>
       <textarea
         :value="element.dataset?.query?.text || ''"
-        @input="updateQueryProperty('text', $event.target.value)"
+        @input="updateQueryProperty('text', ($event.target as HTMLTextAreaElement).value)"
         placeholder="SELECT * FROM table"
         rows="3"
       ></textarea>
@@ -56,7 +56,7 @@
         <label>表头样式</label>
         <select
           :value="element.styles?.tableHeader || 'Table_TH'"
-          @input="updateStyleProperty('tableHeader', $event.target.value)"
+          @input="updateStyleProperty('tableHeader', ($event.target as HTMLSelectElement).value)"
         >
           <option v-for="style in availableStyles" :key="style" :value="style">{{ style }}</option>
         </select>
@@ -67,7 +67,7 @@
         <label>列头样式</label>
         <select
           :value="element.styles?.columnHeader || 'Table_CH'"
-          @input="updateStyleProperty('columnHeader', $event.target.value)"
+          @input="updateStyleProperty('columnHeader', ($event.target as HTMLSelectElement).value)"
         >
           <option v-for="style in availableStyles" :key="style" :value="style">{{ style }}</option>
         </select>
@@ -78,7 +78,7 @@
         <label>详情样式</label>
         <select
           :value="element.styles?.detail || 'Table_TD'"
-          @input="updateStyleProperty('detail', $event.target.value)"
+          @input="updateStyleProperty('detail', ($event.target as HTMLSelectElement).value)"
         >
           <option v-for="style in availableStyles" :key="style" :value="style">{{ style }}</option>
         </select>
@@ -89,7 +89,7 @@
         <label>列脚样式</label>
         <select
           :value="element.styles?.columnFooter || 'Table_CH'"
-          @input="updateStyleProperty('columnFooter', $event.target.value)"
+          @input="updateStyleProperty('columnFooter', ($event.target as HTMLSelectElement).value)"
         >
           <option v-for="style in availableStyles" :key="style" :value="style">{{ style }}</option>
         </select>
@@ -100,7 +100,7 @@
         <label>表脚样式</label>
         <select
           :value="element.styles?.tableFooter || 'Table_TH'"
-          @input="updateStyleProperty('tableFooter', $event.target.value)"
+          @input="updateStyleProperty('tableFooter', ($event.target as HTMLSelectElement).value)"
         >
           <option v-for="style in availableStyles" :key="style" :value="style">{{ style }}</option>
         </select>
@@ -163,8 +163,8 @@
           :key="index"
           class="row-group-item"
         >
-          <span class="row-group-name">{{ group.name || `分组 ${index + 1}` }}</span>
-          <button @click="removeRowGroup(index)" class="remove-button">删除</button>
+          <span class="row-group-name">{{ group.name || `分组 ${Number(index) + 1}` }}</span>
+          <button @click="removeRowGroup(Number(index))" class="remove-button">删除</button>
         </div>
       </div>
       <button @click="addRowGroup" class="add-button">添加行分组</button>
@@ -178,7 +178,7 @@
       <label>样式继承</label>
       <select
         :value="element.parentStyle || ''"
-        @input="updateProperty('parentStyle', $event.target.value)"
+        @input="updateProperty('parentStyle', ($event.target as HTMLSelectElement).value)"
       >
         <option value="">无</option>
         <option v-for="style in availableStyles" :key="style" :value="style">{{ style }}</option>

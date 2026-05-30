@@ -80,7 +80,7 @@ export function useLivePreview(config?: Partial<PreviewConfig>) {
   });
 
   // 防抖定时器
-  let debounceTimer: NodeJS.Timeout | null = null;
+  let debounceTimer: ReturnType<typeof setTimeout> | null = null;
 
   // 动画帧ID
   let animationFrameId: number | null = null;

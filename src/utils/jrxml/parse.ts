@@ -227,6 +227,7 @@ export function parseJRXMLContent(jrxmlContent: string): { properties: ReportPro
               cs.properties.isUnderline = csFont.getAttribute('isUnderline') === 'true';
             }
           }
+          if (!style.conditionalStyles) style.conditionalStyles = [];
           style.conditionalStyles.push(cs);
         });
       }
@@ -885,7 +886,7 @@ function parseElement(element: Element, type: string): any {
 
   // 读取 printWhenExpression 和 style 属性
   if (reportElement.hasAttribute('printWhenExpression')) {
-    result.printWhenExpression = reportElement.getAttribute('printWhenExpression') || undefined;
+    (result as any).printWhenExpression = reportElement.getAttribute('printWhenExpression') || undefined;
   }
   if (reportElement.hasAttribute('style')) {
     result.style = reportElement.getAttribute('style') || undefined;

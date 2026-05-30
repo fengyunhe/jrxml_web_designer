@@ -66,8 +66,8 @@
             </div>
           </div>
 
-          <!-- 通用条件打印表达式（所有元素类型） -->
-          <div class="form-group">
+          <!-- 通用条件打印表达式（所有元素类型，break和table除外） -->
+          <div class="form-group" v-if="currentElement && currentElement.type !== 'break' && currentElement.type !== 'table'">
             <label>{{ t('properties.printWhenExpression') || '条件打印表达式' }}</label>
             <ExpressionEditor
               :model-value="currentElement.printWhenExpression || ''"
@@ -999,7 +999,7 @@ const addColumn = () => {
         }
       }
     };
-    currentElement.value.columns.push(newColumn);
+    (currentElement.value as any).columns.push(newColumn);
     emit('update-jrxml');
   }
 };

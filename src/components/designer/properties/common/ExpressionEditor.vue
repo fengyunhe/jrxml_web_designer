@@ -283,14 +283,14 @@ function detectAutocompleteContext(value: string, cursorPos: number) {
   const match = beforeCursor.match(/\$(F|P|V)\{([^}]*)$/);
   if (match) {
     currentPrefix.value = `$${match[1]}{` as '$F{' | '$P{' | '$V{';
-    currentFilter.value = match[2];
+    currentFilter.value = match[2] || '';
     showAutocomplete.value = true;
     activeSuggestionIndex.value = 0;
   } else {
     // Check for method name trigger: extract word at cursor
     const wordMatch = beforeCursor.match(/([A-Za-z][A-Za-z0-9_.]*)$/);
-    if (wordMatch && wordMatch[1].length >= 2) {
-      const word = wordMatch[1];
+    const word = wordMatch?.[1];
+    if (word && word.length >= 2) {
       // Check if any method suggestion starts with the typed word (case-insensitive)
       const hasMethodMatch = allSuggestions.value.some(
         item => item.type === 'method' && item.value.toLowerCase().startsWith(word.toLowerCase())
@@ -333,7 +333,10 @@ function handleKeydown(event: KeyboardEvent) {
   } else if (event.key === 'Enter' || event.key === 'Tab') {
     if (filteredSuggestions.value.length > 0) {
       event.preventDefault();
-      selectSuggestion(filteredSuggestions.value[activeSuggestionIndex.value]);
+      const selected = filteredSuggestions.value[activeSuggestionIndex.value];
+      if (selected) {
+        selectSuggestion(selected);
+      }
     }
   } else if (event.key === 'Escape') {
     showAutocomplete.value = false;

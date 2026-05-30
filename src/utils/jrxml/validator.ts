@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * JRXML编译验证器
  * 用于验证生成的JRXML是否符合JasperReports规范

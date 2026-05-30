@@ -65,7 +65,10 @@ export function useAlignmentSystem() {
   const updateGuide = (id: string, updates: Partial<AlignmentGuide>) => {
     const index = guides.value.findIndex(g => g.id === id);
     if (index !== -1) {
-      guides.value[index] = { ...guides.value[index], ...updates };
+      const existing = guides.value[index];
+      if (existing) {
+        guides.value[index] = { ...existing, ...updates };
+      }
     }
   };
 
@@ -200,8 +203,10 @@ export function useAlignmentSystem() {
       for (let i = 0; i < sorted.length - 1; i++) {
         const current = sorted[i];
         const next = sorted[i + 1];
-        const spacing = next.x - (current.x + current.width);
-        spacings.push(spacing);
+        if (current && next) {
+          const spacing = next.x - (current.x + current.width);
+          spacings.push(spacing);
+        }
       }
     } else {
       // 按Y坐标排序
@@ -210,8 +215,10 @@ export function useAlignmentSystem() {
       for (let i = 0; i < sorted.length - 1; i++) {
         const current = sorted[i];
         const next = sorted[i + 1];
-        const spacing = next.y - (current.y + current.height);
-        spacings.push(spacing);
+        if (current && next) {
+          const spacing = next.y - (current.y + current.height);
+          spacings.push(spacing);
+        }
       }
     }
 
@@ -237,6 +244,8 @@ export function useAlignmentSystem() {
       const first = sorted[0];
       const last = sorted[sorted.length - 1];
 
+      if (!first || !last) return result;
+
       // 计算总宽度和总间距
       const totalWidth = sorted.reduce((sum, el) => sum + el.width, 0);
       const totalSpace = (containerWidth || last.x + last.width) - first.x;
@@ -253,6 +262,8 @@ export function useAlignmentSystem() {
       const sorted = [...elements].sort((a, b) => a.y - b.y);
       const first = sorted[0];
       const last = sorted[sorted.length - 1];
+
+      if (!first || !last) return result;
 
       // 计算总高度和总间距
       const totalHeight = sorted.reduce((sum, el) => sum + el.height, 0);
