@@ -621,16 +621,7 @@ function getDefaultBandHeight(bandType: string): number {
 function generateStaticTextXML(element: any): string {
   let xml = `    <staticText`;
 
-  // 添加StaticText特有的属性
-  // rotation属性
-  if (element.rotation && ['None', 'Left', 'Right'].includes(element.rotation)) {
-    xml += ` rotation="${element.rotation}"`;
-  }
-
-  // pattern属性
-  if (element.pattern) {
-    xml += ` pattern="${element.pattern}"`;
-  }
+  // staticText不支持rotation和pattern属性（这些是textField专有属性）
 
   xml += `>\n      <reportElement x="${toInt(element.x)}" y="${toInt(element.y)}" width="${toInt(element.width)}" height="${toInt(element.height)}"`;
 
@@ -656,6 +647,11 @@ function generateStaticTextXML(element: any): string {
   }
   if (element.style) {
     xml += ` style="${element.style}"`;
+  }
+
+  // rotation属性属于reportElement，不属于staticText
+  if (element.rotation && ['None', 'Left', 'Right'].includes(element.rotation)) {
+    xml += ` rotation="${element.rotation}"`;
   }
 
   xml += '/>\n';
