@@ -70,14 +70,15 @@
       
       <div class="designer-layout">
       <!-- 左侧元素库 -->
-      <ResizablePanel 
+      <ResizablePanel
         v-show="showLeftPanel"
         position="left"
         :initial-size="leftPanelWidth"
         :min-size="PANEL_CONSTANTS.LEFT_PANEL_MIN_WIDTH"
         :max-size="PANEL_CONSTANTS.LEFT_PANEL_MAX_WIDTH"
-        :collapsible="false"
+        :collapsible="true"
         @size-change="handleLeftPanelSizeChange"
+        @collapse-change="leftPanelCollapsed = $event"
       >
         <ElementLibrary
           :elements="elements"
@@ -179,14 +180,15 @@
       </div>
 
       <!-- 右侧属性面板 -->
-      <ResizablePanel 
+      <ResizablePanel
         v-show="showRightPanel"
         position="right"
         :initial-size="propertyPanelWidth"
         :min-size="200"
-        :max-size="700"
-        :collapsible="false"
+        :max-size="500"
+        :collapsible="true"
         @size-change="handlePropertyPanelSizeChange"
+        @collapse-change="rightPanelCollapsed = $event"
       >
         <!-- 元素属性组件 -->
         <ElementProperties
@@ -451,9 +453,11 @@ const showBottomPanel = ref(false);
 
 // 属性面板宽度
 const propertyPanelWidth = ref(PANEL_CONSTANTS.DEFAULT_PROPERTY_PANEL_WIDTH); // 默认宽度300px
+const rightPanelCollapsed = ref(false); // 右侧面板折叠状态
 
 // 左侧面板宽度
-const leftPanelWidth = ref(PANEL_CONSTANTS.DEFAULT_LEFT_PANEL_WIDTH); 
+const leftPanelWidth = ref(PANEL_CONSTANTS.DEFAULT_LEFT_PANEL_WIDTH);
+const leftPanelCollapsed = ref(false); // 左侧面板折叠状态 
 
 // DesignerCanvas组件引用
 const designerCanvasRef = ref<any>(null);
@@ -1096,6 +1100,7 @@ const {
 });
 
 const isDraggingOrResizing = ref(false); // 标记是否正在拖动或调整大小
+const isUpdatingJRXML = ref(false); // 防止 updateJRXML 重入的标志
 
 // 添加新参数
 // 移除未使用的参数管理函数
@@ -2613,42 +2618,35 @@ const handleBottomPanelSizeChange = (newSize: number) => {
 
 // 自动更新JRXML内容
 const updateJRXML = () => {
+  // 防止重入：如果 updateJRXML 正在执行中，跳过本次调用
+  if (isUpdatingJRXML.value) {
+    return;
+  }
+  isUpdatingJRXML.value = true;
   try {
-    console.log('开始更新JRXML内容...');
-    
     // 确保所有数据都已初始化
     if (!reportProperties.value || !bands.value || !reportFields.value || !reportParameters.value) {
-      console.log('数据未完全初始化，跳过JRXML更新');
       return;
     }
-    
-    console.log('当前reportProperties:', reportProperties.value);
-    console.log('当前bands数量:', bands.value.length);
-    console.log('当前reportFields数量:', reportFields.value.length);
-    console.log('当前reportParameters数量:', reportParameters.value.length);
-    
+
     const content = generateJRXMLContent(reportProperties.value, bands.value, reportFields.value, reportParameters.value, subDatasets.value, reportStyles.value, reportVariables.value);
-    console.log('生成的JRXML内容长度:', content.length);
-    console.log('生成的JRXML内容预览:', content);
-    
+
     // 如果内容有变化，保存到历史记录
     if (content !== jrxmlContent.value) {
-      console.log('JRXML内容已变化，更新中...');
       // 只在非拖拽/调整大小状态下保存历史
       if (!isDraggingOrResizing.value && historyStack.value.length === 0) {
         // 初始化时保存第一次状态
         saveStateToHistory();
       }
       jrxmlContent.value = content;
-      console.log('JRXML内容已更新到响应式变量，新长度:', jrxmlContent.value.length);
-      
+
       // 立即保存到本地存储，确保JRXML内容被保存
       saveToLocalStorageWrapper();
-    } else {
-      console.log('JRXML内容未变化');
     }
   } catch (error) {
     console.error('更新JRXML失败:', error);
+  } finally {
+    isUpdatingJRXML.value = false;
   }
 };
 
@@ -3052,10 +3050,13 @@ const moveElementByKeyboard = (direction: string) => {
       break;
   }
   
+  // 保存移动前的状态到历史记录（用于撤销）
+  saveStateToHistory();
+
   // 更新元素位置
   currentElement.x = newX;
   currentElement.y = newY;
-  
+
   // 触发更新
   updateJRXML();
   saveToLocalStorageWrapper();
@@ -3163,16 +3164,12 @@ onUnmounted(() => {
 watch(
   [reportProperties, bands, reportFields, reportParameters],
   () => {
-    console.log('watch监听器被触发，isDraggingOrResizing:', isDraggingOrResizing.value);
-    // 只在非拖拽/调整大小状态下更新
-    if (!isDraggingOrResizing.value) {
-      console.log('开始保存到本地存储和更新JRXML...');
+    // 在非拖拽/调整大小状态下，且不在 JRXML 更新过程中时才更新
+    if (!isDraggingOrResizing.value && !isUpdatingJRXML.value) {
       saveToLocalStorageWrapper();
       updateJRXML();
       // 更新超出边界的元素
       updateOutOfBoundsElements();
-    } else {
-      console.log('拖拽/调整大小中，跳过更新');
     }
   },
   { deep: true }

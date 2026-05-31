@@ -28,7 +28,7 @@ describe('panelUtils', () => {
 
     it('should not go below default minimum height', () => {
       const result = adjustBottomPanelHeight(400, -50);
-      expect(result).toBe(400); // Should not go below default minimum height
+      expect(result).toBe(350); // 400-50=350, above new default minimum of 320
     });
 
     it('should not go below minimum height', () => {
@@ -137,9 +137,9 @@ describe('panelUtils', () => {
     it('should return default panel state with correct values', () => {
       const state = getDefaultPanelState();
       expect(state).toEqual({
-        leftPanelWidth: 280,
-        bottomPanelHeight: 400,
-        propertyPanelWidth: 400,
+        leftPanelWidth: 240,
+        bottomPanelHeight: 320,
+        propertyPanelWidth: 320,
         leftPanelCollapsed: false,
         bottomPanelCollapsed: false,
         propertyPanelCollapsed: false

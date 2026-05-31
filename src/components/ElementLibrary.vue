@@ -539,8 +539,8 @@ function handleConfirmDelete(): void {
   flex-direction: column;
   height: 100%;
   overflow-y: auto;
-  padding: 8px;
-  gap: 16px;
+  padding: 6px;
+  gap: 10px;
 }
 
 .element-list-container h3,
@@ -550,7 +550,7 @@ function handleConfirmDelete(): void {
   margin-top: 0;
   margin-bottom: 0;
   color: #333;
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 600;
 }
 
@@ -558,7 +558,7 @@ function handleConfirmDelete(): void {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 12px;
+  margin-bottom: 6px;
 }
 
 .add-button {
@@ -585,7 +585,7 @@ function handleConfirmDelete(): void {
 .element-list {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: 8px;
+  gap: 6px;
   /* margin-bottom: 16px; */
 }
 
@@ -594,13 +594,13 @@ function handleConfirmDelete(): void {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 12px;
+  padding: 8px;
   background-color: #f5f5f5;
   border: 1px solid #ddd;
   border-radius: 4px;
   cursor: grab;
   transition: all 0.2s ease;
-  min-height: 80px;
+  min-height: 60px;
 }
 
 .element-item:hover {
@@ -642,8 +642,8 @@ function handleConfirmDelete(): void {
 }
 
 .element-icon {
-  font-size: 24px;
-  margin-bottom: 8px;
+  font-size: 20px;
+  margin-bottom: 4px;
 }
 
 .element-name {
@@ -658,13 +658,13 @@ function handleConfirmDelete(): void {
   background-color: #f9f9f9;
   border: 1px solid #ddd;
   border-radius: 4px;
-  padding: 12px;
-  margin-bottom: 16px;
+  padding: 8px;
+  margin-bottom: 10px;
 }
 
 .filter-input-container {
   position: relative;
-  margin-bottom: 12px;
+  margin-bottom: 8px;
 }
 
 .filter-input {
@@ -684,14 +684,14 @@ function handleConfirmDelete(): void {
 }
 
 .band-group {
-  margin-bottom: 12px;
+  margin-bottom: 8px;
 }
 
 .band-group-header {
   font-size: 12px;
   font-weight: 600;
-  margin-bottom: 6px;
-  padding-bottom: 4px;
+  margin-bottom: 4px;
+  padding-bottom: 3px;
   border-bottom: 1px solid #e0e0e0;
   color: #666;
 }

@@ -255,6 +255,9 @@ export interface TextFieldElement extends DesignElementBase {
   hyperlinkAnchor?: string;
   hyperlinkPage?: number;
   hyperlinkReferenceExpression?: string;
+  hyperlinkAnchorExpression?: string;
+  hyperlinkPageExpression?: string;
+  hyperlinkTooltip?: string;
   bookmarkLevel?: number;
   isIgnorePagination?: boolean;
   printWhenExpression?: string;
@@ -275,6 +278,9 @@ export interface ImageElement extends DesignElementBase {
   evaluationTime?: 'Now' | 'Report' | 'Page' | 'Column' | 'Band';
   hyperlinkType?: string;
   hyperlinkReferenceExpression?: string;
+  hyperlinkAnchorExpression?: string;
+  hyperlinkPageExpression?: string;
+  hyperlinkTooltip?: string;
   printWhenExpression?: string;
   // 过时属性（向后兼容）
   scaleImage?: 'Clip' | 'FillFrame' | 'RetainShape' | 'RealHeight' | 'RealSize';
@@ -285,6 +291,12 @@ export interface LineElement extends DesignElementBase {
   type: 'line';
   lineDirection?: 'TopDown' | 'BottomUp';
   lineWidth?: number;
+  lineColor?: string;
+  lineStyle?: string;
+  evaluationTime?: 'Now' | 'Report' | 'Page' | 'Column' | 'Band';
+  // 新增属性
+  isPrintRepeatedValues?: boolean;
+  printWhenExpression?: string;
 }
 
 // 矩形元素接口
@@ -308,22 +320,13 @@ export interface EllipseElement extends DesignElementBase {
   printWhenExpression?: string;
 }
 
-// 线条元素接口
-export interface LineElement extends DesignElementBase {
-  type: 'line';
-  lineDirection?: 'TopDown' | 'BottomUp';
-  lineWidth?: number;
-  // 新增属性
-  isPrintRepeatedValues?: boolean;
-  printWhenExpression?: string;
-}
-
 // 分页符元素接口
 export interface BreakElement extends DesignElementBase {
   type: 'break';
   breakType?: 'Page' | 'Column';
   // 新增属性
   isResetPageNumber?: boolean;
+  isResetPageOverflow?: boolean;
 }
 
 // 容器元素接口
@@ -331,8 +334,10 @@ export interface FrameElement extends DesignElementBase {
   type: 'frame';
   elements?: DesignElement[]; // 容器内的子元素
   layout?: 'FreeLayout' | 'HorizontalLayout' | 'VerticalLayout'; // 布局属性
+  evaluationTime?: 'Now' | 'Report' | 'Page' | 'Column' | 'Group' | 'Band' | 'Auto';
   // 条件打印
   printWhenExpression?: string;
+  printWhenGroupChanges?: string;
   // 分页控制
   isIgnorePagination?: boolean;
   isSplitAllowed?: boolean;

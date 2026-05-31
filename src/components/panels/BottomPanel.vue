@@ -604,7 +604,7 @@ onBeforeUnmount(() => {
   display: flex;
   background-color: #e9e9e9;
   border-bottom: 1px solid #ddd;
-  padding: 0 10px;
+  padding: 0 8px;
   flex-shrink: 0; /* 确保导航栏不会被压缩 */
   position: sticky;
   top: 0;
@@ -612,11 +612,11 @@ onBeforeUnmount(() => {
 }
 
 .tab-button {
-  padding: 10px 20px;
+  padding: 6px 16px;
   border: none;
   background: none;
   cursor: pointer;
-  font-size: 14px;
+  font-size: 13px;
   border-bottom: 2px solid transparent;
   transition: all 0.3s ease;
 }
@@ -635,7 +635,7 @@ onBeforeUnmount(() => {
   flex: 1;
   overflow: auto;
   min-height: 0; /* 确保flex子元素可以收缩 */
-  padding: 15px;
+  padding: 10px;
   box-sizing: border-box;
 }
 

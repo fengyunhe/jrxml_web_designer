@@ -862,6 +862,16 @@ function generateTextFieldXML(element: any): string {
     xml += `      <hyperlinkReferenceExpression><![CDATA[${element.hyperlinkReferenceExpression}]]></hyperlinkReferenceExpression>\n`;
   }
 
+  // 新增：超链接锚点表达式
+  if (element.hyperlinkAnchorExpression) {
+    xml += `      <hyperlinkAnchorExpression><![CDATA[${element.hyperlinkAnchorExpression}]]></hyperlinkAnchorExpression>\n`;
+  }
+
+  // 新增：超链接页码表达式
+  if (element.hyperlinkPageExpression) {
+    xml += `      <hyperlinkPageExpression><![CDATA[${element.hyperlinkPageExpression}]]></hyperlinkPageExpression>\n`;
+  }
+
   xml += `    </textField>\n`;
   return xml;
 }
@@ -954,6 +964,16 @@ function generateImageXML(element: any): string {
     xml += `      <hyperlinkReferenceExpression><![CDATA[${element.hyperlinkReferenceExpression}]]></hyperlinkReferenceExpression>\n`;
   }
 
+  // 新增：超链接锚点表达式
+  if (element.hyperlinkAnchorExpression) {
+    xml += `      <hyperlinkAnchorExpression><![CDATA[${element.hyperlinkAnchorExpression}]]></hyperlinkAnchorExpression>\n`;
+  }
+
+  // 新增：超链接页码表达式
+  if (element.hyperlinkPageExpression) {
+    xml += `      <hyperlinkPageExpression><![CDATA[${element.hyperlinkPageExpression}]]></hyperlinkPageExpression>\n`;
+  }
+
   xml += `    </image>\n`;
   return xml;
 }
@@ -962,11 +982,21 @@ function generateImageXML(element: any): string {
 function generateLineXML(element: any): string {
   // 处理过时的direction属性，转换为direction属性
   const direction = element.lineDirection || element.direction || 'TopDown'; // XSD中默认是TopDown
-  let xml = `    <line direction="${direction}">
-      <reportElement x="${toInt(element.x)}" y="${toInt(element.y)}" width="${toInt(element.width)}" height="${toInt(element.height)}"`;
+  let xml = `    <line direction="${direction}">`;
+  xml += `\n      <reportElement x="${toInt(element.x)}" y="${toInt(element.y)}" width="${toInt(element.width)}" height="${toInt(element.height)}"`;
 
   if (element.uuid) {
     xml += ` uuid="${element.uuid}"`;
+  }
+
+  if (element.forecolor) {
+    xml += ` forecolor="${element.forecolor}"`;
+  }
+  if (element.backcolor) {
+    xml += ` backcolor="${element.backcolor}"`;
+  }
+  if (element.mode) {
+    xml += ` mode="${element.mode}"`;
   }
 
   if (element.printWhenExpression) {
@@ -976,8 +1006,41 @@ function generateLineXML(element: any): string {
     xml += ` style="${element.style}"`;
   }
 
-  xml += `/>
-    </line>\n`;
+  xml += '/>\n';
+
+  // 生成graphicElement（线条的笔设置）
+  const hasLineWidth = element.lineWidth !== undefined && element.lineWidth > 0;
+  const hasLineColor = element.lineColor !== undefined && element.lineColor !== '';
+  const hasLineStyle = element.lineStyle !== undefined && element.lineStyle !== '';
+  const hasFill = element.fill !== undefined && element.fill !== '';
+  const hasPen = element.pen && (element.pen.lineWidth !== undefined || element.pen.lineStyle || element.pen.lineColor);
+
+  if (hasLineWidth || hasLineColor || hasLineStyle || hasFill || hasPen) {
+    xml += '      <graphicElement';
+    if (hasFill) {
+      xml += ` fill="${element.fill}"`;
+    }
+    xml += '>\n';
+
+    // 优先使用graphicElement的pen，否则从元素直接属性构建pen
+    if (hasPen) {
+      xml += '        <pen';
+      if (element.pen.lineWidth !== undefined) xml += ` lineWidth="${element.pen.lineWidth}"`;
+      if (element.pen.lineStyle) xml += ` lineStyle="${element.pen.lineStyle}"`;
+      if (element.pen.lineColor) xml += ` lineColor="${element.pen.lineColor}"`;
+      xml += '/>\n';
+    } else if (hasLineWidth || hasLineColor || hasLineStyle) {
+      xml += '        <pen';
+      if (hasLineWidth) xml += ` lineWidth="${element.lineWidth}"`;
+      if (hasLineStyle) xml += ` lineStyle="${element.lineStyle}"`;
+      if (hasLineColor) xml += ` lineColor="${element.lineColor}"`;
+      xml += '/>\n';
+    }
+
+    xml += '      </graphicElement>\n';
+  }
+
+  xml += '    </line>\n';
   return xml;
 }
 
@@ -995,7 +1058,11 @@ function generateRectangleXML(element: any): string {
     xml += ` uuid="${element.uuid}"`;
   }
 
-  // 处理过时的backcolor属性，转换为backcolor属性
+  if (element.forecolor) {
+    xml += ` forecolor="${element.forecolor}"`;
+  }
+
+  // 处理backcolor属性
   if (element.backcolor) {
     xml += ` backcolor="${element.backcolor}"`;
   }
@@ -1062,6 +1129,10 @@ function generateEllipseXML(element: any): string {
 
   if (element.uuid) {
     xml += ` uuid="${element.uuid}"`;
+  }
+
+  if (element.forecolor) {
+    xml += ` forecolor="${element.forecolor}"`;
   }
 
   // 处理backcolor属性
@@ -1133,6 +1204,10 @@ function generateFrameXML(element: any): string {
     xml += ` uuid="${element.uuid}"`;
   }
 
+  if (element.forecolor) {
+    xml += ` forecolor="${element.forecolor}"`;
+  }
+
   if (element.backcolor) {
     xml += ` backcolor="${element.backcolor}"`;
   }
@@ -1155,6 +1230,11 @@ function generateFrameXML(element: any): string {
     xml += ` isIgnorePagination="true"`;
   }
 
+  // 新增：分裂类型
+  if (element.splitType) {
+    xml += ` splitType="${element.splitType}"`;
+  }
+
   // 新增：是否移除空白行
   if (element.isRemoveLineWhenBlank !== undefined && element.isRemoveLineWhenBlank) {
     xml += ` isRemoveLineWhenBlank="true"`;
@@ -1166,6 +1246,11 @@ function generateFrameXML(element: any): string {
   }
 
   xml += '/>\n';
+
+  // 生成layout属性
+  if (element.layout) {
+    xml += `      <property name="com.jaspersoft.studio.layout" value="com.jaspersoft.studio.editor.layout.${element.layout}"/>\n`;
+  }
 
   // 生成box元素
   xml += generateBoxXML(element.box, element);
@@ -1187,12 +1272,16 @@ function generateBreakXML(element: any): string {
   const type = element.breakType || 'Page';
   let xml = `    <break type="${type}">`;
 
-  // 新增：是否重置页码
+  xml += `\n      <reportElement x="${toInt(element.x)}" y="${toInt(element.y)}" width="${toInt(element.width)}" height="${toInt(element.height)}"`;
+
+  // 是否重置页码
   if (element.isResetPageNumber !== undefined && element.isResetPageNumber) {
-    xml += `\n      <reportElement x="${toInt(element.x)}" y="${toInt(element.y)}" width="${toInt(element.width)}" height="${toInt(element.height)}"`;
     xml += ` isResetPageNumber="true"`;
-  } else {
-    xml += `\n      <reportElement x="${toInt(element.x)}" y="${toInt(element.y)}" width="${toInt(element.width)}" height="${toInt(element.height)}"`;
+  }
+
+  // 是否重置页溢出
+  if (element.isResetPageOverflow !== undefined && element.isResetPageOverflow) {
+    xml += ` isResetPageOverflow="true"`;
   }
 
   if (element.uuid) {

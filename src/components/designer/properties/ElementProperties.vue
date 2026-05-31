@@ -1620,6 +1620,7 @@ function ensureIntegerValue(element: any, property: string) {
   if (element[property] !== undefined) {
     element[property] = Math.round(element[property]);
   }
+  emit('save-state');
 }
 
 // 设置水平对齐方式
@@ -2639,13 +2640,13 @@ function updateTableStyles() {
 
 <style scoped>
 .element-properties {
-  padding: var(--prop-spacing-lg);
+  padding: var(--prop-spacing-md);
 }
 
 .element-properties h3 {
-  margin: 0 0 var(--prop-spacing-lg) 0;
-  padding: 0 0 var(--prop-spacing-sm) 0;
-  font-size: var(--prop-font-size-lg);
+  margin: 0 0 var(--prop-spacing-md) 0;
+  padding: 0 0 var(--prop-spacing-xs) 0;
+  font-size: var(--prop-font-size-md);
   font-weight: var(--prop-font-weight-semibold);
   color: var(--prop-text-primary);
   border-bottom: 1px solid var(--prop-divider-color);
@@ -2668,17 +2669,17 @@ function updateTableStyles() {
 }
 
 .property-section {
-  margin-bottom: var(--prop-spacing-xl);
+  margin-bottom: var(--prop-spacing-lg);
 }
 
 .form-group {
-  margin-bottom: var(--prop-spacing-lg);
+  margin-bottom: var(--prop-spacing-sm);
 }
 
 .form-group-row {
   display: flex;
-  gap: var(--prop-spacing-lg);
-  margin-bottom: var(--prop-spacing-lg);
+  gap: var(--prop-spacing-sm);
+  margin-bottom: var(--prop-spacing-sm);
 }
 
 .half-width {

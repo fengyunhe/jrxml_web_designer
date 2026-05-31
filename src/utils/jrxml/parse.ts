@@ -1,7 +1,7 @@
 import type { DesignElement, BandType, Band } from '@/types';
 import type { ReportProperties, Field, Parameter, SubDataset, Variable, ReportStyle, ConditionalStyle } from './types';
 
-export function parseJRXMLContent(jrxmlContent: string): { properties: ReportProperties; bands: Band[]; fields: Field[]; parameters: Parameter[]; datasets: SubDataset[]; variables: Variable[]; styles: ReportStyle[] } {
+export function parseJRXMLContent(jrxmlContent: string): { properties: ReportProperties; bands: Band[]; fields: Field[]; parameters: Parameter[]; datasets: SubDataset[]; variables: Variable[]; styles: ReportStyle[]; reportProperties: Array<{name: string; value: string}> } {
   const parser = new DOMParser();
   const xmlDoc = parser.parseFromString(jrxmlContent, 'text/xml');
 
@@ -235,7 +235,19 @@ export function parseJRXMLContent(jrxmlContent: string): { properties: ReportPro
     }
   });
 
-  return { properties, bands, fields, parameters, datasets, variables, styles };
+  // 解析报表级别 <property> 元素
+  const reportProperties: Array<{name: string; value: string}> = [];
+  Array.from(jasperReportElem.children).forEach(child => {
+    if (child.tagName === 'property' || child.localName === 'property') {
+      const propName = child.getAttribute('name');
+      const propValue = child.getAttribute('value');
+      if (propName && propValue) {
+        reportProperties.push({ name: propName, value: propValue });
+      }
+    }
+  });
+
+  return { properties, bands, fields, parameters, datasets, variables, styles, reportProperties };
 }
 
 // 解析子数据集元素
@@ -897,6 +909,12 @@ function parseElement(element: Element, type: string): any {
   if (reportElement.hasAttribute('isRemoveLineWhenBlank')) {
     (result as any).isRemoveLineWhenBlank = reportElement.getAttribute('isRemoveLineWhenBlank') === 'true';
   }
+  if (reportElement.hasAttribute('isResetPageNumber')) {
+    (result as any).isResetPageNumber = reportElement.getAttribute('isResetPageNumber') === 'true';
+  }
+  if (reportElement.hasAttribute('isResetPageOverflow')) {
+    (result as any).isResetPageOverflow = reportElement.getAttribute('isResetPageOverflow') === 'true';
+  }
 
   switch (type) {
     case 'staticText':
@@ -1064,6 +1082,17 @@ function parseStaticTextElement(element: Element, result: any): void {
   if (textNode) {
     result.text = textNode.textContent || '';
   }
+
+  // 解析 StaticText 特有属性
+  if (element.hasAttribute('textAdjust')) {
+    result.textAdjust = element.getAttribute('textAdjust');
+  }
+  if (element.hasAttribute('rotation')) {
+    result.rotation = element.getAttribute('rotation');
+  }
+  if (element.hasAttribute('pattern')) {
+    result.pattern = element.getAttribute('pattern');
+  }
 }
 
 function parseTextFieldElement(element: Element, result: any): void {
@@ -1085,6 +1114,11 @@ function parseTextFieldElement(element: Element, result: any): void {
 
   if (element.hasAttribute('pattern')) result.pattern = element.getAttribute('pattern');
   result.isBlankWhenNull = element.hasAttribute('isBlankWhenNull') ? element.getAttribute('isBlankWhenNull') === 'true' : true;
+
+  // 解析超链接属性
+  if (element.hasAttribute('hyperlinkType')) result.hyperlinkType = element.getAttribute('hyperlinkType');
+  if (element.hasAttribute('bookmarkLevel')) result.bookmarkLevel = parseInt(element.getAttribute('bookmarkLevel') || '0');
+  if (element.hasAttribute('isIgnorePagination')) result.isIgnorePagination = element.getAttribute('isIgnorePagination') === 'true';
 
   const textElement = findChildElement(element, 'textElement');
   if (textElement) {
@@ -1109,10 +1143,24 @@ function parseTextFieldElement(element: Element, result: any): void {
   const expressionElem = findChildElement(element, 'textFieldExpression');
   if (expressionElem) {
     result.expression = expressionElem.textContent || '';
-    const fieldMatch = result.expression.match(/\\$F\\{([^}]+)\\}/);
+    const fieldMatch = result.expression.match(/\$F\{([^}]+)\}/);
     if (fieldMatch) {
       result.fieldName = fieldMatch[1];
     }
+  }
+
+  // 解析超链接表达式
+  const hyperlinkRefExpr = findChildElement(element, 'hyperlinkReferenceExpression');
+  if (hyperlinkRefExpr) {
+    result.hyperlinkReferenceExpression = hyperlinkRefExpr.textContent || '';
+  }
+  const hyperlinkAnchorExpr = findChildElement(element, 'hyperlinkAnchorExpression');
+  if (hyperlinkAnchorExpr) {
+    result.hyperlinkAnchorExpression = hyperlinkAnchorExpr.textContent || '';
+  }
+  const hyperlinkPageExpr = findChildElement(element, 'hyperlinkPageExpression');
+  if (hyperlinkPageExpr) {
+    result.hyperlinkPageExpression = hyperlinkPageExpr.textContent || '';
   }
 }
 
@@ -1120,6 +1168,11 @@ function parseImageElement(element: Element, result: any): void {
   if (element.hasAttribute('scaleImage')) result.scaleImage = element.getAttribute('scaleImage');
   if (element.hasAttribute('hAlign')) result.hAlign = element.getAttribute('hAlign');
   if (element.hasAttribute('vAlign')) result.vAlign = element.getAttribute('vAlign');
+  if (element.hasAttribute('isUsingCache')) result.isUsingCache = element.getAttribute('isUsingCache') === 'true';
+  if (element.hasAttribute('isLazy')) result.isLazy = element.getAttribute('isLazy') === 'true';
+  if (element.hasAttribute('onErrorType')) result.onErrorType = element.getAttribute('onErrorType');
+  if (element.hasAttribute('evaluationTime')) result.evaluationTime = element.getAttribute('evaluationTime');
+  if (element.hasAttribute('hyperlinkType')) result.hyperlinkType = element.getAttribute('hyperlinkType');
 
   const graphicElement = parseGraphicElement(element);
   if (Object.keys(graphicElement).length > 0) {
@@ -1130,11 +1183,38 @@ function parseImageElement(element: Element, result: any): void {
   if (imageExpression) {
     result.imageExpression = imageExpression.textContent || '';
   }
+
+  // 解析超链接表达式
+  const hyperlinkRefExpr = findChildElement(element, 'hyperlinkReferenceExpression');
+  if (hyperlinkRefExpr) {
+    result.hyperlinkReferenceExpression = hyperlinkRefExpr.textContent || '';
+  }
+  const hyperlinkAnchorExpr = findChildElement(element, 'hyperlinkAnchorExpression');
+  if (hyperlinkAnchorExpr) {
+    result.hyperlinkAnchorExpression = hyperlinkAnchorExpr.textContent || '';
+  }
+  const hyperlinkPageExpr = findChildElement(element, 'hyperlinkPageExpression');
+  if (hyperlinkPageExpr) {
+    result.hyperlinkPageExpression = hyperlinkPageExpr.textContent || '';
+  }
 }
 
 function parseLineElement(element: Element, result: any): void {
   if (element.hasAttribute('direction')) {
     result.lineDirection = element.getAttribute('direction');
+  }
+  if (element.hasAttribute('evaluationTime')) {
+    result.evaluationTime = element.getAttribute('evaluationTime');
+  }
+  // 解析线条标签上的直接笔属性
+  if (element.hasAttribute('lineWidth')) {
+    result.lineWidth = parseFloat(element.getAttribute('lineWidth') || '0');
+  }
+  if (element.hasAttribute('lineColor')) {
+    result.lineColor = element.getAttribute('lineColor');
+  }
+  if (element.hasAttribute('lineStyle')) {
+    result.lineStyle = element.getAttribute('lineStyle');
   }
 
   const graphicElement = parseGraphicElement(element);
@@ -1195,45 +1275,42 @@ function parseBreakElement(element: Element, result: any): void {
   } else {
     result.breakType = 'Page';
   }
+  // BreakElement 特有的 reportElement 属性由 parseElement 中的公共代码处理
 }
 
 function parseFrameElement(element: Element, result: any): void {
+  // 解析frame标签上的属性
+  if (element.hasAttribute('isIgnorePagination')) {
+    result.isIgnorePagination = element.getAttribute('isIgnorePagination') === 'true';
+  }
+  if (element.hasAttribute('splitType')) {
+    result.splitType = element.getAttribute('splitType');
+  } else if (element.hasAttribute('isSplitAllowed')) {
+    const isSplitAllowed = element.getAttribute('isSplitAllowed') === 'true';
+    result.splitType = isSplitAllowed ? 'Stretch' : 'Prevent';
+  }
+  if (element.hasAttribute('evaluationTime')) {
+    result.evaluationTime = element.getAttribute('evaluationTime');
+  }
+  if (element.hasAttribute('printWhenGroupChanges')) {
+    result.printWhenGroupChanges = element.getAttribute('printWhenGroupChanges');
+  }
+
   // 递归解析容器内的子元素
-  // 注意：这里我们使用 parseBandElements 来解析容器内的元素，因为它支持所有元素类型
-  // 但我们需要小心不要无限递归，因为 parseBandElements 会查找所有类型的元素
-  // 这里的 element 是 frame 元素，它包含了子元素，就像 band 一样
-  
-  // 然而，querySelectorAll 会查找所有后代，包括嵌套的后代。
-  // parseBandElements 使用 querySelectorAll，这可能会导致重复解析嵌套结构中的元素。
-  // 但由于我们是递归构建树结构，每次调用 parseBandElements(element) 都会返回该层级及其子层级的元素列表。
-  // 问题在于：parseBandElements 返回的是扁平列表吗？
-  // 不，parseBandElements 对每个找到的元素调用 parseElement。
-  // 如果 parseElement 递归处理 frame，那么我们构建的是树。
-  // 但是 querySelectorAll 会找到直接子元素和深层子元素。
-  // 例如：Frame1 > Frame2 > Text1
-  // parseBandElements(Frame1) 会找到 Frame2 和 Text1。
-  // 它会为 Frame2 创建一个对象（包含递归解析的 Text1）。
-  // 它也会为 Text1 创建一个对象。
-  // 这样 Text1 会出现两次：一次在 Frame2 内部，一次作为 Frame1 的直接子元素（错误地）。
-  
-  // 修正方法：我们需要只解析直接子元素。
-  // 但 DOM API 的 children 属性包含所有子节点，我们需要过滤。
-  // 或者我们可以让 parseBandElements 使用 :scope > selector，但这在某些环境可能不支持。
-  // 或者我们可以遍历 element.children 并检查 tagName。
-  
   const elements: any[] = [];
   const validElementTypes = ['staticText', 'textField', 'image', 'line', 'rectangle', 'ellipse', 'break', 'frame'];
-  
+
   // 遍历直接子元素
   Array.from(element.children).forEach(child => {
-    if (validElementTypes.includes(child.tagName)) {
-      const parsedElement = parseElement(child, child.tagName);
+    const childType = child.localName || child.tagName;
+    if (validElementTypes.includes(childType)) {
+      const parsedElement = parseElement(child, childType);
       if (parsedElement) {
         elements.push(parsedElement);
       }
     }
   });
-  
+
   if (elements.length > 0) {
     result.elements = elements;
   }
