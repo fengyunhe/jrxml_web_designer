@@ -1,21 +1,22 @@
 <template>
-  <div class="table-properties">
-    <h4>Table属性</h4>
+  <div class="prop-panel table-properties">
+    <h4 class="prop-heading-md">Table属性</h4>
 
     <!-- 数据集 -->
-    <div class="form-group">
-      <label>数据集名称</label>
+    <div class="prop-form-group">
+      <label class="prop-label">数据集名称</label>
       <input
         :value="element.dataset?.name || ''"
         @input="updateDatasetProperty('name', ($event.target as HTMLInputElement).value)"
         type="text"
         placeholder="tableDataset"
+        class="prop-input"
       />
     </div>
 
     <!-- 连接表达式 -->
-    <div class="form-group">
-      <label>连接表达式</label>
+    <div class="prop-form-group">
+      <label class="prop-label">连接表达式</label>
       <ExpressionEditor
         :model-value="element.dataset?.connectionExpression || ''"
         @update:model-value="updateDatasetProperty('connectionExpression', $event)"
@@ -24,18 +25,19 @@
     </div>
 
     <!-- 查询语句 -->
-    <div class="form-group">
-      <label>查询语句</label>
+    <div class="prop-form-group">
+      <label class="prop-label">查询语句</label>
       <textarea
         :value="element.dataset?.query?.text || ''"
         @input="updateQueryProperty('text', ($event.target as HTMLTextAreaElement).value)"
         placeholder="SELECT * FROM table"
         rows="3"
+        class="prop-textarea"
       ></textarea>
     </div>
 
     <!-- 查询语言 -->
-    <div class="form-group">
+    <div class="prop-form-group">
       <SelectControl
         :model-value="element.dataset?.query?.language || 'sql'"
         @update:model-value="updateQueryProperty('language', $event)"
@@ -45,73 +47,80 @@
     </div>
 
     <!-- 分隔线 -->
-    <div class="form-divider"></div>
+    <div class="prop-divider"></div>
 
     <!-- 表格样式 -->
-    <div class="form-group">
-      <h5>表格样式</h5>
+    <div class="prop-form-group">
+      <h5 class="prop-heading-sm">表格样式</h5>
 
-      <!-- 表头样式 -->
-      <div class="style-item">
-        <label>表头样式</label>
-        <select
-          :value="element.styles?.tableHeader || 'Table_TH'"
-          @input="updateStyleProperty('tableHeader', ($event.target as HTMLSelectElement).value)"
-        >
-          <option v-for="style in availableStyles" :key="style" :value="style">{{ style }}</option>
-        </select>
-      </div>
+      <div class="prop-style-select">
+        <!-- 表头样式 -->
+        <div>
+          <label>表头样式</label>
+          <select
+            :value="element.styles?.tableHeader || 'Table_TH'"
+            @input="updateStyleProperty('tableHeader', ($event.target as HTMLSelectElement).value)"
+            class="prop-select"
+          >
+            <option v-for="style in availableStyles" :key="style" :value="style">{{ style }}</option>
+          </select>
+        </div>
 
-      <!-- 列头样式 -->
-      <div class="style-item">
-        <label>列头样式</label>
-        <select
-          :value="element.styles?.columnHeader || 'Table_CH'"
-          @input="updateStyleProperty('columnHeader', ($event.target as HTMLSelectElement).value)"
-        >
-          <option v-for="style in availableStyles" :key="style" :value="style">{{ style }}</option>
-        </select>
-      </div>
+        <!-- 列头样式 -->
+        <div>
+          <label>列头样式</label>
+          <select
+            :value="element.styles?.columnHeader || 'Table_CH'"
+            @input="updateStyleProperty('columnHeader', ($event.target as HTMLSelectElement).value)"
+            class="prop-select"
+          >
+            <option v-for="style in availableStyles" :key="style" :value="style">{{ style }}</option>
+          </select>
+        </div>
 
-      <!-- 详情样式 -->
-      <div class="style-item">
-        <label>详情样式</label>
-        <select
-          :value="element.styles?.detail || 'Table_TD'"
-          @input="updateStyleProperty('detail', ($event.target as HTMLSelectElement).value)"
-        >
-          <option v-for="style in availableStyles" :key="style" :value="style">{{ style }}</option>
-        </select>
-      </div>
+        <!-- 详情样式 -->
+        <div>
+          <label>详情样式</label>
+          <select
+            :value="element.styles?.detail || 'Table_TD'"
+            @input="updateStyleProperty('detail', ($event.target as HTMLSelectElement).value)"
+            class="prop-select"
+          >
+            <option v-for="style in availableStyles" :key="style" :value="style">{{ style }}</option>
+          </select>
+        </div>
 
-      <!-- 列脚样式 -->
-      <div class="style-item">
-        <label>列脚样式</label>
-        <select
-          :value="element.styles?.columnFooter || 'Table_CH'"
-          @input="updateStyleProperty('columnFooter', ($event.target as HTMLSelectElement).value)"
-        >
-          <option v-for="style in availableStyles" :key="style" :value="style">{{ style }}</option>
-        </select>
-      </div>
+        <!-- 列脚样式 -->
+        <div>
+          <label>列脚样式</label>
+          <select
+            :value="element.styles?.columnFooter || 'Table_CH'"
+            @input="updateStyleProperty('columnFooter', ($event.target as HTMLSelectElement).value)"
+            class="prop-select"
+          >
+            <option v-for="style in availableStyles" :key="style" :value="style">{{ style }}</option>
+          </select>
+        </div>
 
-      <!-- 表脚样式 -->
-      <div class="style-item">
-        <label>表脚样式</label>
-        <select
-          :value="element.styles?.tableFooter || 'Table_TH'"
-          @input="updateStyleProperty('tableFooter', ($event.target as HTMLSelectElement).value)"
-        >
-          <option v-for="style in availableStyles" :key="style" :value="style">{{ style }}</option>
-        </select>
+        <!-- 表脚样式 -->
+        <div>
+          <label>表脚样式</label>
+          <select
+            :value="element.styles?.tableFooter || 'Table_TH'"
+            @input="updateStyleProperty('tableFooter', ($event.target as HTMLSelectElement).value)"
+            class="prop-select"
+          >
+            <option v-for="style in availableStyles" :key="style" :value="style">{{ style }}</option>
+          </select>
+        </div>
       </div>
     </div>
 
     <!-- 分隔线 -->
-    <div class="form-divider"></div>
+    <div class="prop-divider"></div>
 
     <!-- 无数据类型 -->
-    <div class="form-group">
+    <div class="prop-form-group">
       <SelectControl
         :model-value="element.whenNoDataType || 'AllSectionsNoDetail'"
         @update:model-value="updateProperty('whenNoDataType', $event)"
@@ -122,7 +131,7 @@
     </div>
 
     <!-- 打印表头 -->
-    <div class="form-group">
+    <div class="prop-form-group">
       <SwitchControl
         :model-value="element.printHeaders !== false"
         @update:model-value="updateProperty('printHeaders', $event)"
@@ -132,7 +141,7 @@
     </div>
 
     <!-- 忽略宽度 -->
-    <div class="form-group">
+    <div class="prop-form-group">
       <SwitchControl
         :model-value="element.ignoreWidth || false"
         @update:model-value="updateProperty('ignoreWidth', $event)"
@@ -142,7 +151,7 @@
     </div>
 
     <!-- 忽略分页 -->
-    <div class="form-group">
+    <div class="prop-form-group">
       <SwitchControl
         :model-value="element.isIgnorePagination || false"
         @update:model-value="updateProperty('isIgnorePagination', $event)"
@@ -152,33 +161,37 @@
     </div>
 
     <!-- 分隔线 -->
-    <div class="form-divider"></div>
+    <div class="prop-divider"></div>
 
     <!-- 行分组管理 -->
-    <div class="form-group">
-      <h5>行分组</h5>
-      <div class="row-groups-list">
+    <div class="prop-form-group">
+      <h5 class="prop-heading-sm">行分组</h5>
+      <div class="prop-list">
         <div
           v-for="(group, index) in element.rowGroups || []"
           :key="index"
-          class="row-group-item"
+          class="prop-list-item"
         >
-          <span class="row-group-name">{{ group.name || `分组 ${Number(index) + 1}` }}</span>
-          <button @click="removeRowGroup(Number(index))" class="remove-button">删除</button>
+          <span class="prop-list-item-name">{{ group.name || `分组 ${Number(index) + 1}` }}</span>
+          <div class="prop-list-item-actions">
+            <button @click="removeRowGroup(Number(index))" class="prop-btn-danger prop-btn-sm">删除</button>
+          </div>
         </div>
+        <div v-if="!element.rowGroups || element.rowGroups.length === 0" class="prop-hint" style="padding: 8px 12px;">暂无行分组</div>
       </div>
-      <button @click="addRowGroup" class="add-button">添加行分组</button>
+      <button @click="addRowGroup" class="prop-btn-default" style="width: 100%; margin-top: 8px;">添加行分组</button>
     </div>
 
     <!-- 分隔线 -->
-    <div class="form-divider"></div>
+    <div class="prop-divider"></div>
 
     <!-- 样式继承 -->
-    <div class="form-group">
-      <label>样式继承</label>
+    <div class="prop-form-group">
+      <label class="prop-label">样式继承</label>
       <select
         :value="element.parentStyle || ''"
         @input="updateProperty('parentStyle', ($event.target as HTMLSelectElement).value)"
+        class="prop-select"
       >
         <option value="">无</option>
         <option v-for="style in availableStyles" :key="style" :value="style">{{ style }}</option>
@@ -283,121 +296,15 @@ const removeRowGroup = (index: number) => {
   padding: var(--prop-spacing-lg);
 }
 
-.table-properties h4 {
-  margin: 0 0 var(--prop-spacing-lg) 0;
-  padding: 0 0 var(--prop-spacing-sm) 0;
-  font-size: var(--prop-font-size-md);
-  color: var(--prop-text-primary);
-  font-weight: var(--prop-font-weight-semibold);
-  border-bottom: 1px solid var(--prop-divider-color);
-}
-
-.form-group {
-  margin-bottom: var(--prop-spacing-lg);
-}
-
-.form-group label {
-  display: block;
-  margin-bottom: var(--prop-spacing-xs);
-  font-size: var(--prop-font-size-sm);
-  color: var(--prop-text-secondary);
-  font-weight: var(--prop-font-weight-medium);
-}
-
-.form-group h5 {
-  margin: 0 0 var(--prop-spacing-md) 0;
-  font-size: var(--prop-font-size-sm);
-  color: var(--prop-text-primary);
-  font-weight: var(--prop-font-weight-semibold);
-}
-
-.form-divider {
-  height: 1px;
-  background: var(--prop-divider-color);
-  margin: var(--prop-spacing-lg) 0;
-}
-
-.style-item {
+/* Style select items use vertical layout (label above select) within prop-style-select */
+.prop-style-select > div {
   display: flex;
-  align-items: center;
-  gap: var(--prop-spacing-sm);
-  margin-bottom: var(--prop-spacing-sm);
+  flex-direction: column;
+  gap: var(--prop-spacing-xs);
 }
 
-.style-item label {
-  min-width: 80px;
+.prop-style-select > div label {
   font-size: var(--prop-font-size-sm);
   color: var(--prop-text-secondary);
-}
-
-.style-item select {
-  flex: 1;
-  padding: 4px 8px;
-  border: 1px solid var(--prop-border-color);
-  border-radius: var(--prop-border-radius-md);
-  font-size: var(--prop-font-size-sm);
-  transition: border-color var(--prop-transition-fast), box-shadow var(--prop-transition-fast);
-}
-
-.style-item select:hover {
-  border-color: var(--prop-border-hover);
-}
-
-.style-item select:focus {
-  border-color: var(--prop-border-focus);
-  box-shadow: var(--prop-focus-ring);
-  outline: none;
-}
-
-.row-groups-list {
-  margin-bottom: var(--prop-spacing-sm);
-}
-
-.row-group-item {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: var(--prop-spacing-sm);
-  background: var(--prop-bg-tertiary);
-  border-radius: var(--prop-border-radius-md);
-  margin-bottom: var(--prop-spacing-xs);
-}
-
-.row-group-name {
-  font-size: var(--prop-font-size-sm);
-  color: var(--prop-text-primary);
-}
-
-.remove-button {
-  padding: 4px 8px;
-  border: 1px solid var(--prop-danger-color);
-  border-radius: var(--prop-border-radius-md);
-  background: var(--prop-bg-primary);
-  color: var(--prop-danger-color);
-  cursor: pointer;
-  font-size: var(--prop-font-size-sm);
-  transition: background-color var(--prop-transition-fast), color var(--prop-transition-fast);
-}
-
-.remove-button:hover {
-  background: var(--prop-danger-color);
-  color: white;
-}
-
-.add-button {
-  width: 100%;
-  padding: var(--prop-spacing-sm);
-  border: 1px dashed var(--prop-border-color);
-  border-radius: var(--prop-border-radius-md);
-  background: var(--prop-bg-primary);
-  color: var(--prop-text-secondary);
-  cursor: pointer;
-  font-size: var(--prop-font-size-sm);
-  transition: border-color var(--prop-transition-fast), color var(--prop-transition-fast);
-}
-
-.add-button:hover {
-  border-color: var(--prop-primary-color);
-  color: var(--prop-primary-color);
 }
 </style>

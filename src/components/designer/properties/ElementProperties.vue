@@ -219,41 +219,40 @@
           />
 
           <!-- 分隔线 -->
-          <div style="height: 1px; background: #f0f0f0; margin: 16px 0;"></div>
+          <div class="prop-divider"></div>
 
           <!-- 列管理 -->
           <div class="form-group">
             <h5>列管理</h5>
             <div class="table-column-actions">
-              <n-button
-                class="add-column-btn"
+              <button
+                class="prop-btn-primary"
                 @click="addColumn"
                 :title="t('properties.addColumn')"
-                type="primary"
               >
                 + {{ t('properties.addColumn') }}
-              </n-button>
+              </button>
             </div>
 
             <!-- 列列表 -->
-            <div class="table-columns-list">
+            <div class="prop-list">
               <div
                 v-for="(column, index) in currentElement.columns || []"
                 :key="column.uuid || index"
-                class="column-item"
+                class="prop-list-item"
               >
-                <div class="column-header">
-                  <span class="column-name">{{ column.name || `列 ${index + 1}` }}</span>
-                  <n-button
-                    size="small"
-                    type="error"
-                    quaternary
-                    @click="removeColumn(index)"
-                  >
-                    删除
-                  </n-button>
+                <div class="prop-table-column-header">
+                  <span class="prop-list-item-name">{{ column.name || `列 ${index + 1}` }}</span>
+                  <div class="prop-list-item-actions">
+                    <button
+                      class="prop-btn-danger prop-btn-sm"
+                      @click="removeColumn(index)"
+                    >
+                      删除
+                    </button>
+                  </div>
                 </div>
-                <div class="column-properties">
+                <div class="prop-table-column-props">
                   <div class="form-group">
                     <label>列名</label>
                     <input
@@ -278,7 +277,7 @@
           <!-- 行高设置 -->
           <div class="form-group" v-if="currentElement && currentElement.type === 'table'">
             <h5>行高设置</h5>
-            <div class="column-properties">
+            <div class="prop-table-column-props">
               <div class="form-group">
                 <label>表头行高</label>
                 <input
@@ -2753,7 +2752,7 @@ function updateTableStyles() {
 
 .band-heights-grid {
   display: grid;
-  gap: 8px;
+  gap: var(--prop-spacing-sm);
 }
 
 .band-height-item {
@@ -2765,7 +2764,7 @@ function updateTableStyles() {
 .band-height-control {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: var(--prop-spacing-xs);
 }
 
 .band-height-input {
@@ -2773,34 +2772,34 @@ function updateTableStyles() {
 }
 
 .band-height-unit {
-  font-size: 12px;
-  color: #999;
+  font-size: var(--prop-font-size-sm);
+  color: var(--prop-text-tertiary);
 }
 
 .box-section {
-  margin-bottom: 16px;
-  padding: 12px;
-  background-color: #f9f9f9;
-  border-radius: 4px;
+  margin-bottom: var(--prop-spacing-lg);
+  padding: var(--prop-spacing-md);
+  background-color: var(--prop-bg-secondary);
+  border-radius: var(--prop-border-radius-md);
 }
 
 .box-section.compact {
-  margin-bottom: 12px;
-  padding: 8px;
+  margin-bottom: var(--prop-spacing-md);
+  padding: var(--prop-spacing-sm);
 }
 
 .border-quick-actions {
   display: flex;
-  gap: 8px;
+  gap: var(--prop-spacing-sm);
 }
 
 .border-quick-actions.compact {
-  gap: 4px;
+  gap: var(--prop-spacing-xs);
 }
 
 .border-group-row {
   display: flex;
-  gap: 12px;
+  gap: var(--prop-spacing-md);
   flex-wrap: wrap;
   align-items: flex-start;
 }
@@ -2812,19 +2811,19 @@ function updateTableStyles() {
 
 .border-sides-grid {
   display: grid;
-  gap: 6px;
+  gap: var(--prop-spacing-sm);
 }
 
 .border-side-item {
   display: flex;
   align-items: flex-start;
-  gap: 8px;
+  gap: var(--prop-spacing-sm);
 }
 
 .border-side-controls {
   flex: 1;
   display: flex;
-  gap: 6px;
+  gap: var(--prop-spacing-sm);
   align-items: center;
   flex-wrap: wrap;
 }
@@ -2832,16 +2831,16 @@ function updateTableStyles() {
 .border-side-group {
   display: flex;
   align-items: center;
-  gap: 8px;
-  margin-bottom: 8px;
+  gap: var(--prop-spacing-sm);
+  margin-bottom: var(--prop-spacing-sm);
   flex-wrap: wrap;
 }
 
 .side-label {
   width: 20px;
-  font-size: 12px;
-  font-weight: 500;
-  color: #666;
+  font-size: var(--prop-font-size-sm);
+  font-weight: var(--prop-font-weight-medium);
+  color: var(--prop-text-secondary);
 }
 
 .side-control {
@@ -2871,8 +2870,8 @@ function updateTableStyles() {
   width: 60px;
   height: 28px;
   padding: 0;
-  border: 1px solid #ddd;
-  border-radius: 4px;
+  border: 1px solid var(--prop-border-color);
+  border-radius: var(--prop-border-radius-md);
   cursor: pointer;
 }
 
@@ -2882,7 +2881,7 @@ function updateTableStyles() {
 }
 
 .form-group.compact {
-  margin-bottom: 8px;
+  margin-bottom: var(--prop-spacing-sm);
 }
 
 .form-group.compact label {
@@ -2907,29 +2906,29 @@ function updateTableStyles() {
 .padding-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 8px;
+  gap: var(--prop-spacing-sm);
 }
 
 .padding-grid.compact {
-  gap: 6px;
+  gap: var(--prop-spacing-sm);
 }
 
 .border-quick-styles {
-  margin-top: 12px;
-  padding-top: 12px;
-  border-top: 1px solid #eee;
+  margin-top: var(--prop-spacing-md);
+  padding-top: var(--prop-spacing-md);
+  border-top: 1px solid var(--prop-divider-color);
 }
 
 .border-quick-styles h6 {
-  margin: 0 0 8px 0;
-  font-size: 11px;
-  font-weight: 600;
-  color: #666;
+  margin: 0 0 var(--prop-spacing-sm) 0;
+  font-size: var(--prop-font-size-xs);
+  font-weight: var(--prop-font-weight-semibold);
+  color: var(--prop-text-secondary);
 }
 
 .quick-style-buttons {
   display: flex;
-  gap: 6px;
+  gap: var(--prop-spacing-sm);
   flex-wrap: wrap;
 }
 
@@ -2955,21 +2954,21 @@ function updateTableStyles() {
 
 .checkbox-group {
   display: flex;
-  gap: 16px;
-  margin-bottom: 16px;
+  gap: var(--prop-spacing-lg);
+  margin-bottom: var(--prop-spacing-lg);
 }
 
 .checkbox-group.compact {
-  gap: 8px;
-  margin-bottom: 8px;
+  gap: var(--prop-spacing-sm);
+  margin-bottom: var(--prop-spacing-sm);
   flex-wrap: wrap;
 }
 
 .checkbox-group label {
   display: flex;
   align-items: center;
-  gap: 4px;
-  font-size: 12px;
+  gap: var(--prop-spacing-xs);
+  font-size: var(--prop-font-size-sm);
   cursor: pointer;
 }
 
@@ -2983,65 +2982,38 @@ function updateTableStyles() {
 
 .alignment-controls {
   display: flex;
-  gap: 4px;
-  margin-bottom: 8px;
+  gap: var(--prop-spacing-xs);
+  margin-bottom: var(--prop-spacing-sm);
 }
 
 
 
 .element-actions {
-  margin-top: 24px;
-  padding-top: 16px;
-  border-top: 1px solid #e0e0e0;
+  margin-top: var(--prop-spacing-xl);
+  padding-top: var(--prop-spacing-lg);
+  border-top: 1px solid var(--prop-divider-color);
 }
 
 
 
 .font-hint {
   display: block;
-  margin-top: 4px;
-  font-size: 10px;
-  color: #999;
+  margin-top: var(--prop-spacing-xs);
+  font-size: var(--prop-font-size-xs);
+  color: var(--prop-text-tertiary);
 }
 
 /* 表格属性样式 */
-.table-columns-list {
-  margin: 8px 0;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  padding: 4px;
-  background-color: #f9f9f9;
-}
-
-.table-column-item {
-  margin-bottom: 4px;
-  padding: 4px;
-  background-color: #fff;
-  border: 1px solid #e0e0e0;
-  border-radius: 3px;
-}
-
-.table-column-header {
+.table-column-actions {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 4px;
-  font-weight: bold;
-  font-size: 11px;
-}
-
-
-
-.table-column-properties {
-  display: flex;
-  gap: 6px;
-  flex-wrap: wrap;
+  gap: var(--prop-spacing-xs);
+  margin-bottom: var(--prop-spacing-sm);
 }
 
 .form-group.small {
   flex: 1;
   min-width: 80px;
-  margin-bottom: 4px;
+  margin-bottom: var(--prop-spacing-xs);
 }
 
 .form-group.small.full-width {
@@ -3052,50 +3024,41 @@ function updateTableStyles() {
 
 .form-group.small label {
   margin-bottom: 1px;
-  font-size: 10px;
+  font-size: var(--prop-font-size-xs);
 }
 
 .small-input {
   width: 100%;
-  padding: 1px 4px;
-  font-size: 10px;
-  border: 1px solid #ddd;
-  border-radius: 2px;
+  padding: 2px 6px;
+  font-size: var(--prop-font-size-xs);
+  border: 1px solid var(--prop-border-color);
+  border-radius: var(--prop-border-radius-sm);
+  transition: border-color var(--prop-transition-fast), box-shadow var(--prop-transition-fast);
+}
+
+.small-input:hover {
+  border-color: var(--prop-border-hover);
+}
+
+.small-input:focus {
+  outline: none;
+  border-color: var(--prop-border-focus);
+  box-shadow: var(--prop-focus-ring);
 }
 
 .text-style-controls,
 .border-controls {
   display: flex;
-  gap: 4px;
+  gap: var(--prop-spacing-xs);
   flex-wrap: wrap;
 }
 
 .color-picker {
   height: 18px;
   padding: 0;
-  border: 1px solid #ddd;
-  border-radius: 2px;
+  border: 1px solid var(--prop-border-color);
+  border-radius: var(--prop-border-radius-sm);
   cursor: pointer;
-}
-
-.table-column-actions {
-  display: flex;
-  gap: 4px;
-  margin-bottom: 4px;
-}
-
-/* 拖拽排序样式 */
-.table-column-item {
-  transition: all 0.2s;
-}
-
-
-
-.table-column-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 8px;
 }
 
 
@@ -3104,7 +3067,7 @@ function updateTableStyles() {
 
 .field-selection-content {
   display: flex;
-  gap: 20px;
+  gap: var(--prop-spacing-xl);
   height: 400px;
 }
 
@@ -3137,36 +3100,36 @@ function updateTableStyles() {
 
 .available-fields h4, .selected-fields h4 {
   margin-top: 0;
-  margin-bottom: 12px;
-  font-size: 14px;
-  font-weight: 600;
-  color: #666;
+  margin-bottom: var(--prop-spacing-md);
+  font-size: var(--prop-font-size-md);
+  font-weight: var(--prop-font-weight-semibold);
+  color: var(--prop-text-secondary);
 }
 
 .fields-list {
   flex: 1;
   overflow-y: auto;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  background-color: #fafafa;
-  padding: 8px;
+  border: 1px solid var(--prop-border-color);
+  border-radius: var(--prop-border-radius-md);
+  background-color: var(--prop-bg-secondary);
+  padding: var(--prop-spacing-sm);
 }
 
 .field-item {
   display: flex;
   align-items: center;
-  padding: 8px 12px;
-  margin-bottom: 4px;
-  background-color: white;
-  border: 1px solid #e0e0e0;
-  border-radius: 4px;
+  padding: var(--prop-spacing-sm) var(--prop-spacing-md);
+  margin-bottom: var(--prop-spacing-xs);
+  background-color: var(--prop-bg-primary);
+  border: 1px solid var(--prop-border-color);
+  border-radius: var(--prop-border-radius-md);
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all var(--prop-transition-fast);
 }
 
 .field-item:hover {
-  background-color: #f5f5f5;
-  border-color: #1890ff;
+  background-color: var(--prop-bg-tertiary);
+  border-color: var(--prop-primary-color);
 }
 
 .field-item.selected {
@@ -3175,86 +3138,86 @@ function updateTableStyles() {
 }
 
 .field-item input[type="checkbox"] {
-  margin-right: 8px;
+  margin-right: var(--prop-spacing-sm);
 }
 
 /* 无效宽度样式 */
 .invalid-width {
-  border-color: red !important;
+  border-color: var(--prop-danger-color) !important;
   background-color: #fff0f0;
 }
 
 /* 只读输入框样式 */
 .readonly-input {
   display: block;
-  padding: 1px 4px;
-  font-size: 10px;
-  border: 1px solid #ddd;
-  border-radius: 2px;
-  background-color: #f5f5f5;
-  color: #666;
+  padding: 2px 6px;
+  font-size: var(--prop-font-size-xs);
+  border: 1px solid var(--prop-border-color);
+  border-radius: var(--prop-border-radius-sm);
+  background-color: var(--prop-bg-disabled);
+  color: var(--prop-text-secondary);
   cursor: default;
 }
 
 /* 宽度提示样式 */
 .width-hint {
-  font-size: 8px;
-  color: #999;
+  font-size: var(--prop-font-size-xs);
+  color: var(--prop-text-tertiary);
   margin-top: 2px;
 }
 
 .field-name {
   flex: 1;
-  font-size: 12px;
-  font-weight: 500;
+  font-size: var(--prop-font-size-sm);
+  font-weight: var(--prop-font-weight-medium);
 }
 
 .field-type {
   font-size: 11px;
-  color: #999;
-  margin-left: 8px;
+  color: var(--prop-text-tertiary);
+  margin-left: var(--prop-spacing-sm);
 }
 
 
 /* 组合列样式 */
 .table-column-groups {
-  margin-top: 10px;
-  background-color: #f8f9fa;
-  border-radius: 4px;
-  padding: 10px;
-  border: 1px solid #e0e0e0;
+  margin-top: var(--prop-spacing-md);
+  background-color: var(--prop-bg-secondary);
+  border-radius: var(--prop-border-radius-md);
+  padding: var(--prop-spacing-md);
+  border: 1px solid var(--prop-border-color);
 }
 
 .column-group-item {
   margin-bottom: 15px;
-  background-color: #ffffff;
-  border: 1px solid #e0e0e0;
-  border-radius: 4px;
+  background-color: var(--prop-bg-primary);
+  border: 1px solid var(--prop-border-color);
+  border-radius: var(--prop-border-radius-md);
   overflow: hidden;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  box-shadow: var(--prop-shadow-sm);
 }
 
 .column-group-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 10px 15px;
-  background-color: #f0f4f8;
-  border-bottom: 1px solid #e0e0e0;
-  font-weight: 600;
-  color: #333;
+  padding: var(--prop-spacing-md);
+  background-color: var(--prop-bg-tertiary);
+  border-bottom: 1px solid var(--prop-border-color);
+  font-weight: var(--prop-font-weight-semibold);
+  color: var(--prop-text-primary);
 }
 
 .column-group-name {
-  font-size: 14px;
+  font-size: var(--prop-font-size-md);
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--prop-spacing-sm);
 }
 
 .group-path {
-  font-size: 12px;
-  color: #666;
+  font-size: var(--prop-font-size-sm);
+  color: var(--prop-text-secondary);
   font-weight: normal;
   background-color: #e6f0fa;
   padding: 2px 6px;
@@ -3262,34 +3225,34 @@ function updateTableStyles() {
 }
 
 .column-group-properties {
-  padding: 10px;
+  padding: var(--prop-spacing-md);
 }
 
 .group-action-buttons {
   display: flex;
-  gap: 5px;
+  gap: var(--prop-spacing-xs);
 }
 
 .table-style-settings {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: var(--prop-spacing-lg);
 }
 
 .table-style-section {
-  margin-bottom: 12px;
+  margin-bottom: var(--prop-spacing-md);
 }
 
 .table-style-section h6 {
-  margin-bottom: 8px;
-  font-size: 13px;
-  font-weight: 500;
-  color: #333;
+  margin-bottom: var(--prop-spacing-sm);
+  font-size: var(--prop-font-size-sm);
+  font-weight: var(--prop-font-weight-medium);
+  color: var(--prop-text-primary);
 }
 
 /* 样式管理部分 */
 .style-management-section {
-  margin-bottom: 16px;
+  margin-bottom: var(--prop-spacing-lg);
 }
 
 .style-manager-content {
@@ -3298,27 +3261,27 @@ function updateTableStyles() {
 }
 
 .style-item {
-  margin-bottom: 24px;
-  padding: 16px;
-  border: 1px solid #e8e8e8;
-  border-radius: 4px;
-  background-color: #f9f9f9;
+  margin-bottom: var(--prop-spacing-xl);
+  padding: var(--prop-spacing-lg);
+  border: 1px solid var(--prop-border-color);
+  border-radius: var(--prop-border-radius-md);
+  background-color: var(--prop-bg-secondary);
 }
 
 .style-item h4 {
   margin-top: 0;
-  margin-bottom: 12px;
-  font-size: 14px;
-  font-weight: 600;
-  color: #333;
-  border-bottom: 1px solid #e8e8e8;
-  padding-bottom: 8px;
+  margin-bottom: var(--prop-spacing-md);
+  font-size: var(--prop-font-size-md);
+  font-weight: var(--prop-font-weight-semibold);
+  color: var(--prop-text-primary);
+  border-bottom: 1px solid var(--prop-border-color);
+  padding-bottom: var(--prop-spacing-sm);
 }
 
 .style-properties {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 16px;
+  gap: var(--prop-spacing-lg);
 }
 
 @media (max-width: 768px) {

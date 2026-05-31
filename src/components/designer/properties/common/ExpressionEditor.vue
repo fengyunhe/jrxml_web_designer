@@ -416,38 +416,46 @@ const insertExpression = (expression: string) => {
 
 .expression-input-group {
   display: flex;
-  gap: 4px;
+  gap: var(--prop-spacing-xs);
 }
 
 .expression-input {
   flex: 1;
   padding: 6px 8px;
-  border: 1px solid #d9d9d9;
-  border-radius: 4px;
+  border: 1px solid var(--prop-border-color);
+  border-radius: var(--prop-border-radius-md);
   font-family: monospace;
-  font-size: 12px;
+  font-size: var(--prop-font-size-sm);
+  color: var(--prop-text-primary);
+  background-color: var(--prop-bg-primary);
+  transition: border-color var(--prop-transition-fast), box-shadow var(--prop-transition-fast);
+}
+
+.expression-input:hover {
+  border-color: var(--prop-border-hover);
 }
 
 .expression-input:focus {
   outline: none;
-  border-color: #1890ff;
-  box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.2);
+  border-color: var(--prop-border-focus);
+  box-shadow: var(--prop-focus-ring);
 }
 
 .help-button {
   width: 28px;
   height: 28px;
-  border: 1px solid #d9d9d9;
-  border-radius: 4px;
-  background: #fafafa;
+  border: 1px solid var(--prop-border-color);
+  border-radius: var(--prop-border-radius-md);
+  background: var(--prop-bg-secondary);
   cursor: pointer;
   font-weight: bold;
-  color: #666;
+  color: var(--prop-text-secondary);
+  transition: background-color var(--prop-transition-fast), border-color var(--prop-transition-fast);
 }
 
 .help-button:hover {
-  background: #e6e6e6;
-  border-color: #999;
+  background: var(--prop-bg-hover);
+  border-color: var(--prop-border-hover);
 }
 
 /* Autocomplete dropdown */
@@ -456,10 +464,10 @@ const insertExpression = (expression: string) => {
   top: 100%;
   left: 0;
   right: 0;
-  background: white;
-  border: 1px solid #d9d9d9;
-  border-radius: 4px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  background: var(--prop-bg-primary);
+  border: 1px solid var(--prop-border-color);
+  border-radius: var(--prop-border-radius-md);
+  box-shadow: var(--prop-shadow-md);
   z-index: 1100;
   max-height: 200px;
   overflow-y: auto;
@@ -469,11 +477,11 @@ const insertExpression = (expression: string) => {
 .autocomplete-item {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--prop-spacing-sm);
   padding: 5px 10px;
   cursor: pointer;
-  font-size: 12px;
-  transition: background 0.1s;
+  font-size: var(--prop-font-size-sm);
+  transition: background-color var(--prop-transition-fast);
 }
 
 .autocomplete-item:hover,
@@ -488,14 +496,14 @@ const insertExpression = (expression: string) => {
   width: 18px;
   height: 18px;
   border-radius: 3px;
-  font-size: 10px;
+  font-size: var(--prop-font-size-xs);
   font-weight: 700;
   color: white;
   flex-shrink: 0;
 }
 
 .autocomplete-type.field {
-  background: #1890ff;
+  background: var(--prop-primary-color);
 }
 
 .autocomplete-type.parameter {
@@ -507,17 +515,17 @@ const insertExpression = (expression: string) => {
 }
 
 .autocomplete-type.method {
-  background: #52c41a;
+  background: var(--prop-success-color);
 }
 
 .autocomplete-value {
   font-family: monospace;
-  font-weight: 500;
-  color: #333;
+  font-weight: var(--prop-font-weight-medium);
+  color: var(--prop-text-primary);
 }
 
 .autocomplete-desc {
-  color: #999;
+  color: var(--prop-text-tertiary);
   font-size: 11px;
   margin-left: auto;
 }
@@ -528,19 +536,19 @@ const insertExpression = (expression: string) => {
   top: 100%;
   left: 0;
   right: 0;
-  background: white;
-  border: 1px solid #d9d9d9;
-  border-radius: 4px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  background: var(--prop-bg-primary);
+  border: 1px solid var(--prop-border-color);
+  border-radius: var(--prop-border-radius-md);
+  box-shadow: var(--prop-shadow-md);
   z-index: 1000;
   max-height: 400px;
   overflow-y: auto;
-  margin-top: 4px;
+  margin-top: var(--prop-spacing-xs);
 }
 
 .help-section {
-  padding: 8px 12px;
-  border-bottom: 1px solid #f0f0f0;
+  padding: var(--prop-spacing-sm) var(--prop-spacing-md);
+  border-bottom: 1px solid var(--prop-divider-color);
 }
 
 .help-section:last-child {
@@ -548,40 +556,41 @@ const insertExpression = (expression: string) => {
 }
 
 .help-section h5 {
-  margin: 0 0 8px 0;
-  font-size: 12px;
-  color: #666;
-  font-weight: 600;
+  margin: 0 0 var(--prop-spacing-sm) 0;
+  font-size: var(--prop-font-size-sm);
+  color: var(--prop-text-secondary);
+  font-weight: var(--prop-font-weight-semibold);
 }
 
 .help-items {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: var(--prop-spacing-xs);
 }
 
 .help-item {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 4px 8px;
-  border-radius: 4px;
+  padding: var(--prop-spacing-xs) var(--prop-spacing-sm);
+  border-radius: var(--prop-border-radius-md);
   cursor: pointer;
-  font-size: 12px;
+  font-size: var(--prop-font-size-sm);
+  transition: background-color var(--prop-transition-fast);
 }
 
 .help-item:hover {
-  background: #f5f5f5;
+  background: var(--prop-bg-tertiary);
 }
 
 .expression-text {
   font-family: monospace;
-  color: #1890ff;
-  font-weight: 500;
+  color: var(--prop-primary-color);
+  font-weight: var(--prop-font-weight-medium);
 }
 
 .expression-desc {
-  color: #999;
+  color: var(--prop-text-tertiary);
   font-size: 11px;
 }
 </style>

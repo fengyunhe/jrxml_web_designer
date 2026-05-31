@@ -30,13 +30,13 @@ defineEmits<{
 .switch-control {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: var(--prop-spacing-xs);
 }
 
 .switch-label {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--prop-spacing-sm);
   cursor: pointer;
   user-select: none;
 }
@@ -49,9 +49,10 @@ defineEmits<{
   position: relative;
   width: 36px;
   height: 20px;
-  background: #ccc;
+  background: var(--prop-bg-tertiary);
+  border: 1px solid var(--prop-border-color);
   border-radius: 10px;
-  transition: background 0.3s;
+  transition: background-color var(--prop-transition-fast), border-color var(--prop-transition-fast);
 }
 
 .switch-slider::after {
@@ -59,15 +60,16 @@ defineEmits<{
   position: absolute;
   top: 2px;
   left: 2px;
-  width: 16px;
-  height: 16px;
+  width: 14px;
+  height: 14px;
   background: white;
   border-radius: 50%;
-  transition: transform 0.3s;
+  transition: transform var(--prop-transition-fast);
 }
 
 .switch-input:checked + .switch-slider {
-  background: #1890ff;
+  background: var(--prop-primary-color);
+  border-color: var(--prop-primary-color);
 }
 
 .switch-input:checked + .switch-slider::after {
@@ -75,13 +77,13 @@ defineEmits<{
 }
 
 .switch-text {
-  font-size: 14px;
-  color: #333;
+  font-size: var(--prop-font-size-md);
+  color: var(--prop-text-primary);
 }
 
 .switch-description {
-  font-size: 12px;
-  color: #999;
+  font-size: var(--prop-font-size-sm);
+  color: var(--prop-text-tertiary);
   margin-left: 44px;
 }
 </style>
