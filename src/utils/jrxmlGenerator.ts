@@ -622,11 +622,6 @@ function generateStaticTextXML(element: any): string {
   let xml = `    <staticText`;
 
   // 添加StaticText特有的属性
-  // textAdjust属性
-  if (element.textAdjust && ['StretchHeight', 'CutText', 'ShrinkToFit'].includes(element.textAdjust)) {
-    xml += ` textAdjust="${element.textAdjust}"`;
-  }
-
   // rotation属性
   if (element.rotation && ['None', 'Left', 'Right'].includes(element.rotation)) {
     xml += ` rotation="${element.rotation}"`;
