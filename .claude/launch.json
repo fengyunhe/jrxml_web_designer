@@ -12,6 +12,12 @@
       "runtimeExecutable": "npx",
       "runtimeArgs": ["vite", "--port", "5174", "--host"],
       "port": 5174
+    },
+    {
+      "name": "test-server",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": ["serve", "tests", "-l", "3457", "--no-clipboard", "--cors"],
+      "port": 3457
     }
   ]
 }

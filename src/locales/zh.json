@@ -445,7 +445,30 @@
     }
   },
   "pdfPreview": {
-    "title": "PDF 预览"
+    "title": "PDF 预览",
+    "generateBtn": "生成 PDF",
+    "editor": {
+      "showPanel": "显示编辑面板",
+      "hidePanel": "隐藏编辑面板"
+    },
+    "parameters": {
+      "title": "参数",
+      "name": "参数名",
+      "type": "类型",
+      "value": "值",
+      "noParameters": "暂无参数定义"
+    },
+    "dataSource": {
+      "title": "数据源",
+      "rowCount": "行数",
+      "regenerate": "重新生成",
+      "addRow": "添加行",
+      "removeRow": "删除行",
+      "noFields": "暂无字段定义"
+    },
+    "subDataset": {
+      "title": "子数据集"
+    }
   },
   "previewServerSettings": {
     "title": "预览服务器设置",

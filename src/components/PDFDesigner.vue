@@ -275,6 +275,7 @@
       :jrxml-content="jrxmlContent"
       :report-parameters="reportParameters"
       :report-fields="reportFields"
+      :sub-datasets="subDatasets"
       :preview-server-url="previewServerUrl"
       @update:visible="showPdfPreview = $event"
     />
@@ -3212,8 +3213,24 @@ const openPdfPreview = (): void => {
       const content = generateJRXMLContent(reportProperties.value, bands.value, reportFields.value, reportParameters.value, subDatasets.value, [], reportVariables.value);
       jrxmlContent.value = content;
     }
+    // 如果subDatasets为空，从表格元素中提取
+    if (subDatasets.value.length === 0) {
+      const extracted: TableDataset[] = [];
+      for (const band of bands.value) {
+        for (const el of (band.elements || [])) {
+          if (el.type === 'table' && (el as any).dataset?.fields?.length > 0) {
+            const ds = (el as any).dataset;
+            if (!extracted.find(d => d.name === ds.name)) {
+              extracted.push({ uuid: ds.uuid || crypto.randomUUID(), name: ds.name, fields: ds.fields, query: ds.query });
+            }
+          }
+        }
+      }
+      if (extracted.length > 0) {
+        subDatasets.value = extracted;
+      }
+    }
     showPdfPreview.value = true;
-    console.log('打开PDF预览:', { showPdfPreview: showPdfPreview.value, jrxmlContentLength: jrxmlContent.value.length });
   } catch (error) {
     console.error('预览PDF失败:', error);
     alert('预览PDF失败，请检查控制台错误信息');

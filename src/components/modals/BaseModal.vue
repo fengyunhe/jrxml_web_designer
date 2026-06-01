@@ -5,12 +5,12 @@
     class="modal-overlay" 
     @click.self="handleClose"
   >
-    <div class="modal-content" :class="contentClass">
+    <div class="modal-content" :class="contentClass" :style="contentStyle">
       <div class="modal-header" v-if="showHeader">
         <h3 class="modal-title">{{ title }}</h3>
         <n-button type="default" size="small" quaternary circle @click="handleClose" v-if="showCloseButton">×</n-button>
       </div>
-      <div class="modal-body" :style="{ height: bodyHeight }">
+      <div class="modal-body" :class="bodyClass" :style="{ height: bodyHeight, ...bodyStyle }">
         <slot></slot>
       </div>
       <div class="modal-footer" v-if="showFooter">
@@ -26,12 +26,12 @@
     class="modal-overlay" 
     @click.self="handleClose"
   >
-    <div class="modal-content" :class="contentClass">
+    <div class="modal-content" :class="contentClass" :style="contentStyle">
       <div class="modal-header" v-if="showHeader">
         <h3 class="modal-title">{{ title }}</h3>
         <n-button type="default" size="small" quaternary circle @click="handleClose" v-if="showCloseButton">×</n-button>
       </div>
-      <div class="modal-body" :style="{ height: bodyHeight }">
+      <div class="modal-body" :class="bodyClass" :style="{ height: bodyHeight, ...bodyStyle }">
         <slot></slot>
       </div>
       <div class="modal-footer" v-if="showFooter">
@@ -79,6 +79,18 @@ const props = defineProps({
   bodyHeight: {
     type: String,
     default: ''
+  },
+  contentStyle: {
+    type: Object,
+    default: () => ({})
+  },
+  bodyClass: {
+    type: String,
+    default: ''
+  },
+  bodyStyle: {
+    type: Object,
+    default: () => ({})
   },
   useVShow: {
     type: Boolean,

@@ -5,6 +5,9 @@ import { buildJasperReportOpenTag } from './jrxml/xmlBuilder';
 
 export type { ReportProperties, Field, Parameter } from './jrxml/types';
 
+// 默认字体名称
+const DEFAULT_FONT = 'Noto Sans SC';
+
 // 辅助函数：确保坐标值为整数
 function toInt(value: any): number {
   return parseInt(value as string) || 0;
@@ -65,6 +68,9 @@ export function generateJRXMLContent(
   // 获取更新后的字段列表
   const updatedFields = Array.from(fieldMap.values());
   let jrxml = buildJasperReportOpenTag(safeProperties);
+
+  // 报表级默认字体
+  jrxml += `  <reportFont name="reportFont" fontName="${DEFAULT_FONT}"/>\n`;
 
   // 添加报表属性（property元素）
   if (reportProperties && reportProperties.length > 0) {
@@ -327,9 +333,7 @@ function generateStyleXML(style: any): string {
     // 添加font元素
     if (style.fontFamily || style.fontSize || style.isBold || style.isItalic || style.isUnderline) {
       xml += `      <font`;
-      if (style.fontFamily) {
-        xml += ` fontName="${style.fontFamily}"`;
-      }
+      xml += ` fontName="${style.fontFamily || DEFAULT_FONT}"`;
       if (style.fontSize) {
         xml += ` size="${style.fontSize}"`;
       }
@@ -369,7 +373,7 @@ function generateStyleXML(style: any): string {
         xml += '>\n';
         if (cs.properties.fontFamily || cs.properties.fontSize || cs.properties.isBold || cs.properties.isItalic || cs.properties.isUnderline) {
           xml += '        <font';
-          if (cs.properties.fontFamily) xml += ` fontName="${cs.properties.fontFamily}"`;
+          xml += ` fontName="${cs.properties.fontFamily || DEFAULT_FONT}"`;
           if (cs.properties.fontSize) xml += ` size="${cs.properties.fontSize}"`;
           if (cs.properties.isBold) xml += ' isBold="true"';
           if (cs.properties.isItalic) xml += ' isItalic="true"';
@@ -692,10 +696,8 @@ function generateStaticTextXML(element: any): string {
         <font`;
 
   let fontAttrs = '';
-  // 添加字体名称属性
-  if (element.fontFamily) {
-    fontAttrs += ` fontName="${element.fontFamily}"`;
-  }
+  // 添加字体名称属性（默认Noto Sans SC）
+  fontAttrs += ` fontName="${element.fontFamily || DEFAULT_FONT}"`;
   if (element.fontSize) {
     fontAttrs += ` size="${element.fontSize}"`;
   }
@@ -817,10 +819,8 @@ function generateTextFieldXML(element: any): string {
 
   // 添加字体配置
   let fontAttrs = '';
-  // 添加字体名称属性
-  if (element.fontFamily) {
-    fontAttrs += ` fontName="${element.fontFamily}"`;
-  }
+  // 添加字体名称属性（默认Noto Sans SC）
+  fontAttrs += ` fontName="${element.fontFamily || DEFAULT_FONT}"`;
   if (element.fontSize) {
     fontAttrs += ` size="${element.fontSize}"`;
   }
@@ -1362,7 +1362,7 @@ function generateColumnXML(column: any, index: number, hasColumnGroups: boolean 
 `;
       xml += `                  <textElement textAlignment="Center" verticalAlignment="Middle">
 `;
-      xml += `                    <font/>
+      xml += `                    <font fontName="${DEFAULT_FONT}"/>
 `;
       xml += `                  </textElement>
 `;
@@ -1417,7 +1417,7 @@ function generateColumnXML(column: any, index: number, hasColumnGroups: boolean 
 `;
     xml += `                  <textElement textAlignment="Center" verticalAlignment="Middle">
 `;
-    xml += `                    <font/>
+    xml += `                    <font fontName="${DEFAULT_FONT}"/>
 `;
     xml += `                  </textElement>
 `;

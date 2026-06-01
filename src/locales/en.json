@@ -445,7 +445,30 @@
     }
   },
   "pdfPreview": {
-    "title": "PDF Preview"
+    "title": "PDF Preview",
+    "generateBtn": "Generate PDF",
+    "editor": {
+      "showPanel": "Show Editor Panel",
+      "hidePanel": "Hide Editor Panel"
+    },
+    "parameters": {
+      "title": "Parameters",
+      "name": "Name",
+      "type": "Type",
+      "value": "Value",
+      "noParameters": "No parameters defined"
+    },
+    "dataSource": {
+      "title": "Data Source",
+      "rowCount": "Row Count",
+      "regenerate": "Regenerate",
+      "addRow": "Add Row",
+      "removeRow": "Remove Row",
+      "noFields": "No fields defined"
+    },
+    "subDataset": {
+      "title": "Sub Datasets"
+    }
   },
   "previewServerSettings": {
     "title": "Preview Server Settings",

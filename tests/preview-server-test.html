@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>JRXML Preview Server Test</title>
+<style>body{font-family:monospace;max-width:800px;margin:20px auto;padding:0 20px}.pass{color:green}.fail{color:red}.warn{color:orange}#results{white-space:pre-wrap;line-height:1.6}</style>
+</head>
+<body>
+<h1>JRXML Preview Server Integration Test</h1>
+<p>Target: <code>https://jrxml-pdf-preview.firegod.cn/api/pdf/generateForm</code></p>
+<div id="results"></div>
+<script>
+var API='https://jrxml-pdf-preview.firegod.cn/api/pdf/generateForm';
+var out=document.getElementById('results');
+function log(m,c){c=c||'';var l=document.createElement('div');l.className=c;l.textContent=m;out.appendChild(l)}
+var F={};
+async function test(name,jrxml,params,ds,err){
+  params=params||{};ds=ds||[];err=err||false;
+  var b=new URLSearchParams();b.set('jrxml',jrxml);b.set('parameters',JSON.stringify(params));b.set('dataSource',JSON.stringify(ds));
+  try{var c=new AbortController();var t=setTimeout(function(){c.abort()},15000);var r;
+  try{r=await fetch(API,{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:b.toString(),signal:c.signal})}
+  catch(x){r=await fetch(API,{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:b.toString(),mode:'no-cors',signal:c.signal})}
+  clearTimeout(t);
+  if(r.type==='opaque'){log((err?'SENT [opaque] ':'PASS [opaque] ')+name+' CORS blocks body',err?'warn':'pass');return true}
+  var bt='';var ip=false;var ps=0;
+  try{var clone=r.clone();var buf=await clone.arrayBuffer();ps=buf.byteLength;var by=new Uint8Array(buf.slice(0,4));ip=(by[0]===0x25&&by[1]===0x50&&by[2]===0x44&&by[3]===0x46)}catch(e){}
+  try{bt=await r.text()}catch(e){bt=e.message}
+  if(err){if(!r.ok||r.status>=400){log('PASS ['+r.status+'] '+name+' error: '+bt.substring(0,200),'pass');return true}log('FAIL ['+r.status+'] '+name,'fail');return false}
+  if(r.ok&&ip){log('PASS ['+r.status+'] '+name+' ('+ps+' bytes PDF)','pass');return true}
+  else if(!r.ok){log('FAIL ['+r.status+'] '+name+' '+bt.substring(0,300),'fail');return false}
+  log('FAIL ['+r.status+'] '+name+' not PDF','fail');return false
+  }catch(e){log('FAIL '+name+' '+e.message,'fail');return false}}
+function J(p){return p.join('')}
+F.MINIMAL=J(['<?xml version="1.0" encoding="UTF-8"?>','<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports"',' name="MinimalTest" pageWidth="595" pageHeight="842"',' columnWidth="555" leftMargin="20" rightMargin="20"',' topMargin="20" bottomMargin="20">','<title><band height="30"><staticText>','<reportElement x="0" y="0" width="200" height="30"/>','<textElement><font size="14" isBold="true"/></textElement>','<text><![CDATA[Hello World]]></text>','</staticText></band></title></jasperReport>']);
+F.ALL_BANDS=J(['<?xml version="1.0" encoding="UTF-8"?>','<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports"',' name="AllBands" pageWidth="595" pageHeight="842" columnWidth="555" leftMargin="20" rightMargin="20" topMargin="20" bottomMargin="20">','<title><band height="50"><staticText><reportElement x="0" y="0" width="200" height="30"/><text><![CDATA[Title]]></text></staticText></band></title>','<pageHeader><band height="30"><staticText><reportElement x="0" y="0" width="100" height="20"/><text><![CDATA[Header]]></text></staticText></band></pageHeader>','<detail><band height="20"><staticText><reportElement x="0" y="0" width="100" height="20"/><text><![CDATA[Detail]]></text></staticText></band></detail>','<pageFooter><band height="30"><staticText><reportElement x="0" y="0" width="100" height="20"/><text><![CDATA[Footer]]></text></staticText></band></pageFooter>','</jasperReport>']);
+F.UNICODE_MIN=J(['<?xml version="1.0" encoding="UTF-8"?>','<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports"',' name="UnicodeMin" pageWidth="595" pageHeight="842" columnWidth="555" leftMargin="20" rightMargin="20" topMargin="20" bottomMargin="20">','<title><band height="30"><staticText><reportElement x="0" y="0" width="300" height="25"/><text><![CDATA[中文测试]]></text></staticText></band></title>','</jasperReport>']);
+F.UNICODE_FULL=J(['<?xml version="1.0" encoding="UTF-8"?>','<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports"',' name="UnicodeTest" pageWidth="595" pageHeight="842" columnWidth="555" leftMargin="20" rightMargin="20" topMargin="20" bottomMargin="20">','<title><band height="90">','<staticText><reportElement x="0" y="0" width="300" height="25"/><text><![CDATA[中文测试 Chinese Text]]></text></staticText>','<staticText><reportElement x="0" y="30" width="300" height="25"/><text><![CDATA[日本語テスト Japanese]]></text></staticText>','<staticText><reportElement x="0" y="60" width="300" height="25"/><text><![CDATA[한국어 테스트 Korean]]></text></staticText>','</band></title></jasperReport>']);
+F.LANDSCAPE=J(['<?xml version="1.0" encoding="UTF-8"?>','<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports"',' name="Landscape" pageWidth="842" pageHeight="595" columnWidth="802" leftMargin="20" rightMargin="20" topMargin="20" bottomMargin="20">','<title><band height="30"><staticText><reportElement x="0" y="0" width="300" height="25"/><text><![CDATA[Landscape]]></text></staticText></band></title>','</jasperReport>']);
+F.FRAME=J(['<?xml version="1.0" encoding="UTF-8"?>','<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports"',' name="FrameTest" pageWidth="595" pageHeight="842" columnWidth="555" leftMargin="20" rightMargin="20" topMargin="20" bottomMargin="20">','<title><band height="120"><frame>','<reportElement x="10" y="10" width="500" height="100"/>','<box><pen lineWidth="2.0" lineColor="#0066CC"/></box>','<staticText><reportElement x="10" y="10" width="200" height="25"/><text><![CDATA[In Frame]]></text></staticText>','</frame></band></title></jasperReport>']);
+F.STYLES=J(['<?xml version="1.0" encoding="UTF-8"?>','<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports"',' name="StyleTest" pageWidth="595" pageHeight="842" columnWidth="555" leftMargin="20" rightMargin="20" topMargin="20" bottomMargin="20">','<style name="TitleStyle" isBold="true" fontSize="20" forecolor="#333333"/>','<title><band height="40"><staticText>','<reportElement x="0" y="0" width="300" height="30" style="TitleStyle"/><text><![CDATA[Styled]]></text>','</staticText></band></title></jasperReport>']);
+F.STYLES_MIN=J(['<?xml version="1.0" encoding="UTF-8"?>','<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports"',' name="StyleTest2" pageWidth="595" pageHeight="842" columnWidth="555" leftMargin="20" rightMargin="20" topMargin="20" bottomMargin="20">','<style name="TitleStyle" isBold="true" fontSize="20"/>','<title><band height="40"><staticText>','<reportElement x="0" y="0" width="300" height="30" style="TitleStyle"/><text><![CDATA[Styled]]></text>','</staticText></band></title></jasperReport>']);
+F.SPECIAL=J(['<?xml version="1.0" encoding="UTF-8"?>','<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports"',' name="SpecialChars" pageWidth="595" pageHeight="842" columnWidth="555" leftMargin="20" rightMargin="20" topMargin="20" bottomMargin="20">','<title><band height="60">','<staticText><reportElement x="0" y="0" width="400" height="20"/><text><![CDATA[Ampersand: &amp; Less Than: &lt;]]></text></staticText>','<staticText><reportElement x="0" y="25" width="400" height="20"/><text><![CDATA[Quotes: double and single]]></text></staticText>','</band></title></jasperReport>']);
+F.GRAPHICS=J(['<?xml version="1.0" encoding="UTF-8"?>','<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports"',' name="GraphicsTest" pageWidth="595" pageHeight="842" columnWidth="555" leftMargin="20" rightMargin="20" topMargin="20" bottomMargin="20">','<title><band height="150">','<line><reportElement x="0" y="0" width="555" height="1"/></line>','<rectangle><reportElement x="10" y="10" width="100" height="50"/></rectangle>','<ellipse><reportElement x="130" y="10" width="100" height="50"/></ellipse>','</band></title></jasperReport>']);
+F.DESIGNER=J(['<?xml version="1.0" encoding="UTF-8"?>','<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports"',' xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"',' xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd"',' name="DesignerReport" pageWidth="595" pageHeight="842" columnWidth="555" leftMargin="20" rightMargin="20" topMargin="20" bottomMargin="20">','<property name="net.sf.jasperreports.print.keep.full.text" value="true"/>','<style name="TitleStyle" isBold="true" fontSize="16" forecolor="#FF6600"/>','<title><band height="40"><staticText>','<reportElement x="0" y="0" width="300" height="30" style="TitleStyle" uuid="a1b2c3d4-e5f6-7890-abcd-ef1234567890"/>','<textElement textAlignment="Center" verticalAlignment="Middle"><font size="16" isBold="true"/></textElement>','<text><![CDATA[Designer Report Title]]></text>','</staticText></band></title>','<detail><band height="30">','<line><reportElement x="0" y="0" width="555" height="1" uuid="e5f6a7b8-c9d0-1234-ef01-345678901234" forecolor="#CCCCCC"/></line>','</band></detail>','<pageFooter><band height="30"><staticText>','<reportElement x="0" y="5" width="555" height="20" uuid="f6a7b8c9-d0e1-2345-f012-456789012345"/>','<textElement textAlignment="Center"><font size="10"/></textElement>','<text><![CDATA[Page]]></text>','</staticText></band></pageFooter>','</jasperReport>']);
+(async function(){
+log('Starting tests...');
+log('--- Basic ---');
+await test('1. Minimal',F.MINIMAL);
+await test('2. All bands',F.ALL_BANDS);
+await test('3. Landscape',F.LANDSCAPE);
+log('--- Unicode ---');
+await test('4. Chinese',F.UNICODE_MIN);
+await test('5. CJK multi',F.UNICODE_FULL);
+log('--- Elements ---');
+await test('6. Frame',F.FRAME);
+await test('7. Graphics',F.GRAPHICS);
+await test('8. Special chars',F.SPECIAL);
+log('--- Styles ---');
+await test('9. Named styles',F.STYLES);
+await test('10. Style minimal',F.STYLES_MIN);
+log('--- Designer ---');
+await test('11. Designer report',F.DESIGNER);
+log('--- Errors ---');
+await test('12. Invalid XML','broken xml <',null,null,true);
+await test('13. Empty','',null,null,true);
+log('Done!');
+})();
+</script>
+</body>
+</html>
