@@ -270,7 +270,7 @@ function initializeEditor() {
   }
 
   editableParams.value = generateMockParameters(params);
-  editableDataSource.value = generateMockDataSource(fields, 5);
+  editableDataSource.value = generateMockDataSource(fields, 1);
 
   // 为每个表格数据集生成mock数据
   const subDataSources: Record<string, Record<string, any>[]> = {};
