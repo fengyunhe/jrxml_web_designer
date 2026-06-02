@@ -52,8 +52,8 @@ jobs:
         uses: tauri-apps/tauri-action@v0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          TAURI_PACKAGE_MANAGER: pnpm
         with:
+          tauriScript: pnpm tauri
           tagName: ${{ github.ref_name }}
           releaseName: 'App v__VERSION__'
           releaseBody: 'See the assets to download this version and install.'
