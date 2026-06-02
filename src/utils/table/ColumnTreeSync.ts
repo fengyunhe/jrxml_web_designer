@@ -20,13 +20,44 @@ export function syncTableColumns(tableElement: TableElement): void {
 
   children.forEach((child) => {
     if (!('children' in child)) {
-      // 未分组的根级叶子列
-      if (child.tableHeader) child.tableHeader.rowSpan = requiredRowSpan;
-      if (child.columnHeader) child.columnHeader.rowSpan = requiredRowSpan;
-      if (child.columnFooter) child.columnFooter.rowSpan = requiredRowSpan;
-      if (child.tableFooter) child.tableFooter.rowSpan = requiredRowSpan;
+      // ungrouped root-level leaf column
+      if (child.tableHeader) {
+        child.tableHeader.rowSpan = requiredRowSpan;
+        if (child.tableHeader.rowSpan > 1) {
+          const singleRowHeight = getSingleRowHeight(child.tableHeader);
+          child.tableHeader.height = singleRowHeight * child.tableHeader.rowSpan;
+          if (child.tableHeader.element) child.tableHeader.element.height = child.tableHeader.height;
+        }
+      }
+      if (child.columnHeader) {
+        child.columnHeader.rowSpan = requiredRowSpan;
+        if (child.columnHeader.rowSpan > 1) {
+          const singleRowHeight = getSingleRowHeight(child.columnHeader);
+          child.columnHeader.height = singleRowHeight * child.columnHeader.rowSpan;
+          if (child.columnHeader.element) child.columnHeader.element.height = child.columnHeader.height;
+        }
+      }
+      if (child.columnFooter) {
+        child.columnFooter.rowSpan = requiredRowSpan;
+        if (child.columnFooter.rowSpan > 1) {
+          const singleRowHeight = getSingleRowHeight(child.columnFooter);
+          child.columnFooter.height = singleRowHeight * child.columnFooter.rowSpan;
+          if (child.columnFooter.element) child.columnFooter.element.height = child.columnFooter.height;
+        }
+      }
+      if (child.tableFooter) {
+        child.tableFooter.rowSpan = requiredRowSpan;
+        if (child.tableFooter.rowSpan > 1) {
+          const singleRowHeight = getSingleRowHeight(child.tableFooter);
+          child.tableFooter.height = singleRowHeight * child.tableFooter.rowSpan;
+          if (child.tableFooter.element) child.tableFooter.element.height = child.tableFooter.height;
+        }
+      }
     }
   });
+
+  // 递归处理分组内嵌套的独立叶子列的 rowSpan 和高度
+  inflateNestedStandaloneHeights(children, maxDepth, 0);
 
   // 更新表格总宽度
   tableElement.width = children.reduce((sum, c) => sum + c.width, 0);
@@ -144,4 +175,58 @@ export function ungroupColumnGroup(
 
   // 替换组为它的子列
   parent.splice(index, 1, ...group.children);
+}
+
+/**
+ * 从单元格中提取单行高度（如果已 inflate 过则除以 rowSpan 还原，否则返回默认值）
+ */
+function getSingleRowHeight(cell: Cell): number {
+  const h = cell.height || (cell as any).element?.height || 30;
+  const rs = cell.rowSpan || 1;
+  if (rs <= 1) return h;
+  // 如果高度等于默认值，说明从未 inflate 过，直接返回默认值
+  if (h === 30) return 30;
+  return Math.round(h / rs);
+}
+
+/**
+ * 递归处理分组内嵌套的独立叶子列，设置 rowSpan 并 inflate 高度
+ */
+function inflateNestedStandaloneHeights(
+  children: (Column | ColumnGroup)[],
+  maxDepth: number,
+  depth: number,
+): void {
+  for (const child of children) {
+    if ('children' in child) {
+      inflateNestedStandaloneHeights((child as ColumnGroup).children, maxDepth, depth + 1);
+    } else {
+      // 独立叶子列
+      const rowSpan = Math.max(1, maxDepth - depth + 1);
+      if (child.tableHeader && rowSpan > 1) {
+        child.tableHeader.rowSpan = rowSpan;
+        const singleRowHeight = getSingleRowHeight(child.tableHeader);
+        child.tableHeader.height = singleRowHeight * rowSpan;
+        if (child.tableHeader.element) child.tableHeader.element.height = child.tableHeader.height;
+      }
+      if (child.columnHeader && rowSpan > 1) {
+        child.columnHeader.rowSpan = rowSpan;
+        const singleRowHeight = getSingleRowHeight(child.columnHeader);
+        child.columnHeader.height = singleRowHeight * rowSpan;
+        if (child.columnHeader.element) child.columnHeader.element.height = child.columnHeader.height;
+      }
+      if (child.columnFooter && rowSpan > 1) {
+        child.columnFooter.rowSpan = rowSpan;
+        const singleRowHeight = getSingleRowHeight(child.columnFooter);
+        child.columnFooter.height = singleRowHeight * rowSpan;
+        if (child.columnFooter.element) child.columnFooter.element.height = child.columnFooter.height;
+      }
+      if (child.tableFooter && rowSpan > 1) {
+        child.tableFooter.rowSpan = rowSpan;
+        const singleRowHeight = getSingleRowHeight(child.tableFooter);
+        child.tableFooter.height = singleRowHeight * rowSpan;
+        if (child.tableFooter.element) child.tableFooter.element.height = child.tableFooter.height;
+      }
+    }
+  }
 }

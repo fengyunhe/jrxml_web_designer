@@ -1121,4 +1121,114 @@ describe('jrxmlGenerator', () => {
     expect(columnCRowSpanMatch).toBeDefined();
     expect(columnCRowSpanMatch?.[1]).toBe('2');
   })
+
+  it('should inflate standalone column height to match rowSpan alongside groups', () => {
+    // 表格有一个分组（含2列）和一个独立列
+    // 独立列需要 rowSpan=2, height=60 (30*2)
+    const mockReportProperties = {
+      reportName: 'Test',
+      pageWidth: 595,
+      pageHeight: 842,
+      marginLeft: 20,
+      marginRight: 20,
+      marginTop: 20,
+      marginBottom: 20,
+      defaultFontName: 'Noto Sans SC',
+      defaultFontSize: 12
+    }
+
+    const bands = [{
+      type: 'detail' as const,
+      height: 200,
+      elements: [{
+        type: 'table' as const,
+        uuid: 'table-1',
+        x: 0, y: 0, width: 300, height: 200,
+        children: [
+          {
+            uuid: 'group-a',
+            name: 'Group A',
+            width: 200,
+            columnHeader: {
+              enable: true,
+              element: {
+                type: 'staticText',
+                text: 'Group A',
+                x: 0, y: 0, width: 200, height: 30,
+                textAlignment: 'Center', verticalAlignment: 'Middle'
+              }
+            },
+            children: [
+              {
+                uuid: 'col-1',
+                name: 'Col1',
+                width: 100,
+                columnHeader: {
+                  enable: true,
+                  element: {
+                    type: 'staticText',
+                    text: 'Col1',
+                    x: 0, y: 0, width: 100, height: 30
+                  }
+                },
+                detailCell: {
+                  enable: true,
+                  element: { type: 'textField', expression: '$F{f1}', x: 0, y: 0, width: 100, height: 30 }
+                }
+              },
+              {
+                uuid: 'col-2',
+                name: 'Col2',
+                width: 100,
+                columnHeader: {
+                  enable: true,
+                  element: {
+                    type: 'staticText',
+                    text: 'Col2',
+                    x: 0, y: 0, width: 100, height: 30
+                  }
+                },
+                detailCell: {
+                  enable: true,
+                  element: { type: 'textField', expression: '$F{f2}', x: 0, y: 0, width: 100, height: 30 }
+                }
+              }
+            ]
+          },
+          {
+            uuid: 'col-standalone',
+            name: 'Standalone',
+            width: 100,
+            columnHeader: {
+              enable: true,
+              element: {
+                type: 'staticText',
+                text: 'Standalone',
+                x: 0, y: 0, width: 100, height: 30
+              }
+            },
+            detailCell: {
+              enable: true,
+              element: { type: 'textField', expression: '$F{f3}', x: 0, y: 0, width: 100, height: 30 }
+            }
+          }
+        ],
+        columns: []
+      }]
+    }]
+
+    const fields = [
+      { name: 'f1', class: 'java.lang.String' },
+      { name: 'f2', class: 'java.lang.String' },
+      { name: 'f3', class: 'java.lang.String' }
+    ]
+
+    const generated = generateJRXMLContent(mockReportProperties, bands, fields)
+
+    // 独立列的 columnHeader 应该有 rowSpan=2 和 height=60
+    const standaloneMatch = generated.match(/<jr:column[^>]*uuid="col-standalone"[^>]*>[\s\S]*?<jr:columnHeader\s+height="(\d+)"\s+rowSpan="(\d+)"/)
+    expect(standaloneMatch).toBeDefined()
+    expect(standaloneMatch?.[1]).toBe('60') // 30 * 2
+    expect(standaloneMatch?.[2]).toBe('2')
+  })
 })

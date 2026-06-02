@@ -1380,15 +1380,20 @@ function cancelStyleChanges() {
 // 当表格元素变化时，更新行高设置和样式选择
 watch(() => currentElement.value, (newElement) => {
   if (newElement && newElement.type === 'table') {
-    // 从第一列获取当前行高值
+    // 从列中获取当前行高值（除以 rowSpan 还原单行高度）
     if (newElement.columns && newElement.columns.length > 0) {
       const firstColumn = newElement.columns[0];
       if (firstColumn) {
-        tableRowHeights.value.tableHeader = firstColumn.tableHeader?.element?.height ?? 30;
-        tableRowHeights.value.columnHeader = firstColumn.columnHeader?.element?.height ?? 30;
-        tableRowHeights.value.detailCell = firstColumn.detailCell?.element?.height ?? 30;
-        tableRowHeights.value.columnFooter = firstColumn.columnFooter?.element?.height ?? 30;
-        tableRowHeights.value.tableFooter = firstColumn.tableFooter?.element?.height ?? 30;
+        const getBaseHeight = (cell: any) => {
+          const h = cell?.element?.height ?? cell?.height ?? 30;
+          const rs = cell?.rowSpan || 1;
+          return rs > 1 ? Math.round(h / rs) : h;
+        };
+        tableRowHeights.value.tableHeader = getBaseHeight(firstColumn.tableHeader);
+        tableRowHeights.value.columnHeader = getBaseHeight(firstColumn.columnHeader);
+        tableRowHeights.value.detailCell = getBaseHeight(firstColumn.detailCell);
+        tableRowHeights.value.columnFooter = getBaseHeight(firstColumn.columnFooter);
+        tableRowHeights.value.tableFooter = getBaseHeight(firstColumn.tableFooter);
         
         // 更新表格样式选择
         tableStyles.value.tableHeader = (firstColumn.tableHeader as any)?.style ?? 'Table_TH';
