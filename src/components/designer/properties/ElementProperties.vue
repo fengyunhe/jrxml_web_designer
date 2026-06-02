@@ -224,52 +224,51 @@
           <!-- 列管理 -->
           <div class="form-group">
             <h5>列管理</h5>
-            <div class="table-column-actions">
+            <div class="column-tree-toolbar">
               <button
                 class="prop-btn-primary"
-                @click="addColumn"
-                :title="t('properties.addColumn')"
+                @click="handleAddRootColumn"
+                title="添加列"
               >
-                + {{ t('properties.addColumn') }}
+                + 列
+              </button>
+              <button
+                class="prop-btn-primary"
+                @click="handleAddRootGroup"
+                title="添加分组"
+              >
+                + 分组
+              </button>
+              <button
+                class="prop-btn-default"
+                @click="addColumnGroup"
+                title="选择列组合"
+              >
+                组合列
               </button>
             </div>
 
-            <!-- 列列表 -->
-            <div class="prop-list">
-              <div
-                v-for="(column, index) in currentElement.columns || []"
-                :key="column.uuid || index"
-                class="prop-list-item"
-              >
-                <div class="prop-table-column-header">
-                  <span class="prop-list-item-name">{{ column.name || `列 ${index + 1}` }}</span>
-                  <div class="prop-list-item-actions">
-                    <button
-                      class="prop-btn-danger prop-btn-sm"
-                      @click="removeColumn(index)"
-                    >
-                      删除
-                    </button>
-                  </div>
-                </div>
-                <div class="prop-table-column-props">
-                  <div class="form-group">
-                    <label>列名</label>
-                    <input
-                      v-model="column.name"
-                      type="text"
-                      :placeholder="`列 ${index + 1}`"
-                    />
-                  </div>
-                  <div class="form-group">
-                    <label>宽度</label>
-                    <input
-                      v-model.number="column.width"
-                      type="number"
-                      min="1"
-                    />
-                  </div>
-                </div>
+            <!-- 列树 -->
+            <div class="column-tree">
+              <ColumnTreeNode
+                v-for="(child, index) in tableChildren"
+                :key="child.uuid || index"
+                :node="child"
+                :depth="0"
+                :is-last="index === tableChildren.length - 1"
+                :parent-uuid="null"
+                :parent-length="tableChildren.length"
+                :sibling-index="index"
+                @update-node="handleColumnNodeUpdate"
+                @delete-node="handleColumnNodeDelete"
+                @add-column-after="handleAddColumnAfter"
+                @add-column-child="handleAddColumnChild"
+                @add-column-group-after="handleAddColumnGroupAfter"
+                @ungroup-node="handleUngroupNode"
+                @move-node="handleMoveNode"
+              />
+              <div v-if="tableChildren.length === 0" class="column-tree-empty-hint">
+                点击上方按钮添加列
               </div>
             </div>
           </div>
@@ -835,8 +834,12 @@ import BorderStyleSettings from './BorderStyleSettings.vue';
 import ElementTypeBasedSettings from './ElementTypeBasedSettings.vue';
 import FrameProperties from './FrameProperties.vue';
 import TableProperties from './TableProperties.vue';
+import ColumnTreeNode from './ColumnTreeNode.vue';
 import ExpressionEditor from './common/ExpressionEditor.vue';
 import { useLivePreview } from '@/composables/useLivePreview';
+import { syncTableColumns, createDefaultColumn, createDefaultColumnGroup, findInParentArray, ungroupColumnGroup } from '../../../utils/table/ColumnTreeSync';
+import { TableUtils } from '../../../utils/table/ColumnFactory';
+import type { Column, ColumnGroup, BaseColumn, TableElement } from '../../../types/table';
 import SwitchControl from './common/SwitchControl.vue';
 
 const { t } = useI18n();
@@ -1010,6 +1013,152 @@ const removeColumn = (index: number) => {
     emit('update-jrxml');
   }
 };
+
+// ==================== 列组合树管理 ====================
+
+const tableChildren = computed<(Column | ColumnGroup)[]>(() => {
+  if (!currentElement.value || currentElement.value.type !== 'table') return [];
+  const el = currentElement.value as TableElement;
+  if (el.children && el.children.length > 0) return el.children;
+  // 没有 children 时从 columns 初始化
+  return el.columns || [];
+});
+
+function syncAndEmit() {
+  if (!currentElement.value || currentElement.value.type !== 'table') return;
+  const el = currentElement.value as TableElement;
+  // 确保 children 存在
+  if (!el.children) {
+    el.children = [...(el.columns || [])];
+  }
+  syncTableColumns(el);
+  emit('update-jrxml');
+}
+
+function ensureChildren() {
+  if (!currentElement.value || currentElement.value.type !== 'table') return;
+  const el = currentElement.value as TableElement;
+  if (!el.children) {
+    el.children = [...(el.columns || [])];
+  }
+}
+
+function handleAddRootColumn() {
+  if (!currentElement.value || currentElement.value.type !== 'table') return;
+  emit('save-state');
+  ensureChildren();
+  const el = currentElement.value as TableElement;
+  const count = (el.children || []).length;
+  const newCol = createDefaultColumn(`列 ${count + 1}`);
+  el.children!.push(newCol);
+  syncAndEmit();
+}
+
+function handleAddRootGroup() {
+  if (!currentElement.value || currentElement.value.type !== 'table') return;
+  emit('save-state');
+  ensureChildren();
+  const el = currentElement.value as TableElement;
+  const count = (el.children || []).filter(c => 'children' in c).length;
+  const newGroup = createDefaultColumnGroup(`分组 ${count + 1}`);
+  el.children!.push(newGroup);
+  syncAndEmit();
+}
+
+function handleColumnNodeUpdate(uuid: string, updates: Partial<BaseColumn>) {
+  emit('save-state');
+  ensureChildren();
+  const el = currentElement.value as TableElement;
+  const result = findInParentArray(el.children!, uuid);
+  if (result) {
+    Object.assign(result.parent[result.index], updates);
+    // 如果更新了宽度，需要同步
+    if (updates.width !== undefined) {
+      TableUtils.updateAllColumnGroupWidths(el.children!);
+    }
+    // 如果更新了名称，同步到单元格
+    if (updates.name !== undefined) {
+      const node = result.parent[result.index];
+      if (node.columnHeader?.element) {
+        node.columnHeader.element.text = updates.name;
+      }
+    }
+  }
+  syncAndEmit();
+}
+
+function handleColumnNodeDelete(uuid: string) {
+  emit('save-state');
+  ensureChildren();
+  const el = currentElement.value as TableElement;
+  const result = findInParentArray(el.children!, uuid);
+  if (result) {
+    result.parent.splice(result.index, 1);
+  }
+  syncAndEmit();
+}
+
+function handleAddColumnAfter(afterUuid: string) {
+  emit('save-state');
+  ensureChildren();
+  const el = currentElement.value as TableElement;
+  const result = findInParentArray(el.children!, afterUuid);
+  if (result) {
+    const newCol = createDefaultColumn(`列 ${result.parent.length + 1}`);
+    result.parent.splice(result.index + 1, 0, newCol);
+  }
+  syncAndEmit();
+}
+
+function handleAddColumnChild(groupUuid: string) {
+  emit('save-state');
+  ensureChildren();
+  const el = currentElement.value as TableElement;
+  const result = findInParentArray(el.children!, groupUuid);
+  if (result) {
+    const group = result.parent[result.index] as ColumnGroup;
+    if (group && 'children' in group) {
+      const newCol = createDefaultColumn(`列 ${group.children.length + 1}`);
+      group.children.push(newCol);
+    }
+  }
+  syncAndEmit();
+}
+
+function handleAddColumnGroupAfter(afterUuid: string) {
+  emit('save-state');
+  ensureChildren();
+  const el = currentElement.value as TableElement;
+  const result = findInParentArray(el.children!, afterUuid);
+  if (result) {
+    const newGroup = createDefaultColumnGroup(`分组 ${result.parent.length + 1}`);
+    result.parent.splice(result.index + 1, 0, newGroup);
+  }
+  syncAndEmit();
+}
+
+function handleUngroupNode(groupUuid: string) {
+  emit('save-state');
+  ensureChildren();
+  const el = currentElement.value as TableElement;
+  ungroupColumnGroup(el.children!, groupUuid);
+  syncAndEmit();
+}
+
+function handleMoveNode(uuid: string, direction: 'up' | 'down') {
+  emit('save-state');
+  ensureChildren();
+  const el = currentElement.value as TableElement;
+  const result = findInParentArray(el.children!, uuid);
+  if (!result) return;
+  const { parent, index } = result;
+  const targetIndex = direction === 'up' ? index - 1 : index + 1;
+  if (targetIndex < 0 || targetIndex >= parent.length) return;
+  const temp = parent[index];
+  parent[index] = parent[targetIndex];
+  parent[targetIndex] = temp;
+  syncAndEmit();
+}
 
 // 报表样式管理
 const reportStyles = ref<any[]>(props.reportStyles || [

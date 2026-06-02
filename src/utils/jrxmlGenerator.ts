@@ -1303,7 +1303,9 @@ function generateColumnXML(column: any, index: number, hasColumnGroups: boolean 
     if (column.tableHeader.element) {
       // 如果有element对象，则生成包含元素的tableHeader
       const tableHeaderElement = column.tableHeader.element;
-      xml += `            <jr:tableHeader height="${toInt(tableHeaderElement.height || 30)}" rowSpan="${tableHeaderElement.rowSpan || 1}" style="Table_TH">
+      // rowSpan 来自 cell 层级，不是 element 层级
+      const tableHeaderRowSpan = column.tableHeader.rowSpan || 1;
+      xml += `            <jr:tableHeader height="${toInt(tableHeaderElement.height || 30)}" rowSpan="${tableHeaderRowSpan}" style="Table_TH">
 `;
       xml += generateElementXML(tableHeaderElement).replace(/^    /gm, '                ');
       xml += `            </jr:tableHeader>
@@ -1320,7 +1322,8 @@ function generateColumnXML(column: any, index: number, hasColumnGroups: boolean 
     if (column.tableFooter.element) {
       // 如果有element对象，则生成包含元素的tableFooter
       const tableFooterElement = column.tableFooter.element;
-      xml += `            <jr:tableFooter height="${toInt(tableFooterElement.height || 30)}" rowSpan="${tableFooterElement.rowSpan || 1}">
+      const tableFooterRowSpan = column.tableFooter.rowSpan || 1;
+      xml += `            <jr:tableFooter height="${toInt(tableFooterElement.height || 30)}" rowSpan="${tableFooterRowSpan}">
 `;
       xml += generateElementXML(tableFooterElement).replace(/^    /gm, '                ');
       xml += `            </jr:tableFooter>
@@ -1380,7 +1383,8 @@ function generateColumnXML(column: any, index: number, hasColumnGroups: boolean 
     if (column.columnFooter.element) {
       // 如果有element对象，则生成包含元素的columnFooter
       const columnFooterElement = column.columnFooter.element;
-      xml += `            <jr:columnFooter height="${toInt(columnFooterElement.height || 30)}" rowSpan="${columnFooterElement.rowSpan || 1}" style="Table_CH">
+      const columnFooterRowSpan = column.columnFooter.rowSpan || 1;
+      xml += `            <jr:columnFooter height="${toInt(columnFooterElement.height || 30)}" rowSpan="${columnFooterRowSpan}" style="Table_CH">
 `;
       xml += generateElementXML(columnFooterElement).replace(/^    /gm, '                ');
       xml += `            </jr:columnFooter>
@@ -1435,7 +1439,7 @@ function generateColumnXML(column: any, index: number, hasColumnGroups: boolean 
 }
 
 // 生成列分组XML，同时收集处理过的列的UUID
-function generateColumnGroupXML(group: any, processedColumnUuids?: Set<string>, hasColumnGroups: boolean = true, maxDepth: number = 0): string {
+function generateColumnGroupXML(group: any, processedColumnUuids?: Set<string>, hasColumnGroups: boolean = true, maxDepth: number = 0, depth: number = 1): string {
   // 确保group有uuid，如果没有则生成一个
   const groupUuid = group.uuid || crypto.randomUUID();
   // 更新group的uuid，确保被保存
@@ -1524,7 +1528,6 @@ function generateColumnGroupXML(group: any, processedColumnUuids?: Set<string>, 
     
     // 对于组合列，使用设置的rowSpan值，如果没有则默认为1
     const rowSpan = columnHeader.rowSpan || actualColumnHeader.rowSpan || 1;
-    console.log('Group columnHeader rowSpan:', rowSpan);
     xml += `            <jr:columnHeader height="${toInt(actualColumnHeader.height || 30)}" rowSpan="${rowSpan}" style="Table_CH">
 `;
     xml += generateElementXML(actualColumnHeader).replace(/^    /gm, '                ');
@@ -1550,12 +1553,26 @@ function generateColumnGroupXML(group: any, processedColumnUuids?: Set<string>, 
   const children = group.children || [];
   children.forEach((child: any, index: number) => {
     if (child.children) {
-      // 递归生成子分组，传递hasColumnGroups标志和maxDepth
-      xml += generateColumnGroupXML(child, processedColumnUuids, hasColumnGroups, maxDepth);
+      // 递归生成子分组，传递hasColumnGroups标志、maxDepth和depth
+      xml += generateColumnGroupXML(child, processedColumnUuids, hasColumnGroups, maxDepth, depth + 1);
     } else {
-      // 生成普通列，传递hasColumnGroups标志和maxDepth
+      // 生成普通列
+      // standaloneColumn的rowSpan = maxGroupDepthBelow + 1
+      // maxGroupDepthBelow = maxDepth - depth（从当前group到最深group的层级数）
+      const standaloneRowSpan = Math.max(1, maxDepth - depth + 1);
+      if (child.tableHeader) {
+        child.tableHeader.rowSpan = child.tableHeader.rowSpan || standaloneRowSpan;
+        if (child.tableHeader.rowSpan > 1) {
+          child.tableHeader.height = 30 * child.tableHeader.rowSpan;
+        }
+      }
+      if (child.columnHeader) {
+        child.columnHeader.rowSpan = child.columnHeader.rowSpan || standaloneRowSpan;
+        if (child.columnHeader.rowSpan > 1) {
+          child.columnHeader.height = 30 * child.columnHeader.rowSpan;
+        }
+      }
       xml += generateColumnXML(child, index, hasColumnGroups, maxDepth);
-      // 收集处理过的列的UUID
       if (processedColumnUuids) {
         processedColumnUuids.add(child.uuid);
       }
@@ -1704,23 +1721,28 @@ function preprocessTableElements(element: any) {
   }
   
   // 开始处理
-  // 首先处理列分组
+  // 处理所有 children（包括列分组和普通列）
   const groupChildren = element.children || [];
   groupChildren.forEach((child: any) => {
     if (child.children) {
       // 处理列分组
       processColumnGroup(child);
-    }
-  });
-  
-  // 然后处理普通列
-  const normalColumns = element.columns || [];
-  normalColumns.forEach((child: any) => {
-    if (!child.children) {
+    } else {
       // 处理普通列
       processColumn(child);
     }
   });
+
+  // 如果 children 中没有普通列，回退到 columns 数组
+  const hasPlainColumnsInChildren = groupChildren.some((child: any) => !child.children);
+  if (!hasPlainColumnsInChildren) {
+    const normalColumns = element.columns || [];
+    normalColumns.forEach((child: any) => {
+      if (!child.children) {
+        processColumn(child);
+      }
+    });
+  }
 }
 
 // 生成表格XML
@@ -1793,88 +1815,113 @@ function generateTableXML(element: any): string {
   
   // 检测表格是否有任何组合列
   const hasColumnGroups = element.children && element.children.some((child: any) => child.children) || false;
-  
-  // 计算表格中组合列的最大嵌套层级
-  function calculateMaxDepth(node: any, depth: number = 0): number {
+
+  // 计算表格中组合列的最大嵌套深度（只计算group节点，不包括叶子节点）
+  // 从virtual root (depth=0) 开始，group节点在 depth=1
+  function calculateMaxGroupDepth(node: any, depth: number = 0): number {
     if (!node.children || node.children.length === 0) {
-      // 叶子节点不贡献额外的表头行，返回 depth - 1
-      return depth - 1;
+      return depth;
     }
     let maxDepth = depth;
     for (const child of node.children) {
-      const childDepth = calculateMaxDepth(child, depth + 1);
-      if (childDepth > maxDepth) {
-        maxDepth = childDepth;
+      if (child.children && child.children.length > 0) {
+        const childDepth = calculateMaxGroupDepth(child, depth + 1);
+        if (childDepth > maxDepth) {
+          maxDepth = childDepth;
+        }
       }
     }
     return maxDepth;
   }
-  
-  const maxDepth = calculateMaxDepth({ children: element.children || [] });
-  console.log('Max Depth:', maxDepth);
-  console.log('Required RowSpan:', maxDepth + 1);
-  
+
+  // 计算从给定节点的children中，group节点的最大深度（相对于该节点的深度）
+  // 只考虑与standaloneColumn同级或更深层级的group节点
+  // 用于确定standaloneColumn的rowSpan
+  function getMaxGroupDepthInChildren(children: any[], baseDepth: number): number {
+    let maxDepth = baseDepth;
+    for (const child of children) {
+      if (child.children && child.children.length > 0) {
+        // 这是一个group节点
+        const childMaxDepth = getMaxGroupDepthInChildren(child.children, baseDepth + 1);
+        if (childMaxDepth > maxDepth) {
+          maxDepth = childMaxDepth;
+        }
+      }
+    }
+    return maxDepth;
+  }
+
+  // 计算表格中group节点的总数（用于确定顶层standaloneColumn的rowSpan）
+  function countGroups(node: any): number {
+    if (!node.children || node.children.length === 0) {
+      return 0;
+    }
+    let count = 0;
+    for (const child of node.children) {
+      if (child.children && child.children.length > 0) {
+        count += 1 + countGroups(child);
+      }
+    }
+    return count;
+  }
+
+  const maxGroupDepth = calculateMaxGroupDepth({ children: element.children || [] });
+  const totalGroups = countGroups({ children: element.children || [] });
+
   // 1. 收集已经处理过的列的UUID
   const processedColumnUuids = new Set<string>();
-  
-  // 计算需要的rowSpan值，对于未分组的列，rowSpan应该是maxDepth + 1
-  const requiredRowSpan = maxDepth + 1;
-  
+
   // 2. 处理element.children（包含列分组和直接列）
   const children = element.children || [];
   children.forEach((child: any, index: number) => {
     if (child.children) {
-      // 列分组，传递processedColumnUuids集合、hasColumnGroups标志和maxDepth
-      xml += generateColumnGroupXML(child, processedColumnUuids, hasColumnGroups, maxDepth);
+      // 列分组
+      xml += generateColumnGroupXML(child, processedColumnUuids, hasColumnGroups, maxGroupDepth);
     } else {
       // 直接列，是顶层直接列
-      // 对于没有子列的顶层直接列，设置其tableHeader和columnHeader的rowSpan为requiredRowSpan
+      // rowSpan = maxGroupDepth + 1（所有header rows的数量：group header rows + leaf header row）
+      const standaloneRowSpan = Math.max(1, maxGroupDepth + 1);
       if (child.tableHeader && !child.children) {
-        child.tableHeader.rowSpan = child.tableHeader.rowSpan || requiredRowSpan;
-        // 当rowSpan大于1时，调整tableHeader的height为单行高度乘以rowSpan
+        child.tableHeader.rowSpan = child.tableHeader.rowSpan || standaloneRowSpan;
         if (child.tableHeader.rowSpan > 1) {
-          const singleRowHeight = 30; // 默认单行高度
+          const singleRowHeight = 30;
           child.tableHeader.height = singleRowHeight * child.tableHeader.rowSpan;
         }
       }
       if (child.columnHeader && !child.children) {
-        child.columnHeader.rowSpan = child.columnHeader.rowSpan || requiredRowSpan;
-        // 当rowSpan大于1时，调整columnHeader的height为单行高度乘以rowSpan
+        child.columnHeader.rowSpan = child.columnHeader.rowSpan || standaloneRowSpan;
         if (child.columnHeader.rowSpan > 1) {
-          const singleRowHeight = 30; // 默认单行高度
+          const singleRowHeight = 30;
           child.columnHeader.height = singleRowHeight * child.columnHeader.rowSpan;
         }
       }
       // 传递hasColumnGroups标志和maxDepth
-      xml += generateColumnXML(child, index, hasColumnGroups, maxDepth);
+      xml += generateColumnXML(child, index, hasColumnGroups, maxGroupDepth);
       processedColumnUuids.add(child.uuid);
     }
   });
-  
+
   // 3. 处理element.columns，跳过已经在children中处理过的列
   const normalColumns = element.columns || [];
   normalColumns.forEach((child: any, index: number) => {
     if (!child.children && !processedColumnUuids.has(child.uuid)) {
       // 普通列且未被处理过，是顶层直接列
-      // 对于没有子列的顶层直接列，设置其tableHeader和columnHeader的rowSpan为requiredRowSpan
+      const standaloneRowSpan = Math.max(1, totalGroups);
       if (child.tableHeader && !child.children) {
-        child.tableHeader.rowSpan = child.tableHeader.rowSpan || requiredRowSpan;
-        // 当rowSpan大于1时，调整tableHeader的height为单行高度乘以rowSpan
+        child.tableHeader.rowSpan = child.tableHeader.rowSpan || standaloneRowSpan;
         if (child.tableHeader.rowSpan > 1) {
-          const singleRowHeight = 30; // 默认单行高度
+          const singleRowHeight = 30;
           child.tableHeader.height = singleRowHeight * child.tableHeader.rowSpan;
         }
       }
       if (child.columnHeader && !child.children) {
-        child.columnHeader.rowSpan = child.columnHeader.rowSpan || requiredRowSpan;
-        // 当rowSpan大于1时，调整columnHeader的height为单行高度乘以rowSpan
+        child.columnHeader.rowSpan = child.columnHeader.rowSpan || standaloneRowSpan;
         if (child.columnHeader.rowSpan > 1) {
-          const singleRowHeight = 30; // 默认单行高度
+          const singleRowHeight = 30;
           child.columnHeader.height = singleRowHeight * child.columnHeader.rowSpan;
         }
       }
-      // 传递hasColumnGroups标志和maxDepth
-      xml += generateColumnXML(child, index, hasColumnGroups, maxDepth);
+      xml += generateColumnXML(child, index, hasColumnGroups, maxGroupDepth);
       processedColumnUuids.add(child.uuid);
     }
   });

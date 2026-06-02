@@ -958,9 +958,6 @@ describe('jrxmlGenerator', () => {
     const columnUuids = [...generatedJRXML.matchAll(/<jr:column(?!Group)[^>]*uuid="([^"]+)"/g)]
       .map(match => match[1]);
     
-    // 添加调试信息
-    console.log('Generated column UUIDs:', columnUuids);
-    
     // 2. 检查UUID是否唯一
     const uniqueColumnUuids = new Set(columnUuids);
     expect(uniqueColumnUuids.size).toBe(columnUuids.length);
@@ -1114,16 +1111,11 @@ describe('jrxmlGenerator', () => {
 
     const generatedJRXML = generateJRXMLContent(mockReportProperties, bands, fields)
 
-    // 调试信息
-    console.log('Generated JRXML:', generatedJRXML);
-
     // 验证生成的JRXML中C列的columnHeader的rowSpan为2
     const columnCHeaderMatch = generatedJRXML.match(/<jr:columnHeader[^>]*rowSpan="([^"]+)"[^>]*>.*?Column C.*?<\/jr:columnHeader>/s);
-    console.log('Column C Header Match:', columnCHeaderMatch);
 
     // 直接搜索C列的columnHeader的rowSpan
     const columnCRowSpanMatch = generatedJRXML.match(/<jr:column[^>]*uuid="column-c-uuid"[^>]*>.*?<jr:columnHeader[^>]*rowSpan="([^"]+)"/s);
-    console.log('Column C rowSpan Match:', columnCRowSpanMatch);
 
     // 验证rowSpan为2
     expect(columnCRowSpanMatch).toBeDefined();

@@ -438,24 +438,30 @@ function parseCellContent(cellElem: Element): any {
     }
   });
   
-  // 返回第一个元素或创建默认元素
+  // 返回包装为 { enable, element } 格式，与生成器期望一致
   if (elements.length > 0) {
     return {
-      ...elements[0],
-      height
+      enable: true,
+      element: {
+        ...elements[0],
+        height
+      }
     };
   }
-  
+
   // 默认静态文本元素
   return {
-    type: 'staticText',
-    x: 0,
-    y: 0,
-    width: 100,
-    height,
-    text: '',
-    textAlignment: 'Left',
-    verticalAlignment: 'Middle'
+    enable: true,
+    element: {
+      type: 'staticText',
+      x: 0,
+      y: 0,
+      width: 100,
+      height,
+      text: '',
+      textAlignment: 'Left',
+      verticalAlignment: 'Middle'
+    }
   };
 }
 
@@ -499,13 +505,14 @@ function parseColumnElement(columnElem: Element, index: number): any {
   // 获取列名 - 从columnHeader中的文本元素获取
   let columnName = '';
   
-  // 先尝试从columnHeader中获取列名
+  // 先尝试从columnHeader中获取列名（通过 .element 子对象访问）
   if (columnHeader) {
-    if (columnHeader.type === 'staticText') {
-      columnName = columnHeader.text || '';
-    } else if (columnHeader.type === 'textField') {
+    const elem = columnHeader.element || columnHeader;
+    if (elem.type === 'staticText') {
+      columnName = elem.text || '';
+    } else if (elem.type === 'textField') {
       // 去除expression值两侧的引号
-      columnName = (columnHeader.expression || '').replace(/^"|"$/g, '');
+      columnName = (elem.expression || '').replace(/^"|"$/g, '');
     }
   }
   
@@ -520,71 +527,96 @@ function parseColumnElement(columnElem: Element, index: number): any {
     columnName = `Column${index + 1}`;
   }
 
-  // 为没有内容的单元格设置默认值
+  // 为没有内容的单元格设置默认值（使用 { enable, element } 包装格式）
   let tableHeaderWithDefaults = tableHeader;
   if (!tableHeaderWithDefaults) {
     tableHeaderWithDefaults = {
-      type: 'staticText',
-      x: 0,
-      y: 0,
-      width: columnWidth,
-      height: 30,
-      text: '',
+      enable: true,
+      element: {
+        type: 'staticText',
+        x: 0,
+        y: 0,
+        width: columnWidth,
+        height: 30,
+        text: '',
+        textAlignment: 'Center',
+        verticalAlignment: 'Middle'
+      },
       rowSpan: 1
     };
   }
-  
+
   let columnHeaderWithDefaults = columnHeader;
   if (!columnHeaderWithDefaults) {
     columnHeaderWithDefaults = {
-      type: 'staticText',
-      x: 0,
-      y: 0,
-      width: columnWidth,
-      height: 30,
-      text: columnName,
+      enable: true,
+      element: {
+        type: 'staticText',
+        x: 0,
+        y: 0,
+        width: columnWidth,
+        height: 30,
+        text: columnName,
+        textAlignment: 'Center',
+        verticalAlignment: 'Middle'
+      },
       rowSpan: 1
     };
   }
-  
+
   let tableFooterWithDefaults = tableFooter;
   if (!tableFooterWithDefaults) {
     tableFooterWithDefaults = {
-      type: 'textField',
-      x: 0,
-      y: 0,
-      width: columnWidth,
-      height: 30,
-      expression: '',
+      enable: true,
+      element: {
+        type: 'textField',
+        x: 0,
+        y: 0,
+        width: columnWidth,
+        height: 30,
+        expression: '',
+        textAlignment: 'Center',
+        verticalAlignment: 'Middle'
+      },
       rowSpan: 1
     };
   }
-  
+
   let columnFooterWithDefaults = columnFooter;
   if (!columnFooterWithDefaults) {
     columnFooterWithDefaults = {
-      type: 'textField',
-      x: 0,
-      y: 0,
-      width: columnWidth,
-      height: 30,
-      expression: '',
+      enable: true,
+      element: {
+        type: 'textField',
+        x: 0,
+        y: 0,
+        width: columnWidth,
+        height: 30,
+        expression: '',
+        textAlignment: 'Center',
+        verticalAlignment: 'Middle'
+      },
       rowSpan: 1
     };
   }
-  
+
   let detailCellWithDefaults = detailCell;
   if (!detailCellWithDefaults) {
     detailCellWithDefaults = {
-      type: 'textField',
-      x: 0,
-      y: 0,
-      width: columnWidth,
-      height: 30,
-      expression: '',
+      enable: true,
+      element: {
+        type: 'textField',
+        x: 0,
+        y: 0,
+        width: columnWidth,
+        height: 30,
+        expression: '',
+        textAlignment: 'Center',
+        verticalAlignment: 'Middle'
+      },
       rowSpan: 1
     };
-  };
+  }
 
   return {
     type: 'column',
@@ -627,12 +659,13 @@ function parseColumnGroupElement(groupElem: Element, index: number): any {
   let groupName = '';
   const columnHeader = columnHeaderElem ? parseCellWithRowSpan(columnHeaderElem) : undefined;
   
-  // 先尝试从columnHeader中获取列名
+  // 先尝试从columnHeader中获取列名（通过 .element 子对象访问）
   if (columnHeader) {
-    if (columnHeader.type === 'staticText') {
-      groupName = columnHeader.text || '';
-    } else if (columnHeader.type === 'textField') {
-      groupName = columnHeader.expression || '';
+    const elem = columnHeader.element || columnHeader;
+    if (elem.type === 'staticText') {
+      groupName = elem.text || '';
+    } else if (elem.type === 'textField') {
+      groupName = elem.expression || '';
     }
   }
   

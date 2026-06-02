@@ -438,6 +438,7 @@ import {generateJRXMLContent, parseJRXMLContent} from '../utils/jrxmlGenerator';
 // 导入通知管理器
 import notification from '../utils/notification';
 import {createElement, getAllElements as getAllElementConfigs} from '@/components/elements/ElementRegistry';
+import { syncTableColumns } from '../utils/table/ColumnTreeSync';
 
 // 导入默认JRXML示例文件
 import defaultJrxmlContent from '../../tests/build_by_jasper_studio_jrxml/grouped_header_column_table_example.jrxml?raw';
@@ -4697,6 +4698,9 @@ const handleColumnSelectionConfirm = (selectedColumnIndices: number[], selectedR
     }
   });
   
+  // 同步 columns 从 children 重建
+  syncTableColumns(tableElement);
+
   // 更新JRXML
   updateJRXML();
 };
@@ -4795,54 +4799,37 @@ const confirmJoinColumnsToGroup = (): void => {
   
   const tableElement = element as any;
   if (!tableElement.columns || !Array.isArray(tableElement.columns)) return;
-  
-  console.log('开始处理列分组操作:', {
-    selectedGroupName,
-    columnIndices,
-    bandIndex,
-    elementIndex,
-    parentFrameIndex,
-    existingGroupsCount: existingGroups.length
-  });
-  
-  console.log('操作前的表格元素:', tableElement);
-  
+
   // 保存状态到历史记录
   saveStateToHistory();
-  
-  // 排序选中的列索引，确保从左到右处理
-  const sortedIndices = [...columnIndices].sort((a, b) => a - b);
-  
-  // 获取选中的列
-  const selectedColumns = sortedIndices.map(index => tableElement.columns[index]);
-  console.log('选中的列:', selectedColumns);
-  
+
   // 初始化children数组（如果不存在）
   if (!tableElement.children) {
-    // 从columns数组创建初始children数组
     tableElement.children = [...tableElement.columns];
-    console.log('初始化children数组:', tableElement.children);
   }
-  
+
+  // 排序选中的列索引，确保从左到右处理
+  const sortedIndices = [...columnIndices].sort((a, b) => a - b);
+
+  // 从 children 数组获取选中的列（indices 从 children 数组得到）
+  const selectedColumns = sortedIndices.map(index => tableElement.children[index]);
+
   // 查找用户指定的组
   let targetGroup = existingGroups.find(group => group.name === selectedGroupName);
-  console.log('找到的目标组:', targetGroup);
-  
+
   // 先创建新的children数组，避免索引偏移问题
   const newChildren = [...tableElement.children];
-  
+
   // 从后往前移除选中的列，避免索引偏移
   for (let i = sortedIndices.length - 1; i >= 0; i--) {
     const index = sortedIndices[i] as number;
     newChildren.splice(index, 1);
   }
-  console.log('移除选中列后的newChildren:', newChildren);
-  
+
   if (!targetGroup) {
     // 如果组不存在，创建新组
-    const groupWidth = selectedColumns.reduce((sum, column) => sum + column.width, 0);
-    
-    // 获取选中列中第一个列的头部高度，作为新组的默认高度
+    const groupWidth = selectedColumns.reduce((sum: number, column: any) => sum + column.width, 0);
+
     let defaultTableHeaderHeight = 30;
     let defaultColumnHeaderHeight = 30;
     if (selectedColumns.length > 0 && selectedColumns[0]) {
@@ -4850,13 +4837,12 @@ const confirmJoinColumnsToGroup = (): void => {
       defaultTableHeaderHeight = firstColumn.tableHeader?.element?.height || 30;
       defaultColumnHeaderHeight = firstColumn.columnHeader?.element?.height || 30;
     }
-    
+
     targetGroup = {
       uuid: crypto.randomUUID(),
       name: selectedGroupName,
       width: groupWidth,
       hasTableHeader: true,
-      // 添加必要的头部属性，确保在UI中可见
       tableHeader: {
         enable: true,
         element: {
@@ -4872,21 +4858,18 @@ const confirmJoinColumnsToGroup = (): void => {
       },
       children: []
     };
-    console.log('创建的新组:', targetGroup);
-    
+
     // 在第一个选中列的位置插入新分组
     const firstIndex = sortedIndices[0] as number;
     newChildren.splice(firstIndex, 0, targetGroup);
-    console.log('插入新组后的newChildren:', newChildren);
   }
   
   // 将选中的列添加到目标组
   targetGroup.children.push(...selectedColumns);
-  console.log('添加列到目标组后:', targetGroup);
-  
+
   // 重新计算目标组的宽度
   targetGroup.width = targetGroup.children.reduce((sum: number, item: any) => sum + item.width, 0);
-  
+
   // 更新目标组的头部宽度
   if (targetGroup.tableHeader && targetGroup.tableHeader.element) {
     targetGroup.tableHeader.element.width = targetGroup.width;
@@ -4894,56 +4877,18 @@ const confirmJoinColumnsToGroup = (): void => {
   if (targetGroup.columnHeader && targetGroup.columnHeader.element) {
     targetGroup.columnHeader.element.width = targetGroup.width;
   }
-  console.log('更新宽度后的目标组:', targetGroup);
-  
+
   // 更新表格元素
   tableElement.children = newChildren;
-  console.log('更新后的表格元素:', tableElement);
-  
-  // 计算最大嵌套层级并更新未分组列的rowSpan值
-  function calculateMaxDepth(node: any, depth: number = 0): number {
-    if (!node.children || node.children.length === 0) {
-      return depth;
-    }
-    let maxDepth = depth;
-    for (const child of node.children) {
-      const childDepth = calculateMaxDepth(child, depth + 1);
-      if (childDepth > maxDepth) {
-        maxDepth = childDepth;
-      }
-    }
-    return maxDepth;
-  }
-  
-  // 计算最大嵌套层级
-  const maxDepth = calculateMaxDepth({ children: tableElement.children });
-  const requiredRowSpan = maxDepth;
-  console.log('最大嵌套层级:', maxDepth, '需要的rowSpan:', requiredRowSpan);
-  
-  // 更新未分组列的rowSpan值
-  tableElement.children.forEach((child: any) => {
-    if (!child.children) {
-      // 这是一个未分组的列
-      if (child.tableHeader) {
-        child.tableHeader.rowSpan = requiredRowSpan;
-      }
-      if (child.columnHeader) {
-        child.columnHeader.rowSpan = requiredRowSpan;
-      }
-    }
-  });
-  
-  // 不再从columns数组中移除列，而是让generateTableXML函数通过uuid来避免重复处理
-  // 这样可以确保JRXML生成正确，同时保持数据结构的一致性
-  // 表格渲染时会优先使用children数组中的分组结构
-  
+
+  // 同步 columns 从 children 重建（含 rowSpan 计算）
+  syncTableColumns(tableElement);
+
   // 更新JRXML
-  console.log('准备更新JRXML...');
   updateJRXML();
-  
+
   // 关闭对话框
   showGroupDialog.value = false;
-  console.log('列分组操作完成，对话框已关闭');
 };
 
 // 处理元素上下文菜单

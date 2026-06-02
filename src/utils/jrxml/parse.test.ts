@@ -74,8 +74,8 @@ describe('parseJRXMLContent', () => {
     expect(tableElement.columns).toHaveLength(2)
     expect(tableElement.columns[0].width).toBe(100)
     expect(tableElement.columns[1].width).toBe(100)
-    expect(tableElement.columns[0].columnHeader.text).toBe('Column 1')
-    expect(tableElement.columns[1].columnHeader.text).toBe('Column 2')
+    expect(tableElement.columns[0].columnHeader.element.text).toBe('Column 1')
+    expect(tableElement.columns[1].columnHeader.element.text).toBe('Column 2')
   })
 
   it('should parse basic JRXML properties', () => {
@@ -881,21 +881,21 @@ describe('parseJRXMLContent', () => {
     
     // 验证columnGroup的表格头
     expect(columnGroup.tableHeader).toBeDefined()
-    expect(columnGroup.tableHeader.height).toBe(30)
+    expect(columnGroup.tableHeader.element.height).toBe(30)
     expect(columnGroup.tableHeader.rowSpan).toBe(1)
-    
+
     // 验证columnGroup的子列
     expect(columnGroup.children[0].width).toBe(49)
     expect(columnGroup.children[1].width).toBe(45)
-    
+
     // 验证普通column
     const normalColumn = tableElement.children[1]
     expect(normalColumn.type).toBe('column')
     expect(normalColumn.width).toBe(451)
-    
+
     // 验证普通column的表格头
     expect(normalColumn.tableHeader).toBeDefined()
-    expect(normalColumn.tableHeader.height).toBe(60)
+    expect(normalColumn.tableHeader.element.height).toBe(60)
     expect(normalColumn.tableHeader.rowSpan).toBe(2)
   })
 
@@ -931,51 +931,51 @@ describe('parseJRXMLContent', () => {
     
     // 验证列分组的表格头
     expect(tableElement.children[0].tableHeader).toBeDefined()
-    expect(tableElement.children[0].tableHeader.text).toBe('ROW 1+CELL 1')
-    expect(tableElement.children[0].tableHeader.height).toBe(30)
+    expect(tableElement.children[0].tableHeader.element.text).toBe('ROW 1+CELL 1')
+    expect(tableElement.children[0].tableHeader.element.height).toBe(30)
     expect(tableElement.children[0].tableHeader.rowSpan).toBe(1)
-    
+
     // 验证列分组的子列
     expect(tableElement.children[0].children[0].tableHeader).toBeDefined()
-    expect(tableElement.children[0].children[0].tableHeader.text).toBe('ROW 2 CELL 1')
-    expect(tableElement.children[0].children[0].tableHeader.height).toBe(30)
+    expect(tableElement.children[0].children[0].tableHeader.element.text).toBe('ROW 2 CELL 1')
+    expect(tableElement.children[0].children[0].tableHeader.element.height).toBe(30)
     expect(tableElement.children[0].children[0].tableHeader.rowSpan).toBe(1)
-    expect(tableElement.children[0].children[0].tableHeader.textAlignment).toBe('Center')
-    expect(tableElement.children[0].children[0].tableHeader.verticalAlignment).toBe('Middle')
-    expect(tableElement.children[0].children[0].tableHeader.box).toBeDefined()
-    
+    expect(tableElement.children[0].children[0].tableHeader.element.textAlignment).toBe('Center')
+    expect(tableElement.children[0].children[0].tableHeader.element.verticalAlignment).toBe('Middle')
+    expect(tableElement.children[0].children[0].tableHeader.element.box).toBeDefined()
+
     expect(tableElement.children[0].children[1].tableHeader).toBeDefined()
-    expect(tableElement.children[0].children[1].tableHeader.text).toBe('ROW 2 CELL 2')
-    expect(tableElement.children[0].children[1].tableHeader.height).toBe(30)
+    expect(tableElement.children[0].children[1].tableHeader.element.text).toBe('ROW 2 CELL 2')
+    expect(tableElement.children[0].children[1].tableHeader.element.height).toBe(30)
     expect(tableElement.children[0].children[1].tableHeader.rowSpan).toBe(1)
-    expect(tableElement.children[0].children[1].tableHeader.textAlignment).toBe('Center')
-    expect(tableElement.children[0].children[1].tableHeader.verticalAlignment).toBe('Middle')
-    expect(tableElement.children[0].children[1].tableHeader.box).toBeDefined()
-    
+    expect(tableElement.children[0].children[1].tableHeader.element.textAlignment).toBe('Center')
+    expect(tableElement.children[0].children[1].tableHeader.element.verticalAlignment).toBe('Middle')
+    expect(tableElement.children[0].children[1].tableHeader.element.box).toBeDefined()
+
     // 验证普通列的表格头
     expect(tableElement.children[1].tableHeader).toBeDefined()
-    expect(tableElement.children[1].tableHeader.text).toBe('ROW 1+CELL 2+ROWSPAN2')
-    expect(tableElement.children[1].tableHeader.height).toBe(60)
+    expect(tableElement.children[1].tableHeader.element.text).toBe('ROW 1+CELL 2+ROWSPAN2')
+    expect(tableElement.children[1].tableHeader.element.height).toBe(60)
     expect(tableElement.children[1].tableHeader.rowSpan).toBe(2)
-    expect(tableElement.children[1].tableHeader.textAlignment).toBe('Center')
-    expect(tableElement.children[1].tableHeader.verticalAlignment).toBe('Middle')
-    expect(tableElement.children[1].tableHeader.box).toBeDefined()
-    
+    expect(tableElement.children[1].tableHeader.element.textAlignment).toBe('Center')
+    expect(tableElement.children[1].tableHeader.element.verticalAlignment).toBe('Middle')
+    expect(tableElement.children[1].tableHeader.element.box).toBeDefined()
+
     // 验证列头的box元素和文本对齐设置
     expect(tableElement.children[0].children[0].columnHeader).toBeDefined()
-    expect(tableElement.children[0].children[0].columnHeader.textAlignment).toBe('Center')
-    expect(tableElement.children[0].children[0].columnHeader.verticalAlignment).toBe('Middle')
-    expect(tableElement.children[0].children[0].columnHeader.box).toBeDefined()
-    
+    expect(tableElement.children[0].children[0].columnHeader.element.textAlignment).toBe('Center')
+    expect(tableElement.children[0].children[0].columnHeader.element.verticalAlignment).toBe('Middle')
+    expect(tableElement.children[0].children[0].columnHeader.element.box).toBeDefined()
+
     expect(tableElement.children[0].children[1].columnHeader).toBeDefined()
-    expect(tableElement.children[0].children[1].columnHeader.textAlignment).toBe('Center')
-    expect(tableElement.children[0].children[1].columnHeader.verticalAlignment).toBe('Middle')
-    expect(tableElement.children[0].children[1].columnHeader.box).toBeDefined()
-    
+    expect(tableElement.children[0].children[1].columnHeader.element.textAlignment).toBe('Center')
+    expect(tableElement.children[0].children[1].columnHeader.element.verticalAlignment).toBe('Middle')
+    expect(tableElement.children[0].children[1].columnHeader.element.box).toBeDefined()
+
     expect(tableElement.children[1].columnHeader).toBeDefined()
-    expect(tableElement.children[1].columnHeader.textAlignment).toBe('Center')
-    expect(tableElement.children[1].columnHeader.verticalAlignment).toBe('Middle')
-    expect(tableElement.children[1].columnHeader.box).toBeDefined()
+    expect(tableElement.children[1].columnHeader.element.textAlignment).toBe('Center')
+    expect(tableElement.children[1].columnHeader.element.verticalAlignment).toBe('Middle')
+    expect(tableElement.children[1].columnHeader.element.box).toBeDefined()
     
     // 推导组合列后的表头行结构
     // 辅助函数：递归计算列或列分组的实际列数
@@ -997,11 +997,11 @@ describe('parseJRXMLContent', () => {
           // 普通列，直接添加单元格
           if (item[headerLevel]) {
             result.push({
-              content: item[headerLevel].text || item[headerLevel].expression,
+              content: item[headerLevel].element?.text || item[headerLevel].element?.expression,
               rowSpan: item[headerLevel].rowSpan,
               colSpan: 1,
               width: item.width,
-              height: item[headerLevel].height
+              height: item[headerLevel].element?.height
             });
           }
         } else if (item.type === 'columnGroup') {
@@ -1009,11 +1009,11 @@ describe('parseJRXMLContent', () => {
           const colSpan = calculateColumnsCount(item);
           if (item[headerLevel]) {
             result.push({
-              content: item[headerLevel].text || item[headerLevel].expression,
+              content: item[headerLevel].element?.text || item[headerLevel].element?.expression,
               rowSpan: item[headerLevel].rowSpan,
               colSpan: colSpan,
               width: item.width,
-              height: item[headerLevel].height
+              height: item[headerLevel].element?.height
             });
           } else {
             // 如果列分组没有该级别的表头，则递归处理其子项
@@ -1098,29 +1098,29 @@ describe('parseJRXMLContent', () => {
           if (item.type === 'column') {
             // 普通列，填充其tableHeader（如果有）
             if (item.tableHeader) {
-              const { rowSpan, height, text, expression } = item.tableHeader;
+              const { rowSpan, element } = item.tableHeader;
               const cell = {
-                content: text || expression,
+                content: element?.text || element?.expression,
                 rowSpan: rowSpan,
                 colSpan: 1,
                 width: item.width,
-                height: height
+                height: element?.height
               };
-              
+
               // 将单元格添加到起始行
               rows[startRow].push(cell);
             }
           } else if (item.type === 'columnGroup') {
             // 列分组
             if (item.tableHeader) {
-              const { rowSpan, height, text, expression } = item.tableHeader;
+              const { rowSpan, element } = item.tableHeader;
               const colSpan = calculateColumnsCount(item);
               const cell = {
-                content: text || expression,
+                content: element?.text || element?.expression,
                 rowSpan: rowSpan,
                 colSpan: colSpan,
                 width: item.width,
-                height: height
+                height: element?.height
               };
               
               // 将单元格添加到起始行
