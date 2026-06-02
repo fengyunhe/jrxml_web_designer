@@ -52,6 +52,7 @@ jobs:
         uses: tauri-apps/tauri-action@v0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAURI_PACKAGE_MANAGER: pnpm
         with:
           tagName: ${{ github.ref_name }}
           releaseName: 'App v__VERSION__'

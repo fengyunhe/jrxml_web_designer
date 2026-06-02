@@ -2,6 +2,7 @@
   "name": "pdf_template_designer",
   "private": true,
   "version": "0.4.6",
+  "packageManager": "pnpm@9.15.4",
   "description": "A professional JRXML report designer.",
   "license": "MIT",
   "type": "module",
