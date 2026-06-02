@@ -225,6 +225,9 @@ function shortType(className: string): string {
 }
 
 function initializeEditor() {
+  previewUrl.value = 'about:blank';
+  isGenerating.value = false;
+
   const params = props.reportParameters || [];
   let fields = props.reportFields || [];
   let subDatasets = props.subDatasets || [];

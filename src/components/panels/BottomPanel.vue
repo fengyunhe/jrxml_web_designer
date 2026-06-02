@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, onMounted, onBeforeUnmount, watch } from 'vue';
+import { ref, computed, nextTick, onMounted, onBeforeUnmount, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { NButton } from 'naive-ui';
 import ResizablePanel from './ResizablePanel.vue';
@@ -149,7 +149,10 @@ const openPdfPreview = (): void => {
     alert(t('bottomPanel.alerts.generateJrxmlFirst'));
     return;
   }
-  showPdfPreview.value = true;
+  showPdfPreview.value = false;
+  nextTick(() => {
+    showPdfPreview.value = true;
+  });
 };
 
 // 计算属性：本地绑定的reportProperties

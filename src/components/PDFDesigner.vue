@@ -399,7 +399,7 @@ import type {
   TableDataset
 } from '../types';
 import type {DesignerFile} from '@/types/designerFile';
-import {computed, onMounted, onUnmounted, reactive, ref, watch} from 'vue';
+import {computed, nextTick, onMounted, onUnmounted, reactive, ref, watch} from 'vue';
 import {useI18n} from 'vue-i18n';
 import {useDesignerFiles} from '@/composables/useDesignerFiles';
 import {useUndoRedo} from '@/composables/useUndoRedo';
@@ -3230,7 +3230,10 @@ const openPdfPreview = (): void => {
         subDatasets.value = extracted;
       }
     }
-    showPdfPreview.value = true;
+    showPdfPreview.value = false;
+    nextTick(() => {
+      showPdfPreview.value = true;
+    });
   } catch (error) {
     console.error('预览PDF失败:', error);
     alert('预览PDF失败，请检查控制台错误信息');

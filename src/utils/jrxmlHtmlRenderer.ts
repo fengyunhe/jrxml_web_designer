@@ -429,5 +429,150 @@ export function renderToMultiPageHtml(
     pages.push(pageHtml);
   }
 
-  return { pages, totalPages };
+  // Add data table preview page if bands have table columns or detail text fields
+  const fields = extractFieldsFromBands(bands);
+  if (fields.length > 0) {
+    pages.unshift(renderDetailTablePage(fields, opts.scale, reportProperties));
+  }
+
+  return { pages, totalPages: pages.length };
+}
+
+// --- Data Table Preview ---
+
+function extractFieldsFromDetailBand(detailBand: Band | undefined): Array<{ name: string; label: string }> {
+  if (!detailBand?.elements) return [];
+  const fields: Array<{ name: string; label: string }> = [];
+  const seen = new Set<string>();
+  for (const el of detailBand.elements) {
+    if (el.type === 'textField' && (el as TextFieldElement).expression) {
+      const expr = (el as TextFieldElement).expression!;
+      const match = expr.match(/\$F\{(\w+)\}/);
+      if (match && !seen.has(match[1])) {
+        seen.add(match[1]);
+        fields.push({ name: match[1], label: match[1] });
+      }
+    }
+  }
+  return fields;
+}
+
+function extractFieldsFromBands(bands: Band[]): Array<{ name: string; label: string }> {
+  const fields: Array<{ name: string; label: string }> = [];
+  const seen = new Set<string>();
+
+  // 1. Extract from Table elements (column detailCell expressions)
+  for (const band of bands) {
+    if (!band.elements) continue;
+    for (const el of band.elements) {
+      if (el.type === 'table' && (el as TableElement).columns) {
+        for (const col of (el as TableElement).columns) {
+          if (!seen.has(col.name)) {
+            seen.add(col.name);
+            fields.push({ name: col.name, label: col.name });
+          }
+        }
+      }
+    }
+  }
+  if (fields.length > 0) return fields;
+
+  // 2. Fallback: extract from detail band text field expressions
+  const detailBand = bands.find(b => b.type === 'detail');
+  if (detailBand?.elements) {
+    for (const el of detailBand.elements) {
+      if (el.type === 'textField' && (el as TextFieldElement).expression) {
+        const expr = (el as TextFieldElement).expression!;
+        const match = expr.match(/\$F\{(\w+)\}/);
+        if (match && !seen.has(match[1])) {
+          seen.add(match[1]);
+          fields.push({ name: match[1], label: match[1] });
+        }
+      }
+    }
+  }
+
+  return fields;
+}
+
+function generateMockRows(fields: Array<{ name: string }>, count: number): string[][] {
+  const rows: string[][] = [];
+  const names = ['张三', '李四', '王五', '赵六', '孙七', '周八', '吴九', '郑十'];
+  const statuses = ['已完成', '进行中', '待处理'];
+  for (let i = 0; i < count; i++) {
+    const row: string[] = [];
+    for (const field of fields) {
+      const lower = field.name.toLowerCase();
+      if (/^id$|编号|序号/.test(lower)) row.push(String(i + 1));
+      else if (/name|姓名|名称|员工|用户|客户/.test(lower)) row.push(names[i % names.length]);
+      else if (/phone|电话|手机/.test(lower)) row.push(`138${String(Math.floor(Math.random() * 100000000)).padStart(8, '0')}`);
+      else if (/date|日期|时间/.test(lower)) {
+        const d = new Date(Date.now() - Math.random() * 86400000 * 365);
+        row.push(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`);
+      }
+      else if (/amount|金额|价格|费用|工资/.test(lower)) row.push((Math.floor(Math.random() * 99999) + 1).toLocaleString());
+      else if (/status|状态/.test(lower)) row.push(statuses[i % statuses.length]);
+      else if (/city|城市/.test(lower)) row.push(['北京', '上海', '广州', '深圳', '杭州'][i % 5]);
+      else if (/sex|gender|性别/.test(lower)) row.push(i % 2 === 0 ? '男' : '女');
+      else if (/age|年龄/.test(lower)) row.push(String(20 + Math.floor(Math.random() * 40)));
+      else row.push(`数据${i + 1}`);
+    }
+    rows.push(row);
+  }
+  return rows;
+}
+
+function renderDetailTablePage(
+  fields: Array<{ name: string; label: string }>,
+  scale: number,
+  reportProperties: ReportProperties,
+): string {
+  const mockRows = generateMockRows(fields, 8);
+  const pw = reportProperties.pageWidth;
+  const ph = reportProperties.pageHeight;
+
+  let headerCells = '';
+  let bodyRows = '';
+  for (const f of fields) {
+    headerCells += `<th style="padding:8px 12px;background:#f0f5ff;border:1px solid #d0d7de;font-weight:600;font-size:13px;text-align:left;white-space:nowrap;">${escapeHtml(f.label)}</th>`;
+  }
+  for (const row of mockRows) {
+    let cells = '';
+    for (const val of row) {
+      cells += `<td style="padding:6px 12px;border:1px solid #d0d7de;font-size:13px;white-space:nowrap;">${escapeHtml(String(val))}</td>`;
+    }
+    bodyRows += `<tr>${cells}</tr>`;
+  }
+
+  return `<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"><style>
+  body{margin:0;padding:0;background:#f0f0f0;display:flex;justify-content:center;}
+  .jasper-report{
+    width:${pw * scale}px;
+    min-height:${ph * scale}px;
+    background:white;
+    position:relative;
+    box-shadow:0 2px 8px rgba(0,0,0,0.15);
+    font-family:Arial,sans-serif;
+  }
+  .page-content{
+    padding:${20 * scale}px;
+    position:relative;
+    min-height:${ph * scale - 40 * scale}px;
+  }
+</style></head>
+<body>
+<div class="jasper-report">
+  <div class="page-content">
+    <div style="margin-bottom:12px;font-size:${14 * scale}px;font-weight:600;color:#333;">数据预览</div>
+    <div style="overflow-x:auto;">
+      <table style="border-collapse:collapse;width:100%;">
+        <thead><tr>${headerCells}</tr></thead>
+        <tbody>${bodyRows}</tbody>
+      </table>
+    </div>
+  </div>
+</div>
+</body></html>`;
 }
