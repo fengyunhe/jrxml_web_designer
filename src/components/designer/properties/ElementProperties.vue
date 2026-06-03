@@ -1,21 +1,21 @@
 <template>
   <div class="element-properties">
     <h3>{{ t('properties.title') }}</h3>
-    
+
     <!-- 样式管理按钮 -->
     <div class="style-management-section">
-      <n-button 
-        type="primary" 
+      <n-button
+        type="primary"
         @click="showStyleManagerModal = true"
       >
         {{ t('properties.styleManagement') }}
       </n-button>
     </div>
-    
+
     <!-- 报表属性 -->
     <div v-if="!selectedBandIndex && !selectedElement" class="property-section">
       <h4>{{ t('properties.reportProperties') }}</h4>
-      
+
       <!-- Band高度设置 -->
       <div class="form-group">
         <h4>{{ t('properties.bandHeightSettings') }}</h4>
@@ -23,9 +23,9 @@
           <div v-for="(band, index) in bands" :key="index" class="band-height-item">
             <label>{{ getBandDisplayName(band.type) }}</label>
             <div class="band-height-control">
-              <input 
-                v-model.number="band.height" 
-                type="number" 
+              <input
+                v-model.number="band.height"
+                type="number"
                 min="0"
                 step="1"
                 class="band-height-input"
@@ -38,12 +38,12 @@
         </div>
       </div>
     </div>
-    
+
     <!-- 元素属性 -->
     <div v-else-if="selectedElement && currentElement" class="property-section">
       <!-- 元素属性标签页 -->
       <n-tabs type="segment">
-        
+
         <!-- 基本属性标签页 -->
         <n-tab-pane name="basic" :tab="t('properties.basicProperties')" >
           <h4>{{ t('properties.basicProperties') }}</h4>
@@ -155,7 +155,7 @@
               />
             </div>
           </template>
-          
+
           <template v-else-if="currentElement && currentElement.type === 'textField'">
             <div class="form-group" v-if="currentElement && currentElement.type === 'textField'">
               <label>{{ t('properties.expression') }}</label>
@@ -208,7 +208,7 @@
             </div>
           </template>
         </n-tab-pane>
-        
+
         <!-- 表格属性标签页 -->
         <n-tab-pane v-if="currentElement && currentElement.type === 'table'" name="table" :tab="t('properties.tableProperties')">
           <!-- 表格基本属性 -->
@@ -332,10 +332,10 @@
             @update:element="handleFramePropertyUpdate"
           />
         </n-tab-pane>
-        
 
 
-        
+
+
         <!-- 样式设置标签页 -->
         <n-tab-pane name="style" :tab="t('properties.styleSettings')" >
           <template v-if="currentElement && currentElement.type === 'break'">
@@ -345,7 +345,7 @@
           </template>
           <template v-else>
             <h4>{{ t('properties.styleSettings') }}</h4>
-            
+
             <!-- 边框设置 (表格元素不支持) -->
             <template v-if="currentElement.type !== 'table'">
               <!-- 矩形/椭圆元素的边框设置 (统一设置) -->
@@ -353,12 +353,12 @@
                 <div class="box-section compact">
                   <h5>{{ t('properties.unifiedBorder') }}</h5>
                   <p style="font-size: 12px; color: #666; margin-bottom: 8px;">{{ t('properties.unifiedBorderHint') }}</p>
-                  
+
                   <div class="border-group-row">
                     <div class="border-group-item">
                       <label class="side-label">{{ t('properties.style') }}</label>
-                      <n-radio-group 
-                        v-model:value="rectangleBorderStyle" 
+                      <n-radio-group
+                        v-model:value="rectangleBorderStyle"
                         @update:value="setRectangleBorderStyle(rectangleBorderStyle)"
                         size="small"
                       >
@@ -369,51 +369,51 @@
                         <n-radio-button value="Double">{{ t('properties.double') }}</n-radio-button>
                       </n-radio-group>
                     </div>
-                    
+
                     <div class="border-group-item">
                       <label class="side-label">{{ t('properties.width') }}</label>
-                      <input 
-                        :value="getRectangleBorderWidth()" 
-                        @input="setRectangleBorderWidth(($event.target as HTMLInputElement).value)" 
-                        type="number" 
-                        min="0" 
-                        max="10" 
-                        step="0.5" 
-                        class="width-control compact" 
-                        :placeholder="t('properties.width')" 
+                      <input
+                        :value="getRectangleBorderWidth()"
+                        @input="setRectangleBorderWidth(($event.target as HTMLInputElement).value)"
+                        type="number"
+                        min="0"
+                        max="10"
+                        step="0.5"
+                        class="width-control compact"
+                        :placeholder="t('properties.width')"
                       />
                     </div>
-                    
+
                     <div class="border-group-item">
                       <label class="side-label">{{ t('properties.color') }}</label>
-                      <input 
-                        :value="getRectangleBorderColor()" 
-                        @input="setRectangleBorderColor(($event.target as HTMLInputElement).value)" 
-                        type="color" 
-                        class="color-control compact" 
+                      <input
+                        :value="getRectangleBorderColor()"
+                        @input="setRectangleBorderColor(($event.target as HTMLInputElement).value)"
+                        type="color"
+                        class="color-control compact"
                       />
                     </div>
                   </div>
-                  
+
 
                 </div>
               </template>
-              
+
               <!-- 其他元素的边框设置 (支持各边独立设置) -->
               <template v-else>
                 <!-- 各边边框设置 -->
                 <div class="box-section compact">
                   <h5>{{ t('properties.sideBorders') }}</h5>
-                  
+
                   <div class="border-sides-grid">
                     <!-- 四边统一设置 -->
                     <div class="border-side-item">
                       <label class="side-label">{{ t('properties.all') }}</label>
                       <div class="border-side-controls">
-                        <n-radio-group 
-                          v-if="currentElement && currentElement.box" 
-                          :value="getUnifiedBorderStyle()" 
-                          @update:value="setUnifiedBorderStyle($event)" 
+                        <n-radio-group
+                          v-if="currentElement && currentElement.box"
+                          :value="getUnifiedBorderStyle()"
+                          @update:value="setUnifiedBorderStyle($event)"
                           size="small"
                         >
                           <n-radio-button value="">{{ t('properties.none') }}</n-radio-button>
@@ -426,15 +426,15 @@
                         <input v-if="currentElement && currentElement.box" :value="getUnifiedBorderColor()" @input="setUnifiedBorderColor(($event.target as HTMLInputElement).value)" type="color" class="color-control compact" />
                       </div>
                     </div>
-                    
+
                     <!-- 上边 -->
                     <div class="border-side-item">
                       <label class="side-label">{{ t('properties.topSide') }}</label>
                       <div class="border-side-controls">
-                        <n-radio-group 
-                          v-if="currentElement && currentElement.box" 
-                          :value="getSideBorderStyle('top')" 
-                          @update:value="setSideBorderStyle('top', $event)" 
+                        <n-radio-group
+                          v-if="currentElement && currentElement.box"
+                          :value="getSideBorderStyle('top')"
+                          @update:value="setSideBorderStyle('top', $event)"
                           size="small"
                         >
                           <n-radio-button value="">{{ t('properties.none') }}</n-radio-button>
@@ -447,15 +447,15 @@
                         <input v-if="currentElement && currentElement.box" :value="getSideBorderColor('top')" @input="setSideBorderColor('top', ($event.target as HTMLInputElement).value)" type="color" class="color-control compact" />
                       </div>
                     </div>
-                    
+
                     <!-- 左边 -->
                     <div class="border-side-item">
                       <label class="side-label">{{ t('properties.leftSide') }}</label>
                       <div class="border-side-controls">
-                        <n-radio-group 
-                          v-if="currentElement && currentElement.box" 
-                          :value="getSideBorderStyle('left')" 
-                          @update:value="setSideBorderStyle('left', $event)" 
+                        <n-radio-group
+                          v-if="currentElement && currentElement.box"
+                          :value="getSideBorderStyle('left')"
+                          @update:value="setSideBorderStyle('left', $event)"
                           size="small"
                         >
                           <n-radio-button value="">{{ t('properties.none') }}</n-radio-button>
@@ -468,15 +468,15 @@
                         <input v-if="currentElement && currentElement.box" :value="getSideBorderColor('left')" @input="setSideBorderColor('left', ($event.target as HTMLInputElement).value)" type="color" class="color-control compact" />
                       </div>
                     </div>
-                    
+
                     <!-- 下边 -->
                     <div class="border-side-item">
                       <label class="side-label">{{ t('properties.bottomSide') }}</label>
                       <div class="border-side-controls">
-                        <n-radio-group 
-                          v-if="currentElement && currentElement.box" 
-                          :value="getSideBorderStyle('bottom')" 
-                          @update:value="setSideBorderStyle('bottom', $event)" 
+                        <n-radio-group
+                          v-if="currentElement && currentElement.box"
+                          :value="getSideBorderStyle('bottom')"
+                          @update:value="setSideBorderStyle('bottom', $event)"
                           size="small"
                         >
                           <n-radio-button value="">{{ t('properties.none') }}</n-radio-button>
@@ -489,15 +489,15 @@
                         <input v-if="currentElement && currentElement.box" :value="getSideBorderColor('bottom')" @input="setSideBorderColor('bottom', ($event.target as HTMLInputElement).value)" type="color" class="color-control compact" />
                       </div>
                     </div>
-                    
+
                     <!-- 右边 -->
                     <div class="border-side-item">
                       <label class="side-label">{{ t('properties.rightSide') }}</label>
                       <div class="border-side-controls">
-                        <n-radio-group 
-                          v-if="currentElement && currentElement.box" 
-                          :value="getSideBorderStyle('right')" 
-                          @update:value="setSideBorderStyle('right', $event)" 
+                        <n-radio-group
+                          v-if="currentElement && currentElement.box"
+                          :value="getSideBorderStyle('right')"
+                          @update:value="setSideBorderStyle('right', $event)"
                           size="small"
                         >
                           <n-radio-button value="">{{ t('properties.none') }}</n-radio-button>
@@ -512,7 +512,7 @@
                     </div>
                   </div>
                 </div>
-                
+
                 <!-- 边距设置 -->
                 <div class="box-section compact">
                   <h5>{{ t('properties.marginSettings') }}</h5>
@@ -521,7 +521,7 @@
                     <input v-if="currentElement && currentElement.box" v-model.number="currentElement.box.padding" type="number" :placeholder="t('properties.globalMargin')" class="small-input" />
                     <small>{{ t('properties.globalMarginHint') }}</small>
                   </div>
-                  
+
                   <div class="padding-grid compact">
                     <div class="form-group compact">
                       <label>{{ t('properties.topMargin') }}</label>
@@ -546,17 +546,17 @@
             <div class="form-group-row">
               <div class="form-group half-width">
                 <label>{{ t('properties.forecolor') }}</label>
-                <ColorPickerWithOpacity 
+                <ColorPickerWithOpacity
                   v-model="currentElement.forecolor"
                   v-model:mode="currentElement.forecolorMode"
                   @update:modelValue="emit('update-jrxml')"
                   @update:mode="emit('update-jrxml')"
                 />
               </div>
-              
+
               <div class="form-group half-width">
                 <label>{{ t('properties.backgroundColor') }}</label>
-                <ColorPickerWithOpacity 
+                <ColorPickerWithOpacity
                   v-model="currentElement.backcolor"
                   v-model:mode="currentElement.mode"
                   @update:modelValue="emit('update-jrxml')"
@@ -564,7 +564,7 @@
                 />
               </div>
             </div>
-          
+
           <div class="form-group">
             <label>{{ t('properties.backgroundMode') }}</label>
             <select v-if="currentElement" v-model="currentElement.mode" @change="emit('update-jrxml')">
@@ -573,7 +573,7 @@
               <option value="Opaque">{{ t('properties.opaque') }}</option>
             </select>
           </div>
-          
+
           <!-- 表格特定样式设置 -->
           <template v-if="currentElement && currentElement.type === 'table'">
             <div class="form-group">
@@ -585,8 +585,8 @@
                   <div class="box-section compact">
                     <div class="form-group">
                       <label>{{ t('properties.selectStyle') }}</label>
-                      <select 
-                        v-model="tableStyles.tableHeader" 
+                      <select
+                        v-model="tableStyles.tableHeader"
                         @change="updateTableStyles(); emit('update-jrxml')"
                       >
                         <option value="Table_TH">Table_TH</option>
@@ -596,15 +596,15 @@
                     </div>
                   </div>
                 </div>
-                
+
                 <!-- 列头样式选择 -->
                 <div class="table-style-section">
                   <h6>{{ t('properties.columnHeader') }} {{ t('properties.style') }}</h6>
                   <div class="box-section compact">
                     <div class="form-group">
                       <label>{{ t('properties.selectStyle') }}</label>
-                      <select 
-                        v-model="tableStyles.columnHeader" 
+                      <select
+                        v-model="tableStyles.columnHeader"
                         @change="updateTableStyles(); emit('update-jrxml')"
                       >
                         <option value="Table_TH">Table_TH</option>
@@ -614,15 +614,15 @@
                     </div>
                   </div>
                 </div>
-                
+
                 <!-- 列尾样式选择 -->
                 <div class="table-style-section">
                   <h6>{{ t('properties.columnFooter') }} {{ t('properties.style') }}</h6>
                   <div class="box-section compact">
                     <div class="form-group">
                       <label>{{ t('properties.selectStyle') }}</label>
-                      <select 
-                        v-model="tableStyles.columnFooter" 
+                      <select
+                        v-model="tableStyles.columnFooter"
                         @change="updateTableStyles(); emit('update-jrxml')"
                       >
                         <option value="Table_TH">Table_TH</option>
@@ -632,15 +632,15 @@
                     </div>
                   </div>
                 </div>
-                
+
                 <!-- 详情单元格样式选择 -->
                 <div class="table-style-section">
                   <h6>{{ t('properties.detailCell') }} {{ t('properties.style') }}</h6>
                   <div class="box-section compact">
                     <div class="form-group">
                       <label>{{ t('properties.selectStyle') }}</label>
-                      <select 
-                        v-model="tableStyles.detailCell" 
+                      <select
+                        v-model="tableStyles.detailCell"
                         @change="updateTableStyles(); emit('update-jrxml')"
                       >
                         <option value="Table_TH">Table_TH</option>
@@ -653,7 +653,7 @@
               </div>
             </div>
           </template>
-          
+
           <!-- 其他元素的样式设置 -->
           <template v-else-if="currentElement && currentElement.type !== 'line' && currentElement.type !== 'image' && currentElement.type !== 'frame'">
             <div class="form-group">
@@ -664,13 +664,13 @@
               </select>
               <small class="font-hint">{{ t('properties.fontHint') }}</small>
             </div>
-            
+
             <div class="form-group-row">
               <div class="form-group half-width">
                 <label>{{ t('properties.textAlignment') }}</label>
                 <div class="alignment-controls compact">
-                  <n-button 
-                    v-for="align in ['Left', 'Center', 'Right']" 
+                  <n-button
+                    v-for="align in ['Left', 'Center', 'Right']"
                     :key="align"
                     @click="setHorizontalAlignment(align as 'Left' | 'Center' | 'Right')"
                     :type="currentElement && currentElement.textAlignment === align ? 'primary' : 'default'"
@@ -681,12 +681,12 @@
                   </n-button>
                 </div>
               </div>
-              
+
               <div class="form-group half-width">
                 <label>{{ t('properties.verticalAlignment') }}</label>
                 <div class="alignment-controls compact">
-                  <n-button 
-                    v-for="align in ['Top', 'Middle', 'Bottom']" 
+                  <n-button
+                    v-for="align in ['Top', 'Middle', 'Bottom']"
                     :key="align"
                     @click="setVerticalAlignment(align as 'Top' | 'Middle' | 'Bottom')"
                     :type="currentElement && currentElement.verticalAlignment === align ? 'primary' : 'default'"
@@ -698,7 +698,7 @@
                 </div>
               </div>
             </div>
-            
+
             <div class="form-group" style="margin-bottom: 8px;">
               <label>{{ t('properties.fontStyle') }}</label>
               <div class="checkbox-group compact">
@@ -720,13 +720,13 @@
           </template>
         </n-tab-pane>
       </n-tabs>
-      
+
       <div class="element-actions">
         <n-button @click="deleteElement" type="error">{{ t('properties.deleteElement') }}</n-button>
       </div>
     </div>
   </div>
-  
+
   <!-- 样式管理模态框 -->
   <BaseModal
     :visible="showStyleManagerModal"
@@ -748,29 +748,29 @@
               <option value="Opaque">{{ t('properties.opaque') }}</option>
             </select>
           </div>
-          
+
           <!-- 前景颜色设置 -->
           <div class="form-group">
             <label>{{ t('properties.forecolor') }}</label>
-            <ColorPickerWithOpacity 
+            <ColorPickerWithOpacity
               v-model="style.forecolor"
               v-model:mode="style.forecolorMode"
               @update:modelValue="emit('update-jrxml')"
               @update:mode="emit('update-jrxml')"
             />
           </div>
-          
+
           <!-- 背景颜色设置 -->
           <div class="form-group">
             <label>{{ t('properties.backgroundColor') }}</label>
-            <ColorPickerWithOpacity 
+            <ColorPickerWithOpacity
               v-model="style.backcolor"
               v-model:mode="style.mode"
               @update:modelValue="emit('update-jrxml')"
               @update:mode="emit('update-jrxml')"
             />
           </div>
-          
+
           <!-- 水平文本对齐 -->
           <div class="form-group">
             <label>{{ t('properties.hTextAlign') }}</label>
@@ -782,7 +782,7 @@
               <option value="Justified">{{ t('properties.justified') }}</option>
             </select>
           </div>
-          
+
           <!-- 水平图片对齐 -->
           <div class="form-group">
             <label>{{ t('properties.hImageAlign') }}</label>
@@ -793,7 +793,7 @@
               <option value="Right">{{ t('properties.right') }}</option>
             </select>
           </div>
-          
+
           <!-- 垂直文本对齐 -->
           <div class="form-group">
             <label>{{ t('properties.vTextAlign') }}</label>
@@ -804,7 +804,7 @@
               <option value="Bottom">{{ t('properties.bottom') }}</option>
             </select>
           </div>
-          
+
           <!-- 垂直图片对齐 -->
           <div class="form-group">
             <label>{{ t('properties.vImageAlign') }}</label>
@@ -1071,16 +1071,18 @@ function handleColumnNodeUpdate(uuid: string, updates: Partial<BaseColumn>) {
   const el = currentElement.value as TableElement;
   const result = findInParentArray(el.children!, uuid);
   if (result) {
-    Object.assign(result.parent[result.index], updates);
-    // 如果更新了宽度，需要同步
-    if (updates.width !== undefined) {
-      TableUtils.updateAllColumnGroupWidths(el.children!);
-    }
-    // 如果更新了名称，同步到单元格
-    if (updates.name !== undefined) {
-      const node = result.parent[result.index];
-      if (node.columnHeader?.element) {
-        node.columnHeader.element.text = updates.name;
+    const node = result.parent[result.index];
+    if (node) {
+      Object.assign(node, updates);
+      // 如果更新了宽度，需要同步
+      if (updates.width !== undefined) {
+        TableUtils.updateAllColumnGroupWidths(el.children!);
+      }
+      // 如果更新了名称，同步到单元格
+      if (updates.name !== undefined) {
+        if (node.columnHeader?.element) {
+          node.columnHeader.element.text = updates.name;
+        }
       }
     }
   }
@@ -1155,8 +1157,11 @@ function handleMoveNode(uuid: string, direction: 'up' | 'down') {
   const targetIndex = direction === 'up' ? index - 1 : index + 1;
   if (targetIndex < 0 || targetIndex >= parent.length) return;
   const temp = parent[index];
-  parent[index] = parent[targetIndex];
-  parent[targetIndex] = temp;
+  const target = parent[targetIndex];
+  if (temp && target) {
+    parent[index] = target;
+    parent[targetIndex] = temp;
+  }
   syncAndEmit();
 }
 
@@ -1394,7 +1399,7 @@ watch(() => currentElement.value, (newElement) => {
         tableRowHeights.value.detailCell = getBaseHeight(firstColumn.detailCell);
         tableRowHeights.value.columnFooter = getBaseHeight(firstColumn.columnFooter);
         tableRowHeights.value.tableFooter = getBaseHeight(firstColumn.tableFooter);
-        
+
         // 更新表格样式选择
         tableStyles.value.tableHeader = (firstColumn.tableHeader as any)?.style ?? 'Table_TH';
         tableStyles.value.columnHeader = (firstColumn.columnHeader as any)?.style ?? 'Table_CH';
@@ -1408,13 +1413,13 @@ watch(() => currentElement.value, (newElement) => {
 // 更新所有列的行高
 function updateAllColumnRowHeights() {
   if (!currentElement.value || currentElement.value.type !== 'table') return;
-  
+
   console.log('开始更新所有列的行高:', {
     tableRowHeights: tableRowHeights.value,
     columnCount: currentElement.value.columns ? currentElement.value.columns.length : 0,
     groupCount: currentElement.value.children ? currentElement.value.children.length : 0
   });
-  
+
   // 处理普通列
   if (currentElement.value.columns) {
     currentElement.value.columns.forEach(column => {
@@ -1422,7 +1427,7 @@ function updateAllColumnRowHeights() {
     });
     console.log('普通列行高更新完成');
   }
-  
+
   // 处理分组列
   if (currentElement.value.children) {
     currentElement.value.children.forEach(group => {
@@ -1430,7 +1435,7 @@ function updateAllColumnRowHeights() {
     });
     console.log('分组列行高更新完成');
   }
-  
+
   console.log('所有列行高更新完成，表格元素:', currentElement.value);
 }
 
@@ -1440,7 +1445,7 @@ function updateColumnRowHeights(column: any) {
     // 更新tableHeader本身的高度
     const tableHeaderHeight = tableRowHeights.value.tableHeader;
     column.tableHeader.height = tableHeaderHeight;
-    
+
     // 直接更新内部元素的高度，因为这些元素直接包含textField或staticText，而不是通过elements数组
     // 检查并更新reportElement的高度
     if (column.tableHeader.reportElement) {
@@ -1449,12 +1454,12 @@ function updateColumnRowHeights(column: any) {
       // 如果没有reportElement，直接更新元素的height属性
       column.tableHeader.height = tableHeaderHeight;
     }
-    
+
     // 如果是合并列，更新高度为行高乘以行跨度
     if (column.tableHeader.rowSpan && column.tableHeader.rowSpan > 1) {
       const mergedHeight = tableHeaderHeight * column.tableHeader.rowSpan;
       column.tableHeader.height = mergedHeight;
-      
+
       // 内部元素高度也需要相应调整
       if (column.tableHeader.reportElement) {
         column.tableHeader.reportElement.height = mergedHeight;
@@ -1463,12 +1468,12 @@ function updateColumnRowHeights(column: any) {
       }
     }
   }
-  
+
   if (column.columnHeader) {
     // 更新columnHeader本身的高度
     const columnHeaderHeight = tableRowHeights.value.columnHeader;
     column.columnHeader.height = columnHeaderHeight;
-    
+
     // 直接更新内部元素的高度，因为这些元素直接包含textField或staticText，而不是通过elements数组
     // 检查并更新reportElement的高度
     if (column.columnHeader.reportElement) {
@@ -1477,12 +1482,12 @@ function updateColumnRowHeights(column: any) {
       // 如果没有reportElement，直接更新元素的height属性
       column.columnHeader.height = columnHeaderHeight;
     }
-    
+
     // 如果是合并列，更新高度为行高乘以行跨度
     if (column.columnHeader.rowSpan && column.columnHeader.rowSpan > 1) {
       const mergedHeight = columnHeaderHeight * column.columnHeader.rowSpan;
       column.columnHeader.height = mergedHeight;
-      
+
       // 内部元素高度也需要相应调整
       if (column.columnHeader.reportElement) {
         column.columnHeader.reportElement.height = mergedHeight;
@@ -1491,7 +1496,7 @@ function updateColumnRowHeights(column: any) {
       }
     }
   }
-  
+
   if (column.detailCell) {
     // 更新detailCell本身的高度
     column.detailCell.height = tableRowHeights.value.detailCell;
@@ -1504,13 +1509,13 @@ function updateColumnRowHeights(column: any) {
       column.detailCell.height = tableRowHeights.value.detailCell;
     }
   }
-  
+
   // 更新columnFooter的高度
   if (column.columnFooter) {
     // 更新columnFooter本身的高度
     const columnFooterHeight = tableRowHeights.value.columnFooter;
     column.columnFooter.height = columnFooterHeight;
-    
+
     // 直接更新内部元素的高度，因为这些元素直接包含textField或staticText，而不是通过elements数组
     // 检查并更新reportElement的高度
     if (column.columnFooter.reportElement) {
@@ -1519,12 +1524,12 @@ function updateColumnRowHeights(column: any) {
       // 如果没有reportElement，直接更新元素的height属性
       column.columnFooter.height = columnFooterHeight;
     }
-    
+
     // 如果是合并列，更新高度为行高乘以行跨度
     if (column.columnFooter.rowSpan && column.columnFooter.rowSpan > 1) {
       const mergedHeight = columnFooterHeight * column.columnFooter.rowSpan;
       column.columnFooter.height = mergedHeight;
-      
+
       // 内部元素高度也需要相应调整
       if (column.columnFooter.reportElement) {
         column.columnFooter.reportElement.height = mergedHeight;
@@ -1533,13 +1538,13 @@ function updateColumnRowHeights(column: any) {
       }
     }
   }
-  
+
   // 更新tableFooter的高度
   if (column.tableFooter) {
     // 更新tableFooter本身的高度
     const tableFooterHeight = tableRowHeights.value.tableFooter;
     column.tableFooter.height = tableFooterHeight;
-    
+
     // 直接更新内部元素的高度，因为这些元素直接包含textField或staticText，而不是通过elements数组
     // 检查并更新reportElement的高度
     if (column.tableFooter.reportElement) {
@@ -1548,12 +1553,12 @@ function updateColumnRowHeights(column: any) {
       // 如果没有reportElement，直接更新元素的height属性
       column.tableFooter.height = tableFooterHeight;
     }
-    
+
     // 如果是合并列，更新高度为行高乘以行跨度
     if (column.tableFooter.rowSpan && column.tableFooter.rowSpan > 1) {
       const mergedHeight = tableFooterHeight * column.tableFooter.rowSpan;
       column.tableFooter.height = mergedHeight;
-      
+
       // 内部元素高度也需要相应调整
       if (column.tableFooter.reportElement) {
         column.tableFooter.reportElement.height = mergedHeight;
@@ -1568,19 +1573,19 @@ function updateColumnRowHeights(column: any) {
 function updateGroupHeaderHeights(group: any) {
   // 获取组合列的高度
   const groupHeight = group.height;
-  
+
   console.log('开始更新组合列表头高度:', {
     groupName: group.name,
     groupHeight,
     hasTableHeader: !!group.tableHeader,
     hasColumnHeader: !!group.columnHeader
   });
-  
+
   // 更新分组的tableHeader高度
   if (group.tableHeader) {
     // 更新tableHeader本身的高度
     group.tableHeader.height = groupHeight;
-    
+
     // 直接更新内部元素的高度，因为这些元素直接包含textField或staticText，而不是通过elements数组
     // 检查并更新reportElement的高度
     if (group.tableHeader.reportElement) {
@@ -1591,12 +1596,12 @@ function updateGroupHeaderHeights(group: any) {
     }
     console.log('更新后的tableHeader:', group.tableHeader);
   }
-  
+
   // 更新分组的columnHeader高度
   if (group.columnHeader) {
     // 更新columnHeader本身的高度
     group.columnHeader.height = groupHeight;
-    
+
     // 直接更新内部元素的高度，因为这些元素直接包含textField或staticText，而不是通过elements数组
     // 检查并更新reportElement的高度
     if (group.columnHeader.reportElement) {
@@ -1607,7 +1612,7 @@ function updateGroupHeaderHeights(group: any) {
     }
     console.log('更新后的columnHeader:', group.columnHeader);
   }
-  
+
   console.log('组合列表头高度更新完成，更新后的组合列:', group);
 }
 
@@ -1618,7 +1623,7 @@ function updateGroupRowHeights(group: any) {
     // 更新tableHeader本身的高度
     const tableHeaderHeight = tableRowHeights.value.tableHeader;
     group.tableHeader.height = tableHeaderHeight;
-    
+
     // 直接更新内部元素的高度，因为这些元素直接包含textField或staticText，而不是通过elements数组
     // 检查并更新reportElement的高度
     if (group.tableHeader.reportElement) {
@@ -1627,12 +1632,12 @@ function updateGroupRowHeights(group: any) {
       // 如果没有reportElement，直接更新元素的height属性
       group.tableHeader.height = tableHeaderHeight;
     }
-    
+
     // 如果是合并列，更新高度为行高乘以行跨度
     if (group.tableHeader.rowSpan && group.tableHeader.rowSpan > 1) {
       const mergedHeight = tableHeaderHeight * group.tableHeader.rowSpan;
       group.tableHeader.height = mergedHeight;
-      
+
       // 内部元素高度也需要相应调整
       if (group.tableHeader.reportElement) {
         group.tableHeader.reportElement.height = mergedHeight;
@@ -1641,13 +1646,13 @@ function updateGroupRowHeights(group: any) {
       }
     }
   }
-  
+
   // 更新分组的columnHeader高度
   if (group.columnHeader) {
     // 更新columnHeader本身的高度
     const columnHeaderHeight = tableRowHeights.value.columnHeader;
     group.columnHeader.height = columnHeaderHeight;
-    
+
     // 直接更新内部元素的高度，因为这些元素直接包含textField或staticText，而不是通过elements数组
     // 检查并更新reportElement的高度
     if (group.columnHeader.reportElement) {
@@ -1656,12 +1661,12 @@ function updateGroupRowHeights(group: any) {
       // 如果没有reportElement，直接更新元素的height属性
       group.columnHeader.height = columnHeaderHeight;
     }
-    
+
     // 如果是合并列，更新高度为行高乘以行跨度
     if (group.columnHeader.rowSpan && group.columnHeader.rowSpan > 1) {
       const mergedHeight = columnHeaderHeight * group.columnHeader.rowSpan;
       group.columnHeader.height = mergedHeight;
-      
+
       // 内部元素高度也需要相应调整
       if (group.columnHeader.reportElement) {
         group.columnHeader.reportElement.height = mergedHeight;
@@ -1670,13 +1675,13 @@ function updateGroupRowHeights(group: any) {
       }
     }
   }
-  
+
   // 更新分组的columnFooter高度
   if (group.columnFooter) {
     // 更新columnFooter本身的高度
     const columnFooterHeight = tableRowHeights.value.columnFooter;
     group.columnFooter.height = columnFooterHeight;
-    
+
     // 直接更新内部元素的高度，因为这些元素直接包含textField或staticText，而不是通过elements数组
     // 检查并更新reportElement的高度
     if (group.columnFooter.reportElement) {
@@ -1685,12 +1690,12 @@ function updateGroupRowHeights(group: any) {
       // 如果没有reportElement，直接更新元素的height属性
       group.columnFooter.height = columnFooterHeight;
     }
-    
+
     // 如果是合并列，更新高度为行高乘以行跨度
     if (group.columnFooter.rowSpan && group.columnFooter.rowSpan > 1) {
       const mergedHeight = columnFooterHeight * group.columnFooter.rowSpan;
       group.columnFooter.height = mergedHeight;
-      
+
       // 内部元素高度也需要相应调整
       if (group.columnFooter.reportElement) {
         group.columnFooter.reportElement.height = mergedHeight;
@@ -1699,13 +1704,13 @@ function updateGroupRowHeights(group: any) {
       }
     }
   }
-  
+
   // 更新分组的tableFooter高度
   if (group.tableFooter) {
     // 更新tableFooter本身的高度
     const tableFooterHeight = tableRowHeights.value.tableFooter;
     group.tableFooter.height = tableFooterHeight;
-    
+
     // 直接更新内部元素的高度，因为这些元素直接包含textField或staticText，而不是通过elements数组
     // 检查并更新reportElement的高度
     if (group.tableFooter.reportElement) {
@@ -1714,12 +1719,12 @@ function updateGroupRowHeights(group: any) {
       // 如果没有reportElement，直接更新元素的height属性
       group.tableFooter.height = tableFooterHeight;
     }
-    
+
     // 如果是合并列，更新高度为行高乘以行跨度
     if (group.tableFooter.rowSpan && group.tableFooter.rowSpan > 1) {
       const mergedHeight = tableFooterHeight * group.tableFooter.rowSpan;
       group.tableFooter.height = mergedHeight;
-      
+
       // 内部元素高度也需要相应调整
       if (group.tableFooter.reportElement) {
         group.tableFooter.reportElement.height = mergedHeight;
@@ -1728,7 +1733,7 @@ function updateGroupRowHeights(group: any) {
       }
     }
   }
-  
+
   // 递归更新子分组或列
   if (group.children) {
     group.children.forEach((child: any) => {
@@ -1755,7 +1760,7 @@ const rectangleBorderStyle = computed({
 
 // 获取Band显示名称
 function getBandDisplayName(bandType: string): string {
-  // Use t() with dynamic key. 
+  // Use t() with dynamic key.
   // Assuming keys exist in bandNames section of locale files.
   return t(`bandNames.${bandType}`);
 }
@@ -1807,12 +1812,12 @@ function getTextFieldExpression(element: any) {
 // 更新文本字段的表达式
 function updateTextFieldExpression(event: Event) {
   if (!currentElement.value || currentElement.value.type !== 'textField') return;
-  
+
   const newExpression = (event.target as HTMLInputElement).value;
-  
+
   emit('save-state');
   currentElement.value.expression = newExpression;
-  
+
   emit('update-jrxml');
 }
 
@@ -1861,14 +1866,14 @@ function setSideBorderStyle(side: string, value: string) {
   const styleKey = `${side}BorderStyle`;
   const penKey = `${side}Pen`;
   emit('save-state');
-  
+
   // 设置边框样式
   box[styleKey] = value;
   if (!box[penKey]) {
     box[penKey] = {};
   }
   box[penKey].lineStyle = value;
-  
+
   // 根据样式自动调整边框宽度
   if (value && value !== '') {
     // 非"无"样式，宽度为0则自动设为1
@@ -1883,7 +1888,7 @@ function setSideBorderStyle(side: string, value: string) {
     const widthKey = `${side}BorderWidth`;
     box[widthKey] = 0;
   }
-  
+
   emit('update-jrxml');
 }
 
@@ -2003,9 +2008,9 @@ function initTableCell(column: any, cellType: 'tableFooter' | 'columnFooter') {
 // 更新列宽度，同时更新所有相关单元格的宽度，并重新计算表格总宽度
 function updateColumnWidth(column: any, index: number) {
   if (!column || !currentElement) return;
-  
+
   const newWidth = column.width;
-  
+
   // 更新所有相关单元格的宽度
   if (column.tableHeader) {
     if (column.tableHeader.element) {
@@ -2042,7 +2047,7 @@ function updateColumnWidth(column: any, index: number) {
       column.tableFooter.width = newWidth;
     }
   }
-  
+
   // 如果表格有children属性，同时更新children属性中对应列的宽度
   if (currentElement.value && currentElement.value.type === 'table' && currentElement.value.children) {
     // 查找children中对应的列（通过uuid或索引）
@@ -2050,7 +2055,7 @@ function updateColumnWidth(column: any, index: number) {
     if (childColumn) {
       // 更新childColumn的宽度
       childColumn.width = newWidth;
-      
+
       // 同时更新childColumn中所有相关单元格的宽度
       if (childColumn.tableHeader) {
         if (childColumn.tableHeader.element) {
@@ -2089,7 +2094,7 @@ function updateColumnWidth(column: any, index: number) {
       }
     }
   }
-  
+
   // 重新计算表格总宽度：所有列宽度之和
   if (currentElement.value && currentElement.value.type === 'table' && currentElement.value.columns) {
     const totalWidth = currentElement.value.columns.reduce((sum: number, col: any) => sum + (col.width || 0), 0);
@@ -2116,9 +2121,9 @@ function findColumnInChildren(children: any[], targetColumn: any): any | null {
 // 更新列名，同时更新children属性中对应列的名称
 function updateColumnName(column: any, index: number) {
   if (!column || !currentElement) return;
-  
+
   const newName = column.name;
-  
+
   // 如果表格有children属性，同时更新children属性中对应列的名称
   if (currentElement.value && currentElement.value.type === 'table' && currentElement.value.children) {
     // 查找children中对应的列（通过uuid或索引）
@@ -2126,7 +2131,7 @@ function updateColumnName(column: any, index: number) {
     if (childColumn) {
       // 更新childColumn的名称
       childColumn.name = newName;
-      
+
       // 如果childColumn有columnHeader且是staticText类型，同时更新其文本内容
       if (childColumn.columnHeader && childColumn.columnHeader.type === 'staticText') {
         childColumn.columnHeader.text = newName;
@@ -2138,9 +2143,9 @@ function updateColumnName(column: any, index: number) {
 // 更新表格表头文本，同时更新children属性中对应列的表格表头文本
 function updateTableHeaderText(column: any, index: number) {
   if (!column || !currentElement || !column.hasTableHeader || !column.tableHeader) return;
-  
+
   const newText = column.tableHeader.text;
-  
+
   // 如果表格有children属性，同时更新children属性中对应列的表格表头文本
   if (currentElement.value && currentElement.value.type === 'table' && currentElement.value.children) {
     // 查找children中对应的列（通过uuid或索引）
@@ -2155,9 +2160,9 @@ function updateTableHeaderText(column: any, index: number) {
 // 更新字段表达式，同时更新children属性中对应列的字段表达式
 function updateFieldExpression(column: any, index: number) {
   if (!column || !currentElement || !column.detailCell) return;
-  
+
   const newExpression = column.detailCell.expression;
-  
+
   // 如果detailCell是staticText类型，将其转换为textField类型
   if (column.detailCell.type === 'staticText') {
     // 保存原有属性
@@ -2184,7 +2189,7 @@ function updateFieldExpression(column: any, index: number) {
       isBlankWhenNull: true
     };
   }
-  
+
   // 如果表格有children属性，同时更新children属性中对应列的字段表达式
   if (currentElement.value && currentElement.value.type === 'table' && currentElement.value.children) {
     // 查找children中对应的列（通过uuid或索引）
@@ -2227,7 +2232,7 @@ function updateFieldExpression(column: any, index: number) {
 function toggleTableHeader(column: any, event: Event) {
   const checkbox = event.target as HTMLInputElement;
   const hasTableHeader = checkbox.checked;
-  
+
   if (!hasTableHeader) {
     // 清空已有的Table Header数据
     delete column.tableHeader;
@@ -2251,7 +2256,7 @@ function toggleTableHeader(column: any, event: Event) {
       };
     }
   }
-  
+
   emit('update-jrxml');
 }
 
@@ -2260,12 +2265,12 @@ const showFieldSelectionModal = ref(false);
 const selectedFields = ref<string[]>([]);
 const availableFields = computed(() => {
   if (!currentElement.value || currentElement.value.type !== 'table' || !props.subDatasets) return [];
-  
+
   const tableElement = currentElement.value as any;
   const datasetName = tableElement.dataset?.name;
-  
+
   if (!datasetName) return [];
-  
+
   // 在subDatasets中查找匹配的数据集
   const matchingDataset = props.subDatasets.find(dataset => dataset.name === datasetName);
   return matchingDataset?.fields || [];
@@ -2282,10 +2287,10 @@ const allColumnGroups = computed(() => {
 // 打开字段选择模态框
 function openFieldSelectionModal() {
   if (!currentElement.value || currentElement.value.type !== 'table') return;
-  
+
   // Reset selected fields
   selectedFields.value = [];
-  
+
   // Get current table columns
   const tableElement = currentElement.value as any;
   if (tableElement.columns) {
@@ -2300,11 +2305,11 @@ function openFieldSelectionModal() {
         return null;
       })
       .filter((fieldName: string | null) => fieldName !== null);
-    
+
     // Set selected fields to used field names
     selectedFields.value = usedFieldNames as string[];
   }
-  
+
   showFieldSelectionModal.value = true;
 }
 
@@ -2321,21 +2326,21 @@ function toggleFieldSelection(fieldName: string) {
 // 将选中的字段添加为列
 function addSelectedFieldsAsColumns() {
   if (!currentElement.value || currentElement.value.type !== 'table') return;
-  
+
   emit('save-state');
-  
+
   const columnWidth = 160;
   const tableElement = currentElement.value as any;
-  
+
   // Ensure columns array exists
   if (!tableElement.columns) {
     tableElement.columns = [];
   }
-  
+
   // Get existing columns and their field names
   const existingColumns = [...tableElement.columns];
   const existingFieldMap = new Map<string, any>();
-  
+
   // Populate existing field map
   existingColumns.forEach(column => {
     if (column.detailCell?.element?.expression) {
@@ -2346,10 +2351,10 @@ function addSelectedFieldsAsColumns() {
       }
     }
   });
-  
+
   // Prepare new columns array
   const newColumns: any[] = [];
-  
+
   // Add columns for selected fields
   selectedFields.value.forEach(fieldName => {
     // Check if field already has a column
@@ -2426,14 +2431,14 @@ function addSelectedFieldsAsColumns() {
           }
         },
       };
-      
+
       newColumns.push(newColumn);
     }
   });
-  
+
   // Update table columns
   tableElement.columns = newColumns;
-  
+
   showFieldSelectionModal.value = false;
   selectedFields.value = [];
   emit('update-jrxml');
@@ -2444,9 +2449,9 @@ function addSelectedFieldsAsColumns() {
 // 表格列操作方法
 function addTableColumn() {
   if (!currentElement.value || currentElement.value.type !== 'table') return;
-  
+
   emit('save-state');
-  
+
   const columnWidth = 160;
   const newColumn: any = {
     uuid: crypto.randomUUID(),
@@ -2504,24 +2509,24 @@ function addTableColumn() {
       }
     }
   };
-  
+
   if (!currentElement.value.columns) {
     currentElement.value.columns = [];
   }
-  
+
   currentElement.value.columns.push(newColumn);
-  
+
   // 重新计算表格总宽度：所有列宽度之和
   const totalWidth = currentElement.value.columns.reduce((sum: number, col: any) => sum + (col.width || 0), 0);
   currentElement.value.width = totalWidth;
-  
+
   emit('update-jrxml');
 }
 
 // 添加列分组
 function addColumnGroup() {
   if (!currentElement.value || currentElement.value.type !== 'table' || !props.selectedElement) return;
-  
+
   const { elementIndex, bandIndex, parentFrameIndex } = props.selectedElement;
   // 修复TypeScript错误：使用正确的参数格式
   emit('add-columns-to-group', {
@@ -2534,26 +2539,26 @@ function addColumnGroup() {
 
 function removeTableColumn(index: number) {
   if (!currentElement.value || currentElement.value.type !== 'table' || !currentElement.value.columns) return;
-  
+
   if (currentElement.value.columns.length <= 1) {
     // 至少保留一列
     return;
   }
-  
+
   emit('save-state');
   currentElement.value.columns.splice(index, 1);
-  
+
   // 重新计算表格总宽度：所有列宽度之和
   const totalWidth = currentElement.value.columns.reduce((sum: number, col: any) => sum + (col.width || 0), 0);
   currentElement.value.width = totalWidth;
-  
+
   emit('update-jrxml');
 }
 
 // 获取所有组合列，包括子级组，返回扁平化的列表
 function getAllColumnGroups(groups: any[]): any[] {
   const result: any[] = [];
-  
+
   function traverse(group: any, path: number[] = []) {
     // 直接修改原始对象，添加path属性
     group.path = path;
@@ -2564,7 +2569,7 @@ function getAllColumnGroups(groups: any[]): any[] {
       });
     }
   }
-  
+
   groups.forEach(group => traverse(group));
   return result;
 }
@@ -2582,7 +2587,7 @@ function calculateMaxGroupWidth(groupInfo: any): number {
     // 如果节点没有children，说明是普通列，返回其宽度
     return node.width || 0;
   }
-  
+
   return calculateLeafColumnsWidth(groupInfo);
 }
 
@@ -2659,7 +2664,7 @@ function getFirstTableCellStyle(cellType: 'tableHeader' | 'columnHeader' | 'colu
     backcolor: '#ffffff',
     mode: 'Opaque'
   };
-  
+
   // 递归查找函数
   function findCellStyle(node: any): any {
     if (node[cellType]) {
@@ -2675,7 +2680,7 @@ function getFirstTableCellStyle(cellType: 'tableHeader' | 'columnHeader' | 'colu
     }
     return null;
   }
-  
+
   // 首先检查直接子列
   if (tableElement.columns) {
     for (const column of tableElement.columns) {
@@ -2685,7 +2690,7 @@ function getFirstTableCellStyle(cellType: 'tableHeader' | 'columnHeader' | 'colu
       }
     }
   }
-  
+
   // 然后检查列分组
   if (tableElement.children) {
     for (const group of tableElement.children) {
@@ -2695,7 +2700,7 @@ function getFirstTableCellStyle(cellType: 'tableHeader' | 'columnHeader' | 'colu
       }
     }
   }
-  
+
   // 如果没有找到样式，返回默认样式
   return {
     textAlignment: 'Center',
@@ -2715,7 +2720,7 @@ function getFirstTableCellStyle(cellType: 'tableHeader' | 'columnHeader' | 'colu
 function updateAllTableCellStyles(cellType: 'tableHeader' | 'columnHeader' | 'columnFooter' | 'detailCell', style: any) {
   const tableElement = currentElement.value;
   if (!tableElement || tableElement.type !== 'table') return;
-  
+
   // 递归更新函数
   function updateCellStyle(node: any) {
     if (node[cellType]) {
@@ -2728,14 +2733,14 @@ function updateAllTableCellStyles(cellType: 'tableHeader' | 'columnHeader' | 'co
       }
     }
   }
-  
+
   // 更新所有直接子列
   if (tableElement.columns) {
     for (const column of tableElement.columns) {
       updateCellStyle(column);
     }
   }
-  
+
   // 更新所有列分组
   if (tableElement.children) {
     for (const group of tableElement.children) {
@@ -2748,7 +2753,7 @@ function updateAllTableCellStyles(cellType: 'tableHeader' | 'columnHeader' | 'co
 function updateTableStyles() {
   const tableElement = currentElement.value;
   if (!tableElement || tableElement.type !== 'table') return;
-  
+
   // 递归更新函数
   function updateCellStyle(node: any) {
     // 更新tableHeader样式
@@ -2774,14 +2779,14 @@ function updateTableStyles() {
       }
     }
   }
-  
+
   // 更新所有直接子列
   if (tableElement.columns) {
     for (const column of tableElement.columns) {
       updateCellStyle(column);
     }
   }
-  
+
   // 更新所有列分组
   if (tableElement.children) {
     for (const group of tableElement.children) {
