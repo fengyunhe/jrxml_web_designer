@@ -779,7 +779,18 @@ function getDefaultBandHeight(bandType: string): number {
 function generateStaticTextXML(element: any): string {
   let xml = `    <staticText`;
 
-  // staticText不支持rotation和pattern属性（这些是textField专有属性）
+  // textAdjust和pattern属于staticText元素属性，不属于reportElement
+  if (element.textAdjust) {
+    xml += ` textAdjust="${element.textAdjust}"`;
+  } else if (element.isStretchWithOverflow !== undefined) {
+    const textAdjustValue = element.isStretchWithOverflow
+      ? "StretchHeight"
+      : "CutText";
+    xml += ` textAdjust="${textAdjustValue}"`;
+  }
+  if (element.pattern) {
+    xml += ` pattern="${element.pattern}"`;
+  }
 
   xml += `>\n      <reportElement x="${toInt(element.x)}" y="${toInt(element.y)}" width="${toInt(element.width)}" height="${toInt(element.height)}"`;
 
@@ -813,21 +824,6 @@ function generateStaticTextXML(element: any): string {
     ["None", "Left", "Right"].includes(element.rotation)
   ) {
     xml += ` rotation="${element.rotation}"`;
-  }
-
-  // textAdjust属性
-  if (element.textAdjust) {
-    xml += ` textAdjust="${element.textAdjust}"`;
-  } else if (element.isStretchWithOverflow !== undefined) {
-    const textAdjustValue = element.isStretchWithOverflow
-      ? "StretchHeight"
-      : "CutText";
-    xml += ` textAdjust="${textAdjustValue}"`;
-  }
-
-  // pattern属性
-  if (element.pattern) {
-    xml += ` pattern="${element.pattern}"`;
   }
 
   xml += "/>\n";

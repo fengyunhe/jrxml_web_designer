@@ -469,6 +469,8 @@ const bottomPanelHeight = ref(PANEL_CONSTANTS.DEFAULT_BOTTOM_PANEL_HEIGHT); // �
 
 // JRXML内容显示
 const jrxmlContent = ref('');
+const lastGeneratedJRXML = ref(''); // 追踪最后一次从JSON模型自动生成的JRXML
+const isSyncingFromJRXML = ref(false); // 防止syncJrxmlToModel触发watcher重入
 
 // 报表属性
 const reportProperties = ref({
@@ -633,6 +635,9 @@ function saveAsLocalFile() {
 }
 
 function saveCurrentFile() {
+  // 保存前同步编辑器中可能存在的手动JRXML修改
+  syncJrxmlToModel();
+
   // 创建bands的深拷贝，以便处理边框属性
   const processedBands = JSON.parse(JSON.stringify(bands.value));
 
@@ -2621,6 +2626,162 @@ const handleBottomPanelSizeChange = (newSize: number) => {
 };
 
 
+// 检测JRXML编辑器是否有手动修改，如有则同步回JSON模型
+function syncJrxmlToModel() {
+  // 跳过条件：正在同步中、尚未初始化、无变化
+  if (isSyncingFromJRXML.value) return;
+  if (!lastGeneratedJRXML.value) return;
+  if (jrxmlContent.value === lastGeneratedJRXML.value) return;
+
+  isSyncingFromJRXML.value = true;
+  try {
+    const parsedData = parseJRXMLContent(jrxmlContent.value);
+
+    // 更新报表属性，保留defaultFont
+    reportProperties.value = {
+      ...parsedData.properties,
+      defaultFont: reportProperties.value?.defaultFont || {
+        name: FONT_CONSTANTS.DEFAULT_FONT_FAMILY,
+        size: REPORT_CONSTANTS.DEFAULT_FONT_SIZE,
+        isBold: false,
+        isItalic: false,
+        isUnderline: false
+      }
+    };
+
+    reportFields.value = parsedData.fields;
+    reportParameters.value = parsedData.parameters || [];
+
+    if (parsedData.variables) reportVariables.value = parsedData.variables;
+    if (parsedData.groups) reportGroups.value = parsedData.groups;
+    if (parsedData.styles) reportStyles.value = parsedData.styles;
+
+    if (parsedData.datasets) {
+      subDatasets.value = parsedData.datasets.map(dataset => ({
+        uuid: crypto.randomUUID(),
+        name: dataset.name,
+        fields: dataset.fields,
+        query: dataset.query
+      })) as any;
+    }
+
+    bands.value = parsedData.bands;
+    selectedBandTypes.value = parsedData.bands.map(band => band.type);
+
+    // 后处理：边框属性转换、最小尺寸、边界约束
+    bands.value.forEach(band => {
+      band.elements.forEach(element => {
+        if (element.width < ELEMENT_CONSTANTS.MIN_WIDTH) element.width = ELEMENT_CONSTANTS.MIN_WIDTH;
+
+        if (element.box) {
+          const processPen = (pen: any): string => {
+            if (!pen || pen.lineWidth === 0 || pen.lineWidth === undefined) return '';
+            let width = `${pen.lineWidth}px`;
+            let style = 'solid';
+            let color = '#000000';
+            if (pen.lineStyle) {
+              switch (pen.lineStyle) {
+                case 'Dashed': style = 'dashed'; break;
+                case 'Dotted': style = 'dotted'; break;
+                case 'Double': style = 'double'; break;
+                default: style = 'solid';
+              }
+            }
+            if (pen.lineColor) color = pen.lineColor;
+            return `${width} ${style} ${color}`;
+          };
+
+          const convertBorderStyleToName = (borderStyle: string): string => {
+            if (!borderStyle || borderStyle === '') return '';
+            if (['Thin', 'Medium', 'Thick', 'Dashed', 'Dotted', 'Double', '1Point', '2Point', '4Point'].includes(borderStyle)) return borderStyle;
+            const parts = borderStyle.split(' ');
+            if (parts.length >= 2) {
+              const [width, style] = parts;
+              if (width === '0px') return '';
+              if (width === '1px') {
+                if (style === 'solid') return 'Thin';
+                if (style === 'dashed') return 'Dashed';
+                if (style === 'dotted') return 'Dotted';
+              } else if (width === '2px' && style === 'solid') return 'Medium';
+              else if (width === '3px' && style === 'double') return 'Double';
+              else if (width === '4px' && style === 'solid') return 'Thick';
+            }
+            return '';
+          };
+
+          const extractBorderColor = (borderStyle: string): string => {
+            if (!borderStyle || borderStyle === '') return '#000000';
+            if (['Thin', 'Medium', 'Thick', 'Dashed', 'Dotted', 'Double', '1Point', '2Point', '4Point'].includes(borderStyle)) return '#000000';
+            const parts = borderStyle.split(' ');
+            if (parts.length >= 3 && parts[2]) return parts[2];
+            return '#000000';
+          };
+
+          if (element.box.topPen) element.box.topBorder = processPen(element.box.topPen);
+          if (element.box.leftPen) element.box.leftBorder = processPen(element.box.leftPen);
+          if (element.box.bottomPen) element.box.bottomBorder = processPen(element.box.bottomPen);
+          if (element.box.rightPen) element.box.rightBorder = processPen(element.box.rightPen);
+
+          const borderMap: Record<string, string> = {
+            'Thin': '1px', '1Point': '1px', '2Point': '2px', '4Point': '4px',
+            'Dotted': '1px dotted', 'Dashed': '1px dashed', 'Double': '3px double'
+          };
+          const applyBorder = (borderAttr: string, colorAttr: string): string => {
+            if (!borderAttr) return '';
+            let borderValue = borderMap[borderAttr] || '1px';
+            let borderColor = (element.box as any)?.[colorAttr] || '#000000';
+            return `${borderValue} solid ${borderColor}`;
+          };
+
+          if (element.box.border && (!element.box.topBorder || !element.box.leftBorder || !element.box.bottomBorder || !element.box.rightBorder)) {
+            const globalBorder = applyBorder(element.box.border, 'borderColor');
+            if (!element.box.topBorder) element.box.topBorder = globalBorder;
+            if (!element.box.leftBorder) element.box.leftBorder = globalBorder;
+            if (!element.box.bottomBorder) element.box.bottomBorder = globalBorder;
+            if (!element.box.rightBorder) element.box.rightBorder = globalBorder;
+          }
+
+          if (element.box.border && typeof element.box.border === 'string' && element.box.border.includes(' ')) {
+            element.box.border = convertBorderStyleToName(element.box.border);
+          }
+          if (element.box.topBorder && typeof element.box.topBorder === 'string' && element.box.topBorder.includes(' ')) {
+            element.box.topBorderColor = extractBorderColor(element.box.topBorder);
+            element.box.topBorder = convertBorderStyleToName(element.box.topBorder);
+          }
+          if (element.box.leftBorder && typeof element.box.leftBorder === 'string' && element.box.leftBorder.includes(' ')) {
+            element.box.leftBorderColor = extractBorderColor(element.box.leftBorder);
+            element.box.leftBorder = convertBorderStyleToName(element.box.leftBorder);
+          }
+          if (element.box.bottomBorder && typeof element.box.bottomBorder === 'string' && element.box.bottomBorder.includes(' ')) {
+            element.box.bottomBorderColor = extractBorderColor(element.box.bottomBorder);
+            element.box.bottomBorder = convertBorderStyleToName(element.box.bottomBorder);
+          }
+          if (element.box.rightBorder && typeof element.box.rightBorder === 'string' && element.box.rightBorder.includes(' ')) {
+            element.box.rightBorderColor = extractBorderColor(element.box.rightBorder);
+            element.box.rightBorder = convertBorderStyleToName(element.box.rightBorder);
+          }
+        }
+
+        element.x = Math.max(0, element.x);
+        element.y = Math.max(0, element.y);
+        if (element.x + element.width > paperWidth.value) {
+          element.width = paperWidth.value - element.x;
+        }
+      });
+
+      const minHeight = BAND_CONSTANTS.MIN_HEIGHT;
+      band.height = Math.max(band.height, minHeight);
+    });
+
+    // 更新基准线：编辑器内容现在是模型的反映
+    lastGeneratedJRXML.value = jrxmlContent.value;
+  } catch (error) {
+    console.error('JRXML同步到JSON模型失败:', error);
+  } finally {
+    isSyncingFromJRXML.value = false;
+  }
+}
+
 // 自动更新JRXML内容
 const updateJRXML = () => {
   // 防止重入：如果 updateJRXML 正在执行中，跳过本次调用
@@ -2629,6 +2790,9 @@ const updateJRXML = () => {
   }
   isUpdatingJRXML.value = true;
   try {
+    // 在重新生成前，先同步编辑器中可能存在的手动JRXML修改
+    syncJrxmlToModel();
+
     // 确保所有数据都已初始化
     if (!reportProperties.value || !bands.value || !reportFields.value || !reportParameters.value) {
       return;
@@ -2644,10 +2808,13 @@ const updateJRXML = () => {
         saveStateToHistory();
       }
       jrxmlContent.value = content;
-
-      // 立即保存到本地存储，确保JRXML内容被保存
-      saveToLocalStorageWrapper();
     }
+
+    // 更新基准线
+    lastGeneratedJRXML.value = content;
+
+    // 立即保存到本地存储
+    saveToLocalStorageWrapper();
   } catch (error) {
     console.error('更新JRXML失败:', error);
   } finally {
@@ -3170,7 +3337,7 @@ watch(
   [reportProperties, bands, reportFields, reportParameters],
   () => {
     // 在非拖拽/调整大小状态下，且不在 JRXML 更新过程中时才更新
-    if (!isDraggingOrResizing.value && !isUpdatingJRXML.value) {
+    if (!isDraggingOrResizing.value && !isUpdatingJRXML.value && !isSyncingFromJRXML.value) {
       saveToLocalStorageWrapper();
       updateJRXML();
       // 更新超出边界的元素
