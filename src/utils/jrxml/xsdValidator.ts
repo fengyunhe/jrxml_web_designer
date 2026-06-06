@@ -21,7 +21,7 @@ export async function loadXsdSchema(): Promise<string> {
   }
 
   try {
-    const response = await fetch('/jasperreport.xsd');
+    const response = await fetch('./jasperreport.xsd');
     if (!response.ok) {
       throw new Error(`无法加载XSD文件: ${response.status}`);
     }
