@@ -178,22 +178,84 @@ Tables are the most complex element type. They use a `<componentElement>` wrappe
       <connectionExpression><![CDATA[$P{REPORT_CONNECTION}]]></connectionExpression>
     </datasetRun>
     <jr:column width="185">
-      <jr:columnHeader>...</jr:columnHeader>
-      <jr:detailCell>...</jr:detailCell>
+      <jr:tableHeader height="30" rowSpan="2" style="Table_TH">...</jr:tableHeader>
+      <jr:columnHeader height="20" rowSpan="1" style="Table_CH">...</jr:columnHeader>
+      <jr:detailCell height="15" style="Table_TD">...</jr:detailCell>
+      <jr:columnFooter height="15" style="Table_CH">...</jr:columnFooter>
+      <jr:tableFooter height="15" style="Table_TH">...</jr:tableFooter>
     </jr:column>
     <jr:columnGroup width="370">
-      <jr:tableHeader>...</jr:tableHeader>
-      <jr:column>...</jr:column>
+      <jr:tableHeader height="15" style="Table_TH">...</jr:tableHeader>
+      <jr:columnGroup width="185">
+        <jr:columnHeader height="15" style="Table_CH">...</jr:columnHeader>
+        <jr:column>...</jr:column>
+      </jr:columnGroup>
+      <jr:columnGroup width="185">
+        <jr:columnHeader height="15" style="Table_CH">...</jr:columnHeader>
+        <jr:column>...</jr:column>
+      </jr:columnGroup>
     </jr:columnGroup>
   </jr:table>
 </componentElement>
 ```
 
+#### 3.4.1 Table Structure
+
 Tables have:
 - `TableDataset` with its own fields and query
-- `ColumnGroup` for nested column headers
+- `ColumnGroup` for nested column headers (supports recursive grouping)
 - `TableColumn` for individual columns
 - Cell types: `tableHeader`, `columnHeader`, `detailCell`, `columnFooter`, `tableFooter`
+
+#### 3.4.2 Column Merging (rowSpan)
+
+- **rowSpan attribute**: Indicates how many rows a cell spans vertically
+- **Merged cells**: For cells with `rowSpan > 1`, the cell height must be `singleRowHeight × rowSpan`
+- **Example**: If column header has `rowSpan="2"` and single row height is 15, then actual height = 30
+- **Height calculation**: The system tracks both merged height (for rendering) and single row height (for configuration)
+
+#### 3.4.3 Row Height Management
+
+Each table has five types of configurable row heights:
+1. **tableHeader** - Table-level header (optional)
+2. **columnHeader** - Column headers (can be merged via rowSpan)
+3. **detailCell** - Data rows (repeated for each record)
+4. **columnFooter** - Column-level footer (optional)
+5. **tableFooter** - Table-level footer (optional)
+
+**Height synchronization logic**:
+- When user changes row height, all cells of that type across all columns are updated
+- For merged cells (rowSpan > 1), actual height = configured height × rowSpan
+- The system avoids duplicate updates using processed column tracking
+- Changes emit to parent component to update bands and trigger JRXML regeneration
+
+#### 3.4.4 Complex Column Group Scenarios
+
+Column groups can be nested to multiple levels:
+
+```
+ColumnGroup (level 0)
+  ├── ColumnGroup (level 1)
+  │     ├── Column (with detailCell)
+  │     └── Column (with detailCell)
+  └── ColumnGroup (level 1)
+        ├── Column (with detailCell)
+        └── Column (with detailCell)
+```
+
+**Recursive processing**:
+- `updateAllColumnRowHeights()` processes all columns and nested groups
+- `updateGroupRowHeights()` recursively handles nested column groups
+- Each group can have its own `tableHeader`, `columnHeader`, etc.
+- All cells are collected for height calculation via `allColumnsForHeight` computed property
+
+#### 3.4.5 Designer Canvas Rendering
+
+- **Table layout**: Uses `table-layout: fixed` to prevent content from expanding columns
+- **Cell height**: Rendered from JSON data via inline `height` styles (not CSS defaults)
+- **Vertical alignment**: Cells use `vertical-align: top` to prevent content stretching
+- **Overflow handling**: Cells have `overflow: hidden` to prevent row height expansion
+- **Maximum height tracking**: `getMaxCellHeight()` computes maximum height across all cells of same type
 
 ## 4. File Inventory
 

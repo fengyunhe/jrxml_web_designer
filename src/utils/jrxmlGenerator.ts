@@ -1626,7 +1626,35 @@ function generateColumnXML(
         // 使用column.columnHeader的rowSpan，如果没有则使用columnHeaderElement的rowSpan，默认为1
         const rowSpan =
           column.columnHeader.rowSpan || columnHeaderElement.rowSpan || 1;
-        xml += `            <jr:columnHeader height="${toInt(columnHeaderElement.height || 30)}" rowSpan="${rowSpan}" style="Table_CH">
+        // 优先使用column.columnHeader.height（列头本身的高度），其次使用内部元素高度
+        const columnHeaderHeight = column.columnHeader.height || columnHeaderElement.height || 30;
+
+        // 检查原始列对象
+        console.log("JRXML生成前检查列对象:", {
+          列名: column.name,
+          原始columnHeader: column.columnHeader,
+          原始element: columnHeaderElement,
+          问题: rowSpan > 1 && columnHeaderHeight !== 15 * rowSpan ? "高度异常" : "正常",
+        });
+
+        console.log("JRXML生成列头高度详情:", {
+          列名: column.name,
+          rowSpan,
+          columnHeaderHeight,
+          columnHeaderActualHeight: column.columnHeader.height,
+          elementHeight: columnHeaderElement.height,
+          columnHeaderElementRowSpan: columnHeaderElement.rowSpan,
+          是否合并列: rowSpan > 1,
+          expectedHeight: 15 * rowSpan, // 假设单行高度是15
+        });
+
+        // 检查是否有异常
+        if (rowSpan > 1 && columnHeaderHeight === 60 && rowSpan === 2) {
+          console.error("发现异常！高度60应该是30（15*2）而不是60（30*2）");
+          console.error("可能的原因：height被重复乘以了rowSpan");
+        }
+
+        xml += `            <jr:columnHeader height="${toInt(columnHeaderHeight)}" rowSpan="${rowSpan}" style="Table_CH">
 `;
         xml += generateElementXML(columnHeaderElement).replace(
           /^    /gm,
@@ -1638,7 +1666,9 @@ function generateColumnXML(
         // 如果没有element对象，则生成空的columnHeader（自闭合形式）
         // 使用column.columnHeader的rowSpan，默认为1
         const rowSpan = column.columnHeader.rowSpan || 1;
-        xml += `            <jr:columnHeader height="30" rowSpan="${rowSpan}" style="Table_CH"/>
+        // 使用column columnHeader.height，如果为空则使用30
+        const columnHeaderHeight = column.columnHeader.height || 30;
+        xml += `            <jr:columnHeader height="${toInt(columnHeaderHeight)}" rowSpan="${rowSpan}" style="Table_CH"/>
 `;
       }
     } else {
@@ -2022,16 +2052,30 @@ function preprocessTableElements(element: any) {
     // 确保column的columnHeader尺寸始终等于列尺寸
     if (column.columnHeader) {
       column.columnHeader.width = columnWidth;
-      column.columnHeader.height =
-        column.columnHeader.height || defaultCellHeight;
-      // 如果 rowSpan > 1，inflate 高度以覆盖合并的行
+      // 只有当height未设置时才使用默认值，否则使用已设置的值
+      if (!column.columnHeader.height) {
+        column.columnHeader.height = defaultCellHeight;
+      }
+      // 如果 rowSpan > 1，inflate 高度以覆盖合并的行（仅当height是单行高度时）
       const chRowSpan = column.columnHeader.rowSpan || 1;
       if (chRowSpan > 1) {
-        const baseH =
-          column.columnHeader.height === defaultCellHeight
-            ? defaultCellHeight
-            : Math.round(column.columnHeader.height / chRowSpan);
-        column.columnHeader.height = baseH * chRowSpan;
+        // 检查高度是否能被rowSpan整除（说明已经是合并后的高度）
+        // 如果能整除，说明已经是正确的合并高度，不再重新计算
+        const isAlreadyMerged = column.columnHeader.height % chRowSpan === 0;
+        console.log("JRXML生成器columnHeader高度检查:", {
+          当前高度: column.columnHeader.height,
+          rowSpan: chRowSpan,
+          是否已合并: isAlreadyMerged,
+          能否整除: column.columnHeader.height % chRowSpan,
+        });
+        if (!isAlreadyMerged) {
+          // 不能整除，说明还是单行高度，需要乘以rowSpan
+          console.log("重新计算columnHeader高度:", column.columnHeader.height * chRowSpan);
+          column.columnHeader.height = column.columnHeader.height * chRowSpan;
+        } else {
+          console.log("保持columnHeader高度不变:", column.columnHeader.height);
+        }
+        // 否则保持不变（已经是正确的合并高度）
       }
       // 确保columnHeader中的元素尺寸等于columnHeader尺寸
       if (column.columnHeader.element) {
@@ -2054,16 +2098,20 @@ function preprocessTableElements(element: any) {
     // 确保column的columnFooter尺寸始终等于列尺寸
     if (column.columnFooter) {
       column.columnFooter.width = columnWidth;
-      column.columnFooter.height =
-        column.columnFooter.height || defaultCellHeight;
-      // 如果 rowSpan > 1，inflate 高度以覆盖合并的行
+      // 只有当height未设置时才使用默认值，否则使用已设置的值
+      if (!column.columnFooter.height) {
+        column.columnFooter.height = defaultCellHeight;
+      }
+      // 如果 rowSpan > 1，inflate 高度以覆盖合并的行（仅当height是单行高度时）
       const cfRowSpan = column.columnFooter.rowSpan || 1;
       if (cfRowSpan > 1) {
-        const baseH =
-          column.columnFooter.height === defaultCellHeight
-            ? defaultCellHeight
-            : Math.round(column.columnFooter.height / cfRowSpan);
-        column.columnFooter.height = baseH * cfRowSpan;
+        // 检查高度是否能被rowSpan整除（说明已经是合并后的高度）
+        // 如果能整除，说明已经是正确的合并高度，不再重新计算
+        if (column.columnFooter.height % cfRowSpan !== 0) {
+          // 不能整除，说明还是单行高度，需要乘以rowSpan
+          column.columnFooter.height = column.columnFooter.height * cfRowSpan;
+        }
+        // 否则保持不变（已经是正确的合并高度）
       }
       // 确保columnFooter中的元素尺寸等于columnFooter尺寸
       if (column.columnFooter.element) {

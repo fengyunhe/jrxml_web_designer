@@ -104,6 +104,75 @@
 | **Grid/Snap Settings** | ✅ | ✅ | 功能完整 |
 | **Element Constraints** | ✅ | ❌ | **缺失，无法设置拉伸/位置约束** |
 
+### 1.5.1 Table Component (表格组件) 详细对比
+
+| 功能 | 官方 Studio 6 | 当前 Web 版 | 差距说明 |
+|-----|:------------:|:----------:|---------|
+| 基础表格创建 | ✅ | ✅ | 功能完整 |
+| 列添加/删除/排序 | ✅ | ✅ | 功能完整 |
+| 列宽调整 | ✅ | ✅ | 功能完整 |
+| **列分组 (Column Groups)** | ✅ | ✅ | 功能完整，支持嵌套多层分组 |
+| **列合并 (rowSpan)** | ✅ | ✅ | 功能完整，正确处理高度计算 |
+| 行高配置 | ✅ | ✅ | 支持5种行高：tableHeader, columnHeader, detailCell, columnFooter, tableFooter |
+| **分组列行高同步** | ✅ | ✅ | 自动同步分组内所有列的行高 |
+| **嵌套分组高度递归计算** | ✅ | ✅ | 递归处理多层嵌套的列分组 |
+| 表格样式 | ✅ | ✅ | 支持5种表格样式：Table_TH, Table_CH, Table_TD, Table_FOOTER, Table_GROUP |
+| **单元格内容对齐** | ✅ | ✅ | 支持水平和垂直对齐 |
+| 单元格边框 | ✅ | ✅ | 功能完整 |
+| **数据集 (Dataset)** | ✅ | ✅ | 支持独立的数据集配置 |
+| **动态列** | ✅ | ❌ | **缺失，无法动态添加/删除列** |
+| **行组 (Row Groups)** | ✅ | ❌ | **缺失，无法按数据分组** |
+| **表格计算 (Table Calculations)** | ✅ | ❌ | **缺失，无法进行表格内计算** |
+| **表格导出优化** | ✅ | ⚠️ | 基本导出支持 |
+
+#### 表格处理关键技术点
+
+**1. 高度计算逻辑**
+- **单行高度 (Base Height)**: 用户配置的原始高度值
+- **合并高度 (Merged Height)**: `单行高度 × rowSpan`
+- **高度同步**: 修改任意单元格高度时，自动同步所有同类型单元格
+- **避免重复计算**: 使用 `processedColumns` Set 跟踪已处理的列
+
+**2. JSON 数据结构**
+```typescript
+interface TableElement {
+  columns: TableColumn[];          // 扁平列数组
+  children: (ColumnGroup | TableColumn)[]; // 嵌套结构
+}
+
+interface TableColumn {
+  uuid: string;
+  width: number;
+  columnHeader: {
+    height: number;      // 合并后的实际高度
+    rowSpan: number;     // 跨度行数
+    element: { height: number; };
+  };
+  detailCell: {
+    height: number;      // 数据行高度
+    element: { height: number; };
+  };
+  // ... 其他 cell 类型
+}
+```
+
+**3. JRXML 生成时高度处理**
+```typescript
+// 避免重复乘以 rowSpan
+const isAlreadyMerged = columnHeader.height % chRowSpan === 0;
+if (!isAlreadyMerged) {
+  // 还是单行高度，乘以 rowSpan
+  columnHeader.height *= chRowSpan;
+}
+// 否则保持不变（已经是正确的合并高度）
+```
+
+**4. 设计器画布渲染**
+- 使用 `table-layout: fixed` 防止内容撑开列
+- 高度完全由 JSON 数据的内联样式设置（不使用 CSS 默认值）
+- 添加 `overflow: hidden` 防止单元格内容撑开行高
+- 使用 `vertical-align: top` 防止表格内容垂直拉伸
+
 ### 1.6 预览与导出
 
 | 功能 | 官方 Studio 6 | 当前 Web 版 | 差距说明 |

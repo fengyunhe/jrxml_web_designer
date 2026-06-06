@@ -830,6 +830,35 @@ const isResizing = ref(false);
 const tableElement = computed(() => props.element as TableElementType);
 const columns = computed(() => tableElement.value.columns || []);
 
+// 收集所有列（包括分组内的列），用于高度计算
+const allColumnsForHeight = computed(() => {
+    const result: any[] = [];
+
+    // 递归提取所有列的函数
+    function extractColumns(items: any[]) {
+        if (!items) return;
+        items.forEach((item: any) => {
+            if ('detailCell' in item) {
+                // 是普通列（TableColumn）
+                result.push(item);
+            } else if ('children' in item && item.children) {
+                // 是分组（ColumnGroup），递归提取子列
+                extractColumns(item.children);
+            }
+        });
+    }
+
+    // 从 columns 数组中收集普通列
+    if (tableElement.value.columns) {
+        result.push(...tableElement.value.columns);
+    }
+    // 从 children 数组中递归收集所有列（包括嵌套分组中的列）
+    if (tableElement.value.children) {
+        extractColumns(tableElement.value.children);
+    }
+    return result;
+});
+
 // 列选中状态管理
 const selectedColumns = ref<number[]>([]);
 
@@ -1680,7 +1709,8 @@ const hasTableHeader = computed(() => {
 
 // 计算行高 - 取所有列中的最大值
 function getMaxCellHeight(getCell: (col: any) => any): number {
-    const cols = columns.value;
+    // 使用 allColumnsForHeight 来获取所有列（包括分组内的列）
+    const cols = allColumnsForHeight.value;
     if (cols.length === 0) return 30;
     let maxH = 0;
     for (const col of cols) {
@@ -1825,23 +1855,25 @@ function getRowStyle(rowType: string) {
 <style scoped>
 .table-content {
     width: 100%;
-    height: 100%;
+    /* 不设置height，避免被继承导致行高被拉伸 */
     overflow: hidden;
 }
 
 .designer-table {
     width: 100%;
-    height: 100%;
+    /* 不设置height，避免被td继承导致行高被拉伸 */
     border-collapse: collapse;
     border-spacing: 0;
+    table-layout: fixed; /* 固定表格布局，防止被内容撑开 */
 }
 
-/* 确保单元格内容占满整个单元格 */
+/* 确保单元格内容占满整个单元格，但不拉伸行高 */
 .cell-content {
     width: 100%;
     height: 100%;
-    min-height: 100%;
+    min-height: auto; /* 不要使用100% */
     display: flex;
+    align-items: center; /* 垂直居中对齐 */
     padding: 0 5px;
     box-sizing: border-box;
     overflow: hidden;
@@ -1860,8 +1892,24 @@ function getRowStyle(rowType: string) {
 .cellDetail,
 .columnFooter,
 .tableFooter {
-    height: 30px;
+    /* 不设置默认高度，完全由JSON数据中的height属性决定 */
     position: relative;
+    overflow: hidden; /* 防止内容撑开行高 */
+}
+
+/* 防止表格内容撑开行高 */
+.designer-table tbody {
+    vertical-align: top; /* 表格内容顶部对齐，不要拉伸 */
+}
+
+.designer-table tr {
+    vertical-align: top; /* 行内容顶部对齐，不要被拉伸 */
+}
+
+.designer-table td {
+    vertical-align: top; /* 单元格内容顶部对齐 */
+    height: inherit; /* 继承行高 */
+    max-height: inherit; /* 继承最大高度 */
 }
 
 /* 行高拖拽手柄（::after 伪元素） */
@@ -1896,12 +1944,16 @@ function getRowStyle(rowType: string) {
     user-select: none;
     padding: 0;
     margin: 0;
+    height: inherit; /* 继承行高，不要撑开 */
+    max-height: inherit; /* 继承最大高度限制 */
 }
 
 .table-column.th,
 .table-column.td {
     padding: 0;
     margin: 0;
+    height: inherit;
+    max-height: inherit;
 }
 
 .designer-table th,
@@ -1909,7 +1961,8 @@ function getRowStyle(rowType: string) {
     padding: 0;
     margin: 0;
     box-sizing: border-box;
-    overflow: visible;
+    overflow: hidden; /* 隐藏超出内容，防止撑开 */
+    height: inherit; /* 继承行高 */
 }
 
 /* 列选中样式 */
