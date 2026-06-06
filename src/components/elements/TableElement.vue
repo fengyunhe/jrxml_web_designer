@@ -1864,14 +1864,16 @@ function getRowStyle(rowType: string) {
     height: 100%;
     border-collapse: collapse;
     border-spacing: 0;
+    table-layout: fixed; /* 固定表格布局，防止被内容撑开 */
 }
 
-/* 确保单元格内容占满整个单元格 */
+/* 确保单元格内容占满整个单元格，但不拉伸行高 */
 .cell-content {
     width: 100%;
     height: 100%;
-    min-height: 100%;
+    min-height: auto; /* 不要使用100% */
     display: flex;
+    align-items: center; /* 垂直居中对齐 */
     padding: 0 5px;
     box-sizing: border-box;
     overflow: hidden;
@@ -1892,6 +1894,22 @@ function getRowStyle(rowType: string) {
 .tableFooter {
     height: 30px;
     position: relative;
+    overflow: hidden; /* 防止内容撑开行高 */
+}
+
+/* 防止表格内容撑开行高 */
+.designer-table tbody {
+    vertical-align: top; /* 表格内容顶部对齐，不要拉伸 */
+}
+
+.designer-table tr {
+    vertical-align: top; /* 行内容顶部对齐，不要被拉伸 */
+}
+
+.designer-table td {
+    vertical-align: top; /* 单元格内容顶部对齐 */
+    height: inherit; /* 继承行高 */
+    max-height: inherit; /* 继承最大高度 */
 }
 
 /* 行高拖拽手柄（::after 伪元素） */
@@ -1926,12 +1944,16 @@ function getRowStyle(rowType: string) {
     user-select: none;
     padding: 0;
     margin: 0;
+    height: inherit; /* 继承行高，不要撑开 */
+    max-height: inherit; /* 继承最大高度限制 */
 }
 
 .table-column.th,
 .table-column.td {
     padding: 0;
     margin: 0;
+    height: inherit;
+    max-height: inherit;
 }
 
 .designer-table th,
@@ -1939,7 +1961,8 @@ function getRowStyle(rowType: string) {
     padding: 0;
     margin: 0;
     box-sizing: border-box;
-    overflow: visible;
+    overflow: hidden; /* 隐藏超出内容，防止撑开 */
+    height: inherit; /* 继承行高 */
 }
 
 /* 列选中样式 */
