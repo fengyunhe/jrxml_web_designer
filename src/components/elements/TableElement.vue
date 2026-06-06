@@ -1892,7 +1892,7 @@ function getRowStyle(rowType: string) {
 .cellDetail,
 .columnFooter,
 .tableFooter {
-    height: 30px;
+    /* 不设置默认高度，完全由JSON数据中的height属性决定 */
     position: relative;
     overflow: hidden; /* 防止内容撑开行高 */
 }
