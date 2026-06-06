@@ -1812,7 +1812,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, onMounted, watch } from "vue";
+import { computed, ref, onMounted, watch, nextTick } from "vue";
 import { useI18n } from "vue-i18n";
 import { NButton, NTabs, NTabPane, NRadioGroup, NRadioButton } from "naive-ui";
 import type { Band, SelectedElementInfo, TableDataset } from "../../../types";
@@ -2414,40 +2414,73 @@ watch(
     (newElement) => {
         if (newElement && newElement.type === "table") {
             // 从列中获取当前行高值（除以 rowSpan 还原单行高度）
+            // 优先从 columns 数组获取，如果为空则从 children 数组获取
+            let firstColumn: any = null;
             if (newElement.columns && newElement.columns.length > 0) {
-                const firstColumn = newElement.columns[0];
-                if (firstColumn) {
-                    const getBaseHeight = (cell: any) => {
-                        const h = cell?.element?.height ?? cell?.height ?? 30;
-                        const rs = cell?.rowSpan || 1;
-                        return rs > 1 ? Math.round(h / rs) : h;
-                    };
-                    tableRowHeights.value.tableHeader = getBaseHeight(
-                        firstColumn.tableHeader,
-                    );
-                    tableRowHeights.value.columnHeader = getBaseHeight(
-                        firstColumn.columnHeader,
-                    );
-                    tableRowHeights.value.detailCell = getBaseHeight(
-                        firstColumn.detailCell,
-                    );
-                    tableRowHeights.value.columnFooter = getBaseHeight(
-                        firstColumn.columnFooter,
-                    );
-                    tableRowHeights.value.tableFooter = getBaseHeight(
-                        firstColumn.tableFooter,
-                    );
-
-                    // 更新表格样式选择
-                    tableStyles.value.tableHeader =
-                        (firstColumn.tableHeader as any)?.style ?? "Table_TH";
-                    tableStyles.value.columnHeader =
-                        (firstColumn.columnHeader as any)?.style ?? "Table_CH";
-                    tableStyles.value.columnFooter =
-                        (firstColumn.columnFooter as any)?.style ?? "Table_CH";
-                    tableStyles.value.detailCell =
-                        (firstColumn.detailCell as any)?.style ?? "Table_TD";
+                firstColumn = newElement.columns[0];
+            } else if (newElement.children && newElement.children.length > 0) {
+                // 从 children 中找到第一个普通列
+                for (const item of newElement.children) {
+                    if ('detailCell' in item) {
+                        firstColumn = item;
+                        break;
+                    }
                 }
+            }
+
+            if (firstColumn) {
+                console.log("Watch触发! firstColumn.columnHeader:", {
+                    height: firstColumn.columnHeader?.height,
+                    rowSpan: firstColumn.columnHeader?.rowSpan,
+                    elementHeight: firstColumn.columnHeader?.element?.height,
+                });
+
+                const getBaseHeight = (cell: any) => {
+                    const h = cell?.element?.height ?? cell?.height;
+                    if (h === undefined || h === null || h === 0) {
+                        return undefined;
+                    }
+                    const rs = cell?.rowSpan || 1;
+                    const result = rs > 1 ? Math.round(h / rs) : h;
+                    console.log("getBaseHeight:", { inputHeight: h, rowSpan: rs, result });
+                    return result;
+                };
+                console.log("Watch更新tableRowHeights前的firstColumn.columnHeader:", firstColumn.columnHeader);
+                const headerHeight = getBaseHeight(firstColumn.tableHeader);
+                const colHeaderHeight = getBaseHeight(firstColumn.columnHeader);
+                const detailHeight = getBaseHeight(firstColumn.detailCell);
+                const footerHeight = getBaseHeight(firstColumn.columnFooter);
+                const tableFooterHeight = getBaseHeight(firstColumn.tableFooter);
+
+                console.log("Watch计算出的高度:", { headerHeight, colHeaderHeight, detailHeight, footerHeight, tableFooterHeight });
+
+                // 只有当获取到有效值时才更新，避免覆盖用户输入的值
+                if (headerHeight !== undefined) {
+                    tableRowHeights.value.tableHeader = headerHeight;
+                }
+                if (colHeaderHeight !== undefined) {
+                    console.log("Watch更新tableRowHeights.columnHeader:", colHeaderHeight);
+                    tableRowHeights.value.columnHeader = colHeaderHeight;
+                }
+                if (detailHeight !== undefined) {
+                    tableRowHeights.value.detailCell = detailHeight;
+                }
+                if (footerHeight !== undefined) {
+                    tableRowHeights.value.columnFooter = footerHeight;
+                }
+                if (tableFooterHeight !== undefined) {
+                    tableRowHeights.value.tableFooter = tableFooterHeight;
+                }
+
+                // 更新表格样式选择
+                tableStyles.value.tableHeader =
+                    (firstColumn.tableHeader as any)?.style ?? "Table_TH";
+                tableStyles.value.columnHeader =
+                    (firstColumn.columnHeader as any)?.style ?? "Table_CH";
+                tableStyles.value.columnFooter =
+                    (firstColumn.columnFooter as any)?.style ?? "Table_CH";
+                tableStyles.value.detailCell =
+                    (firstColumn.detailCell as any)?.style ?? "Table_TD";
             }
         }
     },
@@ -2457,6 +2490,9 @@ watch(
 // 更新所有列的行高
 function updateAllColumnRowHeights() {
     if (!currentElement.value || currentElement.value.type !== "table") return;
+
+    // 收集所有要处理的列，避免重复
+    const processedColumns = new Set<string>();
 
     console.log("开始更新所有列的行高:", {
         tableRowHeights: tableRowHeights.value,
@@ -2471,28 +2507,114 @@ function updateAllColumnRowHeights() {
     // 处理普通列
     if (currentElement.value.columns) {
         currentElement.value.columns.forEach((column) => {
-            updateColumnRowHeights(column);
+            if (!processedColumns.has(column.uuid)) {
+                processedColumns.add(column.uuid);
+                updateColumnRowHeights(column);
+            } else {
+                console.log("跳过重复列:", column.name || column.uuid);
+            }
         });
         console.log("普通列行高更新完成");
     }
 
     // 处理分组列
     if (currentElement.value.children) {
-        currentElement.value.children.forEach((group) => {
-            updateGroupRowHeights(group);
+        currentElement.value.children.forEach((item) => {
+            // 检查是分组还是普通列
+            if ('children' in item && item.children && item.children.length > 0) {
+                // 是ColumnGroup，递归处理
+                updateGroupRowHeights(item);
+            } else if ('detailCell' in item) {
+                // 是TableColumn（普通列），直接更新detailCell
+                console.log("更新顶层普通列detailCell:", item.name || item.uuid);
+                updateColumnRowHeights(item);
+            }
         });
         console.log("分组列行高更新完成");
     }
 
     console.log("所有列行高更新完成，表格元素:", currentElement.value);
+
+    // 在 emit 前检查合并列的高度
+    const tableElement = currentElement.value as any;
+    if (tableElement?.columns) {
+        tableElement.columns.forEach((col: any) => {
+            if (col.columnHeader && col.columnHeader.rowSpan && col.columnHeader.rowSpan > 1) {
+                console.log("emit前检查合并列:", {
+                    列名: col.name,
+                    columnHeaderHeight: col.columnHeader.height,
+                    elementHeight: col.columnHeader.element?.height,
+                    rowSpan: col.columnHeader.rowSpan,
+                });
+            }
+        });
+    }
+
+    // 使用nextTick确保Vue完成更新后再触发事件，避免嵌套响应式属性追踪不及时的问题
+    nextTick(() => {
+        console.log("nextTick: 触发更新事件");
+
+        // 在 nextTick 中再次检查高度
+        if (tableElement?.columns) {
+            tableElement.columns.forEach((col: any) => {
+                if (col.columnHeader && col.columnHeader.rowSpan && col.columnHeader.rowSpan > 1) {
+                    console.log("nextTick中检查合并列:", {
+                        列名: col.name,
+                        columnHeaderHeight: col.columnHeader.height,
+                        elementHeight: col.columnHeader.element?.height,
+                        rowSpan: col.columnHeader.rowSpan,
+                    });
+                }
+            });
+        }
+
+        emit("update:bands", props.bands);
+
+        // emit后立即检查
+        console.log("emit后立即检查合并列:");
+        if (tableElement?.columns) {
+            tableElement.columns.forEach((col: any) => {
+                if (col.columnHeader && col.columnHeader.rowSpan && col.columnHeader.rowSpan > 1) {
+                    console.log("emit后检查合并列:", {
+                        列名: col.name,
+                        columnHeaderHeight: col.columnHeader.height,
+                        elementHeight: col.columnHeader.element?.height,
+                        rowSpan: col.columnHeader.rowSpan,
+                    });
+                }
+            });
+        }
+
+        // 检查Vue是否在下一tick中修改了高度
+        nextTick(() => {
+            console.log("第二个nextTick检查合并列:");
+            if (tableElement?.columns) {
+                tableElement.columns.forEach((col: any) => {
+                    if (col.columnHeader && col.columnHeader.rowSpan && col.columnHeader.rowSpan > 1) {
+                        console.log("第二个nextTick检查:", {
+                            列名: col.name,
+                            columnHeaderHeight: col.columnHeader.height,
+                            elementHeight: col.columnHeader.element?.height,
+                            rowSpan: col.columnHeader.rowSpan,
+                        });
+                    }
+                });
+            }
+        });
+
+        emit("update-jrxml");
+    });
 }
 
 // 更新单个列的行高
 function updateColumnRowHeights(column: any) {
+    console.log("开始更新列的行高:", column);
+
     if (column.tableHeader) {
         // 更新tableHeader本身的高度
         const tableHeaderHeight = tableRowHeights.value.tableHeader;
         column.tableHeader.height = tableHeaderHeight;
+        console.log("更新tableHeader高度:", tableHeaderHeight);
 
         // 直接更新内部元素的高度，因为这些元素直接包含textField或staticText，而不是通过elements数组
         // 检查并更新reportElement的高度
@@ -2520,7 +2642,17 @@ function updateColumnRowHeights(column: any) {
     if (column.columnHeader) {
         // 更新columnHeader本身的高度
         const columnHeaderHeight = tableRowHeights.value.columnHeader;
+        console.log("更新columnHeader高度前:", {
+            当前值: column.columnHeader.height,
+            新值: columnHeaderHeight,
+            rowSpan: column.columnHeader.rowSpan,
+            element当前值: column.columnHeader.element?.height,
+        });
         column.columnHeader.height = columnHeaderHeight;
+        console.log("更新columnHeader.height后:", {
+            新值: column.columnHeader.height,
+            rowSpan: column.columnHeader.rowSpan,
+        });
 
         // 直接更新内部元素的高度，因为这些元素直接包含textField或staticText，而不是通过elements数组
         // 检查并更新reportElement的高度
@@ -2533,8 +2665,12 @@ function updateColumnRowHeights(column: any) {
 
         // 如果是合并列，更新高度为行高乘以行跨度
         if (column.columnHeader.rowSpan && column.columnHeader.rowSpan > 1) {
-            const mergedHeight =
-                columnHeaderHeight * column.columnHeader.rowSpan;
+            const mergedHeight = columnHeaderHeight * column.columnHeader.rowSpan;
+            console.log("合并列columnHeader高度计算:", {
+                行高: columnHeaderHeight,
+                rowSpan: column.columnHeader.rowSpan,
+                mergedHeight,
+            });
             column.columnHeader.height = mergedHeight;
 
             // 内部元素高度也需要相应调整
@@ -2549,6 +2685,7 @@ function updateColumnRowHeights(column: any) {
     if (column.detailCell) {
         // 更新detailCell本身的高度
         column.detailCell.height = tableRowHeights.value.detailCell;
+        console.log("更新detailCell高度:", tableRowHeights.value.detailCell, "列:", column);
         // 直接更新内部元素的高度，因为detailCell直接包含textField或staticText，而不是通过elements数组
         // 检查并更新reportElement的高度
         if (column.detailCell.reportElement) {
@@ -2790,7 +2927,15 @@ function updateGroupRowHeights(group: any) {
 
     // 递归更新子分组或列
     if (group.children) {
-        group.children.forEach((child: any) => {
+        console.log("分组内子项数量:", group.children.length);
+        group.children.forEach((child: any, index: number) => {
+            console.log(`处理子项[${index}]:`, {
+                name: child.name,
+                uuid: child.uuid,
+                hasDetailCell: !!child.detailCell,
+                hasChildren: !!child.children,
+                childType: child.children ? 'group' : 'column'
+            });
             if (child.children) {
                 // 子分组
                 updateGroupRowHeights(child);

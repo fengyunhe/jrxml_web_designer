@@ -498,7 +498,10 @@ function calculateRowHeight(row: any[]) {
 
         // 根据类型获取对应的高度
         if (cellContent && cellContent[props.type]) {
-            return cellContent[props.type].height || defaultHeight;
+            const cellHeight = cellContent[props.type].height || defaultHeight;
+            const rowSpan = cellContent[props.type].rowSpan || 1;
+            // For grouped cells with rowSpan > 1, UI should show single-row height
+            return rowSpan > 1 ? Math.round(cellHeight / rowSpan) : cellHeight;
         }
     }
 

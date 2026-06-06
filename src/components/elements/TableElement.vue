@@ -830,6 +830,35 @@ const isResizing = ref(false);
 const tableElement = computed(() => props.element as TableElementType);
 const columns = computed(() => tableElement.value.columns || []);
 
+// 收集所有列（包括分组内的列），用于高度计算
+const allColumnsForHeight = computed(() => {
+    const result: any[] = [];
+
+    // 递归提取所有列的函数
+    function extractColumns(items: any[]) {
+        if (!items) return;
+        items.forEach((item: any) => {
+            if ('detailCell' in item) {
+                // 是普通列（TableColumn）
+                result.push(item);
+            } else if ('children' in item && item.children) {
+                // 是分组（ColumnGroup），递归提取子列
+                extractColumns(item.children);
+            }
+        });
+    }
+
+    // 从 columns 数组中收集普通列
+    if (tableElement.value.columns) {
+        result.push(...tableElement.value.columns);
+    }
+    // 从 children 数组中递归收集所有列（包括嵌套分组中的列）
+    if (tableElement.value.children) {
+        extractColumns(tableElement.value.children);
+    }
+    return result;
+});
+
 // 列选中状态管理
 const selectedColumns = ref<number[]>([]);
 
@@ -1680,7 +1709,8 @@ const hasTableHeader = computed(() => {
 
 // 计算行高 - 取所有列中的最大值
 function getMaxCellHeight(getCell: (col: any) => any): number {
-    const cols = columns.value;
+    // 使用 allColumnsForHeight 来获取所有列（包括分组内的列）
+    const cols = allColumnsForHeight.value;
     if (cols.length === 0) return 30;
     let maxH = 0;
     for (const col of cols) {
