@@ -807,29 +807,6 @@ function generateStaticTextXML(element: any): string {
     xml += ` style="${element.style}"`;
   }
 
-  // rotation属性属于reportElement，不属于staticText
-  if (
-    element.rotation &&
-    ["None", "Left", "Right"].includes(element.rotation)
-  ) {
-    xml += ` rotation="${element.rotation}"`;
-  }
-
-  // textAdjust属性
-  if (element.textAdjust) {
-    xml += ` textAdjust="${element.textAdjust}"`;
-  } else if (element.isStretchWithOverflow !== undefined) {
-    const textAdjustValue = element.isStretchWithOverflow
-      ? "StretchHeight"
-      : "CutText";
-    xml += ` textAdjust="${textAdjustValue}"`;
-  }
-
-  // pattern属性
-  if (element.pattern) {
-    xml += ` pattern="${element.pattern}"`;
-  }
-
   xml += "/>\n";
 
   // 生成layout属性
@@ -860,6 +837,14 @@ function generateStaticTextXML(element: any): string {
     ["Left", "Center", "Right", "Justified"].includes(element.textAlignment)
   ) {
     textElementAttrs += ` textAlignment="${element.textAlignment}"`;
+  }
+
+  // rotation属性属于textElement，不属于staticText
+  if (
+    element.rotation &&
+    ["None", "Left", "Right", "UpsideDown"].includes(element.rotation)
+  ) {
+    textElementAttrs += ` rotation="${element.rotation}"`;
   }
 
   // 只添加非过时的verticalAlignment属性，确保符合DTD
@@ -949,11 +934,6 @@ function generateTextFieldXML(element: any): string {
   // 新增：书签层级
   if (element.bookmarkLevel !== undefined && element.bookmarkLevel > 0) {
     xml += ` bookmarkLevel="${element.bookmarkLevel}"`;
-  }
-
-  // 新增：忽略分页
-  if (element.isIgnorePagination !== undefined && element.isIgnorePagination) {
-    xml += ` isIgnorePagination="true"`;
   }
 
   xml += `>\n      <reportElement x="${toInt(element.x)}" y="${toInt(element.y)}" width="${toInt(element.width)}" height="${toInt(element.height)}"`;
@@ -1473,16 +1453,6 @@ function generateFrameXML(element: any): string {
   }
   if (element.style) {
     xml += ` style="${element.style}"`;
-  }
-
-  // 新增：忽略分页
-  if (element.isIgnorePagination !== undefined && element.isIgnorePagination) {
-    xml += ` isIgnorePagination="true"`;
-  }
-
-  // 新增：分裂类型
-  if (element.splitType) {
-    xml += ` splitType="${element.splitType}"`;
   }
 
   // 新增：是否移除空白行
