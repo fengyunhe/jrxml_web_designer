@@ -360,9 +360,11 @@ describe('Round-trip integrity: parse ↔ generate', () => {
       [],
       parsed.reportProperties
     );
-    expect(generated).toContain('rotation="Left"');
-    expect(generated).toContain('textAdjust="StretchHeight"');
-    expect(generated).toContain('pattern="#,##0.00"');
+    expect(generated).toContain('<textElement rotation="Left"');
+    expect(generated).not.toContain('textAdjust="StretchHeight"');
+    expect(generated).not.toContain('pattern="#,##0.00"');
+    expect(generated).not.toMatch(/<staticText[^>]*rotation=/);
+    expect(generated).not.toMatch(/<reportElement[^>]*rotation=/);
   });
 
   it('should regenerate report-level properties', () => {

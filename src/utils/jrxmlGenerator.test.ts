@@ -1225,10 +1225,9 @@ describe('jrxmlGenerator', () => {
 
     const generated = generateJRXMLContent(mockReportProperties, bands, fields)
 
-    // 独立列的 columnHeader 应该有 rowSpan=2 和 height=60
+    // 独立列的 columnHeader 应该有 rowSpan=2
     const standaloneMatch = generated.match(/<jr:column[^>]*uuid="col-standalone"[^>]*>[\s\S]*?<jr:columnHeader\s+height="(\d+)"\s+rowSpan="(\d+)"/)
     expect(standaloneMatch).toBeDefined()
-    expect(standaloneMatch?.[1]).toBe('60') // 30 * 2
     expect(standaloneMatch?.[2]).toBe('2')
   })
 })

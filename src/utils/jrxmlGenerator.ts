@@ -2058,20 +2058,10 @@ function preprocessTableElements(element: any) {
         // 检查高度是否能被rowSpan整除（说明已经是合并后的高度）
         // 如果能整除，说明已经是正确的合并高度，不再重新计算
         const isAlreadyMerged = column.columnHeader.height % chRowSpan === 0;
-        console.log("JRXML生成器columnHeader高度检查:", {
-          当前高度: column.columnHeader.height,
-          rowSpan: chRowSpan,
-          是否已合并: isAlreadyMerged,
-          能否整除: column.columnHeader.height % chRowSpan,
-        });
         if (!isAlreadyMerged) {
           // 不能整除，说明还是单行高度，需要乘以rowSpan
-          console.log("重新计算columnHeader高度:", column.columnHeader.height * chRowSpan);
           column.columnHeader.height = column.columnHeader.height * chRowSpan;
-        } else {
-          console.log("保持columnHeader高度不变:", column.columnHeader.height);
         }
-        // 否则保持不变（已经是正确的合并高度）
       }
       // 确保columnHeader中的元素尺寸等于columnHeader尺寸
       if (column.columnHeader.element) {
