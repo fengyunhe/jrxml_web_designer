@@ -340,7 +340,12 @@
     "alerts": {
       "generateJrxmlFirst": "请先生成 JRXML 内容"
     },
-    "downloadJRXML": "下载JRXML"
+    "downloadJRXML": "下载JRXML",
+    "validate": "XSD校验",
+    "validationSuccess": "校验通过",
+    "validationFailed": "校验失败",
+    "validationNoErrors": "JRXML内容符合XSD Schema规范，未发现错误。",
+    "validationErrorCount": "发现 {count} 个错误："
   },
   "zoom": {
     "zoomIn": "放大",

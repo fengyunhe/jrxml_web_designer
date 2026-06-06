@@ -27,9 +27,11 @@
     "@codemirror/state": "^6.5.4",
     "@codemirror/view": "^6.39.16",
     "naive-ui": "^2.43.2",
+    "uss-xsd-engine": "^0.2.1",
     "vscode-languageserver-types": "^3.17.5",
     "vue": "^3.5.28",
-    "vue-i18n": "^11.2.8"
+    "vue-i18n": "^11.2.8",
+    "xerces-wasm": "^1.0.0"
   },
   "devDependencies": {
     "@tauri-apps/cli": "^2.9.6",

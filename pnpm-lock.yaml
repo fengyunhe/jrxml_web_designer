@@ -29,6 +29,9 @@ importers:
       naive-ui:
         specifier: ^2.43.2
         version: 2.43.2(vue@3.5.28(typescript@5.9.3))
+      uss-xsd-engine:
+        specifier: ^0.2.1
+        version: 0.2.1
       vscode-languageserver-types:
         specifier: ^3.17.5
         version: 3.17.5
@@ -38,6 +41,9 @@ importers:
       vue-i18n:
         specifier: ^11.2.8
         version: 11.2.8(vue@3.5.28(typescript@5.9.3))
+      xerces-wasm:
+        specifier: ^1.0.0
+        version: 1.0.0
     devDependencies:
       '@tauri-apps/cli':
         specifier: ^2.9.6
@@ -1475,6 +1481,10 @@ packages:
   undici-types@7.16.0:
     resolution: {integrity: sha512-Zz+aZWSj8LE6zoxD+xrjh4VfkIG8Ya6LvYkZqtUQGJPZjYl53ypCaUwWqo7eI0x66KBGeRo+mlBEkMSeSZ38Nw==}
 
+  uss-xsd-engine@0.2.1:
+    resolution: {integrity: sha512-YSpQvBW7cTyFNQLh9x7yZKNrfby0kOr3sMy3V4aBqQbguJvnRCe499twBcdM+lw6/WRGqR9la2pChE6t7hbeuQ==}
+    engines: {node: '>=18'}
+
   vdirs@0.1.8:
     resolution: {integrity: sha512-H9V1zGRLQZg9b+GdMk8MXDN2Lva0zx72MPahDKc30v+DtwKjfyOSXWRIX4t2mhDubM1H09gPhWeth/BJWPHGUw==}
     peerDependencies:
@@ -1645,6 +1655,9 @@ packages:
         optional: true
       utf-8-validate:
         optional: true
+
+  xerces-wasm@1.0.0:
+    resolution: {integrity: sha512-ibORuNKk+kRBacDOQYPVnVpx8rO6cPzhgrP1apREsjpVQeatoJW4p02CnkvtxgkNsdGPX9CpHwj7xvVfiZwe0Q==}
 
   xml-name-validator@5.0.0:
     resolution: {integrity: sha512-EvGK8EJ3DhaHfbRlETOWAS5pO9MZITeauHKJyb8wyajUfQUenkIg2MvLDTZ4T/TgIcm3HU0TFBgWWboAZ30UHg==}
@@ -2919,6 +2932,8 @@ snapshots:
 
   undici-types@7.16.0: {}
 
+  uss-xsd-engine@0.2.1: {}
+
   vdirs@0.1.8(vue@3.5.28(typescript@5.9.3)):
     dependencies:
       evtd: 0.2.4
@@ -3061,6 +3076,8 @@ snapshots:
       strip-ansi: 7.1.2
 
   ws@8.19.0: {}
+
+  xerces-wasm@1.0.0: {}
 
   xml-name-validator@5.0.0: {}
 

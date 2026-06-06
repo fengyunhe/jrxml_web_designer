@@ -1,11 +1,12 @@
 <script setup lang="ts">
 import { ref, computed, nextTick, onMounted, onBeforeUnmount, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
-import { NButton } from 'naive-ui';
+import { NButton, NAlert } from 'naive-ui';
 import ResizablePanel from './ResizablePanel.vue';
 import PdfPreviewModal from '../modals/PdfPreviewModal.vue';
 import CodeMirrorEditor from '../editor/CodeMirrorEditor.vue';
 import { renderToHtml, renderToMultiPageHtml } from '../../utils/jrxmlHtmlRenderer';
+import { validateJRXML, type ValidationResult, type ValidationError } from '../../utils/jrxml/xsdValidator';
 import type { Band, ReportProperties } from '../../types';
 import {
   UI_CONSTANTS,
@@ -70,8 +71,7 @@ const bottomPanelHeight = ref(props.initialHeight);
 // 全屏状态
 const isFullscreen = ref(false);
 const originalPanelHeight = ref(props.initialHeight);
-const originalMaxSize = ref(400); // 原始最大高度
-const currentMaxSize = ref(400); // 当前最大高度
+const currentMaxSize = ref(window.innerHeight); // 不限制最大高度
 
 // 纸张规格定义
 const PAPER_SIZES = [
@@ -349,13 +349,12 @@ const toggleFullscreen = (): void => {
   if (isFullscreen.value) {
     // 进入全屏模式
     originalPanelHeight.value = bottomPanelHeight.value;
-    originalMaxSize.value = currentMaxSize.value;
     currentMaxSize.value = window.innerHeight; // 设置更大的最大高度
     bottomPanelHeight.value = window.innerHeight - 100; // 留出一些空间给其他UI元素
   } else {
     // 退出全屏模式
     bottomPanelHeight.value = originalPanelHeight.value;
-    currentMaxSize.value = originalMaxSize.value; // 恢复原始最大高度
+    currentMaxSize.value = window.innerHeight; // 恢复不限制最大高度
   }
 };
 
@@ -394,6 +393,64 @@ function handleKeyDown(event: KeyboardEvent) {
     }, 200);
   }
 }
+
+// 组件挂载时添加事件监听器
+onMounted(() => {
+  window.addEventListener('keydown', handleKeyDown);
+});
+
+// 验证相关状态
+const validationResult = ref<ValidationResult | null>(null);
+const isValidating = ref(false);
+
+// 执行XSD验证
+const runValidation = async () => {
+  if (!localJrxmlContent.value) {
+    alert(t('bottomPanel.alerts.generateJrxmlFirst'));
+    return;
+  }
+  
+  isValidating.value = true;
+  validationResult.value = null;
+  
+  try {
+    validationResult.value = await validateJRXML(localJrxmlContent.value);
+    
+    // 验证失败时自动放大底部面板
+    if (!validationResult.value.valid) {
+      bottomPanelHeight.value = window.innerHeight - 100;
+      currentMaxSize.value = window.innerHeight;
+      activeTab.value = 'jrxml';
+    }
+  } catch (error) {
+    validationResult.value = {
+      valid: false,
+      errors: [{
+        line: 0,
+        column: 0,
+        message: `验证失败: ${String(error)}`
+      }]
+    };
+    // 验证失败时自动放大底部面板
+    bottomPanelHeight.value = window.innerHeight - 100;
+    currentMaxSize.value = window.innerHeight;
+    activeTab.value = 'jrxml';
+  } finally {
+    isValidating.value = false;
+  }
+};
+
+// 清除验证结果
+const clearValidation = () => {
+  validationResult.value = null;
+};
+
+// 跳转到指定行
+const jumpToLine = (line: number, column: number) => {
+  if (codeMirrorEditorRef.value) {
+    codeMirrorEditorRef.value.jumpToLine(line, column);
+  }
+};
 
 // 组件挂载时添加事件监听器
 onMounted(() => {
@@ -544,8 +601,47 @@ onBeforeUnmount(() => {
             <n-button @click="regenerateJRXML" type="default" size="small">{{ t('bottomPanel.regenerate') }}</n-button>
             <n-button @click="downloadJRXML" type="primary" size="small">{{ t('bottomPanel.downloadJRXML') }}</n-button>
             <n-button @click="openPdfPreview" type="info" size="small">{{ t('bottomPanel.previewPDF') }}</n-button>
+            <n-button 
+              @click="runValidation" 
+              :loading="isValidating"
+              type="warning" 
+              size="small"
+              class="validation-btn"
+            >
+              {{ t('bottomPanel.validate') }}
+            </n-button>
           </div>
         </div>
+        
+        <n-alert
+          v-if="validationResult"
+          :type="validationResult.valid ? 'success' : 'error'"
+          :title="validationResult.valid ? t('bottomPanel.validationSuccess') : t('bottomPanel.validationFailed')"
+          closable
+          @close="clearValidation"
+          class="validation-result"
+        >
+          <div v-if="validationResult.valid">
+            <p>{{ t('bottomPanel.validationNoErrors') }}</p>
+          </div>
+          <div v-else>
+            <p>{{ t('bottomPanel.validationErrorCount', { count: validationResult.errors.length }) }}</p>
+            <ul class="validation-error-list">
+              <li 
+                v-for="(error, index) in validationResult.errors" 
+                :key="index"
+                :class="[error.severity, { 'clickable': error.line > 0 }]"
+                @click="error.line > 0 && jumpToLine(error.line, error.column)"
+              >
+                <span class="error-location">
+                  {{ error.line > 0 ? `[${error.line}:${error.column}]` : '[?]' }}
+                </span>
+                <span class="error-message">{{ error.message }}</span>
+              </li>
+            </ul>
+          </div>
+        </n-alert>
+        
         <div class="jrxml-content">
           <CodeMirrorEditor
             ref="codeMirrorEditorRef"
@@ -997,5 +1093,60 @@ onBeforeUnmount(() => {
   display: block;
 }
 
+.validation-btn {
+  margin-left: auto;
+}
+
+.validation-result {
+  margin: 8px;
+  max-height: 150px;
+  overflow-y: auto;
+}
+
+.validation-error-list {
+  margin: 8px 0 0 0;
+  padding-left: 16px;
+  list-style: none;
+  max-height: 100px;
+  overflow-y: auto;
+}
+
+.validation-error-list li {
+  padding: 4px 0;
+  border-bottom: 1px solid #eee;
+  font-size: 13px;
+}
+
+.validation-error-list li:last-child {
+  border-bottom: none;
+}
+
+.validation-error-list li.clickable {
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.validation-error-list li.clickable:hover {
+  background-color: #f5f5f5;
+}
+
+.validation-error-list .error-location {
+  color: #999;
+  margin-right: 8px;
+  font-family: monospace;
+}
+
+.validation-error-list .error-message {
+  color: #dc3545;
+}
+
+.validation-error-list .warning .error-message {
+  color: #ffc107;
+}
+
+.validation-error-list .fatal .error-message {
+  color: #dc3545;
+  font-weight: bold;
+}
 
 </style>

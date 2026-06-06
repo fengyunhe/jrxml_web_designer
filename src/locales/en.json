@@ -340,7 +340,12 @@
     "alerts": {
       "generateJrxmlFirst": "Please generate JRXML content first"
     },
-    "downloadJRXML": "Download JRXML"
+    "downloadJRXML": "Download JRXML",
+    "validate": "Validate XSD",
+    "validationSuccess": "Validation Passed",
+    "validationFailed": "Validation Failed",
+    "validationNoErrors": "JRXML content is valid according to XSD Schema.",
+    "validationErrorCount": "Found {count} errors:"
   },
   "zoom": {
     "zoomIn": "Zoom In",

@@ -365,6 +365,31 @@ const scrollToResult = (index: number) => {
   }
 };
 
+// 跳转到指定行
+const jumpToLine = (line: number, column: number) => {
+  if (!editorView) return;
+  
+  const doc = editorView.state.doc;
+  const lineInfo = doc.line(line);
+  
+  if (lineInfo) {
+    const position = lineInfo.from + (column - 1);
+    
+    editorView.dispatch({
+      selection: { anchor: position, head: position }
+    });
+    
+    editorView.dispatch({
+      effects: EditorView.scrollIntoView(position, {
+        yMargin: 50,
+        xMargin: 10
+      })
+    });
+    
+    editorView.focus();
+  }
+};
+
 // 暴露方法给父组件
 defineExpose({
   // 聚焦编辑器
@@ -376,7 +401,10 @@ defineExpose({
   getEditor: () => editorView,
   
   // 打开搜索栏
-  openSearch: toggleSearch
+  openSearch: toggleSearch,
+  
+  // 跳转到指定行
+  jumpToLine
 });
 </script>
 
