@@ -1855,13 +1855,13 @@ function getRowStyle(rowType: string) {
 <style scoped>
 .table-content {
     width: 100%;
-    height: 100%;
+    /* 不设置height，避免被继承导致行高被拉伸 */
     overflow: hidden;
 }
 
 .designer-table {
     width: 100%;
-    height: 100%;
+    /* 不设置height，避免被td继承导致行高被拉伸 */
     border-collapse: collapse;
     border-spacing: 0;
     table-layout: fixed; /* 固定表格布局，防止被内容撑开 */
