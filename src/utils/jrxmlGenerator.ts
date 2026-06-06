@@ -807,28 +807,7 @@ function generateStaticTextXML(element: any): string {
     xml += ` style="${element.style}"`;
   }
 
-  // rotation属性属于reportElement，不属于staticText
-  if (
-    element.rotation &&
-    ["None", "Left", "Right"].includes(element.rotation)
-  ) {
-    xml += ` rotation="${element.rotation}"`;
-  }
-
-  // textAdjust属性
-  if (element.textAdjust) {
-    xml += ` textAdjust="${element.textAdjust}"`;
-  } else if (element.isStretchWithOverflow !== undefined) {
-    const textAdjustValue = element.isStretchWithOverflow
-      ? "StretchHeight"
-      : "CutText";
-    xml += ` textAdjust="${textAdjustValue}"`;
-  }
-
-  // pattern属性
-  if (element.pattern) {
-    xml += ` pattern="${element.pattern}"`;
-  }
+  // rotation和textAdjust属性不属于reportElement，将在textElement或textField中处理
 
   xml += "/>\n";
 
@@ -843,6 +822,14 @@ function generateStaticTextXML(element: any): string {
 
   // 确保始终包含textElement和font元素，符合DTD结构
   let textElementAttrs = "";
+
+  // rotation属性属于textElement，不属于reportElement
+  if (
+    element.rotation &&
+    ["None", "Left", "Right", "UpsideDown"].includes(element.rotation)
+  ) {
+    textElementAttrs += ` rotation="${element.rotation}"`;
+  }
 
   // 优先使用非过时的markup属性，只有在没有markup属性时才使用过时的isStyledText属性作为fallback
   if (element.markup) {
@@ -999,6 +986,15 @@ function generateTextFieldXML(element: any): string {
 
   // 添加文本元素配置，确保textAlignment符合DTD
   let textElementAttrs = "";
+  
+  // rotation属性属于textElement，不属于reportElement
+  if (
+    element.rotation &&
+    ["None", "Left", "Right", "UpsideDown"].includes(element.rotation)
+  ) {
+    textElementAttrs += ` rotation="${element.rotation}"`;
+  }
+  
   if (
     element.textAlignment &&
     ["Left", "Center", "Right", "Justified"].includes(element.textAlignment)
