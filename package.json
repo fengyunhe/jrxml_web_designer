@@ -34,7 +34,7 @@
     "xerces-wasm": "^1.0.0"
   },
   "devDependencies": {
-    "@tauri-apps/cli": "^2.9.6",
+    "@tauri-apps/cli": "^2.10.1",
     "@testing-library/jest-dom": "^6.9.1",
     "@types/node": "^25.0.10",
     "@vitejs/plugin-vue": "^6.0.4",
