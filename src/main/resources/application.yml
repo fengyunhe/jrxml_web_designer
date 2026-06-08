@@ -1,0 +1,28 @@
+server:
+  port: 8084
+
+spring:
+  application:
+    name: jrxml-preview-server
+  
+  # Jackson配置
+  jackson:
+    default-property-inclusion: non_null
+    
+  # profiles
+  profiles:
+    active: default
+
+# 日志配置
+logging:
+  level:
+    root: INFO
+    cn.firegod.pdfpreviewserver: DEBUG
+    org.springframework: INFO
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
+
+# JasperReports配置
+jasperreports:
+  font:
+    dir: classpath:fonts/

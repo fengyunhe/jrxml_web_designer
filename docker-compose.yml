@@ -1,0 +1,22 @@
+version: '3.8'
+
+services:
+  jrxml-preview-server:
+    build: .
+    container_name: jrxml-preview-server
+    ports:
+      - "8084:8084"
+    environment:
+      - SERVER_PORT=8084
+      - JAVA_OPTS=-Xmx512m -Xms256m
+      - SPRING_PROFILES_ACTIVE=prod
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8084/api/export/formats"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+networks:
+  default:
+    driver: bridge
