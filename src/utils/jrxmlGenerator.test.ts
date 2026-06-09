@@ -101,12 +101,12 @@ describe('jrxmlGenerator', () => {
 
   it('should include all band types present in the bands array', () => {
     const jrxml = generateJRXMLContent(mockReportProperties, mockBands, [], [])
-    
-    // Check that all band types are included
-    expect(jrxml).toContain('<band height="80">')
-    expect(jrxml).toContain('<band height="50">')
-    expect(jrxml).toContain('<band height="100">')
-    
+
+    // Check that all band types are included (with UUID attribute)
+    expect(jrxml).toMatch(/<band height="80" uuid="[^"]*">/)
+    expect(jrxml).toMatch(/<band height="50" uuid="[^"]*">/)
+    expect(jrxml).toMatch(/<band height="100" uuid="[^"]*">/)
+
     // Check that band sections are properly closed
     expect(jrxml).toContain('</band>')
   })
@@ -160,11 +160,11 @@ describe('jrxmlGenerator', () => {
         elements: []
       }
     ]
-    
+
     const jrxml = generateJRXMLContent(mockReportProperties, bandsWithNoElements, [], [])
-    
-    // Should still include the band but no elements inside
-    expect(jrxml).toContain('<band height="80">')
+
+    // Should still include the band but no elements inside (with UUID)
+    expect(jrxml).toMatch(/<band height="80" uuid="[^"]*">/)
     expect(jrxml).toContain('</band>')
   })
 
@@ -182,12 +182,12 @@ describe('jrxmlGenerator', () => {
     const jrxml = generateJRXMLContent(mockReportProperties, mockBands, fields, parameters)
     
     // Check that fields are included
-    expect(jrxml).toContain('<field name="field1" class="java.lang.String"/>')
-    expect(jrxml).toContain('<field name="field2" class="java.lang.Integer"/>')
+    expect(jrxml).toMatch(/<field name="field1" class="java.lang.String" uuid="[^"]*"\/>/)
+    expect(jrxml).toMatch(/<field name="field2" class="java.lang.Integer" uuid="[^"]*"\/>/)
     
     // Check that parameters are included (non-self-closing format)
-    expect(jrxml).toContain('<parameter name="param1" class="java.lang.String">')
-    expect(jrxml).toContain('<parameter name="param2" class="java.util.Date">')
+    expect(jrxml).toMatch(/<parameter name="param1" class="java.lang.String" uuid="[^"]*">/)
+    expect(jrxml).toMatch(/<parameter name="param2" class="java.util.Date" uuid="[^"]*">/)
   })
 
   it('should generate valid XML that can be parsed', () => {
@@ -235,8 +235,8 @@ describe('jrxmlGenerator', () => {
     const jrxml = generateJRXMLContent(mockReportProperties, bandsWithMissingField, fields, [])
     
     // Should include both the existing field and the missing field (with default class)
-    expect(jrxml).toContain('<field name="existing_field" class="java.lang.String"/>')
-    expect(jrxml).toContain('<field name="missing_field" class="java.lang.String"/>')
+    expect(jrxml).toMatch(/<field name="existing_field" class="java.lang.String" uuid="[^"]*"\/>/)
+    expect(jrxml).toMatch(/<field name="missing_field" class="java.lang.String" uuid="[^"]*"\/>/)
   })
 
   it('should add default margins when not provided', () => {
@@ -274,8 +274,8 @@ describe('jrxmlGenerator', () => {
     const jrxml = generateJRXMLContent(mockReportProperties, mockBands, [], parameters)
     
     // Both parameters should be included
-    expect(jrxml).toContain('<parameter name="paramWithDefault" class="java.lang.String">')
-    expect(jrxml).toContain('<parameter name="paramWithoutDefault" class="java.lang.Integer">')
+    expect(jrxml).toMatch(/<parameter name="paramWithDefault" class="java.lang.String" uuid="[^"]*">/)
+    expect(jrxml).toMatch(/<parameter name="paramWithoutDefault" class="java.lang.Integer" uuid="[^"]*">/)
     
     // Param with default should have defaultValueExpression
     expect(jrxml).toContain('<defaultValueExpression><![CDATA[default_value]]></defaultValueExpression>')
@@ -423,8 +423,8 @@ describe('jrxmlGenerator', () => {
     expect(jrxml).toContain('<textFieldExpression><![CDATA[$F{field1} + " - " + $F{field2}]]></textFieldExpression>')
     
     // Should automatically add both fields with default class
-    expect(jrxml).toContain('<field name="field1" class="java.lang.String"/>')
-    expect(jrxml).toContain('<field name="field2" class="java.lang.String"/>')
+    expect(jrxml).toMatch(/<field name="field1" class="java.lang.String" uuid="[^"]*"\/>/)
+    expect(jrxml).toMatch(/<field name="field2" class="java.lang.String" uuid="[^"]*"\/>/)
   })
 
   it('should handle various element types', () => {
