@@ -4028,6 +4028,27 @@ const startResizingElement = (event: MouseEvent, bandIndex: number, elementIndex
         // 再次限制尺寸，确保不超出边界
         newWidth = Math.max(20, Math.min(newWidth, maxElementWidth));
         newHeight = Math.max(20, Math.min(newHeight, availableHeight));
+      } else if (e.altKey) {
+        // 如果按下ALT键，锁定1:1宽高比
+        // 计算基于宽度的1:1高度和基于高度的1:1宽度
+        const size1x1FromWidth = newWidth;
+        const size1x1FromHeight = newHeight;
+
+        // 选择变化量更大的维度作为基准
+        const widthChange = Math.abs(newWidth - resizingInfo.value.startWidth);
+        const heightChange = Math.abs(newHeight - resizingInfo.value.startHeight);
+
+        if (widthChange >= heightChange) {
+          // 以宽度为基准，高度等于宽度
+          newHeight = size1x1FromWidth;
+        } else {
+          // 以高度为基准，宽度等于高度
+          newWidth = size1x1FromHeight;
+        }
+
+        // 再次限制尺寸，确保不超出边界
+        newWidth = Math.max(20, Math.min(newWidth, maxElementWidth));
+        newHeight = Math.max(20, Math.min(newHeight, availableHeight));
       }
 
       // 先保存临时尺寸
