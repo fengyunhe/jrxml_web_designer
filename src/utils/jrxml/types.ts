@@ -13,12 +13,14 @@ export interface ReportProperties {
 export interface Field {
   name: string;
   class: string;
+  uuid?: string;
   properties?: Record<string, string>;
 }
 
 export interface Parameter {
   name: string;
   class: string;
+  uuid?: string;
   defaultValue?: string;
 }
 
@@ -33,6 +35,7 @@ export interface SubDataset {
 export interface Variable {
   name: string;
   class: string;
+  uuid?: string;
   calculationType?: string;
   resetType?: string;
   resetGroup?: string;

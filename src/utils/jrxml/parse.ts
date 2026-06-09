@@ -98,7 +98,24 @@ export function parseJRXMLContent(jrxmlContent: string): {
       const name = child.getAttribute("name");
       const className = child.getAttribute("class") || "java.lang.String";
       if (name) {
-        fields.push({ name, class: className });
+        const field: Field = { name, class: className };
+        // 提取UUID（如果存在）
+        const uuid = child.getAttribute("uuid");
+        if (uuid) field.uuid = uuid;
+        // 提取properties（如果存在）
+        const properties: Record<string, string> = {};
+        const propertyElems = child.querySelectorAll("property");
+        propertyElems.forEach((propElem) => {
+          const propName = propElem.getAttribute("name");
+          const propValue = propElem.getAttribute("value");
+          if (propName && propValue) {
+            properties[propName] = propValue;
+          }
+        });
+        if (Object.keys(properties).length > 0) {
+          field.properties = properties;
+        }
+        fields.push(field);
       }
     }
   });
@@ -111,6 +128,9 @@ export function parseJRXMLContent(jrxmlContent: string): {
       const className = child.getAttribute("class") || "java.lang.String";
       if (name) {
         const param: Parameter = { name, class: className };
+        // 提取UUID（如果存在）
+        const uuid = child.getAttribute("uuid");
+        if (uuid) param.uuid = uuid;
         const defaultValueExpr = child.querySelector("defaultValueExpression");
         if (defaultValueExpr && defaultValueExpr.textContent) {
           param.defaultValue = defaultValueExpr.textContent.trim();
@@ -210,6 +230,9 @@ export function parseJRXMLContent(jrxmlContent: string): {
       const className = child.getAttribute("class") || "java.lang.String";
       if (name) {
         const variable: Variable = { name, class: className };
+        // 提取UUID（如果存在）
+        const uuid = child.getAttribute("uuid");
+        if (uuid) variable.uuid = uuid;
         const calcType = child.getAttribute("calculation");
         if (calcType) variable.calculationType = calcType;
         const resetType = child.getAttribute("resetType");
@@ -238,6 +261,10 @@ export function parseJRXMLContent(jrxmlContent: string): {
         name,
         expression: "",
       };
+
+      // 提取UUID（如果存在）
+      const uuid = child.getAttribute("uuid");
+      if (uuid) group.uuid = uuid;
 
       // 解析分组表达式
       const groupExpression = child.querySelector("groupExpression");

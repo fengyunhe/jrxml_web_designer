@@ -146,6 +146,7 @@ export interface Box {
 // 分组接口
 export interface ReportGroup {
   name: string;
+  uuid?: string;
   expression: string;
   isStartNewPage?: boolean;
   isRepeatHeader?: boolean;
