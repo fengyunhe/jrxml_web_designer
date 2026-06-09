@@ -156,7 +156,7 @@ export function generateJRXMLContent(
         if (dataset.fields && dataset.fields.length > 0) {
           dataset.fields.forEach((field: any) => {
             if (field.name && field.class) {
-              jrxml += `    <field name="${field.name}" class="${field.class}" uuid="${generateUUID()}">\n`;
+              jrxml += `    <field name="${field.name}" class="${field.class}">\n`;
 
               // 添加字段属性
               if (field.properties) {
@@ -185,7 +185,7 @@ export function generateJRXMLContent(
           typeof field.properties === "object" &&
           !Array.isArray(field.properties)
         ) {
-          jrxml += `  <field name="${field.name}" class="${field.class}" uuid="${generateUUID()}">\n`;
+          jrxml += `  <field name="${field.name}" class="${field.class}">\n`;
           Object.entries(field.properties).forEach(([key, value]) => {
             if (key && value) {
               jrxml += `    <property name="${key}" value="${value}"/>\n`;
@@ -193,7 +193,7 @@ export function generateJRXMLContent(
           });
           jrxml += `  </field>\n`;
         } else {
-          jrxml += `  <field name="${field.name}" class="${field.class}" uuid="${generateUUID()}"/>\n`;
+          jrxml += `  <field name="${field.name}" class="${field.class}"/>\n`;
         }
       }
     });
