@@ -25,7 +25,7 @@
     "@codemirror/language": "^6.12.1",
     "@codemirror/lint": "^6.9.3",
     "@codemirror/state": "^6.5.4",
-    "@codemirror/view": "^6.39.16",
+    "@codemirror/view": "^6.43.0",
     "naive-ui": "^2.43.2",
     "uss-xsd-engine": "^0.2.1",
     "vscode-languageserver-types": "^3.17.5",
