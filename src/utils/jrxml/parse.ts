@@ -261,10 +261,26 @@ export function parseJRXMLContent(jrxmlContent: string): {
         if (uuid) variable.uuid = uuid;
         const calcType = child.getAttribute("calculation");
         if (calcType) variable.calculationType = calcType;
+        // 提取incrementType（如果存在，默认"None"）
+        if (child.hasAttribute("incrementType")) {
+          variable.incrementType = child.getAttribute("incrementType") || "None";
+        }
+        // 提取incrementGroup（如果存在）
+        if (child.hasAttribute("incrementGroup")) {
+          variable.incrementGroup = child.getAttribute("incrementGroup") || undefined;
+        }
+        // 提取calculationGroup（如果存在）
+        if (child.hasAttribute("calculationGroup")) {
+          variable.calculationGroup = child.getAttribute("calculationGroup") || undefined;
+        }
         const resetType = child.getAttribute("resetType");
         if (resetType) variable.resetType = resetType;
         const resetGroup = child.getAttribute("resetGroup");
         if (resetGroup) variable.resetGroup = resetGroup;
+        // 提取isInitialized（如果存在，默认false）
+        if (child.hasAttribute("isInitialized")) {
+          variable.isInitialized = child.getAttribute("isInitialized") === "true";
+        }
         const exprElem = child.querySelector("variableExpression");
         if (exprElem && exprElem.textContent)
           variable.expression = exprElem.textContent.trim();
@@ -302,12 +318,36 @@ export function parseJRXMLContent(jrxmlContent: string): {
       if (child.hasAttribute("isStartNewPage")) {
         group.isStartNewPage = child.getAttribute("isStartNewPage") === "true";
       }
+      // 提取isStartNewColumn（如果存在，默认false）
+      if (child.hasAttribute("isStartNewColumn")) {
+        group.isStartNewColumn = child.getAttribute("isStartNewColumn") === "true";
+      }
       if (child.hasAttribute("isRepeatHeader")) {
         group.isRepeatHeader = child.getAttribute("isRepeatHeader") === "true";
+      }
+      // 提取isReprintHeaderOnEachPage（如果存在，默认false）
+      if (child.hasAttribute("isReprintHeaderOnEachPage")) {
+        group.isReprintHeaderOnEachPage = child.getAttribute("isReprintHeaderOnEachPage") === "true";
       }
       if (child.hasAttribute("isResetPageNumber")) {
         group.isResetPageNumber =
           child.getAttribute("isResetPageNumber") === "true";
+      }
+      // 提取isHideColumnHeader（如果存在，默认false）
+      if (child.hasAttribute("isHideColumnHeader")) {
+        group.isHideColumnHeader = child.getAttribute("isHideColumnHeader") === "true";
+      }
+      // 提取isKeepTogether（如果存在，默认false）
+      if (child.hasAttribute("isKeepTogether")) {
+        group.isKeepTogether = child.getAttribute("isKeepTogether") === "true";
+      }
+      // 提取isKeepFooterTogether（如果存在，默认false）
+      if (child.hasAttribute("isKeepFooterTogether")) {
+        group.isKeepFooterTogether = child.getAttribute("isKeepFooterTogether") === "true";
+      }
+      // 提取minHeightToStartNewPage（如果存在，默认0）
+      if (child.hasAttribute("minHeightToStartNewPage")) {
+        group.minHeightToStartNewPage = parseInt(child.getAttribute("minHeightToStartNewPage") || "0");
       }
 
       // 解析分组头 (groupHeader)

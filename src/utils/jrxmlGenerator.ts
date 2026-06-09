@@ -211,11 +211,27 @@ export function generateJRXMLContent(
         ) {
           attrs += ` calculation="${variable.calculationType}"`;
         }
+        // 添加incrementType属性（如果不是默认值"None"）
+        if (variable.incrementType && variable.incrementType !== "None") {
+          attrs += ` incrementType="${variable.incrementType}"`;
+        }
+        // 添加incrementGroup属性（如果存在）
+        if (variable.incrementGroup) {
+          attrs += ` incrementGroup="${variable.incrementGroup}"`;
+        }
+        // 添加calculationGroup属性（如果存在）
+        if (variable.calculationGroup) {
+          attrs += ` calculationGroup="${variable.calculationGroup}"`;
+        }
         if (variable.resetType) {
           attrs += ` resetType="${variable.resetType}"`;
         }
         if (variable.resetGroup) {
           attrs += ` resetGroup="${variable.resetGroup}"`;
+        }
+        // 添加isInitialized属性（如果不是默认值false）
+        if (variable.isInitialized) {
+          attrs += ` isInitialized="true"`;
         }
         jrxml += `  <variable ${attrs}>\n`;
         if (variable.expression) {
@@ -236,8 +252,22 @@ export function generateJRXMLContent(
       if (group.name) {
         let groupAttrs = `name="${group.name}" uuid="${generateUUID()}"`;
         if (group.isStartNewPage) groupAttrs += ' isStartNewPage="true"';
+        // 添加isStartNewColumn属性（如果不是默认值false）
+        if (group.isStartNewColumn) groupAttrs += ' isStartNewColumn="true"';
         if (group.isRepeatHeader) groupAttrs += ' isRepeatHeader="true"';
+        // 添加isReprintHeaderOnEachPage属性（如果不是默认值false）
+        if (group.isReprintHeaderOnEachPage) groupAttrs += ' isReprintHeaderOnEachPage="true"';
         if (group.isResetPageNumber) groupAttrs += ' isResetPageNumber="true"';
+        // 添加isHideColumnHeader属性（如果不是默认值false）
+        if (group.isHideColumnHeader) groupAttrs += ' isHideColumnHeader="true"';
+        // 添加isKeepTogether属性（如果不是默认值false）
+        if (group.isKeepTogether) groupAttrs += ' isKeepTogether="true"';
+        // 添加isKeepFooterTogether属性（如果不是默认值false）
+        if (group.isKeepFooterTogether) groupAttrs += ' isKeepFooterTogether="true"';
+        // 添加minHeightToStartNewPage属性（如果不是默认值0）
+        if (group.minHeightToStartNewPage && group.minHeightToStartNewPage > 0) {
+          groupAttrs += ` minHeightToStartNewPage="${group.minHeightToStartNewPage}"`;
+        }
         jrxml += `  <group ${groupAttrs}>\n`;
         if (group.expression) {
           jrxml += `    <groupExpression><![CDATA[${group.expression}]]></groupExpression>\n`;

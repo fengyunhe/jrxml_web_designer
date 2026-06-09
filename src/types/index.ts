@@ -149,8 +149,14 @@ export interface ReportGroup {
   uuid?: string;
   expression: string;
   isStartNewPage?: boolean;
+  isStartNewColumn?: boolean;
   isRepeatHeader?: boolean;
+  isReprintHeaderOnEachPage?: boolean;
   isResetPageNumber?: boolean;
+  isHideColumnHeader?: boolean;
+  isKeepTogether?: boolean;
+  isKeepFooterTogether?: boolean;
+  minHeightToStartNewPage?: number;
   header?: Band;
   footer?: Band;
 }

@@ -53,8 +53,12 @@ export interface Variable {
   class: string;
   uuid?: string;
   calculationType?: string;
+  incrementType?: string;
+  incrementGroup?: string;
+  calculationGroup?: string;
   resetType?: string;
   resetGroup?: string;
+  isInitialized?: boolean;
   expression?: string;
   initialValueExpression?: string;
 }
