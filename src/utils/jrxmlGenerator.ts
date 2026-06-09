@@ -2,6 +2,7 @@
 import type { DesignElement, BandType, Band, ReportGroup } from "../types";
 import type { ReportProperties, Field, Parameter } from "./jrxml/types";
 import { buildJasperReportOpenTag } from "./jrxml/xmlBuilder";
+import { generateUUID } from "./jrxml/uuidGenerator";
 
 export type { ReportProperties, Field, Parameter } from "./jrxml/types";
 
@@ -99,7 +100,7 @@ export function generateJRXMLContent(
     jrxml += "\n  <!-- 报表参数定义 -->\n";
     parameters.forEach((param) => {
       if (param.name && param.class) {
-        jrxml += `  <parameter name="${param.name}" class="${param.class}">\n`;
+        jrxml += `  <parameter name="${param.name}" class="${param.class}" uuid="${generateUUID()}">\n`;
         if (param.defaultValue !== undefined) {
           jrxml += `    <defaultValueExpression><![CDATA[${param.defaultValue}]]></defaultValueExpression>\n`;
         }
@@ -146,7 +147,7 @@ export function generateJRXMLContent(
         if (dataset.fields && dataset.fields.length > 0) {
           dataset.fields.forEach((field: any) => {
             if (field.name && field.class) {
-              jrxml += `    <field name="${field.name}" class="${field.class}">\n`;
+              jrxml += `    <field name="${field.name}" class="${field.class}" uuid="${generateUUID()}">\n`;
 
               // 添加字段属性
               if (field.properties) {
@@ -175,7 +176,7 @@ export function generateJRXMLContent(
           typeof field.properties === "object" &&
           !Array.isArray(field.properties)
         ) {
-          jrxml += `  <field name="${field.name}" class="${field.class}">\n`;
+          jrxml += `  <field name="${field.name}" class="${field.class}" uuid="${generateUUID()}">\n`;
           Object.entries(field.properties).forEach(([key, value]) => {
             if (key && value) {
               jrxml += `    <property name="${key}" value="${value}"/>\n`;
@@ -183,7 +184,7 @@ export function generateJRXMLContent(
           });
           jrxml += `  </field>\n`;
         } else {
-          jrxml += `  <field name="${field.name}" class="${field.class}"/>\n`;
+          jrxml += `  <field name="${field.name}" class="${field.class}" uuid="${generateUUID()}"/>\n`;
         }
       }
     });
@@ -194,7 +195,7 @@ export function generateJRXMLContent(
     jrxml += "\n  <!-- 报表变量定义 -->\n";
     variables.forEach((variable) => {
       if (variable.name && variable.class) {
-        let attrs = `name="${variable.name}" class="${variable.class}"`;
+        let attrs = `name="${variable.name}" class="${variable.class}" uuid="${generateUUID()}"`;
         if (
           variable.calculationType &&
           variable.calculationType !== "Nothing"
@@ -224,7 +225,7 @@ export function generateJRXMLContent(
     jrxml += "\n  <!-- 报表分组定义 -->\n";
     groups.forEach((group) => {
       if (group.name) {
-        let groupAttrs = `name="${group.name}"`;
+        let groupAttrs = `name="${group.name}" uuid="${generateUUID()}"`;
         if (group.isStartNewPage) groupAttrs += ' isStartNewPage="true"';
         if (group.isRepeatHeader) groupAttrs += ' isRepeatHeader="true"';
         if (group.isResetPageNumber) groupAttrs += ' isResetPageNumber="true"';
@@ -237,7 +238,7 @@ export function generateJRXMLContent(
           (group.header.elements.length > 0 || group.header.height > 0)
         ) {
           jrxml += `    <groupHeader>\n`;
-          jrxml += `      <band height="${group.header.height}">\n`;
+          jrxml += `      <band height="${group.header.height}" uuid="${generateUUID()}">\n`;
           group.header.elements.forEach((element) => {
             const validatedElement = validateElementPosition(element);
             jrxml += generateElementXML(validatedElement);
@@ -250,7 +251,7 @@ export function generateJRXMLContent(
           (group.footer.elements.length > 0 || group.footer.height > 0)
         ) {
           jrxml += `    <groupFooter>\n`;
-          jrxml += `      <band height="${group.footer.height}">\n`;
+          jrxml += `      <band height="${group.footer.height}" uuid="${generateUUID()}">\n`;
           group.footer.elements.forEach((element) => {
             const validatedElement = validateElementPosition(element);
             jrxml += generateElementXML(validatedElement);
@@ -269,7 +270,7 @@ export function generateJRXMLContent(
       jrxml += `\n  <${band.type}>`;
 
       // 根据XSD规范，height属性应该在band元素上
-      let bandAttributes = `height="${band.height}"`;
+      let bandAttributes = `height="${band.height}" uuid="${generateUUID()}"`;
 
       // 优先使用非过时的splitType属性，只有在没有splitType属性时才使用过时的isSplitAllowed属性作为fallback
       if (band.splitType) {

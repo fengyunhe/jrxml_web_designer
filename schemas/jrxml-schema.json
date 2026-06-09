@@ -1,0 +1,1151 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://jrxml-web-designer.com/schemas/jrxml.json",
+  "title": "JRXML Report Definition Schema",
+  "description": "JSON Schema for validating JRXML report structure extracted from JasperReports 6.21.5 source code",
+  "type": "object",
+  "definitions": {
+    "elementBase": {
+      "type": "object",
+      "description": "Base properties for all design elements",
+      "properties": {
+        "uuid": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$",
+          "description": "Unique identifier (UUID format)"
+        },
+        "key": {
+          "type": "string",
+          "description": "Element identifier for reference"
+        },
+        "x": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "X position in points"
+        },
+        "y": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Y position in points"
+        },
+        "width": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Width in points"
+        },
+        "height": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Height in points"
+        },
+        "mode": {
+          "type": "string",
+          "enum": ["Opaque", "Transparent"],
+          "default": "Transparent",
+          "description": "Background mode"
+        },
+        "positionType": {
+          "type": "string",
+          "enum": ["FixRelativeToBand", "Float"],
+          "default": "FixRelativeToBand",
+          "description": "Position type relative to band"
+        },
+        "isRemoveLineWhenBlank": {
+          "type": "boolean",
+          "default": false,
+          "description": "Remove line when value is blank"
+        },
+        "printWhenExpression": {
+          "type": "string",
+          "description": "Expression to determine when to print"
+        },
+        "printWhenGroupChanges": {
+          "type": "string",
+          "description": "Print when specified group changes"
+        }
+      },
+      "required": ["x", "y", "width", "height"]
+    },
+    "reportElement": {
+      "$ref": "#/definitions/elementBase",
+      "description": "Base element properties"
+    },
+    "box": {
+      "type": "object",
+      "description": "Box/border definition",
+      "properties": {
+        "border": {
+          "type": "string",
+          "enum": ["None", "Thin", "1Point", "2Points", "Medium", "Double", "Dashed", "Dotted"],
+          "default": "None",
+          "description": "Border type"
+        },
+        "borderColor": {
+          "type": "string",
+          "pattern": "^#[0-9A-Fa-f]{6}$",
+          "default": "#000000",
+          "description": "Border color (RRGGBB)"
+        },
+        "backgroundColor": {
+          "type": "string",
+          "pattern": "^#[0-9A-Fa-f]{6}$",
+          "default": "#FFFFFF",
+          "description": "Background color (RRGGBB)"
+        },
+        "padding": {
+          "type": "integer",
+          "minimum": 0,
+          "default": 0,
+          "description": "Padding in points"
+        }
+      }
+    },
+    "textElement": {
+      "type": "object",
+      "description": "Text formatting properties",
+      "properties": {
+        "textAlignment": {
+          "type": "string",
+          "enum": ["Left", "Center", "Right", "Justified"],
+          "default": "Left",
+          "description": "Horizontal text alignment"
+        },
+        "verticalAlignment": {
+          "type": "string",
+          "enum": ["Top", "Middle", "Bottom"],
+          "default": "Top",
+          "description": "Vertical text alignment"
+        },
+        "rotation": {
+          "type": "string",
+          "enum": ["None", "Left", "Right", "UpsideDown"],
+          "default": "None",
+          "description": "Text rotation"
+        },
+        "isStyledWithMarkup": {
+          "type": "boolean",
+          "default": false,
+          "description": "Enable markup styling"
+        }
+      }
+    },
+    "staticText": {
+      "type": "object",
+      "description": "Static text element",
+      "properties": {
+        "reportElement": { "$ref": "#/definitions/reportElement" },
+        "box": { "$ref": "#/definitions/box" },
+        "textElement": { "$ref": "#/definitions/textElement" },
+        "text": {
+          "type": "object",
+          "properties": {
+            "markup": {
+              "type": "string",
+              "enum": ["none", "html", "rtf", "xml", "csv"],
+              "default": "none",
+              "description": "Markup type"
+            },
+            "content": {
+              "type": "string",
+              "description": "Static text content"
+            }
+          },
+          "required": ["content"]
+        }
+      },
+      "required": ["reportElement", "text"]
+    },
+    "textField": {
+      "type": "object",
+      "description": "Text field element with expression",
+      "properties": {
+        "reportElement": { "$ref": "#/definitions/reportElement" },
+        "box": { "$ref": "#/definitions/box" },
+        "textElement": { "$ref": "#/definitions/textElement" },
+        "textFieldExpression": {
+          "type": "object",
+          "properties": {
+            "pattern": {
+              "type": "string",
+              "description": "Number/date format pattern"
+            },
+            "evaluationTime": {
+              "type": "string",
+              "enum": ["Now", "Band", "Column", "Group", "Page", "Report", "AutoBand"],
+              "default": "Now",
+              "description": "When to evaluate expression"
+            },
+            "evaluationGroup": {
+              "type": "string",
+              "description": "Group for evaluation time"
+            },
+            "isStretchWithOverflow": {
+              "type": "boolean",
+              "default": false,
+              "description": "Stretch to fit content"
+            },
+            "expression": {
+              "type": "string",
+              "description": "Text field expression"
+            }
+          },
+          "required": ["expression"]
+        }
+      },
+      "required": ["reportElement", "textFieldExpression"]
+    },
+    "image": {
+      "type": "object",
+      "description": "Image element",
+      "properties": {
+        "reportElement": { "$ref": "#/definitions/reportElement" },
+        "box": { "$ref": "#/definitions/box" },
+        "imageExpression": {
+          "type": "object",
+          "properties": {
+            "class": {
+              "type": "string",
+              "default": "java.lang.String",
+              "description": "Expression return type"
+            },
+            "evaluationTime": {
+              "type": "string",
+              "enum": ["Now", "Band", "Column", "Group", "Page", "Report", "AutoBand"],
+              "default": "Now"
+            },
+            "evaluationGroup": {
+              "type": "string"
+            },
+            "isUsingCache": {
+              "type": "boolean",
+              "default": false,
+              "description": "Cache images"
+            },
+            "scaleImage": {
+              "type": "string",
+              "enum": ["Clip", "FillFrame", "RetainImage", "RealHeight", "RealSize"],
+              "default": "RetainImage",
+              "description": "Image scaling behavior"
+            },
+            "isCenterHorizontal": {
+              "type": "boolean",
+              "default": false
+            },
+            "isCenterVertical": {
+              "type": "boolean",
+              "default": false
+            },
+            "expression": {
+              "type": "string",
+              "description": "Image source expression"
+            }
+          },
+          "required": ["expression"]
+        }
+      },
+      "required": ["reportElement", "imageExpression"]
+    },
+    "line": {
+      "type": "object",
+      "description": "Line element",
+      "properties": {
+        "reportElement": { "$ref": "#/definitions/reportElement" },
+        "graphicElement": {
+          "type": "object",
+          "properties": {
+            "penetration": {
+              "type": "string",
+              "enum": ["None", "1Point", "2Points", "4Points"],
+              "default": "None"
+            },
+            "stroke": {
+              "type": "string",
+              "enum": ["Solid", "Dashed", "Dotted", "Double"],
+              "default": "Solid"
+            },
+            "fillColor": {
+              "type": "string",
+              "pattern": "^#[0-9A-Fa-f]{6}$",
+              "default": "#000000"
+            }
+          }
+        }
+      },
+      "required": ["reportElement"]
+    },
+    "rectangle": {
+      "type": "object",
+      "description": "Rectangle element",
+      "properties": {
+        "reportElement": { "$ref": "#/definitions/reportElement" },
+        "box": { "$ref": "#/definitions/box" }
+      },
+      "required": ["reportElement"]
+    },
+    "ellipse": {
+      "type": "object",
+      "description": "Ellipse element",
+      "properties": {
+        "reportElement": { "$ref": "#/definitions/reportElement" },
+        "graphicElement": {
+          "type": "object",
+          "properties": {
+            "penetration": {
+              "type": "string",
+              "enum": ["None", "1Point", "2Points", "4Points"],
+              "default": "None"
+            },
+            "stroke": {
+              "type": "string",
+              "enum": ["Solid", "Dashed", "Dotted", "Double"],
+              "default": "Solid"
+            },
+            "fillColor": {
+              "type": "string",
+              "pattern": "^#[0-9A-Fa-f]{6}$",
+              "default": "#000000"
+            }
+          }
+        }
+      },
+      "required": ["reportElement"]
+    },
+    "frame": {
+      "type": "object",
+      "description": "Frame element containing nested elements",
+      "properties": {
+        "reportElement": { "$ref": "#/definitions/reportElement" },
+        "box": { "$ref": "#/definitions/box" },
+        "elements": {
+          "type": "array",
+          "description": "Nested design elements",
+          "items": {
+            "oneOf": [
+              { "$ref": "#/definitions/staticText" },
+              { "$ref": "#/definitions/textField" },
+              { "$ref": "#/definitions/image" },
+              { "$ref": "#/definitions/line" },
+              { "$ref": "#/definitions/rectangle" },
+              { "$ref": "#/definitions/ellipse" },
+              { "$ref": "#/definitions/frame" }
+            ]
+          }
+        }
+      },
+      "required": ["reportElement"]
+    },
+    "subreport": {
+      "type": "object",
+      "description": "Subreport element",
+      "properties": {
+        "reportElement": { "$ref": "#/definitions/reportElement" },
+        "parametersMapExpression": {
+          "type": "object",
+          "properties": {
+            "expression": {
+              "type": "string",
+              "description": "Expression returning parameters map"
+            }
+          }
+        },
+        "subreportParameters": {
+          "type": "array",
+          "description": "Parameters to pass to subreport",
+          "items": {
+            "type": "object",
+            "properties": {
+              "name": { "type": "string" },
+              "subreportParameterExpression": {
+                "type": "object",
+                "properties": {
+                  "expression": { "type": "string" }
+                }
+              }
+            },
+            "required": ["name"]
+          }
+        },
+        "connectionExpression": {
+          "type": "object",
+          "properties": {
+            "expression": { "type": "string" }
+          }
+        },
+        "dataSourceExpression": {
+          "type": "object",
+          "properties": {
+            "expression": { "type": "string" }
+          }
+        },
+        "subreportExpression": {
+          "type": "object",
+          "properties": {
+            "class": {
+              "type": "string",
+              "default": "java.lang.String"
+            },
+            "evaluationTime": {
+              "type": "string",
+              "enum": ["Now", "Band", "Column", "Group", "Page", "Report", "AutoBand"],
+              "default": "Now"
+            },
+            "evaluationGroup": { "type": "string" },
+            "isUsingCache": {
+              "type": "boolean",
+              "default": false
+            },
+            "expression": {
+              "type": "string",
+              "description": "Subreport source expression"
+            }
+          },
+          "required": ["expression"]
+        }
+      },
+      "required": ["reportElement", "subreportExpression"]
+    },
+    "break": {
+      "type": "object",
+      "description": "Break element for page/column breaks",
+      "properties": {
+        "reportElement": { "$ref": "#/definitions/reportElement" },
+        "type": {
+          "type": "string",
+          "enum": ["Page", "Column"],
+          "description": "Break type"
+        }
+      },
+      "required": ["reportElement", "type"]
+    },
+    "designElement": {
+      "oneOf": [
+        { "$ref": "#/definitions/staticText" },
+        { "$ref": "#/definitions/textField" },
+        { "$ref": "#/definitions/image" },
+        { "$ref": "#/definitions/line" },
+        { "$ref": "#/definitions/rectangle" },
+        { "$ref": "#/definitions/ellipse" },
+        { "$ref": "#/definitions/frame" },
+        { "$ref": "#/definitions/subreport" },
+        { "$ref": "#/definitions/break" }
+      ]
+    },
+    "band": {
+      "type": "object",
+      "description": "Band containing design elements",
+      "properties": {
+        "height": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Band height in points"
+        },
+        "splitType": {
+          "type": "string",
+          "enum": ["Immediate", "Stretch", "Prevent"],
+          "default": "Stretch",
+          "description": "Band split behavior"
+        },
+        "isSplitAllowed": {
+          "type": "boolean",
+          "default": true,
+          "description": "Allow band splitting"
+        },
+        "uuid": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "elements": {
+          "type": "array",
+          "description": "Design elements in the band",
+          "items": { "$ref": "#/definitions/designElement" }
+        }
+      },
+      "required": ["height"]
+    },
+    "parameter": {
+      "type": "object",
+      "description": "Input parameter definition",
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Parameter name"
+        },
+        "class": {
+          "type": "string",
+          "default": "java.lang.String",
+          "description": "Parameter data type"
+        },
+        "isForPrompting": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show in parameter dialog"
+        },
+        "nested": {
+          "type": "boolean",
+          "default": false,
+          "description": "Is nested parameter"
+        },
+        "parameterDescription": {
+          "type": "object",
+          "properties": {
+            "content": { "type": "string" }
+          }
+        },
+        "defaultValueExpression": {
+          "type": "object",
+          "properties": {
+            "class": { "type": "string" },
+            "content": { "type": "string" }
+          }
+        }
+      },
+      "required": ["name", "class"]
+    },
+    "field": {
+      "type": "object",
+      "description": "Data source field definition",
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Field name"
+        },
+        "class": {
+          "type": "string",
+          "default": "java.lang.String",
+          "description": "Field data type"
+        },
+        "uuid": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "fieldDescription": {
+          "type": "object",
+          "properties": {
+            "content": { "type": "string" }
+          }
+        }
+      },
+      "required": ["name", "class"]
+    },
+    "variable": {
+      "type": "object",
+      "description": "Variable definition",
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Variable name"
+        },
+        "class": {
+          "type": "string",
+          "default": "java.lang.String",
+          "description": "Variable data type"
+        },
+        "calculation": {
+          "type": "string",
+          "enum": [
+            "Nothing", "Count", "Sum", "Average", "Lowest", "Highest",
+            "StandardDeviation", "Variance", "System", "First",
+            "CumulativeCount", "CumulativeSum", "CumulativeAverage",
+            "RunningTotalNumberOfPages", "RunningTotalPageWidth",
+            "RunningTotalPageHeight"
+          ],
+          "default": "Nothing",
+          "description": "Calculation type"
+        },
+        "incrementType": {
+          "type": "string",
+          "enum": ["None", "Report", "Page", "Column", "Group"],
+          "default": "None"
+        },
+        "incrementGroup": {
+          "type": "string"
+        },
+        "resetType": {
+          "type": "string",
+          "enum": ["None", "Report", "Page", "Column", "Group"],
+          "default": "Report"
+        },
+        "resetGroup": {
+          "type": "string"
+        },
+        "calculationGroup": {
+          "type": "string"
+        },
+        "isInitialized": {
+          "type": "boolean",
+          "default": false
+        },
+        "uuid": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "variableExpression": {
+          "type": "object",
+          "properties": {
+            "class": { "type": "string" },
+            "content": { "type": "string" }
+          }
+        },
+        "initialValueExpression": {
+          "type": "object",
+          "properties": {
+            "class": { "type": "string" },
+            "content": { "type": "string" }
+          }
+        }
+      },
+      "required": ["name", "class"]
+    },
+    "sortField": {
+      "type": "object",
+      "description": "Sort field definition",
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Sort field name"
+        },
+        "order": {
+          "type": "string",
+          "enum": ["Ascending", "Descending"],
+          "default": "Ascending",
+          "description": "Sort order"
+        },
+        "type": {
+          "type": "string",
+          "enum": ["Field", "Variable", "Expression"],
+          "default": "Field",
+          "description": "Sort type"
+        },
+        "uuid": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        }
+      },
+      "required": ["name"]
+    },
+    "group": {
+      "type": "object",
+      "description": "Group definition",
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Group name"
+        },
+        "isStartNewColumn": {
+          "type": "boolean",
+          "default": false
+        },
+        "isStartNewPage": {
+          "type": "boolean",
+          "default": false
+        },
+        "isResetPageNumber": {
+          "type": "boolean",
+          "default": false
+        },
+        "isReprintHeaderOnEachPage": {
+          "type": "boolean",
+          "default": false
+        },
+        "isHideColumnHeader": {
+          "type": "boolean",
+          "default": false
+        },
+        "isKeepTogether": {
+          "type": "boolean",
+          "default": false
+        },
+        "isKeepFooterTogether": {
+          "type": "boolean",
+          "default": false
+        },
+        "minHeightToStartNewPage": {
+          "type": "integer",
+          "default": 0
+        },
+        "uuid": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "groupExpression": {
+          "type": "object",
+          "properties": {
+            "class": { "type": "string" },
+            "content": { "type": "string" }
+          }
+        },
+        "groupHeader": {
+          "type": "object",
+          "properties": {
+            "band": { "$ref": "#/definitions/band" }
+          }
+        },
+        "groupFooter": {
+          "type": "object",
+          "properties": {
+            "band": { "$ref": "#/definitions/band" }
+          }
+        }
+      },
+      "required": ["name"]
+    },
+    "style": {
+      "type": "object",
+      "description": "Style definition",
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Style name"
+        },
+        "isDefault": {
+          "type": "boolean",
+          "default": false,
+          "description": "Is default style"
+        },
+        "style": {
+          "type": "string",
+          "description": "Parent style name"
+        },
+        "mode": {
+          "type": "string",
+          "enum": ["Opaque", "Transparent"]
+        },
+        "forecolor": {
+          "type": "string",
+          "pattern": "^#[0-9A-Fa-f]{6}$"
+        },
+        "backcolor": {
+          "type": "string",
+          "pattern": "^#[0-9A-Fa-f]{6}$"
+        },
+        "fontName": {
+          "type": "string"
+        },
+        "fontSize": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "isBold": {
+          "type": "boolean"
+        },
+        "isItalic": {
+          "type": "boolean"
+        },
+        "isUnderline": {
+          "type": "boolean"
+        },
+        "isStrikeThrough": {
+          "type": "boolean"
+        },
+        "pdfFontName": {
+          "type": "string"
+        },
+        "pdfEncoding": {
+          "type": "string"
+        },
+        "isPdfEmbedded": {
+          "type": "boolean"
+        },
+        "textAlignment": {
+          "type": "string",
+          "enum": ["Left", "Center", "Right", "Justified"]
+        },
+        "verticalAlignment": {
+          "type": "string",
+          "enum": ["Top", "Middle", "Bottom"]
+        },
+        "rotation": {
+          "type": "string",
+          "enum": ["None", "Left", "Right", "UpsideDown"]
+        },
+        "border": {
+          "type": "string",
+          "enum": ["None", "Thin", "1Point", "2Points", "Medium", "Double", "Dashed", "Dotted"]
+        },
+        "borderColor": {
+          "type": "string",
+          "pattern": "^#[0-9A-Fa-f]{6}$"
+        },
+        "padding": {
+          "type": "integer",
+          "minimum": 0
+        }
+      },
+      "required": ["name"]
+    }
+  },
+  "properties": {
+    "jasperReport": {
+      "type": "object",
+      "description": "Root element - JRXML report definition",
+      "properties": {
+        "uuid": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$",
+          "description": "Report UUID"
+        },
+        "name": {
+          "type": "string",
+          "description": "Report name"
+        },
+        "language": {
+          "type": "string",
+          "default": "java",
+          "description": "Expression language (java, groovy, etc.)"
+        },
+        "columnCount": {
+          "type": "integer",
+          "default": 1,
+          "minimum": 1,
+          "description": "Number of columns"
+        },
+        "printOrder": {
+          "type": "string",
+          "enum": ["Vertical", "Horizontal"],
+          "default": "Vertical",
+          "description": "Column filling order"
+        },
+        "columnDirection": {
+          "type": "string",
+          "enum": ["LTR", "RTL"],
+          "default": "LTR",
+          "description": "Column filling direction"
+        },
+        "pageWidth": {
+          "type": "integer",
+          "default": 595,
+          "minimum": 1,
+          "description": "Page width in points"
+        },
+        "pageHeight": {
+          "type": "integer",
+          "default": 842,
+          "minimum": 1,
+          "description": "Page height in points"
+        },
+        "orientation": {
+          "type": "string",
+          "enum": ["Portrait", "Landscape"],
+          "default": "Portrait",
+          "description": "Page orientation"
+        },
+        "whenNoDataType": {
+          "type": "string",
+          "enum": ["NoPages", "BlankPage", "AllSectionsNoDetail", "NoDataSection"],
+          "default": "NoPages",
+          "description": "Behavior when no data"
+        },
+        "sectionType": {
+          "type": "string",
+          "enum": ["Band", "Part"],
+          "default": "Band",
+          "description": "Report structure type"
+        },
+        "columnWidth": {
+          "type": "integer",
+          "default": 555,
+          "minimum": 0,
+          "description": "Column width in points"
+        },
+        "columnSpacing": {
+          "type": "integer",
+          "default": 0,
+          "minimum": 0,
+          "description": "Space between columns"
+        },
+        "leftMargin": {
+          "type": "integer",
+          "default": 20,
+          "minimum": 0,
+          "description": "Left margin"
+        },
+        "rightMargin": {
+          "type": "integer",
+          "default": 20,
+          "minimum": 0,
+          "description": "Right margin"
+        },
+        "topMargin": {
+          "type": "integer",
+          "default": 30,
+          "minimum": 0,
+          "description": "Top margin"
+        },
+        "bottomMargin": {
+          "type": "integer",
+          "default": 30,
+          "minimum": 0,
+          "description": "Bottom margin"
+        },
+        "isTitleNewPage": {
+          "type": "boolean",
+          "default": false,
+          "description": "Print title on separate page"
+        },
+        "isSummaryNewPage": {
+          "type": "boolean",
+          "default": false,
+          "description": "Print summary on separate page"
+        },
+        "isSummaryWithPageHeaderAndFooter": {
+          "type": "boolean",
+          "default": false,
+          "description": "Include page header/footer in summary"
+        },
+        "isFloatColumnFooter": {
+          "type": "boolean",
+          "default": false,
+          "description": "Float column footer below detail"
+        },
+        "isIgnorePagination": {
+          "type": "boolean",
+          "default": false,
+          "description": "Ignore pagination"
+        },
+        "csvEncoding": {
+          "type": "string",
+          "description": "CSV encoding"
+        },
+        "csvFieldDelimiter": {
+          "type": "string",
+          "description": "CSV field delimiter"
+        },
+        "svgIcons": {
+          "type": "boolean",
+          "default": false,
+          "description": "Use SVG icons"
+        },
+        "properties": {
+          "type": "array",
+          "description": "Report properties",
+          "items": {
+            "type": "object",
+            "properties": {
+              "name": { "type": "string" },
+              "value": { "type": "string" }
+            },
+            "required": ["name", "value"]
+          }
+        },
+        "propertyExpressions": {
+          "type": "array",
+          "description": "Dynamic property expressions",
+          "items": {
+            "type": "object",
+            "properties": {
+              "name": { "type": "string" },
+              "class": { "type": "string" },
+              "content": { "type": "string" }
+            },
+            "required": ["name", "content"]
+          }
+        },
+        "imports": {
+          "type": "array",
+          "description": "Import statements",
+          "items": {
+            "type": "string"
+          }
+        },
+        "templates": {
+          "type": "array",
+          "description": "Template references",
+          "items": {
+            "type": "object",
+            "properties": {
+              "subreport": {
+                "type": "object",
+                "properties": {
+                  "subreportExpression": {
+                    "type": "object",
+                    "properties": {
+                      "class": { "type": "string" },
+                      "content": { "type": "string" }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "reportFonts": {
+          "type": "array",
+          "description": "Font definitions",
+          "items": {
+            "type": "object",
+            "properties": {
+              "name": { "type": "string" },
+              "isDefault": { "type": "boolean" },
+              "fontName": { "type": "string" },
+              "size": { "type": "integer" },
+              "isBold": { "type": "boolean" },
+              "isItalic": { "type": "boolean" },
+              "isUnderline": { "type": "boolean" },
+              "isStrikeThrough": { "type": "boolean" },
+              "pdfFontName": { "type": "string" },
+              "pdfEncoding": { "type": "string" },
+              "isPdfEmbedded": { "type": "boolean" }
+            },
+            "required": ["name"]
+          }
+        },
+        "styles": {
+          "type": "array",
+          "description": "Style definitions",
+          "items": { "$ref": "#/definitions/style" }
+        },
+        "subDatasets": {
+          "type": "array",
+          "description": "Sub-dataset definitions",
+          "items": {
+            "type": "object",
+            "properties": {
+              "name": { "type": "string" },
+              "uuid": {
+                "type": "string",
+                "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+              },
+              "parameters": {
+                "type": "array",
+                "items": { "$ref": "#/definitions/parameter" }
+              },
+              "fields": {
+                "type": "array",
+                "items": { "$ref": "#/definitions/field" }
+              },
+              "variables": {
+                "type": "array",
+                "items": { "$ref": "#/definitions/variable" }
+              }
+            },
+            "required": ["name"]
+          }
+        },
+        "scriptlets": {
+          "type": "array",
+          "description": "Scriptlet definitions",
+          "items": {
+            "type": "object",
+            "properties": {
+              "name": { "type": "string" },
+              "class": { "type": "string" }
+            },
+            "required": ["name", "class"]
+          }
+        },
+        "parameters": {
+          "type": "array",
+          "description": "Input parameters",
+          "items": { "$ref": "#/definitions/parameter" }
+        },
+        "queryString": {
+          "type": "object",
+          "description": "SQL query",
+          "properties": {
+            "language": {
+              "type": "string",
+              "default": "sql"
+            },
+            "content": {
+              "type": "string",
+              "description": "SQL query string"
+            }
+          }
+        },
+        "fields": {
+          "type": "array",
+          "description": "Data source fields",
+          "items": { "$ref": "#/definitions/field" }
+        },
+        "sortFields": {
+          "type": "array",
+          "description": "Sort field definitions",
+          "items": { "$ref": "#/definitions/sortField" }
+        },
+        "variables": {
+          "type": "array",
+          "description": "Computed variables",
+          "items": { "$ref": "#/definitions/variable" }
+        },
+        "filterExpression": {
+          "type": "object",
+          "properties": {
+            "class": { "type": "string" },
+            "content": { "type": "string" }
+          }
+        },
+        "groups": {
+          "type": "array",
+          "description": "Group definitions",
+          "items": { "$ref": "#/definitions/group" }
+        },
+        "background": {
+          "type": "object",
+          "properties": {
+            "band": { "$ref": "#/definitions/band" }
+          }
+        },
+        "title": {
+          "type": "object",
+          "properties": {
+            "band": { "$ref": "#/definitions/band" }
+          }
+        },
+        "pageHeader": {
+          "type": "object",
+          "properties": {
+            "band": { "$ref": "#/definitions/band" }
+          }
+        },
+        "columnHeader": {
+          "type": "object",
+          "properties": {
+            "band": { "$ref": "#/definitions/band" }
+          }
+        },
+        "detail": {
+          "type": "object",
+          "properties": {
+            "band": { "$ref": "#/definitions/band" }
+          }
+        },
+        "columnFooter": {
+          "type": "object",
+          "properties": {
+            "band": { "$ref": "#/definitions/band" }
+          }
+        },
+        "pageFooter": {
+          "type": "object",
+          "properties": {
+            "band": { "$ref": "#/definitions/band" }
+          }
+        },
+        "lastPageFooter": {
+          "type": "object",
+          "properties": {
+            "band": { "$ref": "#/definitions/band" }
+          }
+        },
+        "summary": {
+          "type": "object",
+          "properties": {
+            "band": { "$ref": "#/definitions/band" }
+          }
+        },
+        "noData": {
+          "type": "object",
+          "properties": {
+            "band": { "$ref": "#/definitions/band" }
+          }
+        }
+      },
+      "required": ["name"],
+      "propertyNames": {
+        "pattern": "^(uuid|name|language|columnCount|printOrder|columnDirection|pageWidth|pageHeight|orientation|whenNoDataType|sectionType|columnWidth|columnSpacing|leftMargin|rightMargin|topMargin|bottomMargin|isTitleNewPage|isSummaryNewPage|isSummaryWithPageHeaderAndFooter|isFloatColumnFooter|isIgnorePagination|csvEncoding|csvFieldDelimiter|svgIcons|properties|propertyExpressions|imports|templates|reportFonts|styles|subDatasets|scriptlets|parameters|queryString|fields|sortFields|variables|filterExpression|groups|background|title|pageHeader|columnHeader|detail|columnFooter|pageFooter|lastPageFooter|summary|noData)$"
+      }
+    }
+  },
+  "required": ["jasperReport"],
+  "additionalProperties": false
+}
