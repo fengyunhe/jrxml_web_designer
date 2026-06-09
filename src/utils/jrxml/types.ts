@@ -6,7 +6,20 @@ export interface ReportProperties {
   rightMargin: number;
   topMargin: number;
   bottomMargin: number;
+  language?: string;
+  columnCount?: number;
+  printOrder?: string;
+  columnDirection?: string;
+  orientation?: string;
   whenNoDataType?: string;
+  sectionType?: string;
+  columnWidth?: number;
+  columnSpacing?: number;
+  isTitleNewPage?: boolean;
+  isSummaryNewPage?: boolean;
+  isSummaryWithPageHeaderAndFooter?: boolean;
+  isFloatColumnFooter?: boolean;
+  isIgnorePagination?: boolean;
   query?: { language: string; text: string };
 }
 

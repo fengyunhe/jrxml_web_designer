@@ -86,8 +86,21 @@ export function parseJRXMLContent(jrxmlContent: string): {
     bottomMargin: parseInt(
       jasperReportElem.getAttribute("bottomMargin") || "30",
     ),
+    language: jasperReportElem.getAttribute("language") || "java",
+    columnCount: parseInt(jasperReportElem.getAttribute("columnCount") || "1"),
+    printOrder: jasperReportElem.getAttribute("printOrder") || "Vertical",
+    columnDirection: jasperReportElem.getAttribute("columnDirection") || "LTR",
+    orientation: jasperReportElem.getAttribute("orientation") || "Portrait",
     whenNoDataType:
       jasperReportElem.getAttribute("whenNoDataType") || "AllSectionsNoDetail",
+    sectionType: jasperReportElem.getAttribute("sectionType") || "Band",
+    columnWidth: parseInt(jasperReportElem.getAttribute("columnWidth") || "555"),
+    columnSpacing: parseInt(jasperReportElem.getAttribute("columnSpacing") || "0"),
+    isTitleNewPage: jasperReportElem.getAttribute("isTitleNewPage") === "true",
+    isSummaryNewPage: jasperReportElem.getAttribute("isSummaryNewPage") === "true",
+    isSummaryWithPageHeaderAndFooter: jasperReportElem.getAttribute("isSummaryWithPageHeaderAndFooter") === "true",
+    isFloatColumnFooter: jasperReportElem.getAttribute("isFloatColumnFooter") === "true",
+    isIgnorePagination: jasperReportElem.getAttribute("isIgnorePagination") === "true",
     query,
   };
 
