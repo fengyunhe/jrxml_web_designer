@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports"
+              name="TestReport"
+              pageWidth="595" pageHeight="842"
+              columnWidth="555" leftMargin="20" rightMargin="20"
+              topMargin="20" bottomMargin="20">
+  <sortField name="testSort"/>
+  <detail>
+    <band height="30">
+      <textField>
+        <reportElement x="0" y="0" width="200" height="20" uuid="test-uuid"/>
+        <textFieldExpression><![CDATA[1]]></textFieldExpression>
+      </textField>
+    </band>
+  </detail>
+</jasperReport>
