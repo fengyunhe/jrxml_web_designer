@@ -223,8 +223,8 @@
             },
             "scaleImage": {
               "type": "string",
-              "enum": ["Clip", "FillFrame", "RetainImage", "RealHeight", "RealSize"],
-              "default": "RetainImage",
+              "enum": ["Clip", "FillFrame", "RetainShape", "RealHeight", "RealSize"],
+              "default": "RetainShape",
               "description": "Image scaling behavior"
             },
             "isCenterHorizontal": {
@@ -253,9 +253,9 @@
         "graphicElement": {
           "type": "object",
           "properties": {
-            "penetration": {
+            "pen": {
               "type": "string",
-              "enum": ["None", "1Point", "2Points", "4Points"],
+              "enum": ["None", "Thin", "1Point", "2Point", "4Point", "Dotted"],
               "default": "None"
             },
             "stroke": {
@@ -290,9 +290,9 @@
         "graphicElement": {
           "type": "object",
           "properties": {
-            "penetration": {
+            "pen": {
               "type": "string",
-              "enum": ["None", "1Point", "2Points", "4Points"],
+              "enum": ["None", "Thin", "1Point", "2Point", "4Point", "Dotted"],
               "default": "None"
             },
             "stroke": {
@@ -554,18 +554,11 @@
         },
         "resetType": {
           "type": "string",
-          "enum": ["None", "Report", "Page", "Column", "Group"],
+          "enum": ["None", "Report", "Page", "Column", "Group", "Master"],
           "default": "Report"
         },
         "resetGroup": {
           "type": "string"
-        },
-        "calculationGroup": {
-          "type": "string"
-        },
-        "isInitialized": {
-          "type": "boolean",
-          "default": false
         },
         "variableExpression": {
           "type": "object",
@@ -628,18 +621,6 @@
           "default": false
         },
         "isReprintHeaderOnEachPage": {
-          "type": "boolean",
-          "default": false
-        },
-        "isHideColumnHeader": {
-          "type": "boolean",
-          "default": false
-        },
-        "isKeepTogether": {
-          "type": "boolean",
-          "default": false
-        },
-        "isKeepFooterTogether": {
           "type": "boolean",
           "default": false
         },
