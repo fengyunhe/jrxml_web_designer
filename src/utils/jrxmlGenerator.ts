@@ -1959,7 +1959,23 @@ function generateColumnGroupXML(
         depth + 1,
       );
     } else {
-      // 生成普通列，保持原始高度不变
+      // 生成普通列，调整内部 column 的 rowSpan 以匹配 columnGroup
+      if (group.columnHeader && child.columnHeader) {
+        const groupHeaderRowSpan = group.columnHeader.rowSpan || 1;
+
+        // 如果 columnGroup 的 rowSpan 是 1，内部 column 的 rowSpan 也应该是 1
+        // 因为 columnGroup 已经占据了一行
+        if (groupHeaderRowSpan === 1 && child.columnHeader.rowSpan && child.columnHeader.rowSpan > 1) {
+          // 将内部 column 的 rowSpan 重置为 1
+          child.columnHeader.rowSpan = 1;
+          // 调整高度为单行高度
+          child.columnHeader.height = group.columnHeader.height || 30;
+          if (child.columnHeader.element) {
+            child.columnHeader.element.height = child.columnHeader.height;
+          }
+        }
+      }
+
       xml += generateColumnXML(child, index, hasColumnGroups, maxDepth);
       if (processedColumnUuids) {
         processedColumnUuids.add(child.uuid);
