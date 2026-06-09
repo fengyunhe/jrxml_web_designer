@@ -277,7 +277,7 @@ export function generateJRXMLContent(
           (group.header.elements.length > 0 || group.header.height > 0)
         ) {
           jrxml += `    <groupHeader>\n`;
-          jrxml += `      <band height="${group.header.height}" uuid="${generateUUID()}">\n`;
+          jrxml += `      <band height="${group.header.height}">\n`;
           group.header.elements.forEach((element) => {
             const validatedElement = validateElementPosition(element);
             jrxml += generateElementXML(validatedElement);
@@ -290,7 +290,7 @@ export function generateJRXMLContent(
           (group.footer.elements.length > 0 || group.footer.height > 0)
         ) {
           jrxml += `    <groupFooter>\n`;
-          jrxml += `      <band height="${group.footer.height}" uuid="${generateUUID()}">\n`;
+          jrxml += `      <band height="${group.footer.height}">\n`;
           group.footer.elements.forEach((element) => {
             const validatedElement = validateElementPosition(element);
             jrxml += generateElementXML(validatedElement);
@@ -308,8 +308,8 @@ export function generateJRXMLContent(
     if (band.elements.length > 0 || band.height > 0) {
       jrxml += `\n  <${band.type}>`;
 
-      // 根据XSD规范，height属性应该在band元素上
-      let bandAttributes = `height="${band.height}" uuid="${generateUUID()}"`;
+      // 根据XSD规范，height属性应该在band元素上，但band不允许uuid属性
+      let bandAttributes = `height="${band.height}"`;
 
       // 优先使用非过时的splitType属性，只有在没有splitType属性时才使用过时的isSplitAllowed属性作为fallback
       if (band.splitType) {
