@@ -1941,7 +1941,26 @@ function generateColumnGroupXML(
         depth + 1,
       );
     } else {
-      // 生成普通列（rowSpan 和 height 已由 preprocessTableElements 处理）
+      // 生成普通列，需要调整内部 column 的高度以匹配 columnGroup 的高度
+      // 如果 columnGroup 有自己的 columnHeader，内部 column 的 columnHeader 高度应该与之匹配
+      if (group.columnHeader && child.columnHeader) {
+        const groupHeaderHeight = group.columnHeader.height || 30;
+        const groupHeaderRowSpan = group.columnHeader.rowSpan || 1;
+
+        // 如果 columnGroup 的 rowSpan 是 1，内部 column 的高度不应该超过 columnGroup 的高度
+        if (groupHeaderRowSpan === 1) {
+          // 调整内部 column 的高度为 columnGroup 的高度
+          child.columnHeader.height = groupHeaderHeight;
+          if (child.columnHeader.element) {
+            child.columnHeader.element.height = groupHeaderHeight;
+          }
+          // 如果内部 column 的 rowSpan > 1，需要重新计算
+          if (child.columnHeader.rowSpan && child.columnHeader.rowSpan > 1) {
+            child.columnHeader.rowSpan = 1;
+          }
+        }
+      }
+
       xml += generateColumnXML(child, index, hasColumnGroups, maxDepth);
       if (processedColumnUuids) {
         processedColumnUuids.add(child.uuid);
