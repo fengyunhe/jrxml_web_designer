@@ -1,0 +1,3 @@
+[submodule "jasperreport6Fork"]
+	path = jasperreport6Fork
+	url = git@github.com:fengyunhe/jasperreport6Fork.git
