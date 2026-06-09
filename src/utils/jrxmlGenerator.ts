@@ -1930,7 +1930,19 @@ function generateColumnGroupXML(
 
   // 生成子分组或列
   const children = group.children || [];
-  children.forEach((child: any, index: number) => {
+  const validChildren = children.filter((child: any) => {
+    // 过滤掉宽度为0或无效的子元素
+    if (child.width <= 0 && (!child.children || child.children.length === 0)) {
+      return false;
+    }
+    // 过滤掉无效的columnGroup（没有子元素）
+    if (child.children && child.children.length === 0) {
+      return false;
+    }
+    return true;
+  });
+
+  validChildren.forEach((child: any, index: number) => {
     if (child.children) {
       // 递归生成子分组，传递hasColumnGroups标志、maxDepth和depth
       xml += generateColumnGroupXML(
