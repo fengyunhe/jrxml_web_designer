@@ -1804,6 +1804,25 @@ function generateColumnGroupXML(
   maxDepth: number = 0,
   depth: number = 1,
 ): string {
+  // 检查 group 是否有有效的子元素
+  const children = group.children || [];
+  const validChildren = children.filter((child: any) => {
+    // 过滤掉宽度为0或无效的子元素
+    if (child.width <= 0 && (!child.children || child.children.length === 0)) {
+      return false;
+    }
+    // 过滤掉无效的columnGroup（没有子元素）
+    if (child.children && child.children.length === 0) {
+      return false;
+    }
+    return true;
+  });
+
+  // 如果没有有效的子元素，不生成 columnGroup
+  if (validChildren.length === 0 && (!group.columnHeader || group.width <= 0)) {
+    return '';
+  }
+
   // 确保group有uuid，如果没有则生成一个
   const groupUuid = group.uuid || crypto.randomUUID();
   // 更新group的uuid，确保被保存
@@ -1928,20 +1947,7 @@ function generateColumnGroupXML(
 `;
   }
 
-  // 生成子分组或列
-  const children = group.children || [];
-  const validChildren = children.filter((child: any) => {
-    // 过滤掉宽度为0或无效的子元素
-    if (child.width <= 0 && (!child.children || child.children.length === 0)) {
-      return false;
-    }
-    // 过滤掉无效的columnGroup（没有子元素）
-    if (child.children && child.children.length === 0) {
-      return false;
-    }
-    return true;
-  });
-
+  // 生成子分组或列（使用前面已定义的 validChildren）
   validChildren.forEach((child: any, index: number) => {
     if (child.children) {
       // 递归生成子分组，传递hasColumnGroups标志、maxDepth和depth
