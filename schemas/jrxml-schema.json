@@ -46,8 +46,8 @@
         },
         "positionType": {
           "type": "string",
-          "enum": ["FixRelativeToBand", "Float"],
-          "default": "FixRelativeToBand",
+          "enum": ["FixRelativeToTop", "FixRelativeToBottom", "Float"],
+          "default": "FixRelativeToTop",
           "description": "Position type relative to band"
         },
         "isRemoveLineWhenBlank": {
@@ -510,10 +510,6 @@
           "default": "java.lang.String",
           "description": "Field data type"
         },
-        "uuid": {
-          "type": "string",
-          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
-        },
         "fieldDescription": {
           "type": "object",
           "properties": {
@@ -571,10 +567,6 @@
           "type": "boolean",
           "default": false
         },
-        "uuid": {
-          "type": "string",
-          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
-        },
         "variableExpression": {
           "type": "object",
           "properties": {
@@ -611,10 +603,6 @@
           "enum": ["Field", "Variable", "Expression"],
           "default": "Field",
           "description": "Sort type"
-        },
-        "uuid": {
-          "type": "string",
-          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
         }
       },
       "required": ["name"]
@@ -658,10 +646,6 @@
         "minHeightToStartNewPage": {
           "type": "integer",
           "default": 0
-        },
-        "uuid": {
-          "type": "string",
-          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
         },
         "groupExpression": {
           "type": "object",
