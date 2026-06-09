@@ -42,7 +42,7 @@
     "@vitest/ui": "^4.0.6",
     "@vue/test-utils": "^2.4.6",
     "@vue/tsconfig": "^0.8.1",
-    "jsdom": "^27.4.0",
+    "jsdom": "^29.1.1",
     "typescript": "~5.9.3",
     "vite": "npm:rolldown-vite@7.1.14",
     "vitest": "^4.0.6",
