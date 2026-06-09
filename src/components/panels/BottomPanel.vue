@@ -6,7 +6,7 @@ import ResizablePanel from './ResizablePanel.vue';
 import PdfPreviewModal from '../modals/PdfPreviewModal.vue';
 import CodeMirrorEditor from '../editor/CodeMirrorEditor.vue';
 import { renderToHtml, renderToMultiPageHtml } from '../../utils/jrxmlHtmlRenderer';
-import { validateJRXML, type ValidationResult, type ValidationError } from '../../utils/jrxml/xsdValidator';
+import { validateJRXML, autoFixJRXML, type ValidationResult, type ValidationError, type AutoFixResult } from '../../utils/jrxml/xsdValidator';
 import type { Band, ReportProperties } from '../../types';
 import {
   UI_CONSTANTS,
@@ -452,6 +452,41 @@ const jumpToLine = (line: number, column: number) => {
   }
 };
 
+// 自动修复相关状态
+const isAutoFixing = ref(false);
+const autoFixResult = ref<AutoFixResult | null>(null);
+
+// 执行自动修复
+const runAutoFix = async () => {
+  if (!localJrxmlContent.value) {
+    alert(t('bottomPanel.alerts.generateJrxmlFirst'));
+    return;
+  }
+
+  isAutoFixing.value = true;
+  autoFixResult.value = null;
+
+  try {
+    autoFixResult.value = await autoFixJRXML(localJrxmlContent.value);
+
+    if (autoFixResult.value.fixed) {
+      // 将修复后的内容更新到编辑器
+      localJrxmlContent.value = autoFixResult.value.fixedContent;
+      // 切换到 JRXML 标签页显示修复结果
+      activeTab.value = 'jrxml';
+    }
+  } catch (error) {
+    console.error('自动修复失败:', error);
+  } finally {
+    isAutoFixing.value = false;
+  }
+};
+
+// 清除自动修复结果
+const clearAutoFixResult = () => {
+  autoFixResult.value = null;
+};
+
 // 组件挂载时添加事件监听器
 onMounted(() => {
   window.addEventListener('keydown', handleKeyDown);
@@ -601,14 +636,23 @@ onBeforeUnmount(() => {
             <n-button @click="regenerateJRXML" type="default" size="small">{{ t('bottomPanel.regenerate') }}</n-button>
             <n-button @click="downloadJRXML" type="primary" size="small">{{ t('bottomPanel.downloadJRXML') }}</n-button>
             <n-button @click="openPdfPreview" type="info" size="small">{{ t('bottomPanel.previewPDF') }}</n-button>
-            <n-button 
-              @click="runValidation" 
+            <n-button
+              @click="runValidation"
               :loading="isValidating"
-              type="warning" 
+              type="warning"
               size="small"
               class="validation-btn"
             >
               {{ t('bottomPanel.validate') }}
+            </n-button>
+            <n-button
+              @click="runAutoFix"
+              :loading="isAutoFixing"
+              type="warning"
+              size="small"
+              class="autofix-btn"
+            >
+              {{ t('bottomPanel.autoFix') }}
             </n-button>
           </div>
         </div>
@@ -641,7 +685,51 @@ onBeforeUnmount(() => {
             </ul>
           </div>
         </n-alert>
-        
+
+        <n-alert
+          v-if="autoFixResult"
+          :type="autoFixResult.fixed ? 'success' : (autoFixResult.warnings.length > 0 ? 'warning' : 'info')"
+          :title="autoFixResult.fixed ? t('bottomPanel.autoFixSuccess') : t('bottomPanel.autoFixNoChanges')"
+          closable
+          @close="clearAutoFixResult"
+          class="autofix-result"
+        >
+          <div v-if="autoFixResult.fixed">
+            <p>{{ t('bottomPanel.autoFixFixedCount', { count: autoFixResult.fixes.length }) }}</p>
+            <ul class="autofix-list">
+              <li
+                v-for="(fix, index) in autoFixResult.fixes"
+                :key="index"
+                class="clickable"
+                @click="jumpToLine(fix.lineNumber, 0)"
+              >
+                <span class="fix-location">
+                  {{ fix.lineNumber > 0 ? `[${fix.lineNumber}]` : '[?]' }}
+                </span>
+                <span class="fix-message">
+                  {{ t('bottomPanel.autoFixRemovedAttribute', { element: fix.elementName, attribute: fix.attributeName }) }}
+                </span>
+              </li>
+            </ul>
+          </div>
+          <div v-if="autoFixResult.warnings.length > 0" class="autofix-warnings">
+            <p>{{ t('bottomPanel.autoFixWarnings') }}</p>
+            <ul class="autofix-list warning-list">
+              <li
+                v-for="(warning, index) in autoFixResult.warnings"
+                :key="index"
+              >
+                <span class="warning-message">
+                  <strong>&lt;{{ warning.elementName }}&gt;</strong>: {{ warning.message }}
+                </span>
+              </li>
+            </ul>
+          </div>
+          <div v-if="!autoFixResult.fixed && autoFixResult.warnings.length === 0">
+            <p>{{ t('bottomPanel.autoFixNoIssuesFound') }}</p>
+          </div>
+        </n-alert>
+
         <div class="jrxml-content">
           <CodeMirrorEditor
             ref="codeMirrorEditorRef"
@@ -1147,6 +1235,78 @@ onBeforeUnmount(() => {
 .validation-error-list .fatal .error-message {
   color: #dc3545;
   font-weight: bold;
+}
+
+/* 自动修复按钮样式 */
+.autofix-btn {
+  margin-left: 8px;
+}
+
+.autofix-result {
+  margin: 8px;
+  max-height: 150px;
+  overflow-y: auto;
+}
+
+.autofix-list {
+  margin: 8px 0 0 0;
+  padding-left: 16px;
+  list-style: none;
+  max-height: 100px;
+  overflow-y: auto;
+}
+
+.autofix-list li {
+  padding: 4px 0;
+  border-bottom: 1px solid #eee;
+  font-size: 13px;
+}
+
+.autofix-list li:last-child {
+  border-bottom: none;
+}
+
+.autofix-list li.clickable {
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.autofix-list li.clickable:hover {
+  background-color: #f5f5f5;
+}
+
+.autofix-list .fix-location {
+  color: #999;
+  margin-right: 8px;
+  font-family: monospace;
+}
+
+.autofix-list .fix-message {
+  color: #28a745;
+}
+
+/* 警告列表样式 */
+.autofix-warnings {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid #ddd;
+}
+
+.warning-list li {
+  color: #856404;
+  background-color: #fff3cd;
+  padding: 6px 10px;
+  margin: 4px 0;
+  border-radius: 4px;
+  border-left: 3px solid #ffc107;
+}
+
+.warning-list .warning-message {
+  font-size: 13px;
+}
+
+.warning-list strong {
+  color: #533f03;
 }
 
 </style>

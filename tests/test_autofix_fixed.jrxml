@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports
+    http://jasperreports.sourceforge.net/xsd/jasperreport.xsd"
+    name="TestReport"
+    pageWidth="595"
+    pageHeight="842"
+    columnWidth="555"
+    leftMargin="20"
+    rightMargin="20"
+    topMargin="20"
+    bottomMargin="20"
+    uuid="test-report-001"
+    invalidAttribute1="this is invalid"
+    anotherInvalid="also invalid">
+
+    <field name="fieldName" class="java.lang.String"/>
+
+    <detail>
+        <band height="30">
+            <textField>
+                <reportElement x="0" y="0" width="200" height="20" uuid="..." customBadAttr="invalid"/>
+                <textElement textAlignment="Left" verticalAlignment="Top">
+                    <font fontName="SansSerif" size="12"/>
+                </textElement>
+                <textFieldExpression><![CDATA[$F{fieldName}]]></textFieldExpression>
+            </textField>
+        </band>
+    </detail>
+</jasperReport>
