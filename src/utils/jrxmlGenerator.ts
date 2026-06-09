@@ -69,12 +69,13 @@ export function generateJRXMLContent(
 
   // 获取更新后的字段列表
   const updatedFields = Array.from(fieldMap.values());
+
+  // 构建JRXML，按照XSD规范的严格顺序
   let jrxml = buildJasperReportOpenTag(safeProperties);
 
-  // 报表级默认字体
-  jrxml += `  <reportFont name="reportFont" fontName="${DEFAULT_FONT}"/>\n`;
-
-  // 添加报表属性（property元素）
+  // ============================================================
+  // 顺序1: properties (报表属性)
+  // ============================================================
   if (reportProperties && reportProperties.length > 0) {
     jrxml += "\n  <!-- 报表属性 -->\n";
     reportProperties.forEach((prop) => {
@@ -84,9 +85,17 @@ export function generateJRXMLContent(
     });
   }
 
-  // 添加表格样式
+  // ============================================================
+  // 顺序5: reportFonts (报表字体定义)
+  // ============================================================
+  jrxml += "\n  <!-- 报表字体定义 -->\n";
+  jrxml += `  <reportFont name="reportFont" fontName="${DEFAULT_FONT}"/>\n`;
+
+  // ============================================================
+  // 顺序6: styles (样式定义)
+  // ============================================================
   if (styles && styles.length > 0) {
-    jrxml += "  <!-- 表格样式 -->\n";
+    jrxml += "\n  <!-- 表格样式 -->\n";
     styles.forEach((style) => {
       jrxml += generateStyleXML(style);
     });
@@ -119,7 +128,7 @@ export function generateJRXMLContent(
     jrxml += "\n  <!-- 子数据集定义 -->\n";
     subDatasets.forEach((dataset) => {
       if (dataset.name) {
-        let subDatasetAttrs = `name="${dataset.name}" uuid="${dataset.uuid || crypto.randomUUID()}"`;
+        let subDatasetAttrs = `name="${dataset.name}" uuid="${dataset.uuid || generateUUID()}"`;
         if (dataset.scriptletClass) {
           subDatasetAttrs += ` scriptletClass="${dataset.scriptletClass}"`;
         }
