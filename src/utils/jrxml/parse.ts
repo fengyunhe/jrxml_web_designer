@@ -144,6 +144,19 @@ export function parseJRXMLContent(jrxmlContent: string): {
         // 提取UUID（如果存在）
         const uuid = child.getAttribute("uuid");
         if (uuid) param.uuid = uuid;
+        // 提取isForPrompting（如果存在，默认true）
+        if (child.hasAttribute("isForPrompting")) {
+          param.isForPrompting = child.getAttribute("isForPrompting") === "true";
+        }
+        // 提取nested（如果存在，默认false）
+        if (child.hasAttribute("nested")) {
+          param.nested = child.getAttribute("nested") === "true";
+        }
+        // 提取parameterDescription（如果存在）
+        const descElem = child.querySelector("parameterDescription");
+        if (descElem && descElem.textContent) {
+          param.parameterDescription = descElem.textContent.trim();
+        }
         const defaultValueExpr = child.querySelector("defaultValueExpression");
         if (defaultValueExpr && defaultValueExpr.textContent) {
           param.defaultValue = defaultValueExpr.textContent.trim();

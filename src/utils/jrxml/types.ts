@@ -34,6 +34,9 @@ export interface Parameter {
   name: string;
   class: string;
   uuid?: string;
+  isForPrompting?: boolean;
+  nested?: boolean;
+  parameterDescription?: string;
   defaultValue?: string;
 }
 
