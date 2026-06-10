@@ -51,6 +51,8 @@ interface Props {
   collapsible?: boolean;
   // 折叠后的尺寸
   collapsedSize?: number;
+  // 是否使用自动宽度（占满剩余空间）
+  autoWidth?: boolean;
 }
 
 // 定义组件事件
@@ -65,7 +67,8 @@ const props = withDefaults(defineProps<Props>(), {
   maxSize: 600,
   resizable: true,
   collapsible: false,
-  collapsedSize: 40
+  collapsedSize: 40,
+  autoWidth: false
 });
 
 const emit = defineEmits<Emits>();
@@ -78,8 +81,16 @@ const isResizing = ref(false);
 // 计算面板样式
 const panelStyle = computed(() => {
   const size = isCollapsed.value ? props.collapsedSize : currentSize.value;
-  
+
   if (props.position === 'left' || props.position === 'right') {
+    // 如果启用了autoWidth且未折叠，使用100%宽度
+    if (props.autoWidth && !isCollapsed.value) {
+      return {
+        width: '100%',
+        maxWidth: `${props.maxSize}px`,
+        minWidth: `${props.minSize}px`
+      };
+    }
     return {
       width: `${size}px`
     };
@@ -174,6 +185,7 @@ onUnmounted(() => {
   overflow: hidden;
   background-color: #f5f5f5;
   border: 1px solid #ddd;
+  height: 100%;
 }
 
 /* 左侧面板 */

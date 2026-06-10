@@ -173,41 +173,6 @@
         :visible="selectionBox.visible"
       />
     </div>
-    <!-- 右侧控制面板容器 -->
-    <div class="right-side-controls">
-      <!-- 自动吸附开关 -->
-      <div class="snap-controls">
-        <n-space item-style="display: flex;" size="small" align="center">
-          <n-checkbox 
-            :checked="props.enableSnapToGrid" 
-            size="small"
-            @update:checked="emit('update:enableSnapToGrid', $event)"
-          >
-            {{ t('actions.snapToGrid') }}
-          </n-checkbox>
-          <n-checkbox 
-            :checked="props.enableSnapToAlignment" 
-            size="small"
-            @update:checked="emit('update:enableSnapToAlignment', $event)"
-          >
-            {{ t('actions.snapToAlignment') }}
-          </n-checkbox>
-          <n-checkbox 
-            :checked="props.showGrid" 
-            size="small"
-            @update:checked="emit('update:showGrid', $event)"
-          >
-            {{ t('actions.showGrid') }}
-          </n-checkbox>
-        </n-space>
-      </div>
-      <!-- 缩放控制组件 -->
-      <ZoomControls
-        :zoom-level="zoomLevel"
-        :paper-width="paperWidth"
-        @update:zoomLevel="emit('zoom-change', $event)"
-      />
-    </div>
   </div>
 </template>
 

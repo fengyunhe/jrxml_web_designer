@@ -27,17 +27,50 @@
           @update:currentFileId="currentFileId = $event"
         />
 
-        <n-button @click="toggleLeftPanel" type="default">
-          {{ showLeftPanel ? t('actions.hideLeftPanel') : t('actions.showLeftPanel') }}
-        </n-button>
-        <n-button @click="toggleRightPanel" type="default">
-          {{ showRightPanel ? t('actions.hideRightPanel') : t('actions.showRightPanel') }}
-        </n-button>
         <n-button @click="toggleBottomPanel" type="default">
           {{ showBottomPanel ? t('actions.hideBottomPanel') : t('actions.showBottomPanel') }}
         </n-button>
+        <n-button
+          @click="toggleAIChat"
+          :disabled="!isAIAssistantSupported"
+          :title="isAIAssistantSupported ? '切换AI助手显示' : browserSupport.message"
+          type="default"
+        >
+          🤖 {{ showAIChat ? '隐藏AI助手' : '显示AI助手' }}
+          <span v-if="!isAIAssistantSupported" style="font-size: 0.8em; color: #999;">（不支持）</span>
+        </n-button>
 
+        <!-- 吸附控制 -->
+        <div class="snap-controls-header">
+          <n-checkbox
+            :checked="enableSnapToGrid"
+            size="small"
+            @update:checked="enableSnapToGrid = $event"
+          >
+            {{ t('actions.snapToGrid') }}
+          </n-checkbox>
+          <n-checkbox
+            :checked="enableSnapToAlignment"
+            size="small"
+            @update:checked="enableSnapToAlignment = $event"
+          >
+            {{ t('actions.snapToAlignment') }}
+          </n-checkbox>
+          <n-checkbox
+            :checked="showGrid"
+            size="small"
+            @update:checked="showGrid = $event"
+          >
+            {{ t('actions.showGrid') }}
+          </n-checkbox>
+        </div>
 
+        <!-- 缩放控制 -->
+        <ZoomControls
+          :zoom-level="zoomLevel"
+          :paper-width="reportProperties.pageWidth"
+          @update:zoomLevel="setZoomLevel($event)"
+        />
 
         <SplitButton
           :actions="[
@@ -187,26 +220,68 @@
         :min-size="200"
         :max-size="500"
         :collapsible="true"
+        :auto-width="true"
         @size-change="handlePropertyPanelSizeChange"
         @collapse-change="rightPanelCollapsed = $event"
       >
+        <!-- 右侧面板标签页 -->
+        <div class="right-panel-tabs">
+          <button
+            class="right-panel-tab"
+            :class="{ active: rightPanelTab === 'properties' }"
+            @click="rightPanelTab = 'properties'"
+          >
+            属性
+          </button>
+          <button
+            class="right-panel-tab"
+            :class="{ active: rightPanelTab === 'ai' }"
+            @click="rightPanelTab = 'ai'"
+          >
+            🤖 AI助手
+          </button>
+          <button
+            v-if="rightPanelTab === 'ai'"
+            class="right-panel-settings-btn"
+            @click="toggleAISettings"
+            title="配置AI服务"
+          >
+            ⚙️
+          </button>
+        </div>
+
         <!-- 元素属性组件 -->
-        <ElementProperties
-          :selected-band-index="selectedBandIndex"
-          :selected-element="selectedElement"
-          :bands="bands"
-          :report-properties="reportProperties"
-          :sub-datasets="subDatasets"
-          :report-styles="reportStyles"
-          :report-fields="reportFields"
-          :report-parameters="reportParameters"
-          @update:bands="bands = $event"
-          @delete-element="deleteElement"
-          @update-jrxml="updateJRXML"
-          @save-state="saveStateToHistory"
-          @update:reportStyles="reportStyles = $event"
-          @add-columns-to-group="handleAddColumnsToGroup"
-        />
+        <div v-show="rightPanelTab === 'properties'">
+          <ElementProperties
+            :selected-band-index="selectedBandIndex"
+            :selected-element="selectedElement"
+            :bands="bands"
+            :report-properties="reportProperties"
+            :sub-datasets="subDatasets"
+            :report-styles="reportStyles"
+            :report-fields="reportFields"
+            :report-parameters="reportParameters"
+            @update:bands="bands = $event"
+            @delete-element="deleteElement"
+            @update-jrxml="updateJRXML"
+            @save-state="saveStateToHistory"
+            @update:reportStyles="reportStyles = $event"
+            @add-columns-to-group="handleAddColumnsToGroup"
+          />
+        </div>
+
+        <!-- AI助手面板 -->
+        <div v-show="rightPanelTab === 'ai'" class="ai-panel-container">
+          <AIChatPanel
+            :visible="rightPanelTab === 'ai'"
+            :initial-height="aiChatPanelHeight"
+            :mcp-context="mcpContext"
+            :on-update="forceUpdateUI"
+            :embedded="true"
+            :show-settings="showAISettings"
+            @update:show-settings="showAISettings = $event"
+          />
+        </div>
       </ResizablePanel>
     </div>
 
@@ -376,15 +451,17 @@ import StyleManagementModal from './modals/StyleManagementModal.vue';
 import BaseModal from './modals/BaseModal.vue';
 import ColumnSelectionModal from './modals/ColumnSelectionModal.vue';
 import BottomPanel from './panels/BottomPanel.vue';
+import AIChatPanel from './ai/AIChatPanel.vue';
 import ElementLibrary from './ElementLibrary.vue';
 import FileManager from './designer/controls/FileManager.vue';
+import ZoomControls from './designer/controls/ZoomControls.vue';
 import ElementProperties from './designer/properties/ElementProperties.vue';
 import LanguageSwitcher from './common/LanguageSwitcher.vue';
 import SplitButton from './common/SplitButton.vue';
 import MultiSelectToolbar from './designer/MultiSelectToolbar.vue';
 import AlignmentGuides from './designer/AlignmentGuides.vue';
 import DragFeedbackLayer from './designer/DragFeedbackLayer.vue';
-import {NButton, NSelect} from 'naive-ui';
+import {NButton, NSelect, NCheckbox} from 'naive-ui';
 import type {
   Band,
   BandType,
@@ -399,7 +476,9 @@ import type {
   TableDataset
 } from '../types';
 import type {DesignerFile} from '@/types/designerFile';
-import {computed, nextTick, onMounted, onUnmounted, reactive, ref, watch} from 'vue';
+import type {MCPContext} from '@/mcp';
+import {checkWebMCPSupport} from '@/utils/browserCompatibility';
+import {computed, nextTick, onMounted, onUnmounted, reactive, ref, watch, getCurrentInstance} from 'vue';
 import {useI18n} from 'vue-i18n';
 import {useDesignerFiles} from '@/composables/useDesignerFiles';
 import {useUndoRedo} from '@/composables/useUndoRedo';
@@ -452,6 +531,52 @@ const activeTab = ref('pageSettings');
 const showLeftPanel = ref(true);
 const showRightPanel = ref(true);
 const showBottomPanel = ref(false);
+const showAIChat = ref(false);
+const aiChatPanelHeight = ref(300);
+const rightPanelTab = ref('properties'); // 'properties' 或 'ai'
+
+// 浏览器兼容性检查
+const browserSupport = ref(checkWebMCPSupport());
+const isAIAssistantSupported = computed(() => browserSupport.value.isSupported);
+
+// MCP上下文，用于AI对话框执行工具调用
+const mcpContext = computed<MCPContext>(() => ({
+  bands: bands.value,
+  reportProperties: reportProperties.value,
+  fields: reportFields.value,
+  parameters: reportParameters.value,
+  variables: reportVariables.value,
+  saveStateToHistory,
+  updateJRXML,
+  selectElement,
+  selectedElement: selectedElement.value,
+  selectedElements: selectedElements.value
+}));
+
+// 强制更新函数，用于工具执行后触发UI更新
+function forceUpdateUI() {
+  console.log('forceUpdateUI called');
+  console.log('bands.value before update:', bands.value);
+
+  // 通过深拷贝创建新数组，确保Vue检测到变化
+  const newBands = JSON.parse(JSON.stringify(bands.value));
+  bands.value = newBands;
+
+  console.log('bands.value after update:', bands.value);
+
+  // 使用Vue的强制更新机制
+  const instance = getCurrentInstance();
+  if (instance) {
+    console.log('Forcing component update');
+    instance.proxy?.$forceUpdate();
+  }
+
+  // 调用nextTick确保DOM更新
+  nextTick(() => {
+    console.log('Calling updateJRXML');
+    updateJRXML();
+  });
+}
 
 // 属性面板宽度
 const propertyPanelWidth = ref(PANEL_CONSTANTS.DEFAULT_PROPERTY_PANEL_WIDTH); // 默认宽度300px
@@ -1159,6 +1284,11 @@ const { zoomLevel, resetZoom, calculateOptimalZoom, handleZoomChange } = useZoom
   paperWidth,
   zoomConstants: ZOOM_CONSTANTS
 });
+
+// 设置缩放级别的函数
+const setZoomLevel = (newZoom: number) => {
+  zoomLevel.value = newZoom;
+};
 const currentElement = computed(() => {
   if (selectedElement.value && bands.value && Array.isArray(bands.value)) {
     const band = bands.value[selectedElement.value.bandIndex];
@@ -2589,6 +2719,16 @@ const toggleBottomPanel = () => {
   showBottomPanel.value = !showBottomPanel.value;
 };
 
+const toggleAIChat = () => {
+  showAIChat.value = !showAIChat.value;
+};
+
+// AI设置相关
+const showAISettings = ref(false);
+
+const toggleAISettings = () => {
+  showAISettings.value = !showAISettings.value;
+};
 
 // 处理左侧面板大小变化
 const handleLeftPanelSizeChange = (newSize: number) => {
@@ -5076,6 +5216,60 @@ const handleBandSelectionChange = (): void => {
   font-family: Arial, sans-serif;
 }
 
+/* 右侧面板标签页样式 */
+.right-panel-tabs {
+  display: flex;
+  border-bottom: 1px solid var(--border-color);
+  background-color: #fafafa;
+}
+
+.right-panel-tab {
+  flex: 1;
+  padding: 10px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 500;
+  color: #666;
+  transition: all 0.2s;
+  border-bottom: 2px solid transparent;
+}
+
+.right-panel-tab:hover {
+  background-color: #f0f0f0;
+  color: var(--primary-color);
+}
+
+.right-panel-tab.active {
+  color: var(--primary-color);
+  border-bottom-color: var(--primary-color);
+  background-color: #fff;
+}
+
+.right-panel-settings-btn {
+  padding: 8px 12px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  font-size: 16px;
+  color: #666;
+  transition: all 0.2s;
+  border-left: 1px solid #e0e0e0;
+}
+
+.right-panel-settings-btn:hover {
+  background-color: #f0f0f0;
+  color: var(--primary-color);
+}
+
+.ai-panel-container {
+  flex: 1;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
 .designer-header {
   display: flex;
   justify-content: space-between;
@@ -5109,6 +5303,16 @@ const handleBandSelectionChange = (): void => {
   display: flex;
   gap: 6px;
   align-items: center;
+}
+
+.snap-controls-header {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  padding: 0 8px;
+  border-left: 1px solid #ddd;
+  border-right: 1px solid #ddd;
+  margin: 0 4px;
 }
 
 .designer-layout {

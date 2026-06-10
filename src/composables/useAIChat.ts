@@ -257,7 +257,8 @@ export function useAIChat(getMcpContext?: () => MCPContext | undefined, onUpdate
    * 清空历史
    */
   function clearHistory() {
-    messages.value = [];
+    // 直接清空数组内容，而不是替换整个数组
+    messages.value.splice(0, messages.value.length);
     conversationHistory.length = 0;
   }
 

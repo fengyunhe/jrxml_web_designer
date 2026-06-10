@@ -16,16 +16,21 @@ const props = withDefaults(defineProps<{
   initialHeight?: number;
   mcpContext?: MCPContext;
   onUpdate?: () => void;
+  embedded?: boolean; // 是否嵌入模式（隐藏header）
+  showSettings?: boolean; // 外部控制设置面板显示
 }>(), {
   visible: false,
   initialHeight: 300,
   mcpContext: undefined,
-  onUpdate: undefined
+  onUpdate: undefined,
+  embedded: false,
+  showSettings: false
 });
 
 // Emits
 const emit = defineEmits<{
   (e: 'update:visible', value: boolean): void;
+  (e: 'update:showSettings', value: boolean): void;
 }>();
 
 // AI对话
@@ -47,7 +52,6 @@ const {
 // 状态
 const panelHeight = ref(props.initialHeight);
 const isExpanded = ref(true);
-const showSettings = ref(false);
 const messagesContainer = ref<HTMLDivElement | null>(null);
 
 // 配置表单（requestTimeout在UI中显示为秒，保存时转换为毫秒）
@@ -58,8 +62,14 @@ const configForm = ref<AIConfiguration & { requestTimeoutSeconds: number }>({
 
 // 计算属性
 const panelStyle = computed(() => ({
-  height: isExpanded.value ? `${panelHeight.value}px` : '40px'
+  height: props.embedded ? '100%' : (isExpanded.value ? `${panelHeight.value}px` : '40px')
 }));
+
+// 计算showSettings（支持外部控制）
+const showSettings = computed({
+  get: () => props.showSettings,
+  set: (value: boolean) => emit('update:showSettings', value)
+});
 
 // 切换展开/折叠
 function toggleExpand() {
@@ -132,7 +142,19 @@ onMounted(() => {
     requestTimeoutSeconds: Math.round(config.requestTimeout / 1000)
   } as AIConfiguration & { requestTimeoutSeconds: number };
   browserSupport.value = checkWebMCPSupport();
+
+  // 添加键盘快捷键监听器
+  document.addEventListener('keydown', handleKeyDown);
 });
+
+// 键盘快捷键处理
+function handleKeyDown(event: KeyboardEvent) {
+  // Ctrl+K 或 Cmd+K (Mac)
+  if ((event.ctrlKey || event.metaKey) && event.key === 'k') {
+    event.preventDefault();
+    clearHistory();
+  }
+}
 
 // 浏览器兼容性检查
 const browserSupport = ref<BrowserSupportResult | null>(null);
@@ -140,9 +162,9 @@ const isSupported = computed(() => browserSupport.value?.isSupported ?? false);
 </script>
 
 <template>
-  <div class="ai-chat-panel" :style="panelStyle" v-show="visible">
-    <!-- 头部 -->
-    <div class="panel-header" @click="toggleExpand">
+  <div class="ai-chat-panel" :class="{ 'ai-chat-panel--embedded': embedded }" :style="panelStyle" v-show="visible">
+    <!-- 头部（非嵌入模式时显示） -->
+    <div v-if="!embedded" class="panel-header" @click="toggleExpand">
       <div class="header-left">
         <span class="panel-icon">🤖</span>
         <span class="panel-title">AI 助手</span>
@@ -329,6 +351,12 @@ const isSupported = computed(() => browserSupport.value?.isSupported ?? false);
   box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.1);
   overflow: hidden;
   transition: height 0.3s ease;
+  height: 100%;
+}
+
+.ai-chat-panel--embedded {
+  border-top: none;
+  box-shadow: none;
 }
 
 .panel-header {
@@ -340,6 +368,7 @@ const isSupported = computed(() => browserSupport.value?.isSupported ?? false);
   border-bottom: 1px solid #e0e0e0;
   cursor: pointer;
   user-select: none;
+  flex-shrink: 0;
 }
 
 .header-left {
@@ -397,7 +426,7 @@ const isSupported = computed(() => browserSupport.value?.isSupported ?? false);
   background-color: #f9f9f9;
   border-bottom: 1px solid #e0e0e0;
   padding: 12px;
-  max-height: 300px;
+  max-height: 40%;
   overflow-y: auto;
 }
 
