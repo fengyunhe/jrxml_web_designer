@@ -109,7 +109,7 @@ export function generateJRXMLContent(
     jrxml += "\n  <!-- 报表参数定义 -->\n";
     parameters.forEach((param) => {
       if (param.name && param.class) {
-        jrxml += `  <parameter name="${param.name}" class="${param.class}" uuid="${generateUUID()}">\n`;
+        jrxml += `  <parameter name="${param.name}" class="${param.class}">\n`;
         if (param.defaultValue !== undefined) {
           jrxml += `    <defaultValueExpression><![CDATA[${param.defaultValue}]]></defaultValueExpression>\n`;
         }

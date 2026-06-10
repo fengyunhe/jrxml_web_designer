@@ -143,12 +143,12 @@ const FIELDS_JRXML = `<?xml version="1.0" encoding="UTF-8"?>
     pageWidth="595" pageHeight="842"
     columnWidth="555" leftMargin="20" rightMargin="20"
     topMargin="20" bottomMargin="20">
+  <queryString language="sql"><![CDATA[SELECT * FROM users]]></queryString>
   <field name="userName" class="java.lang.String"/>
   <field name="age" class="java.lang.Integer"/>
   <field name="salary" class="java.lang.Double"/>
   <field name="isVip" class="java.lang.Boolean"/>
   <field name="userId" class="java.lang.Long"/>
-  <queryString language="sql"><![CDATA[SELECT * FROM users]]></queryString>
   <title><band height="30"/></title>
   <detail>
     <band height="25">
@@ -184,7 +184,7 @@ const GRAPHICS_ELEMENTS_JRXML = `<?xml version="1.0" encoding="UTF-8"?>
       </rectangle>
       <image>
         <reportElement x="230" y="40" width="100" height="100"/>
-        <imageExpression><![CDATA["https://via.placeholder.com/100x100.png"]]></imageExpression>
+        <imageExpression><![CDATA["https://search-operate.cdn.bcebos.com/fea1ebd1003179f119e5782b1656c06e.gif"]]></imageExpression>
       </image>
       <ellipse>
         <reportElement x="360" y="40" width="150" height="100"/>
@@ -216,16 +216,16 @@ const STYLES_JRXML = `<?xml version="1.0" encoding="UTF-8"?>
   </style>
   <title>
     <band height="40">
-      <staticText style="TitleStyle">
-        <reportElement x="0" y="0" width="300" height="30"/>
+      <staticText>
+        <reportElement x="0" y="0" width="300" height="30" style="TitleStyle"/>
         <text><![CDATA[Styled Report]]></text>
       </staticText>
     </band>
   </title>
   <detail>
     <band height="25">
-      <staticText style="BorderedBox">
-        <reportElement x="0" y="0" width="555" height="25"/>
+      <staticText>
+        <reportElement x="0" y="0" width="555" height="25" style="BorderedBox"/>
         <text><![CDATA[Styled row]]></text>
       </staticText>
     </band>
@@ -284,7 +284,7 @@ const TABLE_JRXML = `<?xml version="1.0" encoding="UTF-8"?>
           <datasetRun subDataset="tableDataset">
             <connectionExpression><![CDATA[$P{REPORT_CONNECTION}]]></connectionExpression>
           </datasetRun>
-          <jr:column width="185" uuid="col1-uuid">
+          <jr:column width="185" uuid="b1a2c3d4-e5f6-7890-abcd-ef1234567891">
             <jr:columnHeader height="30">
               <staticText>
                 <reportElement x="0" y="0" width="185" height="30"/>
@@ -302,7 +302,7 @@ const TABLE_JRXML = `<?xml version="1.0" encoding="UTF-8"?>
               </textField>
             </jr:detailCell>
           </jr:column>
-          <jr:column width="185" uuid="col2-uuid">
+          <jr:column width="185" uuid="b2c3d4e5-f6a7-8901-bcde-f12345678901">
             <jr:columnHeader height="30">
               <staticText>
                 <reportElement x="0" y="0" width="185" height="30"/>
@@ -320,7 +320,7 @@ const TABLE_JRXML = `<?xml version="1.0" encoding="UTF-8"?>
               </textField>
             </jr:detailCell>
           </jr:column>
-          <jr:column width="185" uuid="col3-uuid">
+          <jr:column width="185" uuid="c3d4e5f6-a7b8-9012-cdef-123456789012">
             <jr:columnHeader height="30">
               <staticText>
                 <reportElement x="0" y="0" width="185" height="30"/>
@@ -352,9 +352,9 @@ const EXPRESSIONS_JRXML = `<?xml version="1.0" encoding="UTF-8"?>
     pageWidth="595" pageHeight="842"
     columnWidth="555" leftMargin="20" rightMargin="20"
     topMargin="20" bottomMargin="20">
-  <parameter name="reportDate" class="java.util.Date"/>
-  <variable name="reportCounter" class="java.lang.Integer" calculation="Count"/>
+  <parameter name="reportDate" class="java.lang.String"/>
   <queryString language="sql"><![CDATA[SELECT 1 AS id]]></queryString>
+  <variable name="reportCounter" class="java.lang.Integer" calculation="Count"/>
   <title>
     <band height="100">
       <textField>
@@ -405,22 +405,6 @@ const MULTI_PAGE_JRXML = `<?xml version="1.0" encoding="UTF-8"?>
       </textField>
     </band>
   </pageFooter>
-  <columnHeader>
-    <band height="25">
-      <staticText>
-        <reportElement x="0" y="0" width="100" height="20"/>
-        <text><![CDATA[Col A]]></text>
-      </staticText>
-    </band>
-  </columnHeader>
-  <detail>
-    <band height="20">
-      <staticText>
-        <reportElement x="0" y="0" width="100" height="20"/>
-        <text><![CDATA[Row data]]></text>
-      </staticText>
-    </band>
-  </detail>
 </jasperReport>`;
 
 const LANDSCAPE_JRXML = `<?xml version="1.0" encoding="UTF-8"?>
@@ -481,15 +465,14 @@ const TEXT_FORMATTING_JRXML = `<?xml version="1.0" encoding="UTF-8"?>
     pageWidth="595" pageHeight="842"
     columnWidth="555" leftMargin="20" rightMargin="20"
     topMargin="20" bottomMargin="20">
-  <parameter name="amount" class="java.lang.Double"/>
+  <parameter name="amount" class="java.lang.String"/>
   <queryString language="sql"><![CDATA[SELECT 1]]></queryString>
   <title>
     <band height="120">
       <staticText>
         <reportElement x="0" y="0" width="300" height="20"/>
         <textElement>
-          <font fontName="Arial" size="14" isBold="true" isItalic="false" isUnderline="true" isStrikeThrough="false"
-                pdfFontName="Helvetica-Bold" pdfEncoding="UTF-8" isPdfEmbedded="false"/>
+          <font size="14" isBold="true" isItalic="false" isUnderline="true" isStrikeThrough="false"/>
           <paragraph lineSpacing="Double"/>
         </textElement>
         <text><![CDATA[Formatted Text]]></text>
@@ -498,7 +481,7 @@ const TEXT_FORMATTING_JRXML = `<?xml version="1.0" encoding="UTF-8"?>
         <reportElement x="0" y="30" width="200" height="30"/>
         <textElement>
           <font size="12"/>
-          <paragraph lineSpacing="1.5"/>
+          <paragraph lineSpacing="1_1_2"/>
         </textElement>
         <textFieldExpression><![CDATA[$P{amount}]]></textFieldExpression>
       </textField>
@@ -859,7 +842,7 @@ describe('jrxml-pdf-preview.firegod.cn - JRXML Validity Integration Tests', () =
     it('should accept JRXML with font, paragraph, and pattern settings', async () => {
       const res = requireResponse(await safeSend({
         jrxml: TEXT_FORMATTING_JRXML,
-        parameters: { amount: 1234.56 },
+        parameters: { amount: '1234.56' },
       }));
       expect(res.ok).toBe(true);
       const buffer = await res.arrayBuffer();

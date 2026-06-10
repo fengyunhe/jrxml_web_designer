@@ -102,10 +102,10 @@ describe('jrxmlGenerator', () => {
   it('should include all band types present in the bands array', () => {
     const jrxml = generateJRXMLContent(mockReportProperties, mockBands, [], [])
 
-    // Check that all band types are included (with UUID attribute)
-    expect(jrxml).toMatch(/<band height="80" uuid="[^"]*">/)
-    expect(jrxml).toMatch(/<band height="50" uuid="[^"]*">/)
-    expect(jrxml).toMatch(/<band height="100" uuid="[^"]*">/)
+    // Check that all band types are included (without UUID - bands don't require it per XSD)
+    expect(jrxml).toMatch(/<band height="80">/)
+    expect(jrxml).toMatch(/<band height="50">/)
+    expect(jrxml).toMatch(/<band height="100">/)
 
     // Check that band sections are properly closed
     expect(jrxml).toContain('</band>')
@@ -163,8 +163,8 @@ describe('jrxmlGenerator', () => {
 
     const jrxml = generateJRXMLContent(mockReportProperties, bandsWithNoElements, [], [])
 
-    // Should still include the band but no elements inside (with UUID)
-    expect(jrxml).toMatch(/<band height="80" uuid="[^"]*">/)
+    // Should still include the band but no elements inside (without UUID - bands don't require it per XSD)
+    expect(jrxml).toMatch(/<band height="80">/)
     expect(jrxml).toContain('</band>')
   })
 
@@ -181,13 +181,13 @@ describe('jrxmlGenerator', () => {
     
     const jrxml = generateJRXMLContent(mockReportProperties, mockBands, fields, parameters)
     
-    // Check that fields are included
-    expect(jrxml).toMatch(/<field name="field1" class="java.lang.String" uuid="[^"]*"\/>/)
-    expect(jrxml).toMatch(/<field name="field2" class="java.lang.Integer" uuid="[^"]*"\/>/)
-    
-    // Check that parameters are included (non-self-closing format)
-    expect(jrxml).toMatch(/<parameter name="param1" class="java.lang.String" uuid="[^"]*">/)
-    expect(jrxml).toMatch(/<parameter name="param2" class="java.util.Date" uuid="[^"]*">/)
+    // Check that fields are included (without UUID - fields don't require it per XSD)
+    expect(jrxml).toMatch(/<field name="field1" class="java.lang.String"\/>/)
+    expect(jrxml).toMatch(/<field name="field2" class="java.lang.Integer"\/>/)
+
+    // Check that parameters are included (without UUID - parameters don't require it per XSD)
+    expect(jrxml).toMatch(/<parameter name="param1" class="java.lang.String">/)
+    expect(jrxml).toMatch(/<parameter name="param2" class="java.util.Date">/)
   })
 
   it('should generate valid XML that can be parsed', () => {
@@ -234,9 +234,9 @@ describe('jrxmlGenerator', () => {
     
     const jrxml = generateJRXMLContent(mockReportProperties, bandsWithMissingField, fields, [])
     
-    // Should include both the existing field and the missing field (with default class)
-    expect(jrxml).toMatch(/<field name="existing_field" class="java.lang.String" uuid="[^"]*"\/>/)
-    expect(jrxml).toMatch(/<field name="missing_field" class="java.lang.String" uuid="[^"]*"\/>/)
+    // Should include both the existing field and the missing field (without UUID - fields don't require it per XSD)
+    expect(jrxml).toMatch(/<field name="existing_field" class="java.lang.String"\/>/)
+    expect(jrxml).toMatch(/<field name="missing_field" class="java.lang.String"\/>/)
   })
 
   it('should add default margins when not provided', () => {
@@ -273,9 +273,9 @@ describe('jrxmlGenerator', () => {
     
     const jrxml = generateJRXMLContent(mockReportProperties, mockBands, [], parameters)
     
-    // Both parameters should be included
-    expect(jrxml).toMatch(/<parameter name="paramWithDefault" class="java.lang.String" uuid="[^"]*">/)
-    expect(jrxml).toMatch(/<parameter name="paramWithoutDefault" class="java.lang.Integer" uuid="[^"]*">/)
+    // Both parameters should be included (without UUID - parameters don't require it per XSD)
+    expect(jrxml).toMatch(/<parameter name="paramWithDefault" class="java.lang.String">/)
+    expect(jrxml).toMatch(/<parameter name="paramWithoutDefault" class="java.lang.Integer">/)
     
     // Param with default should have defaultValueExpression
     expect(jrxml).toContain('<defaultValueExpression><![CDATA[default_value]]></defaultValueExpression>')
@@ -422,9 +422,9 @@ describe('jrxmlGenerator', () => {
     expect(jrxml).toContain('<textFieldExpression><![CDATA[$F{field2}]]></textFieldExpression>')
     expect(jrxml).toContain('<textFieldExpression><![CDATA[$F{field1} + " - " + $F{field2}]]></textFieldExpression>')
     
-    // Should automatically add both fields with default class
-    expect(jrxml).toMatch(/<field name="field1" class="java.lang.String" uuid="[^"]*"\/>/)
-    expect(jrxml).toMatch(/<field name="field2" class="java.lang.String" uuid="[^"]*"\/>/)
+    // Should automatically add both fields with default class (without UUID - fields don't require it per XSD)
+    expect(jrxml).toMatch(/<field name="field1" class="java.lang.String"\/>/)
+    expect(jrxml).toMatch(/<field name="field2" class="java.lang.String"\/>/)
   })
 
   it('should handle various element types', () => {
