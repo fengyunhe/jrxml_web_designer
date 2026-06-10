@@ -180,7 +180,6 @@
 import { onMounted, onBeforeUnmount, ref } from 'vue';
 import ElementFactory from '../elements/ElementFactory.vue';
 import SelectionBox from './SelectionBox.vue';
-import ZoomControls from './controls/ZoomControls.vue';
 import DragFeedbackLayer from './DragFeedbackLayer.vue';
 import { BAND_CONSTANTS } from '@/constants/constants';
 import { getBandDisplayName } from '@/utils/bandUtils';

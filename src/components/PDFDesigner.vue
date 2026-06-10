@@ -30,15 +30,13 @@
         <n-button @click="toggleBottomPanel" type="default">
           {{ showBottomPanel ? t('actions.hideBottomPanel') : t('actions.showBottomPanel') }}
         </n-button>
-        <n-button
-          @click="toggleAIChat"
-          :disabled="!isAIAssistantSupported"
-          :title="isAIAssistantSupported ? '切换AI助手显示' : browserSupport.message"
-          type="default"
-        >
-          🤖 {{ showAIChat ? '隐藏AI助手' : '显示AI助手' }}
-          <span v-if="!isAIAssistantSupported" style="font-size: 0.8em; color: #999;">（不支持）</span>
-        </n-button>
+
+        <!-- 缩放控制 -->
+        <ZoomControls
+          :zoom-level="zoomLevel"
+          :paper-width="reportProperties.pageWidth"
+          @update:zoomLevel="setZoomLevel($event)"
+        />
 
         <!-- 吸附控制 -->
         <div class="snap-controls-header">
