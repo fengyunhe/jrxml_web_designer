@@ -4128,8 +4128,9 @@ const startResizingElement = (event: MouseEvent, bandIndex: number, elementIndex
       let newHeight = resizingInfo.value.startHeight + ((e.clientY - currentPaperOffsetY) / currentZoom - resizingInfo.value.startY);
 
       // 限制最小尺寸
-      newWidth = Math.max(20, newWidth);
-      newHeight = Math.max(20, newHeight);
+      const minSize = 1;
+      newWidth = Math.max(minSize, newWidth);
+      newHeight = Math.max(minSize, newHeight);
 
       // 获取报表边距设置
       const { leftMargin = 0, rightMargin = 0 } = reportProperties.value;
@@ -4164,8 +4165,8 @@ const startResizingElement = (event: MouseEvent, bandIndex: number, elementIndex
         }
 
         // 再次限制尺寸，确保不超出边界
-        newWidth = Math.max(20, Math.min(newWidth, maxElementWidth));
-        newHeight = Math.max(20, Math.min(newHeight, availableHeight));
+        newWidth = Math.max(minSize, Math.min(newWidth, maxElementWidth));
+        newHeight = Math.max(minSize, Math.min(newHeight, availableHeight));
       } else if (e.altKey) {
         // 如果按下ALT键，锁定1:1宽高比
         // 计算基于宽度的1:1高度和基于高度的1:1宽度
@@ -4185,8 +4186,8 @@ const startResizingElement = (event: MouseEvent, bandIndex: number, elementIndex
         }
 
         // 再次限制尺寸，确保不超出边界
-        newWidth = Math.max(20, Math.min(newWidth, maxElementWidth));
-        newHeight = Math.max(20, Math.min(newHeight, availableHeight));
+        newWidth = Math.max(minSize, Math.min(newWidth, maxElementWidth));
+        newHeight = Math.max(minSize, Math.min(newHeight, availableHeight));
       }
 
       // 先保存临时尺寸
