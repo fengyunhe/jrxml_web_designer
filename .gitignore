@@ -24,3 +24,18 @@ dist-ssr
 *.sw?
 /coverage
 /jasperreport6Fork/*
+
+# Temporary and generated files
+COMMIT_COMPLETE_SUMMARY.md
+test-attribute-validation/compiled/
+test-attribute-validation/test-results.txt
+test-attribute-validation/validation-summary.txt
+
+# AI/OMC tool generated files
+.omc/
+.claude/AGENTS.md
+AGENTS.md
+QUICKSTART.md
+README-AI-CHAT.md
+docs/ai-configuration.md
+docs/mcp-interface.md
