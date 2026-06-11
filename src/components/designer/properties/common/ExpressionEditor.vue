@@ -72,6 +72,62 @@
       </div>
 
       <div class="help-section">
+        <h5>内置变量</h5>
+        <div class="help-items">
+          <div class="help-item" @click="insertExpression('$V{REPORT_COUNT}')">
+            <span class="expression-text">$V{REPORT_COUNT}</span>
+            <span class="expression-desc">记录总数</span>
+          </div>
+          <div class="help-item" @click="insertExpression('$V{PAGE_NUMBER}')">
+            <span class="expression-text">$V{PAGE_NUMBER}</span>
+            <span class="expression-desc">当前页码</span>
+          </div>
+          <div class="help-item" @click="insertExpression('$V{PAGE_COUNT}')">
+            <span class="expression-text">$V{PAGE_COUNT}</span>
+            <span class="expression-desc">总页数</span>
+          </div>
+          <div class="help-item" @click="insertExpression('$V{COLUMN_NUMBER}')">
+            <span class="expression-text">$V{COLUMN_NUMBER}</span>
+            <span class="expression-desc">当前列号</span>
+          </div>
+          <div class="help-item" @click="insertExpression('$V{COLUMN_COUNT}')">
+            <span class="expression-text">$V{COLUMN_COUNT}</span>
+            <span class="expression-desc">当前列记录数</span>
+          </div>
+          <div class="help-item" @click="insertExpression('$V{MASTER_CURRENT_PAGE}')">
+            <span class="expression-text">$V{MASTER_CURRENT_PAGE}</span>
+            <span class="expression-desc">主报表当前页码</span>
+          </div>
+          <div class="help-item" @click="insertExpression('$V{MASTER_TOTAL_PAGES}')">
+            <span class="expression-text">$V{MASTER_TOTAL_PAGES}</span>
+            <span class="expression-desc">主报表总页数</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="help-section">
+        <h5>内置参数</h5>
+        <div class="help-items">
+          <div class="help-item" @click="insertExpression('$P{REPORT_CONNECTION}')">
+            <span class="expression-text">$P{REPORT_CONNECTION}</span>
+            <span class="expression-desc">JDBC连接</span>
+          </div>
+          <div class="help-item" @click="insertExpression('$P{REPORT_DATA_SOURCE}')">
+            <span class="expression-text">$P{REPORT_DATA_SOURCE}</span>
+            <span class="expression-desc">报表数据源</span>
+          </div>
+          <div class="help-item" @click="insertExpression('$P{REPORT_LOCALE}')">
+            <span class="expression-text">$P{REPORT_LOCALE}</span>
+            <span class="expression-desc">报表语言环境</span>
+          </div>
+          <div class="help-item" @click="insertExpression('$P{REPORT_SCRIPTLET}')">
+            <span class="expression-text">$P{REPORT_SCRIPTLET}</span>
+            <span class="expression-desc">报表脚本</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="help-section">
         <h5>比较运算符</h5>
         <div class="help-items">
           <div class="help-item" @click="insertExpression('==')">
@@ -203,20 +259,46 @@ const allSuggestions = computed<SuggestionItem[]>(() => {
     }
   }
 
-  // Built-in variables
-  const builtInVars = [
-    { value: 'PAGE_NUMBER', description: '当前页码' },
-    { value: 'PAGE_COUNT', description: '总页数' },
-    { value: 'REPORT_COUNT', description: '记录总数' },
-    { value: 'COLUMN_NUMBER', description: '当前列号' },
-    { value: 'CURRENT_ROW_COUNT', description: '当前行号' },
+  // Built-in parameters (from JRParameter.java)
+  const builtInParams = [
     { value: 'REPORT_PARAMETERS_MAP', description: '报表参数映射' },
-    { value: 'REPORT_FILE', description: '报表文件名' },
-    { value: 'REPORT_CONNECTION', description: '报表连接' },
-    { value: 'REPORT_SCRIPTLET', description: '报表脚本' },
-    { value: 'SUBREPORT_DIR', description: '子报表目录' },
+    { value: 'JASPER_REPORTS_CONTEXT', description: 'JasperReports上下文' },
+    { value: 'JASPER_REPORT', description: '当前JasperReport模板对象' },
+    { value: 'REPORT_CONNECTION', description: 'JDBC连接' },
+    { value: 'REPORT_MAX_COUNT', description: '限制数据源大小' },
     { value: 'REPORT_DATA_SOURCE', description: '报表数据源' },
+    { value: 'REPORT_SCRIPTLET', description: '报表脚本' },
+    { value: 'REPORT_LOCALE', description: '报表语言环境' },
+    { value: 'REPORT_RESOURCE_BUNDLE', description: '报表资源包' },
+    { value: 'REPORT_TIME_ZONE', description: '报表时区' },
+    { value: 'REPORT_VIRTUALIZER', description: '报表虚拟化器' },
+    { value: 'REPORT_CLASS_LOADER', description: '报表类加载器' },
+    { value: 'REPORT_FORMAT_FACTORY', description: '报表格式工厂' },
     { value: 'IS_IGNORE_PAGINATION', description: '是否忽略分页' },
+    { value: 'MAX_PAGE_HEIGHT', description: '最大页面高度' },
+    { value: 'MAX_PAGE_WIDTH', description: '最大页面宽度' },
+    { value: 'REPORT_TEMPLATES', description: '报表模板集合' },
+  ];
+  for (const p of builtInParams) {
+    items.push({
+      value: p.value,
+      type: 'parameter',
+      typeLabel: 'P',
+      description: p.description,
+    });
+  }
+
+  // Built-in variables (from JRVariable.java)
+  const builtInVars = [
+    { value: 'REPORT_COUNT', description: '数据源中读取的总记录数' },
+    { value: 'PAGE_COUNT', description: '生成当前页面时处理的记录数' },
+    { value: 'COLUMN_COUNT', description: '生成当前列时处理的记录数' },
+    { value: 'PAGE_NUMBER', description: '当前页码' },
+    { value: 'COLUMN_NUMBER', description: '当前列号' },
+    { value: 'MASTER_CURRENT_PAGE', description: '主报表的当前页码' },
+    { value: 'MASTER_TOTAL_PAGES', description: '主报表的总页数' },
+    { value: 'CURRENT_ROW_COUNT', description: '当前行号' },
+    { value: 'GROUP_COUNT', description: '组计数变量（自动生成）' },
   ];
   for (const v of builtInVars) {
     items.push({

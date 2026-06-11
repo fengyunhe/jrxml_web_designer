@@ -128,6 +128,7 @@
                             "
                             :report-fields="reportFields"
                             :report-parameters="reportParameters"
+                            :report-variables="reportVariables"
                         />
                     </div>
 
@@ -294,17 +295,14 @@
                             "
                         >
                             <label>{{ t("properties.expression") }}</label>
-                            <input
-                                v-if="currentElement"
-                                :value="getTextFieldExpression(currentElement)"
-                                @input="updateTextFieldExpression"
-                                type="text"
+                            <ExpressionEditor
+                                :model-value="getTextFieldExpression(currentElement)"
+                                @update:model-value="updateTextFieldExpression"
+                                :report-fields="reportFields"
+                                :report-parameters="reportParameters"
+                                :report-variables="reportVariables"
+                                :placeholder="t('properties.expressionHint', { fieldHolder: '$F{fieldName}' })"
                             />
-                            <small>{{
-                                t("properties.expressionHint", {
-                                    fieldHolder: "$F{fieldName}",
-                                })
-                            }}</small>
                         </div>
                         <div class="form-group">
                             <label>{{ t("properties.pattern") }}</label>
@@ -382,6 +380,9 @@
                     <TableProperties
                         :element="currentElement"
                         :available-styles="reportStyles.map((s) => s.name)"
+                        :report-fields="reportFields"
+                        :report-parameters="reportParameters"
+                        :report-variables="reportVariables"
                         @update:element="handleTablePropertyUpdate"
                     />
 
@@ -511,6 +512,9 @@
                 >
                     <FrameProperties
                         :element="currentElement"
+                        :report-fields="reportFields"
+                        :report-parameters="reportParameters"
+                        :report-variables="reportVariables"
                         @update:element="handleFramePropertyUpdate"
                     />
                 </n-tab-pane>
@@ -1854,6 +1858,7 @@ interface Props {
     reportStyles?: any[];
     reportFields?: Array<{ name: string; class?: string }>;
     reportParameters?: Array<{ name: string; class?: string }>;
+    reportVariables?: Array<{ name: string; class?: string }>;
 }
 
 interface Emits {
@@ -3009,11 +3014,9 @@ function getTextFieldExpression(element: any) {
 }
 
 // 更新文本字段的表达式
-function updateTextFieldExpression(event: Event) {
+function updateTextFieldExpression(newExpression: string) {
     if (!currentElement.value || currentElement.value.type !== "textField")
         return;
-
-    const newExpression = (event.target as HTMLInputElement).value;
 
     emit("save-state");
     currentElement.value.expression = newExpression;

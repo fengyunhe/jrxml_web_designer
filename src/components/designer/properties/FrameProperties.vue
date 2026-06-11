@@ -20,6 +20,9 @@
         :model-value="element.printWhenExpression || ''"
         @update:model-value="updateProperty('printWhenExpression', $event)"
         placeholder="例如: $F{status}.equals(&quot;active&quot;)"
+        :report-fields="reportFields"
+        :report-parameters="reportParameters"
+        :report-variables="reportVariables"
       />
       <span class="form-hint">当表达式为true时打印此Frame</span>
     </div>
@@ -115,6 +118,9 @@ import SelectControl from './common/SelectControl.vue';
 
 const props = defineProps<{
   element: any;
+  reportFields?: Array<{ name: string; class?: string }>;
+  reportParameters?: Array<{ name: string; class?: string }>;
+  reportVariables?: Array<{ name: string; class?: string }>;
 }>();
 
 const emit = defineEmits<{

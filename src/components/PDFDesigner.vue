@@ -259,6 +259,7 @@
             :report-styles="reportStyles"
             :report-fields="reportFields"
             :report-parameters="reportParameters"
+            :report-variables="reportVariables"
             @update:bands="bands = $event"
             @delete-element="deleteElement"
             @update-jrxml="updateJRXML"

@@ -21,6 +21,9 @@
         :model-value="element.dataset?.connectionExpression || ''"
         @update:model-value="updateDatasetProperty('connectionExpression', $event)"
         placeholder="$P{REPORT_CONNECTION}"
+        :report-fields="reportFields"
+        :report-parameters="reportParameters"
+        :report-variables="reportVariables"
       />
     </div>
 
@@ -209,6 +212,9 @@ import SelectControl from './common/SelectControl.vue';
 const props = defineProps<{
   element: any;
   availableStyles?: string[];
+  reportFields?: Array<{ name: string; class?: string }>;
+  reportParameters?: Array<{ name: string; class?: string }>;
+  reportVariables?: Array<{ name: string; class?: string }>;
 }>();
 
 const emit = defineEmits<{
