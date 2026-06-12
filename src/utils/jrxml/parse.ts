@@ -1452,6 +1452,18 @@ function parseElement(element: Element, type: string): any {
     case "frame":
       parseFrameElement(element, result);
       break;
+    case "subreport":
+      parseSubreportElement(element, result);
+      break;
+    case "list":
+      parseListElement(element, result);
+      break;
+    case "chart":
+      parseChartElement(element, result);
+      break;
+    case "crosstab":
+      parseCrosstabElement(element, result);
+      break;
   }
 
   if (elementType === "rectangle" && element.hasAttribute("radius")) {
@@ -1909,6 +1921,154 @@ function parseFrameElement(element: Element, result: any): void {
       }
     }
   });
+}
+
+// 解析子报表元素
+function parseSubreportElement(element: Element, result: any): void {
+  // 解析subreportExpression
+  const subreportExprElem = element.querySelector("subreportExpression");
+  if (subreportExprElem) {
+    result.subreportExpression = subreportExprElem.textContent?.trim() || '';
+  }
+  
+  // 解析parametersMapExpression
+  const paramsMapExprElem = element.querySelector("parametersMapExpression");
+  if (paramsMapExprElem) {
+    result.parametersMapExpression = paramsMapExprElem.textContent?.trim() || '';
+  }
+  
+  // 解析connectionExpression
+  const connExprElem = element.querySelector("connectionExpression");
+  if (connExprElem) {
+    result.connectionExpression = connExprElem.textContent?.trim() || '';
+  }
+  
+  // 解析dataSourceExpression
+  const dsExprElem = element.querySelector("dataSourceExpression");
+  if (dsExprElem) {
+    result.dataSourceExpression = dsExprElem.textContent?.trim() || '';
+  }
+  
+  // 解析evaluationTime
+  if (element.hasAttribute("evaluationTime")) {
+    result.evaluationTime = element.getAttribute("evaluationTime");
+  }
+  
+  // 解析isUsingCache
+  if (element.hasAttribute("isUsingCache")) {
+    result.isUsingCache = element.getAttribute("isUsingCache") === "true";
+  }
+}
+
+// 解析列表元素
+function parseListElement(element: Element, result: any): void {
+  // 解析evaluationTime
+  if (element.hasAttribute("evaluationTime")) {
+    result.evaluationTime = element.getAttribute("evaluationTime");
+  }
+  
+  // 解析splitType
+  if (element.hasAttribute("splitType")) {
+    result.splitType = element.getAttribute("splitType");
+  }
+  
+  // 解析listContents
+  const listContentsElem = element.querySelector("listContents");
+  if (listContentsElem) {
+    const contentsHeight = parseInt(listContentsElem.getAttribute("height") || "0");
+    const elements: any[] = [];
+    
+    // 解析列表内容中的子元素
+    Array.from(listContentsElem.children).forEach(child => {
+      const childType = child.localName || child.tagName;
+      const validElementTypes = [
+        "staticText", "textField", "image", "line", "rectangle", "ellipse",
+        "break", "frame", "subreport", "list", "chart", "crosstab"
+      ];
+      if (validElementTypes.includes(childType)) {
+        const parsedElement = parseElement(child, childType);
+        if (parsedElement) {
+          elements.push(parsedElement);
+        }
+      }
+    });
+    
+    result.listContents = {
+      elements: elements,
+      height: contentsHeight
+    };
+  }
+}
+
+// 解析图表元素
+function parseChartElement(element: Element, result: any): void {
+  // 根据元素标签名确定图表类型
+  const tagName = element.tagName || element.localName || '';
+  const chartTypeMap: Record<string, string> = {
+    'pieChart': 'pie', 'pie3DChart': 'pie3D',
+    'barChart': 'bar', 'bar3DChart': 'bar3D', 'xyBarChart': 'xyBar',
+    'stackedBarChart': 'stackedBar', 'stackedBar3DChart': 'stackedBar3D',
+    'lineChart': 'line', 'xyLineChart': 'xyLine',
+    'areaChart': 'area', 'xyAreaChart': 'xyArea', 'stackedAreaChart': 'stackedArea',
+    'scatterChart': 'scatter', 'bubbleChart': 'bubble',
+    'timeSeriesChart': 'timeSeries', 'highLowChart': 'highLow', 'candlestickChart': 'candlestick',
+    'meterChart': 'meter', 'thermometerChart': 'thermometer',
+    'multiAxisChart': 'multiAxis', 'ganttChart': 'gantt', 'spiderChart': 'spider'
+  };
+  
+  // 尝试匹配带或不带命名空间的标签名
+  for (const [key, value] of Object.entries(chartTypeMap)) {
+    if (tagName === key || tagName === `jr:${key}` || tagName.includes(key)) {
+      result.chartType = value;
+      break;
+    }
+  }
+  
+  // 解析chart子元素
+  const chartElem = element.querySelector("chart") || 
+    (element.localName === 'chart' ? element : null);
+  
+  if (chartElem) {
+    // 解析titleExpression
+    const titleExprElem = chartElem.querySelector("titleExpression");
+    if (titleExprElem) {
+      result.titleExpression = titleExprElem.textContent?.trim() || '';
+    }
+    
+    // 解析subtitleExpression
+    const subtitleExprElem = chartElem.querySelector("subtitleExpression");
+    if (subtitleExprElem) {
+      result.subtitleExpression = subtitleExprElem.textContent?.trim() || '';
+    }
+    
+    // 解析legendExpression
+    const legendExprElem = chartElem.querySelector("legendExpression");
+    if (legendExprElem) {
+      result.legendExpression = legendExprElem.textContent?.trim() || '';
+    }
+  }
+  
+  // 解析evaluationTime
+  if (element.hasAttribute("evaluationTime")) {
+    result.evaluationTime = element.getAttribute("evaluationTime");
+  }
+}
+
+// 解析交叉表元素
+function parseCrosstabElement(element: Element, result: any): void {
+  // 解析crosstabDataset
+  const datasetElem = element.querySelector("crosstabDataset");
+  if (datasetElem) {
+    result.whenNoDataType = datasetElem.getAttribute("whenNoDataType") || 'AllSectionsNoDetail';
+  }
+  
+  // 解析crosstabWidth和crosstabHeight
+  if (element.hasAttribute("crosstabWidth")) {
+    result.crosstabWidth = parseInt(element.getAttribute("crosstabWidth") || "0");
+  }
+  if (element.hasAttribute("crosstabHeight")) {
+    result.crosstabHeight = parseInt(element.getAttribute("crosstabHeight") || "0");
+  }
 }
 
 if (typeof window === "undefined" && typeof DOMParser === "undefined") {
