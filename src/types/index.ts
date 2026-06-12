@@ -325,6 +325,7 @@ export interface TextFieldElement extends DesignElementBase {
     | "Auto";
   evaluationGroup?: string;
   pattern?: string;
+  patternExpression?: string;
   isBlankWhenNull?: boolean;
   hyperlinkType?:
     | "None"
@@ -342,33 +343,43 @@ export interface TextFieldElement extends DesignElementBase {
   hyperlinkReferenceExpression?: string;
   hyperlinkAnchorExpression?: string;
   hyperlinkPageExpression?: string;
-  hyperlinkTooltip?: string;
+  hyperlinkTooltipExpression?: string;
+  hyperlinkWhenExpression?: string;
+  anchorNameExpression?: string;
   bookmarkLevel?: number;
+  bookmarkLevelExpression?: string;
   isIgnorePagination?: boolean;
   printWhenExpression?: string;
   // 过时属性（向后兼容）
   isStretchWithOverflow?: boolean;
+  hyperlinkTooltip?: string;
 }
 
 // 图片元素接口
 export interface ImageElement extends DesignElementBase {
   type: "image";
   imageExpression?: string;
-  scaleType?: "Clip" | "FillFrame" | "RealHeight" | "RealSize";
+  scaleType?: "Clip" | "FillFrame" | "RealHeight" | "RealSize" | "RetainShape";
   hAlign?: "Left" | "Center" | "Right";
   vAlign?: "Top" | "Middle" | "Bottom";
   isUsingCache?: boolean;
   isLazy?: boolean;
   onErrorType?: "Error" | "Blank" | "Icon";
   evaluationTime?: "Now" | "Report" | "Page" | "Column" | "Band";
+  rotation?: "None" | "Left" | "Right" | "UpsideDown";
   hyperlinkType?: string;
   hyperlinkReferenceExpression?: string;
   hyperlinkAnchorExpression?: string;
   hyperlinkPageExpression?: string;
-  hyperlinkTooltip?: string;
+  hyperlinkTooltipExpression?: string;
+  hyperlinkWhenExpression?: string;
+  anchorNameExpression?: string;
+  bookmarkLevel?: number;
+  bookmarkLevelExpression?: string;
   printWhenExpression?: string;
   // 过时属性（向后兼容）
   scaleImage?: "Clip" | "FillFrame" | "RetainShape" | "RealHeight" | "RealSize";
+  hyperlinkTooltip?: string;
 }
 
 // 线条元素接口
@@ -498,6 +509,7 @@ export interface SubreportElement extends DesignElementBase {
   }[];
   printWhenExpression?: string;
   isUsingCache?: boolean;
+  runToBottom?: boolean;
   evaluationTime?: "Now" | "Report" | "Page" | "Column" | "Group" | "Band" | "Auto" | "Master";
   evaluationGroup?: string;
   isIgnorePagination?: boolean;

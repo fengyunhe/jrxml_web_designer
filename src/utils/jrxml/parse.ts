@@ -1769,6 +1769,28 @@ function parseTextFieldElement(element: Element, result: any): void {
   if (hyperlinkPageExpr) {
     result.hyperlinkPageExpression = hyperlinkPageExpr.textContent || "";
   }
+
+  // 解析新增的超链接表达式
+  const hyperlinkTooltipExpr = findChildElement(element, "hyperlinkTooltipExpression");
+  if (hyperlinkTooltipExpr) {
+    result.hyperlinkTooltipExpression = hyperlinkTooltipExpr.textContent || "";
+  }
+  const hyperlinkWhenExpr = findChildElement(element, "hyperlinkWhenExpression");
+  if (hyperlinkWhenExpr) {
+    result.hyperlinkWhenExpression = hyperlinkWhenExpr.textContent || "";
+  }
+  const anchorNameExpr = findChildElement(element, "anchorNameExpression");
+  if (anchorNameExpr) {
+    result.anchorNameExpression = anchorNameExpr.textContent || "";
+  }
+  const bookmarkLevelExpr = findChildElement(element, "bookmarkLevelExpression");
+  if (bookmarkLevelExpr) {
+    result.bookmarkLevelExpression = bookmarkLevelExpr.textContent || "";
+  }
+  const patternExpr = findChildElement(element, "patternExpression");
+  if (patternExpr) {
+    result.patternExpression = patternExpr.textContent || "";
+  }
 }
 
 function parseImageElement(element: Element, result: any): void {
@@ -1788,6 +1810,10 @@ function parseImageElement(element: Element, result: any): void {
     result.evaluationTime = element.getAttribute("evaluationTime");
   if (element.hasAttribute("hyperlinkType"))
     result.hyperlinkType = element.getAttribute("hyperlinkType");
+  if (element.hasAttribute("rotation"))
+    result.rotation = element.getAttribute("rotation");
+  if (element.hasAttribute("bookmarkLevel"))
+    result.bookmarkLevel = parseInt(element.getAttribute("bookmarkLevel") || "0");
 
   const graphicElement = parseGraphicElement(element);
   if (Object.keys(graphicElement).length > 0) {
@@ -1820,6 +1846,22 @@ function parseImageElement(element: Element, result: any): void {
   );
   if (hyperlinkPageExpr) {
     result.hyperlinkPageExpression = hyperlinkPageExpr.textContent || "";
+  }
+  const hyperlinkTooltipExpr = findChildElement(element, "hyperlinkTooltipExpression");
+  if (hyperlinkTooltipExpr) {
+    result.hyperlinkTooltipExpression = hyperlinkTooltipExpr.textContent || "";
+  }
+  const hyperlinkWhenExpr = findChildElement(element, "hyperlinkWhenExpression");
+  if (hyperlinkWhenExpr) {
+    result.hyperlinkWhenExpression = hyperlinkWhenExpr.textContent || "";
+  }
+  const anchorNameExpr = findChildElement(element, "anchorNameExpression");
+  if (anchorNameExpr) {
+    result.anchorNameExpression = anchorNameExpr.textContent || "";
+  }
+  const bookmarkLevelExpr = findChildElement(element, "bookmarkLevelExpression");
+  if (bookmarkLevelExpr) {
+    result.bookmarkLevelExpression = bookmarkLevelExpr.textContent || "";
   }
 }
 
@@ -2006,6 +2048,11 @@ function parseSubreportElement(element: Element, result: any): void {
   // 解析isUsingCache
   if (element.hasAttribute("isUsingCache")) {
     result.isUsingCache = element.getAttribute("isUsingCache") === "true";
+  }
+  
+  // 解析runToBottom
+  if (element.hasAttribute("runToBottom")) {
+    result.runToBottom = element.getAttribute("runToBottom") === "true";
   }
 }
 

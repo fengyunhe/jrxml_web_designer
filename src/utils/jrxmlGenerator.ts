@@ -1066,9 +1066,29 @@ function generateTextFieldXML(element: any): string {
     xml += `      <textFieldExpression><![CDATA[${expression}]]></textFieldExpression>\n`;
   }
 
+  // 新增：模式表达式
+  if (element.patternExpression) {
+    xml += `      <patternExpression><![CDATA[${element.patternExpression}]]></patternExpression>\n`;
+  }
+
+  // 新增：锚点名称表达式
+  if (element.anchorNameExpression) {
+    xml += `      <anchorNameExpression><![CDATA[${element.anchorNameExpression}]]></anchorNameExpression>\n`;
+  }
+
+  // 新增：书签层级表达式
+  if (element.bookmarkLevelExpression) {
+    xml += `      <bookmarkLevelExpression><![CDATA[${element.bookmarkLevelExpression}]]></bookmarkLevelExpression>\n`;
+  }
+
   // 新增：超链接表达式
   if (element.hyperlinkReferenceExpression) {
     xml += `      <hyperlinkReferenceExpression><![CDATA[${element.hyperlinkReferenceExpression}]]></hyperlinkReferenceExpression>\n`;
+  }
+
+  // 新增：超链接条件表达式
+  if (element.hyperlinkWhenExpression) {
+    xml += `      <hyperlinkWhenExpression><![CDATA[${element.hyperlinkWhenExpression}]]></hyperlinkWhenExpression>\n`;
   }
 
   // 新增：超链接锚点表达式
@@ -1079,6 +1099,14 @@ function generateTextFieldXML(element: any): string {
   // 新增：超链接页码表达式
   if (element.hyperlinkPageExpression) {
     xml += `      <hyperlinkPageExpression><![CDATA[${element.hyperlinkPageExpression}]]></hyperlinkPageExpression>\n`;
+  }
+
+  // 新增：超链接工具提示表达式
+  if (element.hyperlinkTooltipExpression) {
+    xml += `      <hyperlinkTooltipExpression><![CDATA[${element.hyperlinkTooltipExpression}]]></hyperlinkTooltipExpression>\n`;
+  }
+  if (element.patternExpression) {
+    xml += `      <patternExpression><![CDATA[${element.patternExpression}]]></patternExpression>\n`;
   }
 
   xml += `    </textField>\n`;
@@ -1108,6 +1136,11 @@ function generateImageXML(element: any): string {
   // 处理垂直对齐
   if (element.vAlign && ["Top", "Middle", "Bottom"].includes(element.vAlign)) {
     xml += ` vAlign="${element.vAlign}"`;
+  }
+
+  // 旋转
+  if (element.rotation && ["None", "Left", "Right", "UpsideDown"].includes(element.rotation)) {
+    xml += ` rotation="${element.rotation}"`;
   }
 
   // 新增：是否使用缓存
@@ -1141,31 +1174,15 @@ function generateImageXML(element: any): string {
     xml += ` hyperlinkType="${element.hyperlinkType}"`;
   }
 
+  // 新增：书签层级
+  if (element.bookmarkLevel !== undefined && element.bookmarkLevel > 0) {
+    xml += ` bookmarkLevel="${element.bookmarkLevel}"`;
+  }
+
   xml += `>
-      <reportElement x="${toInt(element.x)}" y="${toInt(element.y)}" width="${toInt(element.width)}" height="${toInt(element.height)}"`;
-
-  if (element.uuid) {
-    xml += ` uuid="${element.uuid}"`;
-  }
-
-  if (element.forecolor) {
-    xml += ` forecolor="${element.forecolor}"`;
-  }
-
-  if (element.backcolor) {
-    xml += ` backcolor="${element.backcolor}"`;
-  }
-
-  if (element.mode) {
-    xml += ` mode="${element.mode}"`;
-  }
-
-  if (element.printWhenExpression) {
-    xml += ` printWhenExpression="${element.printWhenExpression}"`;
-  }
-  if (element.style) {
-    xml += ` style="${element.style}"`;
-  }
+      <reportElement${generateReportElementAttrs(element)}`;
+  xml += `${generateReportElementChildren(element)}`;
+  xml += "/>\n";
 
   xml += `/>
 `;
@@ -1176,9 +1193,24 @@ function generateImageXML(element: any): string {
   const imageExpressionValue = element.imageExpression || '""';
   xml += `      <imageExpression><![CDATA[${imageExpressionValue}]]></imageExpression>\n`;
 
+  // 新增：锚点名称表达式
+  if (element.anchorNameExpression) {
+    xml += `      <anchorNameExpression><![CDATA[${element.anchorNameExpression}]]></anchorNameExpression>\n`;
+  }
+
+  // 新增：书签层级表达式
+  if (element.bookmarkLevelExpression) {
+    xml += `      <bookmarkLevelExpression><![CDATA[${element.bookmarkLevelExpression}]]></bookmarkLevelExpression>\n`;
+  }
+
   // 新增：超链接表达式
   if (element.hyperlinkReferenceExpression) {
     xml += `      <hyperlinkReferenceExpression><![CDATA[${element.hyperlinkReferenceExpression}]]></hyperlinkReferenceExpression>\n`;
+  }
+
+  // 新增：超链接条件表达式
+  if (element.hyperlinkWhenExpression) {
+    xml += `      <hyperlinkWhenExpression><![CDATA[${element.hyperlinkWhenExpression}]]></hyperlinkWhenExpression>\n`;
   }
 
   // 新增：超链接锚点表达式
@@ -1189,6 +1221,11 @@ function generateImageXML(element: any): string {
   // 新增：超链接页码表达式
   if (element.hyperlinkPageExpression) {
     xml += `      <hyperlinkPageExpression><![CDATA[${element.hyperlinkPageExpression}]]></hyperlinkPageExpression>\n`;
+  }
+
+  // 新增：超链接工具提示表达式
+  if (element.hyperlinkTooltipExpression) {
+    xml += `      <hyperlinkTooltipExpression><![CDATA[${element.hyperlinkTooltipExpression}]]></hyperlinkTooltipExpression>\n`;
   }
 
   xml += `    </image>\n`;
@@ -1461,22 +1498,39 @@ function generateBreakXML(element: any): string {
 
 // 生成子报表XML
 function generateSubreportXML(element: any): string {
-  let xml = `    <subreport>`;
-  xml += `\n      <reportElement x="${toInt(element.x)}" y="${toInt(element.y)}" width="${toInt(element.width)}" height="${toInt(element.height)}"`;
+  let xml = `    <subreport`;
+  
+  // 子报表特有属性
+  if (element.isUsingCache !== undefined) {
+    xml += ` isUsingCache="${element.isUsingCache}"`;
+  }
+  if (element.runToBottom) {
+    xml += ` runToBottom="true"`;
+  }
+  
+  xml += `>`;
+  xml += `\n      <reportElement${generateReportElementAttrs(element)}`;
+  xml += `${generateReportElementChildren(element)}`;
+  xml += "/>\n";
 
-  if (element.uuid) {
-    xml += ` uuid="${element.uuid}"`;
+  // 生成parametersMapExpression
+  if (element.parametersMapExpression) {
+    xml += `      <parametersMapExpression><![CDATA[${element.parametersMapExpression}]]></parametersMapExpression>\n`;
   }
 
-  if (element.printWhenExpression) {
-    xml += `>`;
-    xml += `\n        <printWhenExpression><![CDATA[${element.printWhenExpression}]]></printWhenExpression>`;
-    xml += `\n      </reportElement>`;
-  } else {
-    xml += `/>`;
+  // 生成connectionExpression或dataSourceExpression
+  if (element.connectionExpression) {
+    xml += `      <connectionExpression><![CDATA[${element.connectionExpression}]]></connectionExpression>\n`;
+  } else if (element.dataSourceExpression) {
+    xml += `      <dataSourceExpression><![CDATA[${element.dataSourceExpression}]]></dataSourceExpression>\n`;
   }
 
-  xml += `\n    </subreport>`;
+  // 生成subreportExpression
+  if (element.subreportExpression) {
+    xml += `      <subreportExpression><![CDATA[${element.subreportExpression}]]></subreportExpression>\n`;
+  }
+
+  xml += `    </subreport>`;
   return xml;
 }
 
@@ -1495,19 +1549,9 @@ function generateListXML(element: any): string {
   }
   
   xml += `>`;
-  xml += `\n      <reportElement x="${toInt(element.x)}" y="${toInt(element.y)}" width="${toInt(element.width)}" height="${toInt(element.height)}"`;
-
-  if (element.uuid) {
-    xml += ` uuid="${element.uuid}"`;
-  }
-
-  if (element.printWhenExpression) {
-    xml += `>`;
-    xml += `\n        <printWhenExpression><![CDATA[${element.printWhenExpression}]]></printWhenExpression>`;
-    xml += `\n      </reportElement>`;
-  } else {
-    xml += `/>`;
-  }
+  xml += `\n      <reportElement${generateReportElementAttrs(element)}`;
+  xml += `${generateReportElementChildren(element)}`;
+  xml += "/>\n";
 
   // 生成datasetRun（数据集运行配置）
   if (element.subDataset || element.dataSourceExpression || element.connectionExpression) {
