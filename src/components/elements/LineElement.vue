@@ -55,6 +55,7 @@ const emit = defineEmits<{
 const lineStyle = computed(() => {
   const direction = props.element.lineDirection || 'TopDown';
   const width = props.element.lineWidth || 1;
+  const color = props.element.lineColor || '#000000';
   
   // 根据XSD规范，线条是对角线
   // TopDown: 从左上角到右下角的对角线
@@ -69,7 +70,7 @@ const lineStyle = computed(() => {
       left: '0',
       width: `${diagonalLength}px`,
       height: `${width}px`,
-      backgroundColor: '#000',
+      backgroundColor: color,
       transformOrigin: '0 0',
       transform: `rotate(${Math.atan2(props.element.height, props.element.width)}rad)`
     };
@@ -81,7 +82,7 @@ const lineStyle = computed(() => {
       left: '0',
       width: `${diagonalLength}px`,
       height: `${width}px`,
-      backgroundColor: '#000',
+      backgroundColor: color,
       transformOrigin: '0 0',
       transform: `rotate(${-Math.atan2(props.element.height, props.element.width)}rad)`
     };

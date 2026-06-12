@@ -21,6 +21,7 @@
         v-if="imageUrl" 
         :src="imageUrl" 
         class="preview-image" 
+        :style="imageStyle"
         alt="Preview" 
         @error="handleImageError"
         @dragstart.prevent="" 
@@ -62,6 +63,51 @@ const emit = defineEmits<{
 
 // 图片加载错误标志
 const imageError = ref(false);
+
+// 图片样式 - 根据scaleType属性
+const imageStyle = computed(() => {
+  const scaleType = props.element.scaleType || 'FillFrame';
+  const hAlign = props.element.hAlign || 'Center';
+  const vAlign = props.element.vAlign || 'Middle';
+  
+  let objectFit: 'fill' | 'contain' | 'cover' | 'none' | 'scale-down';
+  let objectPosition: string;
+  
+  switch (scaleType) {
+    case 'RealSize':
+      objectFit = 'none';
+      break;
+    case 'RealHeight':
+      objectFit = 'contain';
+      break;
+    case 'Clip':
+      objectFit = 'cover';
+      break;
+    case 'FillFrame':
+    default:
+      objectFit = 'fill';
+      break;
+  }
+  
+  // 处理对齐
+  const hAlignMap: Record<string, string> = {
+    'Left': 'left',
+    'Center': 'center',
+    'Right': 'right'
+  };
+  const vAlignMap: Record<string, string> = {
+    'Top': 'top',
+    'Middle': 'center',
+    'Bottom': 'bottom'
+  };
+  
+  objectPosition = `${hAlignMap[hAlign] || 'center'} ${vAlignMap[vAlign] || 'center'}`;
+  
+  return {
+    objectFit,
+    objectPosition
+  };
+});
 
 // 解析图片表达式，提取URL
 const imageUrl = computed(() => {
