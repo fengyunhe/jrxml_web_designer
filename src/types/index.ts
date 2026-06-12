@@ -8,7 +8,9 @@ export type ElementType =
   | "ellipse"
   | "break"
   | "frame"
-  | "table";
+  | "table"
+  | "subreport"
+  | "list";
 
 // 列分组接口
 export interface ColumnGroup {
@@ -467,6 +469,38 @@ export interface TableElement extends DesignElementBase {
   splitType?: "Stretch" | "Prevent" | "Immediate";
 }
 
+// 子报表元素接口
+export interface SubreportElement extends DesignElementBase {
+  type: "subreport";
+  subreportExpression?: string;
+  parametersMapExpression?: string;
+  connectionExpression?: string;
+  dataSourceExpression?: string;
+  returnValue?: {
+    subreportVariable: string;
+    toVariable: string;
+    calculationType?: string;
+  }[];
+  printWhenExpression?: string;
+  isUsingCache?: boolean;
+  evaluationTime?: "Now" | "Report" | "Page" | "Column" | "Group" | "Band" | "Auto" | "Master";
+  evaluationGroup?: string;
+  isIgnorePagination?: boolean;
+}
+
+// 列表元素接口
+export interface ListElement extends DesignElementBase {
+  type: "list";
+  listContents?: {
+    elements: DesignElement[];
+    height?: number;
+  };
+  printWhenExpression?: string;
+  evaluationTime?: "Now" | "Report" | "Page" | "Column" | "Group" | "Band" | "Auto";
+  evaluationGroup?: string;
+  splitType?: "Stretch" | "Prevent" | "Immediate";
+}
+
 // 设计元素联合类型
 export type DesignElement =
   | StaticTextElement
@@ -477,7 +511,9 @@ export type DesignElement =
   | EllipseElement
   | BreakElement
   | FrameElement
-  | TableElement;
+  | TableElement
+  | SubreportElement
+  | ListElement;
 
 // 报表区域接口
 export interface Band {

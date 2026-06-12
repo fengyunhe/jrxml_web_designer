@@ -520,6 +520,10 @@ function generateElementXML(element: any): string {
       return generateFrameXML(element);
     case "table":
       return generateTableXML(element);
+    case "subreport":
+      return generateSubreportXML(element);
+    case "list":
+      return generateListXML(element);
     default:
       return "";
   }
@@ -1586,6 +1590,58 @@ function generateBreakXML(element: any): string {
   xml += `/>
     </break>
 `;
+  return xml;
+}
+
+// 生成子报表XML
+function generateSubreportXML(element: any): string {
+  let xml = `    <subreport>`;
+  xml += `\n      <reportElement x="${toInt(element.x)}" y="${toInt(element.y)}" width="${toInt(element.width)}" height="${toInt(element.height)}"`;
+
+  if (element.uuid) {
+    xml += ` uuid="${element.uuid}"`;
+  }
+
+  if (element.printWhenExpression) {
+    xml += `>`;
+    xml += `\n        <printWhenExpression><![CDATA[${element.printWhenExpression}]]></printWhenExpression>`;
+    xml += `\n      </reportElement>`;
+  } else {
+    xml += `/>`;
+  }
+
+  xml += `\n    </subreport>`;
+  return xml;
+}
+
+// 生成列表XML
+function generateListXML(element: any): string {
+  let xml = `    <list>`;
+  xml += `\n      <reportElement x="${toInt(element.x)}" y="${toInt(element.y)}" width="${toInt(element.width)}" height="${toInt(element.height)}"`;
+
+  if (element.uuid) {
+    xml += ` uuid="${element.uuid}"`;
+  }
+
+  if (element.printWhenExpression) {
+    xml += `>`;
+    xml += `\n        <printWhenExpression><![CDATA[${element.printWhenExpression}]]></printWhenExpression>`;
+    xml += `\n      </reportElement>`;
+  } else {
+    xml += `/>`;
+  }
+
+  // 生成列表内容
+  if (element.listContents && element.listContents.elements && element.listContents.elements.length > 0) {
+    const contentsHeight = element.listContents.height || element.height;
+    xml += `\n      <listContents height="${contentsHeight}">`;
+    element.listContents.elements.forEach((child: any) => {
+      xml += generateElementXML(child);
+    });
+    xml += `\n      </listContents>`;
+  }
+
+  xml += `\n    </list>`;
   return xml;
 }
 

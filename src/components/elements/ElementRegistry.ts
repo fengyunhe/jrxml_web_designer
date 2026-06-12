@@ -333,6 +333,51 @@ export class ElementRegistry {
         whenNoDataType: 'AllSectionsNoDetail'
       }
     });
+
+    // 子报表元素
+    this.registerElement({
+      type: 'subreport',
+      name: 'elementNames.subreport',
+      icon: '📋',
+      category: 'container',
+      defaultProps: {
+        type: 'subreport',
+        x: 0,
+        y: 0,
+        width: 200,
+        height: 100,
+        subreportExpression: '""',
+        parametersMapExpression: '',
+        connectionExpression: '',
+        dataSourceExpression: '',
+        evaluationTime: 'Now',
+        printWhenExpression: '',
+        isUsingCache: false,
+        isIgnorePagination: false
+      }
+    });
+
+    // 列表元素
+    this.registerElement({
+      type: 'list',
+      name: 'elementNames.list',
+      icon: '📝',
+      category: 'container',
+      defaultProps: {
+        type: 'list',
+        x: 0,
+        y: 0,
+        width: 200,
+        height: 100,
+        listContents: {
+          elements: [],
+          height: 100
+        },
+        printWhenExpression: '',
+        evaluationTime: 'Now',
+        splitType: 'Stretch'
+      }
+    });
   }
 
   // 注册元素

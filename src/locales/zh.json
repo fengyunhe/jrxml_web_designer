@@ -134,7 +134,9 @@
     "ellipse": "椭圆",
     "break": "分页符",
     "frame": "容器",
-    "table": "表格"
+    "table": "表格",
+    "subreport": "子报表",
+    "list": "列表"
   },
   "properties": {
     "title": "属性设置",

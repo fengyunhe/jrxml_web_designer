@@ -19,6 +19,8 @@ import EllipseElement from './EllipseElement.vue';
 import BreakElement from './BreakElement.vue';
 import FrameElement from './FrameElement.vue';
 import TableElement from './TableElement.vue';
+import SubreportElement from './SubreportElement.vue';
+import ListElement from './ListElement.vue';
 import type { 
   DesignElement,
   SelectedElementInfo,
@@ -35,7 +37,9 @@ const componentCache: Record<string, any> = {
   ellipse: EllipseElement,
   break: BreakElement,
   frame: FrameElement,
-  table: TableElement
+  table: TableElement,
+  subreport: SubreportElement,
+  list: ListElement
 };
 
 // 预加载组件

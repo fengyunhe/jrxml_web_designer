@@ -626,6 +626,8 @@ function parseBandElements(bandElem: Element): any[] {
     "ellipse",
     "break",
     "frame",
+    "subreport",
+    "list",
   ];
 
   // 遍历直接子元素，而不是使用 querySelectorAll（避免递归查找嵌套元素）
@@ -712,6 +714,8 @@ function parseCellContent(cellElem: Element): any {
     "ellipse",
     "break",
     "frame",
+    "subreport",
+    "list",
   ];
 
   Array.from(cellElem.children).forEach((child) => {
@@ -1210,6 +1214,8 @@ function parseElement(element: Element, type: string): any {
     | "break"
     | "frame"
     | "table"
+    | "subreport"
+    | "list"
   > = [
     "staticText",
     "textField",
@@ -1220,6 +1226,8 @@ function parseElement(element: Element, type: string): any {
     "break",
     "frame",
     "table",
+    "subreport",
+    "list",
   ];
   const elementType = validElementTypes.includes(type as any)
     ? (type as any)

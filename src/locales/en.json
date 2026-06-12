@@ -134,7 +134,9 @@
     "ellipse": "Ellipse",
     "break": "Break",
     "frame": "Frame",
-    "table": "Table"
+    "table": "Table",
+    "subreport": "Subreport",
+    "list": "List"
   },
   "properties": {
     "title": "Properties",
