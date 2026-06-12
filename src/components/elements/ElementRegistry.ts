@@ -480,6 +480,24 @@ export class ElementRegistry {
         printWhenExpression: ''
       }
     });
+
+    // 通用元素
+    this.registerElement({
+      type: 'genericElement',
+      name: 'elementNames.genericElement',
+      icon: '❓',
+      category: 'container',
+      defaultProps: {
+        type: 'genericElement',
+        x: 0,
+        y: 0,
+        width: 100,
+        height: 50,
+        namespace: '',
+        evaluationTime: 'Now',
+        printWhenExpression: ''
+      }
+    });
   }
 
   // 注册元素

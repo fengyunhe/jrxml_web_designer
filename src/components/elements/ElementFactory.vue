@@ -26,6 +26,7 @@ import BarcodeElement from './BarcodeElement.vue';
 import MapElement from './MapElement.vue';
 import CrosstabElement from './CrosstabElement.vue';
 import IconLabelElement from './IconLabelElement.vue';
+import GenericElement from './GenericElement.vue';
 import type { 
   DesignElement,
   SelectedElementInfo,
@@ -49,7 +50,8 @@ const componentCache: Record<string, any> = {
   barcode: BarcodeElement,
   map: MapElement,
   crosstab: CrosstabElement,
-  iconLabel: IconLabelElement
+  iconLabel: IconLabelElement,
+  genericElement: GenericElement
 };
 
 // 预加载组件

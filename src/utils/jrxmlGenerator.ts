@@ -534,6 +534,8 @@ function generateElementXML(element: any): string {
       return generateCrosstabXML(element);
     case "iconLabel":
       return generateIconLabelXML(element);
+    case "genericElement":
+      return generateGenericElementXML(element);
     default:
       return "";
   }
@@ -1818,6 +1820,21 @@ function generateIconLabelXML(element: any): string {
   }
   xml += `\n      </c:iconLabel>`;
   xml += `\n    </componentElement>`;
+  return xml;
+}
+
+// 生成通用元素XML
+function generateGenericElementXML(element: any): string {
+  // GenericElement is a generic container for custom elements
+  let xml = `    <genericElement`;
+  xml += ` x="${toInt(element.x)}" y="${toInt(element.y)}" width="${toInt(element.width)}" height="${toInt(element.height)}"`;
+  if (element.uuid) {
+    xml += ` uuid="${element.uuid}"`;
+  }
+  if (element.namespace) {
+    xml += ` namespace="${element.namespace}"`;
+  }
+  xml += `/>`;
   return xml;
 }
 

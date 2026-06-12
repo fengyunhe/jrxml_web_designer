@@ -141,7 +141,8 @@
     "barcode": "条码",
     "map": "地图",
     "crosstab": "交叉表",
-    "iconLabel": "图标标签"
+    "iconLabel": "图标标签",
+    "genericElement": "通用元素"
   },
   "properties": {
     "title": "属性设置",

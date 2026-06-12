@@ -141,7 +141,8 @@
     "barcode": "Barcode",
     "map": "Map",
     "crosstab": "Crosstab",
-    "iconLabel": "Icon Label"
+    "iconLabel": "Icon Label",
+    "genericElement": "Generic Element"
   },
   "properties": {
     "title": "Properties",
