@@ -76,15 +76,15 @@
         <div class="help-items">
           <div class="help-item" @click="insertExpression('$V{REPORT_COUNT}')">
             <span class="expression-text">$V{REPORT_COUNT}</span>
-            <span class="expression-desc">数据源记录总数</span>
+            <span class="expression-desc">数据源读取的总记录数</span>
           </div>
           <div class="help-item" @click="insertExpression('$V{PAGE_NUMBER}')">
             <span class="expression-text">$V{PAGE_NUMBER}</span>
-            <span class="expression-desc">当前页码（末尾时=总页数）</span>
+            <span class="expression-desc">当前页码（填充结束后为总页数）</span>
           </div>
           <div class="help-item" @click="insertExpression('$V{PAGE_COUNT}')">
             <span class="expression-text">$V{PAGE_COUNT}</span>
-            <span class="expression-desc">当前页处理的记录数</span>
+            <span class="expression-desc">生成当前页时处理的记录数</span>
           </div>
           <div class="help-item" @click="insertExpression('$V{COLUMN_NUMBER}')">
             <span class="expression-text">$V{COLUMN_NUMBER}</span>
@@ -92,15 +92,15 @@
           </div>
           <div class="help-item" @click="insertExpression('$V{COLUMN_COUNT}')">
             <span class="expression-text">$V{COLUMN_COUNT}</span>
-            <span class="expression-desc">当前列处理的记录数</span>
+            <span class="expression-desc">生成当前列时处理的记录数</span>
           </div>
           <div class="help-item" @click="insertExpression('$V{MASTER_CURRENT_PAGE}')">
             <span class="expression-text">$V{MASTER_CURRENT_PAGE}</span>
-            <span class="expression-desc">主报表当前页码</span>
+            <span class="expression-desc">主报表当前页码（仅Master评估时间）</span>
           </div>
           <div class="help-item" @click="insertExpression('$V{MASTER_TOTAL_PAGES}')">
             <span class="expression-text">$V{MASTER_TOTAL_PAGES}</span>
-            <span class="expression-desc">主报表总页数</span>
+            <span class="expression-desc">主报表总页数（仅Master评估时间）</span>
           </div>
         </div>
       </div>
@@ -261,23 +261,21 @@ const allSuggestions = computed<SuggestionItem[]>(() => {
 
   // Built-in parameters (from JRParameter.java)
   const builtInParams = [
-    { value: 'REPORT_PARAMETERS_MAP', description: '报表参数映射' },
-    { value: 'JASPER_REPORTS_CONTEXT', description: 'JasperReports上下文' },
-    { value: 'JASPER_REPORT', description: '当前JasperReport模板对象' },
-    { value: 'REPORT_CONNECTION', description: 'JDBC连接' },
-    { value: 'REPORT_MAX_COUNT', description: '限制数据源大小' },
-    { value: 'REPORT_DATA_SOURCE', description: '报表数据源' },
-    { value: 'REPORT_SCRIPTLET', description: '报表脚本' },
-    { value: 'REPORT_LOCALE', description: '报表语言环境' },
-    { value: 'REPORT_RESOURCE_BUNDLE', description: '报表资源包' },
-    { value: 'REPORT_TIME_ZONE', description: '报表时区' },
-    { value: 'REPORT_VIRTUALIZER', description: '报表虚拟化器' },
-    { value: 'REPORT_CLASS_LOADER', description: '报表类加载器' },
-    { value: 'REPORT_FORMAT_FACTORY', description: '报表格式工厂' },
-    { value: 'IS_IGNORE_PAGINATION', description: '是否忽略分页' },
-    { value: 'MAX_PAGE_HEIGHT', description: '最大页面高度' },
-    { value: 'MAX_PAGE_WIDTH', description: '最大页面宽度' },
-    { value: 'REPORT_TEMPLATES', description: '报表模板集合' },
+    { value: 'REPORT_PARAMETERS_MAP', description: '包含用户填充时传递的报表参数Map' },
+    { value: 'JASPER_REPORTS_CONTEXT', description: '当前报表填充上下文' },
+    { value: 'JASPER_REPORT', description: '当前正在填充的JasperReport模板对象' },
+    { value: 'REPORT_CONNECTION', description: '执行默认报表查询所需的JDBC连接' },
+    { value: 'REPORT_MAX_COUNT', description: '限制数据源处理的记录数' },
+    { value: 'REPORT_DATA_SOURCE', description: '报表数据源实例' },
+    { value: 'REPORT_SCRIPTLET', description: '用户提供的报表脚本实例' },
+    { value: 'REPORT_LOCALE', description: '资源包所需的语言环境' },
+    { value: 'REPORT_RESOURCE_BUNDLE', description: '包含本地化消息的资源包' },
+    { value: 'REPORT_TIME_ZONE', description: '用于日期格式化的时区' },
+    { value: 'REPORT_VIRTUALIZER', description: '用于页面虚拟化的虚拟化器' },
+    { value: 'REPORT_CLASS_LOADER', description: '填充过程中加载资源的类加载器' },
+    { value: 'REPORT_FORMAT_FACTORY', description: '用于创建DateFormat和NumberFormat的格式化工厂' },
+    { value: 'IS_IGNORE_PAGINATION', description: '是否忽略分页标志' },
+    { value: 'REPORT_TEMPLATES', description: '填充时传递的报表模板集合' },
   ];
   for (const p of builtInParams) {
     items.push({
@@ -290,15 +288,13 @@ const allSuggestions = computed<SuggestionItem[]>(() => {
 
   // Built-in variables (from JRVariable.java)
   const builtInVars = [
-    { value: 'REPORT_COUNT', description: '数据源记录总数' },
-    { value: 'PAGE_COUNT', description: '当前页处理的记录数' },
-    { value: 'COLUMN_COUNT', description: '当前列处理的记录数' },
-    { value: 'PAGE_NUMBER', description: '当前页码（报表末尾时=总页数）' },
+    { value: 'REPORT_COUNT', description: '数据源读取的总记录数' },
+    { value: 'PAGE_COUNT', description: '生成当前页时处理的记录数' },
+    { value: 'COLUMN_COUNT', description: '生成当前列时处理的记录数' },
+    { value: 'PAGE_NUMBER', description: '当前页码（报表填充结束后为总页数）' },
     { value: 'COLUMN_NUMBER', description: '当前列号' },
-    { value: 'MASTER_CURRENT_PAGE', description: '主报表当前页码（需Master评估时间）' },
-    { value: 'MASTER_TOTAL_PAGES', description: '主报表总页数（需Master评估时间）' },
-    { value: 'CURRENT_ROW_COUNT', description: '当前行号' },
-    { value: 'GROUP_COUNT', description: '组计数变量（自动生成）' },
+    { value: 'MASTER_CURRENT_PAGE', description: '主报表当前页码（仅Master评估时间可用）' },
+    { value: 'MASTER_TOTAL_PAGES', description: '主报表总页数（仅Master评估时间可用）' },
   ];
   for (const v of builtInVars) {
     items.push({
