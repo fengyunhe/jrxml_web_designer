@@ -524,6 +524,8 @@ function generateElementXML(element: any): string {
       return generateSubreportXML(element);
     case "list":
       return generateListXML(element);
+    case "chart":
+      return generateChartXML(element);
     default:
       return "";
   }
@@ -1642,6 +1644,55 @@ function generateListXML(element: any): string {
   }
 
   xml += `\n    </list>`;
+  return xml;
+}
+
+// 生成图表XML
+function generateChartXML(element: any): string {
+  const chartType = element.chartType || 'pie';
+  const chartTagMap: Record<string, string> = {
+    pie: 'pieChart', pie3D: 'pie3DChart',
+    bar: 'barChart', bar3D: 'bar3DChart', xyBar: 'xyBarChart',
+    stackedBar: 'stackedBarChart', stackedBar3D: 'stackedBar3DChart',
+    line: 'lineChart', xyLine: 'xyLineChart',
+    area: 'areaChart', xyArea: 'xyAreaChart', stackedArea: 'stackedAreaChart',
+    scatter: 'scatterChart', bubble: 'bubbleChart',
+    timeSeries: 'timeSeriesChart', highLow: 'highLowChart', candlestick: 'candlestickChart',
+    meter: 'meterChart', thermometer: 'thermometerChart',
+    multiAxis: 'multiAxisChart', gantt: 'ganttChart', spider: 'spiderChart'
+  };
+  const chartTag = chartTagMap[chartType] || 'pieChart';
+
+  let xml = `    <${chartTag}>`;
+  xml += `\n      <reportElement x="${toInt(element.x)}" y="${toInt(element.y)}" width="${toInt(element.width)}" height="${toInt(element.height)}"`;
+  if (element.uuid) {
+    xml += ` uuid="${element.uuid}"`;
+  }
+  xml += `/>\n`;
+
+  // 图表标题
+  if (element.title || element.titleExpression) {
+    xml += `      <chart>`;
+    xml += `\n        <reportElement x="${toInt(element.x)}" y="${toInt(element.y)}" width="${toInt(element.width)}" height="${toInt(element.height)}"`;
+    if (element.uuid) {
+      xml += ` uuid="${element.uuid}"`;
+    }
+    xml += `/>\n`;
+    if (element.titleExpression) {
+      xml += `        <titleExpression><![CDATA[${element.titleExpression}]]></titleExpression>\n`;
+    } else if (element.title) {
+      xml += `        <titleExpression><![CDATA["${element.title}"]]></titleExpression>\n`;
+    }
+    if (element.subtitleExpression) {
+      xml += `        <subtitleExpression><![CDATA[${element.subtitleExpression}]]></subtitleExpression>\n`;
+    }
+    if (element.legendExpression) {
+      xml += `        <legendExpression><![CDATA[${element.legendExpression}]]></legendExpression>\n`;
+    }
+    xml += `      </chart>\n`;
+  }
+
+  xml += `    </${chartTag}>`;
   return xml;
 }
 

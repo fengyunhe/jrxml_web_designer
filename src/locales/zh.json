@@ -136,7 +136,8 @@
     "frame": "容器",
     "table": "表格",
     "subreport": "子报表",
-    "list": "列表"
+    "list": "列表",
+    "chart": "图表"
   },
   "properties": {
     "title": "属性设置",

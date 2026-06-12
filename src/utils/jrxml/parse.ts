@@ -628,6 +628,7 @@ function parseBandElements(bandElem: Element): any[] {
     "frame",
     "subreport",
     "list",
+    "chart",
   ];
 
   // 遍历直接子元素，而不是使用 querySelectorAll（避免递归查找嵌套元素）
@@ -716,6 +717,7 @@ function parseCellContent(cellElem: Element): any {
     "frame",
     "subreport",
     "list",
+    "chart",
   ];
 
   Array.from(cellElem.children).forEach((child) => {
@@ -1216,6 +1218,7 @@ function parseElement(element: Element, type: string): any {
     | "table"
     | "subreport"
     | "list"
+    | "chart"
   > = [
     "staticText",
     "textField",
@@ -1228,6 +1231,7 @@ function parseElement(element: Element, type: string): any {
     "table",
     "subreport",
     "list",
+    "chart",
   ];
   const elementType = validElementTypes.includes(type as any)
     ? (type as any)
@@ -1766,6 +1770,9 @@ function parseFrameElement(element: Element, result: any): void {
     "ellipse",
     "break",
     "frame",
+    "subreport",
+    "list",
+    "chart",
   ];
 
   // 遍历直接子元素

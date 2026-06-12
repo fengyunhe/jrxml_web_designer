@@ -21,6 +21,7 @@ import FrameElement from './FrameElement.vue';
 import TableElement from './TableElement.vue';
 import SubreportElement from './SubreportElement.vue';
 import ListElement from './ListElement.vue';
+import ChartElement from './ChartElement.vue';
 import type { 
   DesignElement,
   SelectedElementInfo,
@@ -39,7 +40,8 @@ const componentCache: Record<string, any> = {
   frame: FrameElement,
   table: TableElement,
   subreport: SubreportElement,
-  list: ListElement
+  list: ListElement,
+  chart: ChartElement
 };
 
 // 预加载组件

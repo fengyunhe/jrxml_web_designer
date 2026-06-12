@@ -10,7 +10,8 @@ export type ElementType =
   | "frame"
   | "table"
   | "subreport"
-  | "list";
+  | "list"
+  | "chart";
 
 // 列分组接口
 export interface ColumnGroup {
@@ -501,6 +502,19 @@ export interface ListElement extends DesignElementBase {
   splitType?: "Stretch" | "Prevent" | "Immediate";
 }
 
+// 图表元素接口
+export interface ChartElement extends DesignElementBase {
+  type: "chart";
+  chartType: "pie" | "pie3D" | "bar" | "bar3D" | "xyBar" | "stackedBar" | "stackedBar3D" | "line" | "xyLine" | "area" | "xyArea" | "scatter" | "bubble" | "timeSeries" | "highLow" | "candlestick" | "meter" | "thermometer" | "multiAxis" | "stackedArea" | "gantt" | "spider";
+  title?: string;
+  titleExpression?: string;
+  subtitleExpression?: string;
+  legendExpression?: string;
+  evaluationTime?: "Now" | "Report" | "Page" | "Column" | "Group" | "Band" | "Auto" | "Master";
+  evaluationGroup?: string;
+  printWhenExpression?: string;
+}
+
 // 设计元素联合类型
 export type DesignElement =
   | StaticTextElement
@@ -513,7 +527,8 @@ export type DesignElement =
   | FrameElement
   | TableElement
   | SubreportElement
-  | ListElement;
+  | ListElement
+  | ChartElement;
 
 // 报表区域接口
 export interface Band {

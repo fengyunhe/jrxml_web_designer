@@ -378,6 +378,28 @@ export class ElementRegistry {
         splitType: 'Stretch'
       }
     });
+
+    // 图表元素
+    this.registerElement({
+      type: 'chart',
+      name: 'elementNames.chart',
+      icon: '📊',
+      category: 'shape',
+      defaultProps: {
+        type: 'chart',
+        x: 0,
+        y: 0,
+        width: 200,
+        height: 150,
+        chartType: 'pie',
+        title: 'Chart',
+        titleExpression: '',
+        subtitleExpression: '',
+        legendExpression: '',
+        evaluationTime: 'Now',
+        printWhenExpression: ''
+      }
+    });
   }
 
   // 注册元素

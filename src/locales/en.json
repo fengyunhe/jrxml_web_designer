@@ -136,7 +136,8 @@
     "frame": "Frame",
     "table": "Table",
     "subreport": "Subreport",
-    "list": "List"
+    "list": "List",
+    "chart": "Chart"
   },
   "properties": {
     "title": "Properties",
