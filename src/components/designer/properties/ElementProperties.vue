@@ -167,6 +167,34 @@
                             ></textarea>
                         </div>
                         <div class="form-group">
+                            <label>文本调整</label>
+                            <select v-model="currentElement.textAdjust">
+                                <option value="">默认</option>
+                                <option value="StretchHeight">StretchHeight - 拉伸高度</option>
+                                <option value="CutText">CutText - 截断文本</option>
+                                <option value="ShrinkToFit">ShrinkToFit - 缩小适应</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>旋转</label>
+                            <select v-model="currentElement.rotation">
+                                <option value="">默认</option>
+                                <option value="None">None - 不旋转</option>
+                                <option value="Left">Left - 左旋90°</option>
+                                <option value="Right">Right - 右旋90°</option>
+                                <option value="UpsideDown">UpsideDown - 倒置</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>标记类型</label>
+                            <select v-model="currentElement.markup">
+                                <option value="none">无</option>
+                                <option value="html">HTML</option>
+                                <option value="rtf">RTF</option>
+                                <option value="styledtext">Styled Text</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
                             <label>{{ t("properties.fontSize") }}</label>
                             <input
                                 v-if="currentElement"
@@ -285,6 +313,15 @@
                         "
                     >
                         <div class="form-group">
+                            <label>圆角半径</label>
+                            <input
+                                v-model.number="currentElement.radius"
+                                type="number"
+                                min="0"
+                                placeholder="0"
+                            />
+                        </div>
+                        <div class="form-group">
                             <SwitchControl
                                 :model-value="
                                     currentElement.isPrintRepeatedValues !==
@@ -325,6 +362,14 @@
                         v-if="currentElement && currentElement.type === 'line'"
                     >
                         <div class="form-group">
+                            <label>线条方向</label>
+                            <select v-model="currentElement.lineDirection">
+                                <option value="">默认（TopDown）</option>
+                                <option value="TopDown">TopDown - 从上到下</option>
+                                <option value="BottomUp">BottomUp - 从下到上</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
                             <SwitchControl
                                 :model-value="
                                     currentElement.isPrintRepeatedValues !==
@@ -344,6 +389,13 @@
                         v-if="currentElement && currentElement.type === 'break'"
                     >
                         <div class="form-group">
+                            <label>分隔类型</label>
+                            <select v-model="currentElement.breakType">
+                                <option value="Page">Page - 页面分隔</option>
+                                <option value="Column">Column - 列分隔</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
                             <SwitchControl
                                 :model-value="
                                     currentElement.isResetPageNumber || false
@@ -352,6 +404,17 @@
                                     currentElement.isResetPageNumber = $event
                                 "
                                 label="重置页码"
+                            />
+                        </div>
+                        <div class="form-group">
+                            <SwitchControl
+                                :model-value="
+                                    currentElement.isResetPageOverflow || false
+                                "
+                                @update:model-value="
+                                    currentElement.isResetPageOverflow = $event
+                                "
+                                label="重置页溢出"
                             />
                         </div>
                     </template>
@@ -461,6 +524,19 @@
                                 :report-parameters="reportParameters"
                                 :report-variables="reportVariables"
                                 placeholder="例如: &quot;anchor1&quot;"
+                            />
+                        </div>
+
+                        <!-- 新增：空值时显示空白 -->
+                        <div class="form-group">
+                            <SwitchControl
+                                :model-value="
+                                    currentElement.isBlankWhenNull !== false
+                                "
+                                @update:model-value="
+                                    currentElement.isBlankWhenNull = $event
+                                "
+                                label="空值时显示空白"
                             />
                         </div>
 
