@@ -202,6 +202,81 @@
                         </div>
                     </template>
 
+                    <!-- Image属性 -->
+                    <template
+                        v-if="
+                            currentElement &&
+                            currentElement.type === 'image'
+                        "
+                    >
+                        <div class="form-group">
+                            <label>图片表达式</label>
+                            <ExpressionEditor
+                                :model-value="currentElement.imageExpression || ''"
+                                @update:model-value="currentElement.imageExpression = $event"
+                                :report-fields="reportFields"
+                                :report-parameters="reportParameters"
+                                :report-variables="reportVariables"
+                                placeholder='例如: $P{imagePath} 或 "logo.png"'
+                            />
+                        </div>
+                        <div class="form-group">
+                            <label>缩放类型</label>
+                            <select v-model="currentElement.scaleType">
+                                <option value="">默认</option>
+                                <option value="Clip">Clip - 裁剪</option>
+                                <option value="FillFrame">FillFrame - 填充框架</option>
+                                <option value="RetainShape">RetainShape - 保持形状</option>
+                                <option value="RealHeight">RealHeight - 实际高度</option>
+                                <option value="RealSize">RealSize - 实际大小</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>旋转</label>
+                            <select v-model="currentElement.rotation">
+                                <option value="">默认</option>
+                                <option value="None">None - 不旋转</option>
+                                <option value="Left">Left - 左旋90°</option>
+                                <option value="Right">Right - 右旋90°</option>
+                                <option value="UpsideDown">UpsideDown - 倒置</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>水平对齐</label>
+                            <select v-model="currentElement.hAlign">
+                                <option value="">默认</option>
+                                <option value="Left">Left - 左对齐</option>
+                                <option value="Center">Center - 居中</option>
+                                <option value="Right">Right - 右对齐</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>垂直对齐</label>
+                            <select v-model="currentElement.vAlign">
+                                <option value="">默认</option>
+                                <option value="Top">Top - 顶部对齐</option>
+                                <option value="Middle">Middle - 居中</option>
+                                <option value="Bottom">Bottom - 底部对齐</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>错误处理</label>
+                            <select v-model="currentElement.onErrorType">
+                                <option value="">默认</option>
+                                <option value="Error">Error - 报错</option>
+                                <option value="Blank">Blank - 空白</option>
+                                <option value="Icon">Icon - 图标</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <SwitchControl
+                                :model-value="currentElement.isUsingCache !== false"
+                                @update:model-value="currentElement.isUsingCache = $event"
+                                label="使用缓存"
+                            />
+                        </div>
+                    </template>
+
                     <!-- Rectangle属性 -->
                     <template
                         v-if="
@@ -340,9 +415,53 @@
                                 v-model="currentElement.hyperlinkType"
                             >
                                 <option value="None">无</option>
-                                <option value="Reference">Reference</option>
-                                <option value="Anchor">Anchor</option>
+                                <option value="Reference">Reference - URL引用</option>
+                                <option value="Anchor">Anchor - 锚点</option>
+                                <option value="LocalAnchor">LocalAnchor - 本地锚点</option>
+                                <option value="LocalPage">LocalPage - 本地页码</option>
+                                <option value="RemotePage">RemotePage - 远程页码</option>
+                                <option value="RemoteAnchor">RemoteAnchor - 远程锚点</option>
+                                <option value="mailto">mailto - 邮件</option>
                             </select>
+                        </div>
+
+                        <!-- 新增：超链接引用表达式 -->
+                        <div class="form-group" v-if="currentElement.hyperlinkType === 'Reference'">
+                            <label>超链接引用表达式</label>
+                            <ExpressionEditor
+                                :model-value="currentElement.hyperlinkReferenceExpression || ''"
+                                @update:model-value="currentElement.hyperlinkReferenceExpression = $event"
+                                :report-fields="reportFields"
+                                :report-parameters="reportParameters"
+                                :report-variables="reportVariables"
+                                placeholder="例如: &quot;https://example.com&quot;"
+                            />
+                        </div>
+
+                        <!-- 新增：超链接工具提示表达式 -->
+                        <div class="form-group" v-if="currentElement.hyperlinkType && currentElement.hyperlinkType !== 'None'">
+                            <label>超链接工具提示</label>
+                            <ExpressionEditor
+                                :model-value="currentElement.hyperlinkTooltipExpression || ''"
+                                @update:model-value="currentElement.hyperlinkTooltipExpression = $event"
+                                :report-fields="reportFields"
+                                :report-parameters="reportParameters"
+                                :report-variables="reportVariables"
+                                placeholder="例如: &quot;Click to view&quot;"
+                            />
+                        </div>
+
+                        <!-- 新增：锚点名称表达式 -->
+                        <div class="form-group" v-if="currentElement.hyperlinkType === 'Anchor' || currentElement.hyperlinkType === 'LocalAnchor'">
+                            <label>锚点名称表达式</label>
+                            <ExpressionEditor
+                                :model-value="currentElement.anchorNameExpression || ''"
+                                @update:model-value="currentElement.anchorNameExpression = $event"
+                                :report-fields="reportFields"
+                                :report-parameters="reportParameters"
+                                :report-variables="reportVariables"
+                                placeholder="例如: &quot;anchor1&quot;"
+                            />
                         </div>
 
                         <!-- 新增：书签层级 -->
