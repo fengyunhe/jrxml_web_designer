@@ -139,7 +139,8 @@
     "list": "列表",
     "chart": "图表",
     "barcode": "条码",
-    "map": "地图"
+    "map": "地图",
+    "crosstab": "交叉表"
   },
   "properties": {
     "title": "属性设置",

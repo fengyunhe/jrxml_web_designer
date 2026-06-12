@@ -13,7 +13,8 @@ export type ElementType =
   | "list"
   | "chart"
   | "barcode"
-  | "map";
+  | "map"
+  | "crosstab";
 
 // 列分组接口
 export interface ColumnGroup {
@@ -538,6 +539,15 @@ export interface MapElement extends DesignElementBase {
   evaluationTime?: "Now" | "Report" | "Page" | "Column" | "Group" | "Band" | "Auto";
 }
 
+// 交叉表元素接口
+export interface CrosstabElement extends DesignElementBase {
+  type: "crosstab";
+  crosstabWidth?: number;
+  crosstabHeight?: number;
+  printWhenExpression?: string;
+  whenNoDataType?: "AllSectionsNoDetail" | "AllSectionsWithDetail" | "NoDataCell" | "Blank";
+}
+
 // 设计元素联合类型
 export type DesignElement =
   | StaticTextElement
@@ -553,7 +563,8 @@ export type DesignElement =
   | ListElement
   | ChartElement
   | BarcodeElement
-  | MapElement;
+  | MapElement
+  | CrosstabElement;
 
 // 报表区域接口
 export interface Band {

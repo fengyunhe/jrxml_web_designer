@@ -139,7 +139,8 @@
     "list": "List",
     "chart": "Chart",
     "barcode": "Barcode",
-    "map": "Map"
+    "map": "Map",
+    "crosstab": "Crosstab"
   },
   "properties": {
     "title": "Properties",

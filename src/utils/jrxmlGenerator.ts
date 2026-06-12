@@ -530,6 +530,8 @@ function generateElementXML(element: any): string {
       return generateBarcodeXML(element);
     case "map":
       return generateMapXML(element);
+    case "crosstab":
+      return generateCrosstabXML(element);
     default:
       return "";
   }
@@ -1759,6 +1761,33 @@ function generateMapXML(element: any): string {
   }
   xml += `\n      </m:map>`;
   xml += `\n    </componentElement>`;
+  return xml;
+}
+
+// 生成交叉表XML
+function generateCrosstabXML(element: any): string {
+  let xml = `    <crosstab>`;
+  xml += `\n      <reportElement x="${toInt(element.x)}" y="${toInt(element.y)}" width="${toInt(element.width)}" height="${toInt(element.height)}"`;
+  if (element.uuid) {
+    xml += ` uuid="${element.uuid}"`;
+  }
+  if (element.printWhenExpression) {
+    xml += `>`;
+    xml += `\n        <printWhenExpression><![CDATA[${element.printWhenExpression}]]></printWhenExpression>`;
+    xml += `\n      </reportElement>`;
+  } else {
+    xml += `/>`;
+  }
+
+  // 当无数据时的显示方式
+  if (element.whenNoDataType) {
+    xml += `\n      <crosstabDataset>`;
+    xml += `\n        <datasetRun subDataset="crosstabDataset">`;
+    xml += `\n        </datasetRun>`;
+    xml += `\n      </crosstabDataset>`;
+  }
+
+  xml += `\n    </crosstab>`;
   return xml;
 }
 

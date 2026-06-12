@@ -441,6 +441,25 @@ export class ElementRegistry {
         printWhenExpression: ''
       }
     });
+
+    // 交叉表元素
+    this.registerElement({
+      type: 'crosstab',
+      name: 'elementNames.crosstab',
+      icon: '⊞',
+      category: 'container',
+      defaultProps: {
+        type: 'crosstab',
+        x: 0,
+        y: 0,
+        width: 400,
+        height: 200,
+        crosstabWidth: 400,
+        crosstabHeight: 200,
+        printWhenExpression: '',
+        whenNoDataType: 'AllSectionsNoDetail'
+      }
+    });
   }
 
   // 注册元素

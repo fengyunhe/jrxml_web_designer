@@ -24,6 +24,7 @@ import ListElement from './ListElement.vue';
 import ChartElement from './ChartElement.vue';
 import BarcodeElement from './BarcodeElement.vue';
 import MapElement from './MapElement.vue';
+import CrosstabElement from './CrosstabElement.vue';
 import type { 
   DesignElement,
   SelectedElementInfo,
@@ -45,7 +46,8 @@ const componentCache: Record<string, any> = {
   list: ListElement,
   chart: ChartElement,
   barcode: BarcodeElement,
-  map: MapElement
+  map: MapElement,
+  crosstab: CrosstabElement
 };
 
 // 预加载组件
