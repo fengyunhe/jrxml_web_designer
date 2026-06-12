@@ -23,6 +23,7 @@ import SubreportElement from './SubreportElement.vue';
 import ListElement from './ListElement.vue';
 import ChartElement from './ChartElement.vue';
 import BarcodeElement from './BarcodeElement.vue';
+import MapElement from './MapElement.vue';
 import type { 
   DesignElement,
   SelectedElementInfo,
@@ -43,7 +44,8 @@ const componentCache: Record<string, any> = {
   subreport: SubreportElement,
   list: ListElement,
   chart: ChartElement,
-  barcode: BarcodeElement
+  barcode: BarcodeElement,
+  map: MapElement
 };
 
 // 预加载组件

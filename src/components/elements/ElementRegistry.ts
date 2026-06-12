@@ -419,6 +419,28 @@ export class ElementRegistry {
         printWhenExpression: ''
       }
     });
+
+    // 地图元素
+    this.registerElement({
+      type: 'map',
+      name: 'elementNames.map',
+      icon: '📍',
+      category: 'container',
+      defaultProps: {
+        type: 'map',
+        x: 0,
+        y: 0,
+        width: 200,
+        height: 200,
+        mapType: 'html',
+        latExpression: '',
+        lngExpression: '',
+        zoomExpression: '',
+        languageExpression: '',
+        evaluationTime: 'Now',
+        printWhenExpression: ''
+      }
+    });
   }
 
   // 注册元素

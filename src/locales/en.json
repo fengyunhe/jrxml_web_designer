@@ -138,7 +138,8 @@
     "subreport": "Subreport",
     "list": "List",
     "chart": "Chart",
-    "barcode": "Barcode"
+    "barcode": "Barcode",
+    "map": "Map"
   },
   "properties": {
     "title": "Properties",

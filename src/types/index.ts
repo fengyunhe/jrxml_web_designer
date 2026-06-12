@@ -12,7 +12,8 @@ export type ElementType =
   | "subreport"
   | "list"
   | "chart"
-  | "barcode";
+  | "barcode"
+  | "map";
 
 // 列分组接口
 export interface ColumnGroup {
@@ -525,6 +526,18 @@ export interface BarcodeElement extends DesignElementBase {
   evaluationTime?: "Now" | "Report" | "Page" | "Column" | "Group" | "Band" | "Auto";
 }
 
+// 地图元素接口
+export interface MapElement extends DesignElementBase {
+  type: "map";
+  mapType?: "html" | "image" | "pdf";
+  latExpression?: string;
+  lngExpression?: string;
+  zoomExpression?: string;
+  languageExpression?: string;
+  printWhenExpression?: string;
+  evaluationTime?: "Now" | "Report" | "Page" | "Column" | "Group" | "Band" | "Auto";
+}
+
 // 设计元素联合类型
 export type DesignElement =
   | StaticTextElement
@@ -539,7 +552,8 @@ export type DesignElement =
   | SubreportElement
   | ListElement
   | ChartElement
-  | BarcodeElement;
+  | BarcodeElement
+  | MapElement;
 
 // 报表区域接口
 export interface Band {

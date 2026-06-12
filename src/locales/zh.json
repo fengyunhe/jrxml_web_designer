@@ -138,7 +138,8 @@
     "subreport": "子报表",
     "list": "列表",
     "chart": "图表",
-    "barcode": "条码"
+    "barcode": "条码",
+    "map": "地图"
   },
   "properties": {
     "title": "属性设置",

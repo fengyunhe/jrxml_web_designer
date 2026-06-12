@@ -725,6 +725,32 @@ function parseComponentElement(componentElem: Element): any {
     }
   }
 
+  // 查找map元素
+  for (const child of Array.from(componentElem.children)) {
+    const childLocalName = child.localName || child.tagName;
+    if (childLocalName === 'map' || child.tagName === 'm:map') {
+      const latExprElem = child.querySelector("latExpression");
+      const lngExprElem = child.querySelector("lngExpression");
+      const zoomExprElem = child.querySelector("zoomExpression");
+      const langExprElem = child.querySelector("languageExpression");
+      
+      return {
+        type: 'map',
+        uuid: reportElement.getAttribute("uuid") || crypto.randomUUID(),
+        x: parseInt(reportElement.getAttribute("x") || "0"),
+        y: parseInt(reportElement.getAttribute("y") || "0"),
+        width: parseInt(reportElement.getAttribute("width") || "100"),
+        height: parseInt(reportElement.getAttribute("height") || "100"),
+        mapType: 'html',
+        latExpression: latExprElem ? latExprElem.textContent?.trim() || '' : '',
+        lngExpression: lngExprElem ? lngExprElem.textContent?.trim() || '' : '',
+        zoomExpression: zoomExprElem ? zoomExprElem.textContent?.trim() || '' : '',
+        languageExpression: langExprElem ? langExprElem.textContent?.trim() || '' : '',
+        printWhenExpression: ''
+      };
+    }
+  }
+
   return null;
 }
 

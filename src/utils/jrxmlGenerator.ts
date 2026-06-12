@@ -528,6 +528,8 @@ function generateElementXML(element: any): string {
       return generateChartXML(element);
     case "barcode":
       return generateBarcodeXML(element);
+    case "map":
+      return generateMapXML(element);
     default:
       return "";
   }
@@ -1721,6 +1723,41 @@ function generateBarcodeXML(element: any): string {
     xml += `\n        <c:codeExpression><![CDATA[${element.codeExpression}]]></c:codeExpression>`;
   }
   xml += `\n      </c:${barcodeType}>`;
+  xml += `\n    </componentElement>`;
+  return xml;
+}
+
+// 生成地图XML
+function generateMapXML(element: any): string {
+  // Map is a componentElement type that uses the map namespace
+  let xml = `    <componentElement>`;
+  xml += `\n      <reportElement x="${toInt(element.x)}" y="${toInt(element.y)}" width="${toInt(element.width)}" height="${toInt(element.height)}"`;
+  if (element.uuid) {
+    xml += ` uuid="${element.uuid}"`;
+  }
+  if (element.printWhenExpression) {
+    xml += `>`;
+    xml += `\n        <printWhenExpression><![CDATA[${element.printWhenExpression}]]></printWhenExpression>`;
+    xml += `\n      </reportElement>`;
+  } else {
+    xml += `/>`;
+  }
+
+  // Map uses the map namespace
+  xml += `\n      <m:map xmlns:m="http://jasperreports.sourceforge.net/jasperreports/components/map">`;
+  if (element.latExpression) {
+    xml += `\n        <m:latExpression><![CDATA[${element.latExpression}]]></m:latExpression>`;
+  }
+  if (element.lngExpression) {
+    xml += `\n        <m:lngExpression><![CDATA[${element.lngExpression}]]></m:lngExpression>`;
+  }
+  if (element.zoomExpression) {
+    xml += `\n        <m:zoomExpression><![CDATA[${element.zoomExpression}]]></m:zoomExpression>`;
+  }
+  if (element.languageExpression) {
+    xml += `\n        <m:languageExpression><![CDATA[${element.languageExpression}]]></m:languageExpression>`;
+  }
+  xml += `\n      </m:map>`;
   xml += `\n    </componentElement>`;
   return xml;
 }
