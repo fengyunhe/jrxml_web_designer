@@ -1818,17 +1818,9 @@ function generateMapXML(element: any): string {
 // 生成交叉表XML
 function generateCrosstabXML(element: any): string {
   let xml = `    <crosstab>`;
-  xml += `\n      <reportElement x="${toInt(element.x)}" y="${toInt(element.y)}" width="${toInt(element.width)}" height="${toInt(element.height)}"`;
-  if (element.uuid) {
-    xml += ` uuid="${element.uuid}"`;
-  }
-  if (element.printWhenExpression) {
-    xml += `>`;
-    xml += `\n        <printWhenExpression><![CDATA[${element.printWhenExpression}]]></printWhenExpression>`;
-    xml += `\n      </reportElement>`;
-  } else {
-    xml += `/>`;
-  }
+  xml += `\n      <reportElement${generateReportElementAttrs(element)}`;
+  xml += `${generateReportElementChildren(element)}`;
+  xml += "/>\n";
 
   // 当无数据时的显示方式
   if (element.whenNoDataType) {
