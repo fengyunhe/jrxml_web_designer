@@ -231,7 +231,7 @@ const inputRef = ref<HTMLInputElement>();
 const showHelp = ref(false);
 const showAutocomplete = ref(false);
 const activeSuggestionIndex = ref(0);
-const currentPrefix = ref<'$F{' | '$P{' | '$V{' | 'method' | null>(null);
+const currentPrefix = ref<'$F{' | '$P{' | '$V{' | 'method' | 'any' | null>(null);
 const currentFilter = ref('');
 
 const allSuggestions = computed<SuggestionItem[]>(() => {
@@ -350,6 +350,7 @@ const filteredSuggestions = computed(() => {
   else if (currentPrefix.value === '$P{') typeFilter = 'parameter';
   else if (currentPrefix.value === '$V{') typeFilter = 'variable';
   else if (currentPrefix.value === 'method') typeFilter = 'method';
+  else if (currentPrefix.value === 'any') typeFilter = null;
 
   return allSuggestions.value
     .filter(item => {
@@ -369,25 +370,19 @@ function detectAutocompleteContext(value: string, cursorPos: number) {
     showAutocomplete.value = true;
     activeSuggestionIndex.value = 0;
   } else {
-    // Check for method name trigger: extract word at cursor
+    // Check for any word at cursor to trigger autocomplete
     const wordMatch = beforeCursor.match(/([A-Za-z][A-Za-z0-9_.]*)$/);
     const word = wordMatch?.[1];
-    if (word && word.length >= 2) {
-      // Check if any method suggestion starts with the typed word (case-insensitive)
-      const hasMethodMatch = allSuggestions.value.some(
-        item => item.type === 'method' && item.value.toLowerCase().startsWith(word.toLowerCase())
-      );
-      if (hasMethodMatch) {
-        currentPrefix.value = 'method';
-        currentFilter.value = word;
-        showAutocomplete.value = true;
-        activeSuggestionIndex.value = 0;
-        return;
-      }
+    if (word && word.length >= 1) {
+      currentPrefix.value = 'any';
+      currentFilter.value = word;
+      showAutocomplete.value = true;
+      activeSuggestionIndex.value = 0;
+    } else {
+      showAutocomplete.value = false;
+      currentPrefix.value = null;
+      currentFilter.value = '';
     }
-    showAutocomplete.value = false;
-    currentPrefix.value = null;
-    currentFilter.value = '';
   }
 }
 
@@ -440,6 +435,24 @@ function selectSuggestion(item: SuggestionItem) {
     if (wordMatch) {
       const prefixStart = beforeCursor.length - wordMatch[0].length;
       const newValue = beforeCursor.substring(0, prefixStart) + item.value + afterCursor;
+      emit('update:modelValue', newValue);
+    }
+  } else if (currentPrefix.value === 'any') {
+    // For 'any' mode, replace the partial word with the appropriate reference
+    const wordMatch = beforeCursor.match(/([A-Za-z][A-Za-z0-9_.]*)$/);
+    if (wordMatch) {
+      const prefixStart = beforeCursor.length - wordMatch[0].length;
+      let replacement = '';
+      if (item.type === 'field') {
+        replacement = `$F{${item.value}}`;
+      } else if (item.type === 'parameter') {
+        replacement = `$P{${item.value}}`;
+      } else if (item.type === 'variable') {
+        replacement = `$V{${item.value}}`;
+      } else {
+        replacement = item.value;
+      }
+      const newValue = beforeCursor.substring(0, prefixStart) + replacement + afterCursor;
       emit('update:modelValue', newValue);
     }
   } else {
