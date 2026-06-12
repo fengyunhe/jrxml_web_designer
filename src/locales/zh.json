@@ -198,7 +198,8 @@
       "Column": "列结束时",
       "Group": "组结束时",
       "Band": "区域渲染时",
-      "Auto": "自动"
+      "Auto": "自动",
+      "Master": "主报表结束时"
     },
     "imageExpression": "图片表达式",
     "imageExpressionHint": "例如: \"logo.png\" 或 {imageFileHolder}",

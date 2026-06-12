@@ -321,13 +321,14 @@
                                 v-if="currentElement"
                                 v-model="currentElement.evaluationTime"
                             >
-                                <option value="Now">Now</option>
-                                <option value="Report">Report</option>
-                                <option value="Page">Page</option>
-                                <option value="Column">Column</option>
-                                <option value="Group">Group</option>
-                                <option value="Band">Band</option>
-                                <option value="Auto">Auto</option>
+                                <option value="Now">Now - 立即求值</option>
+                                <option value="Report">Report - 报表结束时</option>
+                                <option value="Page">Page - 页面结束时</option>
+                                <option value="Column">Column - 列结束时</option>
+                                <option value="Group">Group - 组结束时</option>
+                                <option value="Band">Band - 区域结束时</option>
+                                <option value="Auto">Auto - 引擎决定</option>
+                                <option value="Master">Master - 主报表结束时</option>
                             </select>
                         </div>
 

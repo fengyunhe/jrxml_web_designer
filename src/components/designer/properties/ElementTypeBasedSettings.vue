@@ -53,6 +53,7 @@
             <option value="Group">{{ t('properties.evalTime.Group') }}</option>
             <option value="Band">{{ t('properties.evalTime.Band') }}</option>
             <option value="Auto">{{ t('properties.evalTime.Auto') }}</option>
+            <option value="Master">{{ t('properties.evalTime.Master') }}</option>
           </select>
         </div>
       </template>

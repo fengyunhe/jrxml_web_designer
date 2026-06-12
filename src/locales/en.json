@@ -198,7 +198,8 @@
       "Column": "Column",
       "Group": "Group",
       "Band": "Band",
-      "Auto": "Auto"
+      "Auto": "Auto",
+      "Master": "Master"
     },
     "imageExpression": "Image Expression",
     "imageExpressionHint": "e.g., \"logo.png\" or {imageFileHolder}",
