@@ -536,6 +536,8 @@ function generateElementXML(element: any): string {
       return generateIconLabelXML(element);
     case "genericElement":
       return generateGenericElementXML(element);
+    case "sort":
+      return generateSortXML(element);
     default:
       return "";
   }
@@ -1835,6 +1837,35 @@ function generateGenericElementXML(element: any): string {
     xml += ` namespace="${element.namespace}"`;
   }
   xml += `/>`;
+  return xml;
+}
+
+// 生成排序XML
+function generateSortXML(element: any): string {
+  // Sort is a componentElement type
+  let xml = `    <componentElement>`;
+  xml += `\n      <reportElement x="${toInt(element.x)}" y="${toInt(element.y)}" width="${toInt(element.width)}" height="${toInt(element.height)}"`;
+  if (element.uuid) {
+    xml += ` uuid="${element.uuid}"`;
+  }
+  if (element.printWhenExpression) {
+    xml += `>`;
+    xml += `\n        <printWhenExpression><![CDATA[${element.printWhenExpression}]]></printWhenExpression>`;
+    xml += `\n      </reportElement>`;
+  } else {
+    xml += `/>`;
+  }
+
+  // Sort uses the components namespace
+  xml += `\n      <c:sort xmlns:c="http://jasperreports.sourceforge.net/jasperreports/components">`;
+  if (element.sortFields && element.sortFields.length > 0) {
+    element.sortFields.forEach((field: any) => {
+      const order = field.order || 'Ascending';
+      xml += `\n        <c:sortField name="${field.name}" order="${order}"/>`;
+    });
+  }
+  xml += `\n      </c:sort>`;
+  xml += `\n    </componentElement>`;
   return xml;
 }
 

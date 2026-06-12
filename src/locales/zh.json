@@ -142,7 +142,8 @@
     "map": "地图",
     "crosstab": "交叉表",
     "iconLabel": "图标标签",
-    "genericElement": "通用元素"
+    "genericElement": "通用元素",
+    "sort": "排序"
   },
   "properties": {
     "title": "属性设置",

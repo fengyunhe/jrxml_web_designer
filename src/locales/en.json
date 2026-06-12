@@ -142,7 +142,8 @@
     "map": "Map",
     "crosstab": "Crosstab",
     "iconLabel": "Icon Label",
-    "genericElement": "Generic Element"
+    "genericElement": "Generic Element",
+    "sort": "Sort"
   },
   "properties": {
     "title": "Properties",

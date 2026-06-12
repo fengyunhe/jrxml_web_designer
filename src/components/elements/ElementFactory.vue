@@ -27,6 +27,7 @@ import MapElement from './MapElement.vue';
 import CrosstabElement from './CrosstabElement.vue';
 import IconLabelElement from './IconLabelElement.vue';
 import GenericElement from './GenericElement.vue';
+import SortElement from './SortElement.vue';
 import type { 
   DesignElement,
   SelectedElementInfo,
@@ -51,7 +52,8 @@ const componentCache: Record<string, any> = {
   map: MapElement,
   crosstab: CrosstabElement,
   iconLabel: IconLabelElement,
-  genericElement: GenericElement
+  genericElement: GenericElement,
+  sort: SortElement
 };
 
 // 预加载组件

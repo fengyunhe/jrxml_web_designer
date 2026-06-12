@@ -16,7 +16,8 @@ export type ElementType =
   | "map"
   | "crosstab"
   | "iconLabel"
-  | "genericElement";
+  | "genericElement"
+  | "sort";
 
 // 列分组接口
 export interface ColumnGroup {
@@ -568,6 +569,17 @@ export interface GenericElement extends DesignElementBase {
   evaluationTime?: "Now" | "Report" | "Page" | "Column" | "Group" | "Band" | "Auto";
 }
 
+// 排序元素接口
+export interface SortElement extends DesignElementBase {
+  type: "sort";
+  sortFields?: Array<{
+    name: string;
+    order?: "Ascending" | "Descending";
+  }>;
+  printWhenExpression?: string;
+  evaluationTime?: "Now" | "Report" | "Page" | "Column" | "Group" | "Band" | "Auto";
+}
+
 // 设计元素联合类型
 export type DesignElement =
   | StaticTextElement
@@ -586,7 +598,8 @@ export type DesignElement =
   | MapElement
   | CrosstabElement
   | IconLabelElement
-  | GenericElement;
+  | GenericElement
+  | SortElement;
 
 // 报表区域接口
 export interface Band {

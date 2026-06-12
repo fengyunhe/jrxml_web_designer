@@ -498,6 +498,24 @@ export class ElementRegistry {
         printWhenExpression: ''
       }
     });
+
+    // 排序元素
+    this.registerElement({
+      type: 'sort',
+      name: 'elementNames.sort',
+      icon: '↕️',
+      category: 'container',
+      defaultProps: {
+        type: 'sort',
+        x: 0,
+        y: 0,
+        width: 100,
+        height: 30,
+        sortFields: [],
+        evaluationTime: 'Now',
+        printWhenExpression: ''
+      }
+    });
   }
 
   // 注册元素

@@ -771,6 +771,31 @@ function parseComponentElement(componentElem: Element): any {
     }
   }
 
+  // 查找sort元素
+  for (const child of Array.from(componentElem.children)) {
+    const childLocalName = child.localName || child.tagName;
+    if (childLocalName === 'sort' || child.tagName === 'c:sort') {
+      const sortFields: Array<{name: string; order?: string}> = [];
+      const sortFieldElems = child.querySelectorAll("sortField");
+      sortFieldElems.forEach(fieldElem => {
+        const name = fieldElem.getAttribute("name") || "";
+        const order = fieldElem.getAttribute("order") || "Ascending";
+        sortFields.push({ name, order });
+      });
+      
+      return {
+        type: 'sort',
+        uuid: reportElement.getAttribute("uuid") || crypto.randomUUID(),
+        x: parseInt(reportElement.getAttribute("x") || "0"),
+        y: parseInt(reportElement.getAttribute("y") || "0"),
+        width: parseInt(reportElement.getAttribute("width") || "100"),
+        height: parseInt(reportElement.getAttribute("height") || "30"),
+        sortFields: sortFields,
+        printWhenExpression: ''
+      };
+    }
+  }
+
   return null;
 }
 
