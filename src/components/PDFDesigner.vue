@@ -25,6 +25,13 @@
         </div>
       </div>
       <div class="header-actions">
+        <!-- 缩放控制 -->
+        <ZoomControls
+          :zoom-level="zoomLevel"
+          :paper-width="reportProperties.pageWidth"
+          @update:zoomLevel="setZoomLevel($event)"
+        />
+
         <!-- 文件管理组件 -->
         <FileManager
           :current-file-name="currentFileName"
@@ -40,13 +47,6 @@
         <n-button @click="toggleBottomPanel" type="default">
           {{ showBottomPanel ? t('actions.hideBottomPanel') : t('actions.showBottomPanel') }}
         </n-button>
-
-        <!-- 缩放控制 -->
-        <ZoomControls
-          :zoom-level="zoomLevel"
-          :paper-width="reportProperties.pageWidth"
-          @update:zoomLevel="setZoomLevel($event)"
-        />
 
         <!-- 吸附控制 -->
         <div class="snap-controls-header">
