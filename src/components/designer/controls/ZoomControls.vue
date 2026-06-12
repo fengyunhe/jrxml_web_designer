@@ -136,14 +136,10 @@ function calculateOptimalZoom() {
   display: flex;
   align-items: center;
   gap: 4px;
-  position: fixed;
-  right: 20px;
-  bottom: 20px;
-  background-color: white;
-  padding: 8px;
-  border-radius: 8px;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.15);
-  z-index: 1000;
+  background-color: #f5f5f5;
+  padding: 4px 8px;
+  border-radius: 4px;
+  border: 1px solid #ddd;
 }
 
 
