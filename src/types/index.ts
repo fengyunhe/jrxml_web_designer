@@ -351,7 +351,6 @@ export interface TextFieldElement extends DesignElementBase {
   anchorNameExpression?: string;
   bookmarkLevel?: number;
   bookmarkLevelExpression?: string;
-  isIgnorePagination?: boolean;
   printWhenExpression?: string;
   // 过时属性（向后兼容）
   isStretchWithOverflow?: boolean;

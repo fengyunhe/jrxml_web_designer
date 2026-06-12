@@ -1011,11 +1011,6 @@ function generateTextFieldXML(element: any): string {
     xml += ` bookmarkLevel="${element.bookmarkLevel}"`;
   }
 
-  // 新增：忽略分页
-  if (element.isIgnorePagination !== undefined && element.isIgnorePagination) {
-    xml += ` isIgnorePagination="true"`;
-  }
-
   xml += `>\n      <reportElement${generateReportElementAttrs(element)}`;
   xml += `${generateReportElementChildren(element)}`;
 

@@ -78,7 +78,6 @@ export class ElementRegistry {
         isBlankWhenNull: false,
         hyperlinkType: 'None',
         bookmarkLevel: 0,
-        isIgnorePagination: false,
         // 过时属性（向后兼容）
         isStretchWithOverflow: false,
         // 样式属性

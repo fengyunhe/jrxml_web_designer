@@ -550,19 +550,6 @@
                                 min="0"
                             />
                         </div>
-
-                        <!-- 新增：忽略分页 -->
-                        <div class="form-group">
-                            <SwitchControl
-                                :model-value="
-                                    currentElement.isIgnorePagination || false
-                                "
-                                @update:model-value="
-                                    currentElement.isIgnorePagination = $event
-                                "
-                                label="忽略分页"
-                            />
-                        </div>
                     </template>
                 </n-tab-pane>
 

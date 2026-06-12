@@ -1744,9 +1744,6 @@ function parseTextFieldElement(element: Element, result: any): void {
     result.bookmarkLevel = parseInt(
       element.getAttribute("bookmarkLevel") || "0",
     );
-  if (element.hasAttribute("isIgnorePagination"))
-    result.isIgnorePagination =
-      element.getAttribute("isIgnorePagination") === "true";
 
   const textElement = findChildElement(element, "textElement");
   if (textElement) {
