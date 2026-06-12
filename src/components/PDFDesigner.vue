@@ -73,13 +73,6 @@
           </n-checkbox>
         </div>
 
-        <!-- 缩放控制 -->
-        <ZoomControls
-          :zoom-level="zoomLevel"
-          :paper-width="reportProperties.pageWidth"
-          @update:zoomLevel="setZoomLevel($event)"
-        />
-
         <SplitButton
           :actions="[
             { label: t('actions.previewPDF'), handler: openPdfPreview, class: 'btn-primary' },
