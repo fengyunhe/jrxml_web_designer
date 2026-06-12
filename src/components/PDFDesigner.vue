@@ -4,14 +4,24 @@
       <div class="header-left">
         <h1>{{ t('app.title') }}</h1>
         <div class="header-undo-redo">
-          <n-button @click="undo" type="default" quaternary circle :title="t('actions.undo')">↩️</n-button>
-          <n-button @click="redo" type="default" quaternary circle :title="t('actions.redo')">↪️</n-button>
+          <n-button @click="undo" type="default" quaternary circle :title="t('actions.undo')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M3 10h10a5 5 0 0 1 0 10H9"/><polyline points="7 14 3 10 7 6"/></svg>
+          </n-button>
+          <n-button @click="redo" type="default" quaternary circle :title="t('actions.redo')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M21 10H11a5 5 0 0 0 0 10h4"/><polyline points="17 14 21 10 17 6"/></svg>
+          </n-button>
         </div>
         <div class="header-toolbar-ops">
           <span class="toolbar-divider"></span>
-          <button class="toolbar-btn" @click="deleteElement" title="删除">🗑️</button>
-          <button class="toolbar-btn" @click="copyElement" title="复制">📋</button>
-          <button class="toolbar-btn" @click="pasteElement" title="粘贴">📎</button>
+          <button class="toolbar-btn" @click="deleteElement" title="删除">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+          </button>
+          <button class="toolbar-btn" @click="copyElement" title="复制">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+          </button>
+          <button class="toolbar-btn" @click="pasteElement" title="粘贴">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1"/></svg>
+          </button>
         </div>
       </div>
       <div class="header-actions">
@@ -406,21 +416,21 @@
       <div class="context-menu" :style="{ left: contextMenu.x + 'px', top: contextMenu.y + 'px' }">
         <div v-if="contextMenu.type === 'element'" class="context-menu-items">
           <div class="context-menu-item" @click="handleContextMenuAction('copy')">
-            <span class="menu-icon">📋</span> 复制
+            <svg class="menu-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg> 复制
           </div>
           <div class="context-menu-item" @click="handleContextMenuAction('paste')">
-            <span class="menu-icon">📎</span> 粘贴
+            <svg class="menu-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1"/></svg> 粘贴
           </div>
           <div class="context-menu-divider"></div>
           <div class="context-menu-item" @click="handleContextMenuAction('delete')">
-            <span class="menu-icon">🗑️</span> 删除
+            <svg class="menu-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg> 删除
           </div>
           <div class="context-menu-divider"></div>
           <div class="context-menu-item" @click="handleContextMenuAction('bringToFront')">
-            <span class="menu-icon">⬆️</span> 置顶
+            <svg class="menu-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 19V5M5 12l7-7 7 7"/></svg> 置顶
           </div>
           <div class="context-menu-item" @click="handleContextMenuAction('sendToBack')">
-            <span class="menu-icon">⬇️</span> 置底
+            <svg class="menu-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M19 12l-7 7-7-7"/></svg> 置底
           </div>
         </div>
         <div v-else class="context-menu-items">

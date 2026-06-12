@@ -1742,25 +1742,69 @@
                     <div class="form-group">
                         <label>图表类型</label>
                         <select v-model="currentElement.chartType">
-                            <option value="pie">饼图</option>
-                            <option value="pie3D">3D饼图</option>
-                            <option value="bar">柱状图</option>
-                            <option value="bar3D">3D柱状图</option>
-                            <option value="line">折线图</option>
-                            <option value="area">面积图</option>
-                            <option value="scatter">散点图</option>
-                            <option value="bubble">气泡图</option>
-                            <option value="timeSeries">时间序列</option>
-                            <option value="highLow">高低图</option>
-                            <option value="candlestick">K线图</option>
-                            <option value="meter">仪表盘</option>
-                            <option value="thermometer">温度计</option>
+                            <optgroup label="分类图表">
+                                <option value="pie">饼图</option>
+                                <option value="pie3D">3D饼图</option>
+                                <option value="bar">柱状图</option>
+                                <option value="bar3D">3D柱状图</option>
+                                <option value="stackedBar">堆叠柱状图</option>
+                                <option value="stackedBar3D">3D堆叠柱状图</option>
+                                <option value="line">折线图</option>
+                                <option value="area">面积图</option>
+                                <option value="stackedArea">堆叠面积图</option>
+                            </optgroup>
+                            <optgroup label="XY图表">
+                                <option value="xyBar">XY柱状图</option>
+                                <option value="xyLine">XY折线图</option>
+                                <option value="xyArea">XY面积图</option>
+                                <option value="scatter">散点图</option>
+                                <option value="bubble">气泡图</option>
+                                <option value="timeSeries">时间序列</option>
+                            </optgroup>
+                            <optgroup label="金融图表">
+                                <option value="highLow">高低图</option>
+                                <option value="candlestick">K线图</option>
+                            </optgroup>
+                            <optgroup label="特殊图表">
+                                <option value="meter">仪表盘</option>
+                                <option value="thermometer">温度计</option>
+                                <option value="multiAxis">多轴图</option>
+                                <option value="gantt">甘特图</option>
+                                <option value="spider">蛛网图</option>
+                            </optgroup>
                         </select>
                     </div>
+
+                    <!-- 图表设置 -->
                     <div class="form-group">
-                        <label>标题</label>
-                        <input v-model="currentElement.title" type="text" />
+                        <label>渲染类型</label>
+                        <select v-model="currentElement.renderType">
+                            <option value="">默认</option>
+                            <option value="svg">SVG</option>
+                            <option value="draw">Draw</option>
+                            <option value="image">Image</option>
+                        </select>
                     </div>
+                    <div class="form-group" style="display: flex; gap: 16px;">
+                        <label style="display: flex; align-items: center; gap: 4px; white-space: nowrap;">
+                            <input type="checkbox" v-model="currentElement.isShowTitle" />
+                            显示标题
+                        </label>
+                        <label style="display: flex; align-items: center; gap: 4px; white-space: nowrap;">
+                            <input type="checkbox" v-model="currentElement.isShowSubtitle" />
+                            显示副标题
+                        </label>
+                        <label style="display: flex; align-items: center; gap: 4px; white-space: nowrap;">
+                            <input type="checkbox" v-model="currentElement.isShowLegend" />
+                            显示图例
+                        </label>
+                    </div>
+                    <div class="form-group">
+                        <label>自定义类</label>
+                        <input v-model="currentElement.customizerClass" type="text" placeholder="com.example.MyChartCustomizer" />
+                    </div>
+
+                    <!-- 标题表达式 -->
                     <div class="form-group">
                         <label>标题表达式</label>
                         <ExpressionEditor
@@ -1770,6 +1814,10 @@
                             :report-parameters="reportParameters"
                             :report-variables="reportVariables"
                         />
+                    </div>
+                    <div class="form-group">
+                        <label>标题文本</label>
+                        <input v-model="currentElement.title" type="text" />
                     </div>
                     <div class="form-group">
                         <label>副标题表达式</label>
@@ -1790,6 +1838,332 @@
                             :report-parameters="reportParameters"
                             :report-variables="reportVariables"
                         />
+                    </div>
+
+                    <!-- 数据集设置 -->
+                    <div style="border-top: 1px solid #e8e8e8; margin: 8px 0; padding-top: 8px;">
+                        <label style="font-weight: 600; font-size: 12px; color: #666; margin-bottom: 6px; display: block;">数据集</label>
+                    </div>
+                    <div class="form-group">
+                        <label>子数据集名称</label>
+                        <input v-model="currentElement.subDataset" type="text" placeholder="例如: pieDataset" />
+                    </div>
+                    <div class="form-group">
+                        <label>数据源表达式</label>
+                        <ExpressionEditor
+                            :model-value="currentElement.dataSourceExpression || ''"
+                            @update:model-value="currentElement.dataSourceExpression = $event"
+                            :report-fields="reportFields"
+                            :report-parameters="reportParameters"
+                            :report-variables="reportVariables"
+                            placeholder="例如: $P{myDatasource}"
+                        />
+                    </div>
+                    <div class="form-group">
+                        <label>增量类型</label>
+                        <select v-model="currentElement.incrementType">
+                            <option value="">无</option>
+                            <option value="None">None</option>
+                            <option value="Group">Group</option>
+                            <option value="Page">Page</option>
+                            <option value="Column">Column</option>
+                            <option value="Report">Report</option>
+                        </select>
+                    </div>
+                    <div class="form-group" v-if="currentElement.incrementType === 'Group'">
+                        <label>增量分组</label>
+                        <input v-model="currentElement.incrementGroup" type="text" />
+                    </div>
+
+                    <!-- 系列表达式（分类图表） -->
+                    <template v-if="['bar','bar3D','stackedBar','stackedBar3D','line','area','stackedArea'].includes(currentElement.chartType)">
+                        <div style="border-top: 1px solid #e8e8e8; margin: 8px 0; padding-top: 8px;">
+                            <label style="font-weight: 600; font-size: 12px; color: #666; margin-bottom: 6px; display: block;">系列表达式</label>
+                        </div>
+                        <div class="form-group">
+                            <label>系列</label>
+                            <ExpressionEditor
+                                :model-value="currentElement.seriesExpression || ''"
+                                @update:model-value="currentElement.seriesExpression = $event"
+                                :report-fields="reportFields"
+                                :report-parameters="reportParameters"
+                                :report-variables="reportVariables"
+                                placeholder="例如: $F{sales_state}"
+                            />
+                        </div>
+                        <div class="form-group">
+                            <label>分类</label>
+                            <ExpressionEditor
+                                :model-value="currentElement.categoryExpression || ''"
+                                @update:model-value="currentElement.categoryExpression = $event"
+                                :report-fields="reportFields"
+                                :report-parameters="reportParameters"
+                                :report-variables="reportVariables"
+                                placeholder="例如: $F{full_name}"
+                            />
+                        </div>
+                        <div class="form-group">
+                            <label>值</label>
+                            <ExpressionEditor
+                                :model-value="currentElement.valueExpression || ''"
+                                @update:model-value="currentElement.valueExpression = $event"
+                                :report-fields="reportFields"
+                                :report-parameters="reportParameters"
+                                :report-variables="reportVariables"
+                                placeholder="例如: $V{amount}"
+                            />
+                        </div>
+                    </template>
+
+                    <!-- 饼图表达式 -->
+                    <template v-if="['pie','pie3D'].includes(currentElement.chartType)">
+                        <div style="border-top: 1px solid #e8e8e8; margin: 8px 0; padding-top: 8px;">
+                            <label style="font-weight: 600; font-size: 12px; color: #666; margin-bottom: 6px; display: block;">饼图表达式</label>
+                        </div>
+                        <div class="form-group">
+                            <label>键（Key）</label>
+                            <ExpressionEditor
+                                :model-value="currentElement.keyExpression || ''"
+                                @update:model-value="currentElement.keyExpression = $event"
+                                :report-fields="reportFields"
+                                :report-parameters="reportParameters"
+                                :report-variables="reportVariables"
+                                placeholder="例如: $F{category}"
+                            />
+                        </div>
+                        <div class="form-group">
+                            <label>值（Value）</label>
+                            <ExpressionEditor
+                                :model-value="currentElement.valueExpression || ''"
+                                @update:model-value="currentElement.valueExpression = $event"
+                                :report-fields="reportFields"
+                                :report-parameters="reportParameters"
+                                :report-variables="reportVariables"
+                                placeholder="例如: $V{amount}"
+                            />
+                        </div>
+                    </template>
+
+                    <!-- XY图表表达式 -->
+                    <template v-if="['scatter','bubble','xyLine','xyArea','xyBar','timeSeries','highLow','candlestick'].includes(currentElement.chartType)">
+                        <div style="border-top: 1px solid #e8e8e8; margin: 8px 0; padding-top: 8px;">
+                            <label style="font-weight: 600; font-size: 12px; color: #666; margin-bottom: 6px; display: block;">XY系列表达式</label>
+                        </div>
+                        <div class="form-group">
+                            <label>系列</label>
+                            <ExpressionEditor
+                                :model-value="currentElement.seriesExpression || ''"
+                                @update:model-value="currentElement.seriesExpression = $event"
+                                :report-fields="reportFields"
+                                :report-parameters="reportParameters"
+                                :report-variables="reportVariables"
+                                placeholder="例如: $F{series}"
+                            />
+                        </div>
+                        <div class="form-group">
+                            <label>X值</label>
+                            <ExpressionEditor
+                                :model-value="currentElement.xValueExpression || ''"
+                                @update:model-value="currentElement.xValueExpression = $event"
+                                :report-fields="reportFields"
+                                :report-parameters="reportParameters"
+                                :report-variables="reportVariables"
+                                placeholder="例如: $F{x_value}"
+                            />
+                        </div>
+                        <div class="form-group">
+                            <label>Y值</label>
+                            <ExpressionEditor
+                                :model-value="currentElement.yValueExpression || ''"
+                                @update:model-value="currentElement.yValueExpression = $event"
+                                :report-fields="reportFields"
+                                :report-parameters="reportParameters"
+                                :report-variables="reportVariables"
+                                placeholder="例如: $F{y_value}"
+                            />
+                        </div>
+                    </template>
+
+                    <!-- 仪表盘/温度计表达式 -->
+                    <template v-if="['meter','thermometer'].includes(currentElement.chartType)">
+                        <div style="border-top: 1px solid #e8e8e8; margin: 8px 0; padding-top: 8px;">
+                            <label style="font-weight: 600; font-size: 12px; color: #666; margin-bottom: 6px; display: block;">仪表盘设置</label>
+                        </div>
+                        <div class="form-group">
+                            <label>数据表达式</label>
+                            <ExpressionEditor
+                                :model-value="currentElement.dataExpression || ''"
+                                @update:model-value="currentElement.dataExpression = $event"
+                                :report-fields="reportFields"
+                                :report-parameters="reportParameters"
+                                :report-variables="reportVariables"
+                                placeholder="例如: $V{value}"
+                            />
+                        </div>
+                        <div class="form-group" v-if="currentElement.chartType === 'meter'">
+                            <label>形状</label>
+                            <select v-model="currentElement.shape">
+                                <option value="">默认</option>
+                                <option value="chord">Chord</option>
+                                <option value="pie">Pie</option>
+                                <option value="circle">Circle</option>
+                                <option value="fan">Fan</option>
+                                <option value="dash">Dash</option>
+                                <option value="bullet">Bullet</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>单位</label>
+                            <input v-model="currentElement.units" type="text" placeholder="例如: %" />
+                        </div>
+                        <div class="form-group">
+                            <label>低阈值</label>
+                            <ExpressionEditor
+                                :model-value="currentElement.lowExpression || ''"
+                                @update:model-value="currentElement.lowExpression = $event"
+                                :report-fields="reportFields"
+                                :report-parameters="reportParameters"
+                                :report-variables="reportVariables"
+                                placeholder="例如: 0"
+                            />
+                        </div>
+                        <div class="form-group">
+                            <label>中阈值</label>
+                            <ExpressionEditor
+                                :model-value="currentElement.mediumExpression || ''"
+                                @update:model-value="currentElement.mediumExpression = $event"
+                                :report-fields="reportFields"
+                                :report-parameters="reportParameters"
+                                :report-variables="reportVariables"
+                                placeholder="例如: 50"
+                            />
+                        </div>
+                        <div class="form-group">
+                            <label>高阈值</label>
+                            <ExpressionEditor
+                                :model-value="currentElement.highExpression || ''"
+                                @update:model-value="currentElement.highExpression = $event"
+                                :report-fields="reportFields"
+                                :report-parameters="reportParameters"
+                                :report-variables="reportVariables"
+                                placeholder="例如: 100"
+                            />
+                        </div>
+                    </template>
+
+                    <!-- 绘图设置（分类图表） -->
+                    <template v-if="['bar','bar3D','stackedBar','stackedBar3D','line','area','stackedArea'].includes(currentElement.chartType)">
+                        <div style="border-top: 1px solid #e8e8e8; margin: 8px 0; padding-top: 8px;">
+                            <label style="font-weight: 600; font-size: 12px; color: #666; margin-bottom: 6px; display: block;">绘图设置</label>
+                        </div>
+                        <div class="form-group" v-if="['line'].includes(currentElement.chartType)">
+                            <label style="display: flex; align-items: center; gap: 4px;">
+                                <input type="checkbox" v-model="currentElement.isShowShapes" />
+                                显示数据点形状
+                            </label>
+                        </div>
+                        <div class="form-group">
+                            <label>标签颜色</label>
+                            <input v-model="currentElement.itemLabelColor" type="color" style="width: 60px; height: 30px;" />
+                        </div>
+                        <div class="form-group">
+                            <label>标签背景色</label>
+                            <input v-model="currentElement.itemLabelBackgroundColor" type="color" style="width: 60px; height: 30px;" />
+                        </div>
+                        <div class="form-group">
+                            <label>分类轴标签</label>
+                            <ExpressionEditor
+                                :model-value="currentElement.categoryAxisLabelExpression || ''"
+                                @update:model-value="currentElement.categoryAxisLabelExpression = $event"
+                                :report-fields="reportFields"
+                                :report-parameters="reportParameters"
+                                :report-variables="reportVariables"
+                                placeholder="例如: $F{axis_label}"
+                            />
+                        </div>
+                        <div class="form-group">
+                            <label>值轴标签</label>
+                            <ExpressionEditor
+                                :model-value="currentElement.valueAxisLabelExpression || ''"
+                                @update:model-value="currentElement.valueAxisLabelExpression = $event"
+                                :report-fields="reportFields"
+                                :report-parameters="reportParameters"
+                                :report-variables="reportVariables"
+                                placeholder="例如: Amount"
+                            />
+                        </div>
+                    </template>
+
+                    <!-- 饼图绘图设置 -->
+                    <template v-if="['pie','pie3D'].includes(currentElement.chartType)">
+                        <div style="border-top: 1px solid #e8e8e8; margin: 8px 0; padding-top: 8px;">
+                            <label style="font-weight: 600; font-size: 12px; color: #666; margin-bottom: 6px; display: block;">绘图设置</label>
+                        </div>
+                        <div class="form-group">
+                            <label style="display: flex; align-items: center; gap: 4px;">
+                                <input type="checkbox" v-model="currentElement.isCircular" />
+                                圆形显示
+                            </label>
+                        </div>
+                        <div class="form-group">
+                            <label>标签颜色</label>
+                            <input v-model="currentElement.itemLabelColor" type="color" style="width: 60px; height: 30px;" />
+                        </div>
+                        <div class="form-group">
+                            <label>标签背景色</label>
+                            <input v-model="currentElement.itemLabelBackgroundColor" type="color" style="width: 60px; height: 30px;" />
+                        </div>
+                    </template>
+
+                    <!-- 超链接设置 -->
+                    <div style="border-top: 1px solid #e8e8e8; margin: 8px 0; padding-top: 8px;">
+                        <label style="font-weight: 600; font-size: 12px; color: #666; margin-bottom: 6px; display: block;">超链接</label>
+                    </div>
+                    <div class="form-group">
+                        <label>工具提示表达式</label>
+                        <ExpressionEditor
+                            :model-value="currentElement.hyperlinkTooltipExpression || ''"
+                            @update:model-value="currentElement.hyperlinkTooltipExpression = $event"
+                            :report-fields="reportFields"
+                            :report-parameters="reportParameters"
+                            :report-variables="reportVariables"
+                        />
+                    </div>
+                    <div class="form-group">
+                        <label>超链接类型</label>
+                        <select v-model="currentElement.hyperlinkType">
+                            <option value="">无</option>
+                            <option value="Reference">Reference</option>
+                            <option value="LocalAnchor">LocalAnchor</option>
+                            <option value="LocalPage">LocalPage</option>
+                            <option value="RemoteAnchor">RemoteAnchor</option>
+                            <option value="RemotePage">RemotePage</option>
+                            <option value="Tooltip">Tooltip</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>超链接目标</label>
+                        <select v-model="currentElement.hyperlinkTarget">
+                            <option value="">默认</option>
+                            <option value="Self">Self</option>
+                            <option value="Blank">Blank</option>
+                            <option value="Top">Top</option>
+                            <option value="Parent">Parent</option>
+                        </select>
+                    </div>
+                    <div class="form-group" v-if="currentElement.hyperlinkType">
+                        <label>超链接表达式</label>
+                        <ExpressionEditor
+                            :model-value="currentElement.hyperlinkExpression || ''"
+                            @update:model-value="currentElement.hyperlinkExpression = $event"
+                            :report-fields="reportFields"
+                            :report-parameters="reportParameters"
+                            :report-variables="reportVariables"
+                        />
+                    </div>
+                    <div class="form-group">
+                        <label>书签级别</label>
+                        <input v-model.number="currentElement.bookmarkLevel" type="number" min="0" max="10" />
                     </div>
                 </n-tab-pane>
 
@@ -2047,6 +2421,45 @@
                     :tab="'列表属性'"
                 >
                     <div class="form-group">
+                        <label>打印顺序</label>
+                        <select v-model="currentElement.printOrder">
+                            <option value="Vertical">Vertical - 垂直</option>
+                            <option value="Horizontal">Horizontal - 水平</option>
+                        </select>
+                    </div>
+                    <div class="form-group" v-if="currentElement.printOrder === 'Horizontal'">
+                        <label style="display: flex; align-items: center; gap: 4px;">
+                            <input type="checkbox" v-model="currentElement.ignoreWidth" />
+                            忽略宽度（继续渲染）
+                        </label>
+                    </div>
+                    <div class="form-group">
+                        <label>子数据集名称</label>
+                        <input v-model="currentElement.subDataset" type="text" placeholder="例如: Addresses" />
+                    </div>
+                    <div class="form-group">
+                        <label>数据源表达式</label>
+                        <ExpressionEditor
+                            :model-value="currentElement.dataSourceExpression || ''"
+                            @update:model-value="currentElement.dataSourceExpression = $event"
+                            :report-fields="reportFields"
+                            :report-parameters="reportParameters"
+                            :report-variables="reportVariables"
+                            placeholder='例如: $P{myDatasource}'
+                        />
+                    </div>
+                    <div class="form-group">
+                        <label>连接表达式（可选）</label>
+                        <ExpressionEditor
+                            :model-value="currentElement.connectionExpression || ''"
+                            @update:model-value="currentElement.connectionExpression = $event"
+                            :report-fields="reportFields"
+                            :report-parameters="reportParameters"
+                            :report-variables="reportVariables"
+                            placeholder='例如: $P{connection}'
+                        />
+                    </div>
+                    <div class="form-group">
                         <label>列表内容高度</label>
                         <input
                             v-model.number="listContentsHeight"
@@ -2054,6 +2467,16 @@
                             min="0"
                             placeholder="像素"
                             @change="updateListContentsHeight"
+                        />
+                    </div>
+                    <div class="form-group">
+                        <label>列表内容宽度</label>
+                        <input
+                            v-model.number="listContentsWidth"
+                            type="number"
+                            min="0"
+                            placeholder="像素"
+                            @change="updateListContentsWidth"
                         />
                     </div>
                     <div class="form-group">
@@ -4571,6 +4994,7 @@ function removeSortField(index: number) {
 
 // 列表内容高度
 const listContentsHeight = ref(0);
+const listContentsWidth = ref(0);
 
 // 同步列表内容高度到currentElement
 watch(
@@ -4578,6 +5002,7 @@ watch(
     (el) => {
         if (el && el.type === "list" && el.listContents) {
             listContentsHeight.value = el.listContents.height || 0;
+            listContentsWidth.value = el.listContents.width || 0;
         }
     },
     { immediate: true },
@@ -4589,9 +5014,23 @@ function updateListContentsHeight() {
         currentElement.value.listContents = {
             elements: [],
             height: 0,
+            width: 0,
         };
     }
     currentElement.value.listContents.height = listContentsHeight.value;
+    emit("update-jrxml");
+}
+
+function updateListContentsWidth() {
+    if (!currentElement.value || currentElement.value.type !== "list") return;
+    if (!currentElement.value.listContents) {
+        currentElement.value.listContents = {
+            elements: [],
+            height: 0,
+            width: 0,
+        };
+    }
+    currentElement.value.listContents.width = listContentsWidth.value;
     emit("update-jrxml");
 }
 </script>

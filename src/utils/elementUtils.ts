@@ -23,6 +23,12 @@ export function getElementIcon(type: string): string {
   return config?.icon || '?';
 }
 
+// 获取元素SVG图标
+export function getElementIconSvg(type: string): string | undefined {
+  const config = getElementConfig(type);
+  return config?.iconSvg;
+}
+
 // 获取元素显示信息（不包含Band）
 export function getElementDisplayInfoWithoutBand(element: DesignElement): string {
   let info = '';

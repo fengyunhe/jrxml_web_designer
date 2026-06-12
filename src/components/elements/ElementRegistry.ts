@@ -5,6 +5,7 @@ export interface ElementConfig {
   type: string;
   name: string;
   icon: string;
+  iconSvg?: string;
   category?: string;
   defaultProps: Partial<DesignElement>;
   component?: any;
@@ -35,6 +36,7 @@ export class ElementRegistry {
       type: 'staticText',
       name: 'elementNames.staticText',
       icon: 'T',
+      iconSvg: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7V4h16v3M9 20h6M12 4v16"/></svg>',
       category: 'text',
       defaultProps: {
         type: 'staticText',
@@ -61,6 +63,7 @@ export class ElementRegistry {
       type: 'textField',
       name: 'elementNames.textField',
       icon: '{ }',
+      iconSvg: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 9l-3 3 3 3M16 9l3 3-3 3M14 4l-4 16"/></svg>',
       category: 'text',
       defaultProps: {
         type: 'textField',
@@ -92,7 +95,8 @@ export class ElementRegistry {
     this.registerElement({
       type: 'image',
       name: 'elementNames.image',
-      icon: '🖼',
+      icon: '◻',
+      iconSvg: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>',
       category: 'shape',
       defaultProps: {
         type: 'image',
@@ -115,6 +119,7 @@ export class ElementRegistry {
       type: 'line',
       name: 'elementNames.line',
       icon: '─',
+      iconSvg: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14"/></svg>',
       category: 'shape',
       defaultProps: {
         type: 'line',
@@ -134,6 +139,7 @@ export class ElementRegistry {
       type: 'rectangle',
       name: 'elementNames.rectangle',
       icon: '▭',
+      iconSvg: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="1"/></svg>',
       category: 'shape',
       defaultProps: {
         type: 'rectangle',
@@ -153,6 +159,7 @@ export class ElementRegistry {
       type: 'ellipse',
       name: 'elementNames.ellipse',
       icon: '◯',
+      iconSvg: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><ellipse cx="12" cy="12" rx="10" ry="8"/></svg>',
       category: 'shape',
       defaultProps: {
         type: 'ellipse',
@@ -172,6 +179,7 @@ export class ElementRegistry {
       type: 'break',
       name: 'elementNames.break',
       icon: '⤓',
+      iconSvg: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12l7 7 7-7"/></svg>',
       category: 'container',
       defaultProps: {
         type: 'break',
@@ -189,6 +197,7 @@ export class ElementRegistry {
       type: 'frame',
       name: 'elementNames.frame',
       icon: '☐',
+      iconSvg: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" stroke-dasharray="4 2"/></svg>',
       category: 'container',
       defaultProps: {
         type: 'frame',
@@ -214,6 +223,7 @@ export class ElementRegistry {
       type: 'table',
       name: 'elementNames.table',
       icon: '⊞',
+      iconSvg: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M3 15h18M9 3v18M15 3v18"/></svg>',
       category: 'container',
       defaultProps: {
         type: 'table',
@@ -338,7 +348,8 @@ export class ElementRegistry {
     this.registerElement({
       type: 'subreport',
       name: 'elementNames.subreport',
-      icon: '📋',
+      icon: '⊡',
+      iconSvg: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="20" rx="2"/><rect x="6" y="6" width="12" height="12" rx="1"/></svg>',
       category: 'container',
       defaultProps: {
         type: 'subreport',
@@ -361,7 +372,8 @@ export class ElementRegistry {
     this.registerElement({
       type: 'list',
       name: 'elementNames.list',
-      icon: '📝',
+      icon: '☰',
+      iconSvg: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg>',
       category: 'container',
       defaultProps: {
         type: 'list',
@@ -371,11 +383,18 @@ export class ElementRegistry {
         height: 100,
         listContents: {
           elements: [],
-          height: 100
+          height: 100,
+          width: 200
         },
+        printOrder: 'Vertical',
+        ignoreWidth: false,
+        subDataset: '',
+        dataSourceExpression: '',
+        connectionExpression: '',
         printWhenExpression: '',
         evaluationTime: 'Now',
-        splitType: 'Stretch'
+        splitType: 'Stretch',
+        isIgnorePagination: false
       }
     });
 
@@ -383,7 +402,8 @@ export class ElementRegistry {
     this.registerElement({
       type: 'chart',
       name: 'elementNames.chart',
-      icon: '📊',
+      icon: '▊',
+      iconSvg: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 20V10M12 20V4M6 20v-6"/></svg>',
       category: 'shape',
       defaultProps: {
         type: 'chart',
@@ -405,7 +425,8 @@ export class ElementRegistry {
     this.registerElement({
       type: 'barcode',
       name: 'elementNames.barcode',
-      icon: '▌▐',
+      icon: '▐',
+      iconSvg: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2v20M10 2v20M14 2v20M18 2v20M22 2v20"/></svg>',
       category: 'shape',
       defaultProps: {
         type: 'barcode',
@@ -425,6 +446,7 @@ export class ElementRegistry {
       type: 'map',
       name: 'elementNames.map',
       icon: '📍',
+      iconSvg: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>',
       category: 'container',
       defaultProps: {
         type: 'map',
@@ -447,6 +469,7 @@ export class ElementRegistry {
       type: 'crosstab',
       name: 'elementNames.crosstab',
       icon: '⊞',
+      iconSvg: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M3 15h18M9 3v18M15 3v18"/><path d="M9 9h6v6H9z" fill="currentColor" opacity="0.2"/></svg>',
       category: 'container',
       defaultProps: {
         type: 'crosstab',
@@ -466,6 +489,7 @@ export class ElementRegistry {
       type: 'iconLabel',
       name: 'elementNames.iconLabel',
       icon: '🏷️',
+      iconSvg: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>',
       category: 'text',
       defaultProps: {
         type: 'iconLabel',
@@ -486,6 +510,7 @@ export class ElementRegistry {
       type: 'genericElement',
       name: 'elementNames.genericElement',
       icon: '❓',
+      iconSvg: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>',
       category: 'container',
       defaultProps: {
         type: 'genericElement',
@@ -504,6 +529,7 @@ export class ElementRegistry {
       type: 'sort',
       name: 'elementNames.sort',
       icon: '↕️',
+      iconSvg: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 15l5 5 5-5M7 9l5-5 5 5"/></svg>',
       category: 'container',
       defaultProps: {
         type: 'sort',

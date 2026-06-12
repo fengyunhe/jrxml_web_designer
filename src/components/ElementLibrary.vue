@@ -14,7 +14,7 @@
                draggable="true"
                @dragstart="handleDragStart($event, element)"
                @dblclick="handleElementDoubleClick(element)">
-            <span class="element-icon">{{ getElementIcon(element.type) }}</span>
+            <span class="element-icon" v-html="getElementIconSvg(element.type) || getElementIcon(element.type)"></span>
             <span class="element-name">{{ t(element.name) }}</span>
           </div>
         </div>
@@ -54,10 +54,12 @@
             :style="{ paddingLeft: (6 + (element.level || 0) * 12) + 'px' }"
           >
             <div class="element-info-container" @click="selectElementFromList(element, selectElement)">
-              <span class="element-icon">{{ getElementIcon(element.element.type) }}</span>
+              <span class="element-icon" v-html="getElementIconSvg(element.element.type) || getElementIcon(element.element.type)"></span>
               <span class="element-info">{{ getElementDisplayInfoWithoutBand(element.element) }}</span>
             </div>
-            <n-button class="action-button delete-button" @click.stop="handleDeleteElement(element)" type="error" quaternary circle size="small" :title="t('properties.deleteElement')">🗑️</n-button>
+            <n-button class="action-button delete-button" @click.stop="handleDeleteElement(element)" type="error" quaternary circle size="small" :title="t('properties.deleteElement')">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+            </n-button>
           </div>
         </div>
       </div>
@@ -81,8 +83,12 @@
             <span class="field-type">({{ getFieldTypeName(param.class) }})</span>
           </div>
           <div class="field-actions">
-            <n-button class="action-button edit-button" @click.stop="handleEditParameter(param)" type="default" quaternary circle size="small" :title="t('elementLibrary.editParameter')">✏️</n-button>
-            <n-button class="action-button delete-button" @click.stop="handleDeleteParameter(param.name)" type="error" quaternary circle size="small" :title="t('elementLibrary.deleteParameter')">🗑️</n-button>
+            <n-button class="action-button edit-button" @click.stop="handleEditParameter(param)" type="default" quaternary circle size="small" :title="t('elementLibrary.editParameter')">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+            </n-button>
+            <n-button class="action-button delete-button" @click.stop="handleDeleteParameter(param.name)" type="error" quaternary circle size="small" :title="t('elementLibrary.deleteParameter')">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+            </n-button>
           </div>
         </div>
         <div v-if="reportParameters.length === 0" class="empty-state">
@@ -109,8 +115,12 @@
             <span class="field-type">({{ getFieldTypeName(variable.class) }})</span>
           </div>
           <div class="field-actions">
-            <n-button class="action-button edit-button" @click.stop="handleEditVariable(variable)" type="default" quaternary circle size="small" :title="t('elementLibrary.editVariable')">✏️</n-button>
-            <n-button class="action-button delete-button" @click.stop="handleDeleteVariable(variable.name)" type="error" quaternary circle size="small" :title="t('elementLibrary.deleteVariable')">🗑️</n-button>
+            <n-button class="action-button edit-button" @click.stop="handleEditVariable(variable)" type="default" quaternary circle size="small" :title="t('elementLibrary.editVariable')">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+            </n-button>
+            <n-button class="action-button delete-button" @click.stop="handleDeleteVariable(variable.name)" type="error" quaternary circle size="small" :title="t('elementLibrary.deleteVariable')">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+            </n-button>
           </div>
         </div>
         <div v-if="reportVariables.length === 0" class="empty-state">
@@ -137,8 +147,12 @@
             <span v-if="style.parentStyle" class="field-type">({{ style.parentStyle }})</span>
           </div>
           <div class="field-actions">
-            <n-button class="action-button edit-button" @click.stop="handleEditStyle(style)" type="default" quaternary circle size="small" :title="t('elementLibrary.editStyle')">✏️</n-button>
-            <n-button class="action-button delete-button" @click.stop="handleDeleteStyle(style.name)" type="error" quaternary circle size="small" :title="t('elementLibrary.deleteStyle')">🗑️</n-button>
+            <n-button class="action-button edit-button" @click.stop="handleEditStyle(style)" type="default" quaternary circle size="small" :title="t('elementLibrary.editStyle')">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+            </n-button>
+            <n-button class="action-button delete-button" @click.stop="handleDeleteStyle(style.name)" type="error" quaternary circle size="small" :title="t('elementLibrary.deleteStyle')">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+            </n-button>
           </div>
         </div>
         <div v-if="reportStyles.length === 0" class="empty-state">
@@ -164,8 +178,12 @@
   <span class="field-name">{{ dataset.name }}</span>
 </div>
             <div class="field-actions">
-              <n-button class="action-button edit-button" @click.stop="handleEditSubDataset(dataset, index)" type="default" quaternary circle size="small" :title="t('elementLibrary.editSubDataset')">✏️</n-button>
-              <n-button class="action-button delete-button" @click.stop="handleDeleteSubDataset(index)" type="error" quaternary circle size="small" :title="t('elementLibrary.deleteSubDataset')">🗑️</n-button>
+              <n-button class="action-button edit-button" @click.stop="handleEditSubDataset(dataset, index)" type="default" quaternary circle size="small" :title="t('elementLibrary.editSubDataset')">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+              </n-button>
+              <n-button class="action-button delete-button" @click.stop="handleDeleteSubDataset(index)" type="error" quaternary circle size="small" :title="t('elementLibrary.deleteSubDataset')">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+              </n-button>
             </div>
           </div>
         <div v-if="subDatasets.length === 0" class="empty-state">
@@ -192,8 +210,12 @@
             <span class="field-type">({{ getFieldTypeName(field.class) }})</span>
           </div>
           <div class="field-actions">
-            <n-button class="action-button edit-button" @click.stop="handleEditField(field)" type="default" quaternary circle size="small" :title="t('elementLibrary.editField')">✏️</n-button>
-            <n-button class="action-button delete-button" @click.stop="handleDeleteField(field.name)" type="error" quaternary circle size="small" :title="t('elementLibrary.deleteField')">🗑️</n-button>
+            <n-button class="action-button edit-button" @click.stop="handleEditField(field)" type="default" quaternary circle size="small" :title="t('elementLibrary.editField')">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+            </n-button>
+            <n-button class="action-button delete-button" @click.stop="handleDeleteField(field.name)" type="error" quaternary circle size="small" :title="t('elementLibrary.deleteField')">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+            </n-button>
           </div>
         </div>
         <div v-if="reportFields.length === 0" class="empty-state">
@@ -223,6 +245,7 @@ import type { DesignElement, StaticTextElement, TextFieldElement, ReportField, R
 import {
   getElementDisplayInfoWithoutBand,
   getElementIcon,
+  getElementIconSvg,
   getElementKey,
   isElementSelected,
   selectElementFromList,
@@ -644,6 +667,15 @@ function handleConfirmDelete(): void {
 .element-icon {
   font-size: 20px;
   margin-bottom: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.element-icon :deep(svg) {
+  width: 20px;
+  height: 20px;
+  color: currentColor;
 }
 
 .element-name {
@@ -728,6 +760,15 @@ function handleConfirmDelete(): void {
   font-size: 16px;
   margin-right: 8px;
   margin-bottom: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.report-element-item .element-icon :deep(svg) {
+  width: 16px;
+  height: 16px;
+  color: currentColor;
 }
 
 .report-element-item .element-info {

@@ -17,7 +17,9 @@
   >
     <div class="sort-element">
       <div class="sort-content">
-        <span class="sort-icon">↕️</span>
+        <svg class="sort-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M7 15l5 5 5-5M7 9l5-5 5 5"/>
+        </svg>
         <span class="sort-label">Sort</span>
       </div>
     </div>

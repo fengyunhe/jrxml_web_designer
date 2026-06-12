@@ -1630,7 +1630,19 @@ function generateSubreportXML(element: any): string {
 
 // 生成列表XML
 function generateListXML(element: any): string {
-  let xml = `    <list>`;
+  let xml = `    <list`;
+  
+  // 生成printOrder属性
+  if (element.printOrder && element.printOrder !== 'Vertical') {
+    xml += ` printOrder="${element.printOrder}"`;
+  }
+  
+  // 生成ignoreWidth属性
+  if (element.ignoreWidth !== undefined) {
+    xml += ` ignoreWidth="${element.ignoreWidth}"`;
+  }
+  
+  xml += `>`;
   xml += `\n      <reportElement x="${toInt(element.x)}" y="${toInt(element.y)}" width="${toInt(element.width)}" height="${toInt(element.height)}"`;
 
   if (element.uuid) {
@@ -1645,10 +1657,35 @@ function generateListXML(element: any): string {
     xml += `/>`;
   }
 
+  // 生成datasetRun（数据集运行配置）
+  if (element.subDataset || element.dataSourceExpression || element.connectionExpression) {
+    xml += `\n      <datasetRun`;
+    if (element.subDataset) {
+      xml += ` subDataset="${element.subDataset}"`;
+    }
+    if (element.uuid) {
+      xml += ` uuid="${element.uuid}"`;
+    }
+    xml += `>`;
+    
+    if (element.connectionExpression) {
+      xml += `\n        <connectionExpression><![CDATA[${element.connectionExpression}]]></connectionExpression>`;
+    }
+    if (element.dataSourceExpression) {
+      xml += `\n        <dataSourceExpression><![CDATA[${element.dataSourceExpression}]]></dataSourceExpression>`;
+    }
+    
+    xml += `\n      </datasetRun>`;
+  } else if (element.dataSourceExpression) {
+    // 兼容旧格式：直接在list元素下的dataSourceExpression
+    xml += `\n      <dataSourceExpression><![CDATA[${element.dataSourceExpression}]]></dataSourceExpression>`;
+  }
+
   // 生成列表内容
   if (element.listContents && element.listContents.elements && element.listContents.elements.length > 0) {
     const contentsHeight = element.listContents.height || element.height;
-    xml += `\n      <listContents height="${contentsHeight}">`;
+    const contentsWidth = element.listContents.width || element.width;
+    xml += `\n      <listContents height="${contentsHeight}" width="${contentsWidth}">`;
     element.listContents.elements.forEach((child: any) => {
       xml += generateElementXML(child);
     });
@@ -1675,36 +1712,244 @@ function generateChartXML(element: any): string {
   };
   const chartTag = chartTagMap[chartType] || 'pieChart';
 
-  let xml = `    <${chartTag}>`;
-  xml += `\n      <reportElement x="${toInt(element.x)}" y="${toInt(element.y)}" width="${toInt(element.width)}" height="${toInt(element.height)}"`;
+  let xml = `    <${chartTag}>\n`;
+
+  // <chart> 元素
+  xml += `      <chart`;
+  if (element.evaluationTime && element.evaluationTime !== 'Now') {
+    xml += ` evaluationTime="${element.evaluationTime}"`;
+  }
+  if (element.evaluationGroup) {
+    xml += ` evaluationGroup="${element.evaluationGroup}"`;
+  }
+  if (element.renderType) {
+    xml += ` renderType="${element.renderType}"`;
+  }
+  if (element.customizerClass) {
+    xml += ` customizerClass="${element.customizerClass}"`;
+  }
+  xml += `>\n`;
+
+  // reportElement
+  xml += `        <reportElement x="${toInt(element.x)}" y="${toInt(element.y)}" width="${toInt(element.width)}" height="${toInt(element.height)}"`;
   if (element.uuid) {
     xml += ` uuid="${element.uuid}"`;
   }
   xml += `/>\n`;
 
-  // 图表标题
-  if (element.title || element.titleExpression) {
-    xml += `      <chart>`;
-    xml += `\n        <reportElement x="${toInt(element.x)}" y="${toInt(element.y)}" width="${toInt(element.width)}" height="${toInt(element.height)}"`;
+  // chartTitle
+  if (element.isShowTitle !== false && (element.titleExpression || element.title)) {
+    xml += `        <chartTitle>\n`;
+    if (element.titleExpression) {
+      xml += `          <titleExpression><![CDATA[${element.titleExpression}]]></titleExpression>\n`;
+    } else if (element.title) {
+      xml += `          <titleExpression><![CDATA["${element.title}"]]></titleExpression>\n`;
+    }
+    xml += `        </chartTitle>\n`;
+  }
+
+  // chartSubtitle
+  if (element.isShowSubtitle !== false && element.subtitleExpression) {
+    xml += `        <chartSubtitle>\n`;
+    xml += `          <subtitleExpression><![CDATA[${element.subtitleExpression}]]></subtitleExpression>\n`;
+    xml += `        </chartSubtitle>\n`;
+  }
+
+  // chartLegend
+  if (element.isShowLegend !== false) {
+    xml += `        <chartLegend`;
+    if (element.legendExpression) {
+      xml += `>\n          <labelExpression><![CDATA[${element.legendExpression}]]></labelExpression>\n        </chartLegend>\n`;
+    } else {
+      xml += `/>\n`;
+    }
+  }
+
+  // hyperlinkTooltipExpression
+  if (element.hyperlinkTooltipExpression) {
+    xml += `        <hyperlinkTooltipExpression><![CDATA[${element.hyperlinkTooltipExpression}]]></hyperlinkTooltipExpression>\n`;
+  }
+
+  // hyperlinkReferenceExpression
+  if (element.hyperlinkExpression && element.hyperlinkType) {
+    xml += `        <hyperlinkReferenceExpression target="${element.hyperlinkTarget || 'Self'}" type="${element.hyperlinkType}"`;
+    if (element.bookmarkLevel) {
+      xml += ` bookmarkLevel="${element.bookmarkLevel}"`;
+    }
+    xml += `><![CDATA[${element.hyperlinkExpression}]]></hyperlinkReferenceExpression>\n`;
+  } else if (element.bookmarkLevel) {
+    xml += `        <hyperlinkReferenceExpression bookmarkLevel="${element.bookmarkLevel}"/>\n`;
+  }
+
+  xml += `      </chart>\n`;
+
+  // 数据集
+  const datasetTag = getDatasetTag(chartType);
+  const datasetItemTag = getDatasetItemTag(chartType);
+
+  xml += `      <${datasetTag}>\n`;
+  xml += `        <dataset`;
+  if (element.incrementType && element.incrementType !== 'None') {
+    xml += ` incrementType="${element.incrementType}"`;
+    if (element.incrementType === 'Group' && element.incrementGroup) {
+      xml += ` incrementGroup="${element.incrementGroup}"`;
+    }
+  }
+  xml += `>\n`;
+  if (element.subDataset) {
+    xml += `          <datasetRun subDataset="${element.subDataset}"`;
     if (element.uuid) {
       xml += ` uuid="${element.uuid}"`;
     }
-    xml += `/>\n`;
-    if (element.titleExpression) {
-      xml += `        <titleExpression><![CDATA[${element.titleExpression}]]></titleExpression>\n`;
-    } else if (element.title) {
-      xml += `        <titleExpression><![CDATA["${element.title}"]]></titleExpression>\n`;
+    xml += `>\n`;
+    if (element.dataSourceExpression) {
+      xml += `            <dataSourceExpression><![CDATA[${element.dataSourceExpression}]]></dataSourceExpression>\n`;
     }
-    if (element.subtitleExpression) {
-      xml += `        <subtitleExpression><![CDATA[${element.subtitleExpression}]]></subtitleExpression>\n`;
-    }
-    if (element.legendExpression) {
-      xml += `        <legendExpression><![CDATA[${element.legendExpression}]]></legendExpression>\n`;
-    }
-    xml += `      </chart>\n`;
+    xml += `          </datasetRun>\n`;
   }
+  xml += `        </dataset>\n`;
+
+  // 系列表达式
+  xml += generateDatasetSeries(chartType, element);
+
+  xml += `      </${datasetTag}>\n`;
+
+  // Plot
+  xml += generatePlot(chartType, element);
 
   xml += `    </${chartTag}>`;
+  return xml;
+}
+
+// 获取数据集标签
+function getDatasetTag(chartType: string): string {
+  const map: Record<string, string> = {
+    pie: 'pieDataset', pie3D: 'pieDataset',
+    bar: 'categoryDataset', bar3D: 'categoryDataset',
+    stackedBar: 'categoryDataset', stackedBar3D: 'categoryDataset',
+    line: 'categoryDataset', area: 'categoryDataset', stackedArea: 'categoryDataset',
+    xyBar: 'xyDataset', xyLine: 'xyDataset', xyArea: 'xyDataset',
+    scatter: 'xyDataset', bubble: 'xyDataset', timeSeries: 'xyDataset',
+    highLow: 'highLowDataset', candlestick: 'highLowDataset',
+    meter: 'categoryDataset', thermometer: 'categoryDataset',
+  };
+  return map[chartType] || 'categoryDataset';
+}
+
+// 获取数据系列标签
+function getDatasetItemTag(chartType: string): string {
+  const map: Record<string, string> = {
+    pie: 'keyExpression', pie3D: 'keyExpression',
+    bar: 'categorySeries', bar3D: 'categorySeries',
+    stackedBar: 'categorySeries', stackedBar3D: 'categorySeries',
+    line: 'categorySeries', area: 'categorySeries', stackedArea: 'categorySeries',
+    meter: 'categorySeries', thermometer: 'categorySeries',
+  };
+  return map[chartType] || 'categorySeries';
+}
+
+// 生成系列表达式
+function generateDatasetSeries(chartType: string, element: any): string {
+  let xml = '';
+
+  if (['pie', 'pie3D'].includes(chartType)) {
+    // 饼图: keyExpression + valueExpression
+    if (element.keyExpression) {
+      xml += `        <keyExpression><![CDATA[${element.keyExpression}]]></keyExpression>\n`;
+    }
+    if (element.valueExpression) {
+      xml += `        <valueExpression><![CDATA[${element.valueExpression}]]></valueExpression>\n`;
+    }
+  } else if (['scatter', 'bubble', 'xyLine', 'xyArea', 'xyBar', 'timeSeries', 'highLow', 'candlestick'].includes(chartType)) {
+    // XY图表: xySeries
+    xml += `        <xySeries>\n`;
+    if (element.seriesExpression) {
+      xml += `          <seriesExpression><![CDATA[${element.seriesExpression}]]></seriesExpression>\n`;
+    }
+    if (element.xValueExpression) {
+      xml += `          <xValueExpression><![CDATA[${element.xValueExpression}]]></xValueExpression>\n`;
+    }
+    if (element.yValueExpression) {
+      xml += `          <yValueExpression><![CDATA[${element.yValueExpression}]]></yValueExpression>\n`;
+    }
+    xml += `        </xySeries>\n`;
+  } else {
+    // 分类图表: categorySeries
+    xml += `        <categorySeries>\n`;
+    if (element.seriesExpression) {
+      xml += `          <seriesExpression><![CDATA[${element.seriesExpression}]]></seriesExpression>\n`;
+    }
+    if (element.categoryExpression) {
+      xml += `          <categoryExpression><![CDATA[${element.categoryExpression}]]></categoryExpression>\n`;
+    }
+    if (element.valueExpression) {
+      xml += `          <valueExpression><![CDATA[${element.valueExpression}]]></valueExpression>\n`;
+    }
+    xml += `        </categorySeries>\n`;
+  }
+
+  return xml;
+}
+
+// 生成Plot
+function generatePlot(chartType: string, element: any): string {
+  const plotTagMap: Record<string, string> = {
+    pie: 'piePlot', pie3D: 'pie3DPlot',
+    bar: 'barPlot', bar3D: 'bar3DPlot',
+    stackedBar: 'barPlot', stackedBar3D: 'bar3DPlot',
+    line: 'linePlot', xyLine: 'linePlot',
+    area: 'areaPlot', xyArea: 'areaPlot', stackedArea: 'areaPlot',
+    scatter: 'scatterPlot', bubble: 'bubblePlot', timeSeries: 'linePlot',
+    highLow: 'highLowPlot', candlestick: 'highLowPlot',
+    meter: 'meterPlot', thermometer: 'thermometerPlot',
+  };
+  const plotTag = plotTagMap[chartType] || 'plot';
+
+  let xml = `      <${plotTag}`;
+
+  // 饼图特有属性
+  if (['pie', 'pie3D'].includes(chartType)) {
+    if (element.isCircular !== undefined) {
+      xml += ` isCircular="${element.isCircular}"`;
+    }
+  }
+
+  // 折线图特有属性
+  if (['line', 'xyLine', 'timeSeries'].includes(chartType)) {
+    if (element.isShowShapes !== undefined) {
+      xml += ` isShowShapes="${element.isShowShapes}"`;
+    }
+  }
+
+  xml += `>\n`;
+
+  // plot子元素
+  xml += `        <plot/>\n`;
+
+  // itemLabel（分类图表和饼图）
+  if (!['scatter', 'bubble', 'highLow', 'candlestick', 'meter', 'thermometer'].includes(chartType)) {
+    const itemLabelColor = element.itemLabelColor || '#000000';
+    const itemLabelBg = element.itemLabelBackgroundColor || '#FFFFFF';
+    xml += `        <itemLabel color="${itemLabelColor}" backgroundColor="${itemLabelBg}"/>\n`;
+  }
+
+  // 分类轴标签（分类图表）
+  if (['bar', 'bar3D', 'stackedBar', 'stackedBar3D', 'line', 'area', 'stackedArea', 'meter', 'thermometer'].includes(chartType)) {
+    if (element.categoryAxisLabelExpression) {
+      xml += `        <categoryAxisLabelExpression><![CDATA[${element.categoryAxisLabelExpression}]]></categoryAxisLabelExpression>\n`;
+    }
+    xml += `        <categoryAxisFormat>\n          <axisFormat/>\n        </categoryAxisFormat>\n`;
+  }
+
+  // 值轴标签（分类图表）
+  if (['bar', 'bar3D', 'stackedBar', 'stackedBar3D', 'line', 'area', 'stackedArea'].includes(chartType)) {
+    if (element.valueAxisLabelExpression) {
+      xml += `        <valueAxisLabelExpression><![CDATA[${element.valueAxisLabelExpression}]]></valueAxisLabelExpression>\n`;
+    }
+    xml += `        <valueAxisFormat>\n          <axisFormat/>\n        </valueAxisFormat>\n`;
+  }
+
+  xml += `      </${plotTag}>\n`;
   return xml;
 }
 

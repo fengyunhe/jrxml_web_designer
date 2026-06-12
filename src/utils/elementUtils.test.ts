@@ -66,7 +66,7 @@ describe('elementUtils', () => {
     })
 
     it('should return the correct icon for image', () => {
-      expect(getElementIcon(ELEMENT_TYPE_CONSTANTS.IMAGE)).toBe('🖼')
+      expect(getElementIcon(ELEMENT_TYPE_CONSTANTS.IMAGE)).toBe('◻')
     })
 
     it('should return the correct icon for line', () => {

@@ -631,13 +631,28 @@ function parseBandElements(bandElem: Element): any[] {
     "chart",
     "crosstab",
   ];
+  
+  // 图表类型的标签名映射
+  const chartTagNames = [
+    'pieChart', 'pie3DChart', 'barChart', 'bar3DChart', 'xyBarChart',
+    'stackedBarChart', 'stackedBar3DChart', 'lineChart', 'xyLineChart',
+    'areaChart', 'xyAreaChart', 'stackedAreaChart', 'scatterChart', 'bubbleChart',
+    'timeSeriesChart', 'highLowChart', 'candlestickChart',
+    'meterChart', 'thermometerChart', 'multiAxisChart', 'ganttChart', 'spiderChart'
+  ];
 
   // 遍历直接子元素，而不是使用 querySelectorAll（避免递归查找嵌套元素）
   // 这也保留了元素的Z-order（堆叠顺序）
   Array.from(bandElem.children).forEach((child) => {
     const elementType = child.localName || child.tagName;
 
-    if (validElementTypes.includes(elementType)) {
+    // 检查是否是图表类型标签
+    if (chartTagNames.includes(elementType)) {
+      const parsedElement = parseElement(child, 'chart');
+      if (parsedElement) {
+        elements.push(parsedElement);
+      }
+    } else if (validElementTypes.includes(elementType)) {
       const parsedElement = parseElement(child, elementType);
       if (parsedElement) {
         elements.push(parsedElement);
@@ -1303,8 +1318,25 @@ function findChildElement(parent: Element, localName: string): Element | null {
 }
 
 function parseElement(element: Element, type: string): any {
+  // 图表类型的标签名映射
+  const chartTagNames = [
+    'pieChart', 'pie3DChart', 'barChart', 'bar3DChart', 'xyBarChart',
+    'stackedBarChart', 'stackedBar3DChart', 'lineChart', 'xyLineChart',
+    'areaChart', 'xyAreaChart', 'stackedAreaChart', 'scatterChart', 'bubbleChart',
+    'timeSeriesChart', 'highLowChart', 'candlestickChart',
+    'meterChart', 'thermometerChart', 'multiAxisChart', 'ganttChart', 'spiderChart'
+  ];
+  
   // 查找reportElement，考虑命名空间
-  const reportElement = findChildElement(element, "reportElement");
+  // 对于图表类型，reportElement在<chart>子元素内
+  let reportElement = findChildElement(element, "reportElement");
+  if (!reportElement && (type === 'chart' || chartTagNames.includes(element.localName || element.tagName))) {
+    // 图表类型：reportElement在<chart>子元素内
+    const chartElem = findChildElement(element, "chart");
+    if (chartElem) {
+      reportElement = findChildElement(chartElem, "reportElement");
+    }
+  }
   if (!reportElement) return null;
 
   const validElementTypes: Array<
@@ -1962,6 +1994,16 @@ function parseSubreportElement(element: Element, result: any): void {
 
 // 解析列表元素
 function parseListElement(element: Element, result: any): void {
+  // 解析printOrder
+  if (element.hasAttribute("printOrder")) {
+    result.printOrder = element.getAttribute("printOrder");
+  }
+  
+  // 解析ignoreWidth
+  if (element.hasAttribute("ignoreWidth")) {
+    result.ignoreWidth = element.getAttribute("ignoreWidth") === "true";
+  }
+  
   // 解析evaluationTime
   if (element.hasAttribute("evaluationTime")) {
     result.evaluationTime = element.getAttribute("evaluationTime");
@@ -1972,10 +2014,45 @@ function parseListElement(element: Element, result: any): void {
     result.splitType = element.getAttribute("splitType");
   }
   
+  // 解析isIgnorePagination
+  if (element.hasAttribute("isIgnorePagination")) {
+    result.isIgnorePagination = element.getAttribute("isIgnorePagination") === "true";
+  }
+  
+  // 解析datasetRun（数据集运行配置）
+  const datasetRunElem = element.querySelector("datasetRun");
+  if (datasetRunElem) {
+    // 解析subDataset
+    if (datasetRunElem.hasAttribute("subDataset")) {
+      result.subDataset = datasetRunElem.getAttribute("subDataset");
+    }
+    
+    // 解析dataSourceExpression
+    const dsExprElem = datasetRunElem.querySelector("dataSourceExpression");
+    if (dsExprElem) {
+      result.dataSourceExpression = dsExprElem.textContent?.trim() || '';
+    }
+    
+    // 解析connectionExpression
+    const connExprElem = datasetRunElem.querySelector("connectionExpression");
+    if (connExprElem) {
+      result.connectionExpression = connExprElem.textContent?.trim() || '';
+    }
+  }
+  
+  // 兼容旧格式：直接在list元素下的dataSourceExpression
+  if (!result.dataSourceExpression) {
+    const dsExprElem = element.querySelector("dataSourceExpression");
+    if (dsExprElem) {
+      result.dataSourceExpression = dsExprElem.textContent?.trim() || '';
+    }
+  }
+  
   // 解析listContents
   const listContentsElem = element.querySelector("listContents");
   if (listContentsElem) {
     const contentsHeight = parseInt(listContentsElem.getAttribute("height") || "0");
+    const contentsWidth = parseInt(listContentsElem.getAttribute("width") || "0");
     const elements: any[] = [];
     
     // 解析列表内容中的子元素
@@ -2029,28 +2106,268 @@ function parseChartElement(element: Element, result: any): void {
     (element.localName === 'chart' ? element : null);
   
   if (chartElem) {
-    // 解析titleExpression
-    const titleExprElem = chartElem.querySelector("titleExpression");
-    if (titleExprElem) {
-      result.titleExpression = titleExprElem.textContent?.trim() || '';
+    // chart元素属性
+    if (chartElem.hasAttribute("evaluationTime")) {
+      result.evaluationTime = chartElem.getAttribute("evaluationTime");
+    }
+    if (chartElem.hasAttribute("evaluationGroup")) {
+      result.evaluationGroup = chartElem.getAttribute("evaluationGroup");
+    }
+    if (chartElem.hasAttribute("renderType")) {
+      result.renderType = chartElem.getAttribute("renderType");
+    }
+    if (chartElem.hasAttribute("customizerClass")) {
+      result.customizerClass = chartElem.getAttribute("customizerClass");
     }
     
-    // 解析subtitleExpression
-    const subtitleExprElem = chartElem.querySelector("subtitleExpression");
-    if (subtitleExprElem) {
-      result.subtitleExpression = subtitleExprElem.textContent?.trim() || '';
+    // chartTitle
+    const chartTitleElem = chartElem.querySelector("chartTitle");
+    if (chartTitleElem) {
+      const titleExprElem = chartTitleElem.querySelector("titleExpression");
+      if (titleExprElem) {
+        result.titleExpression = titleExprElem.textContent?.trim() || '';
+      }
+    }
+    // 兼容旧格式：直接在chart下的titleExpression
+    if (!result.titleExpression) {
+      const titleExprElem = chartElem.querySelector("titleExpression");
+      if (titleExprElem) {
+        result.titleExpression = titleExprElem.textContent?.trim() || '';
+      }
     }
     
-    // 解析legendExpression
-    const legendExprElem = chartElem.querySelector("legendExpression");
-    if (legendExprElem) {
-      result.legendExpression = legendExprElem.textContent?.trim() || '';
+    // chartSubtitle
+    const chartSubtitleElem = chartElem.querySelector("chartSubtitle");
+    if (chartSubtitleElem) {
+      const subtitleExprElem = chartSubtitleElem.querySelector("subtitleExpression");
+      if (subtitleExprElem) {
+        result.subtitleExpression = subtitleExprElem.textContent?.trim() || '';
+      }
+    }
+    if (!result.subtitleExpression) {
+      const subtitleExprElem = chartElem.querySelector("subtitleExpression");
+      if (subtitleExprElem) {
+        result.subtitleExpression = subtitleExprElem.textContent?.trim() || '';
+      }
+    }
+    
+    // chartLegend
+    const chartLegendElem = chartElem.querySelector("chartLegend");
+    if (chartLegendElem) {
+      result.isShowLegend = true;
+      const labelExprElem = chartLegendElem.querySelector("labelExpression");
+      if (labelExprElem) {
+        result.legendExpression = labelExprElem.textContent?.trim() || '';
+      }
+    }
+    // 兼容旧格式
+    if (!result.legendExpression) {
+      const legendExprElem = chartElem.querySelector("legendExpression");
+      if (legendExprElem) {
+        result.legendExpression = legendExprElem.textContent?.trim() || '';
+      }
+    }
+    
+    // hyperlinkTooltipExpression
+    const tooltipElem = chartElem.querySelector("hyperlinkTooltipExpression");
+    if (tooltipElem) {
+      result.hyperlinkTooltipExpression = tooltipElem.textContent?.trim() || '';
+    }
+    
+    // hyperlinkReferenceExpression
+    const hyperlinkElem = chartElem.querySelector("hyperlinkReferenceExpression");
+    if (hyperlinkElem) {
+      result.hyperlinkExpression = hyperlinkElem.textContent?.trim() || '';
+      if (hyperlinkElem.hasAttribute("type")) {
+        result.hyperlinkType = hyperlinkElem.getAttribute("type");
+      }
+      if (hyperlinkElem.hasAttribute("target")) {
+        result.hyperlinkTarget = hyperlinkElem.getAttribute("target");
+      }
+      if (hyperlinkElem.hasAttribute("bookmarkLevel")) {
+        result.bookmarkLevel = parseInt(hyperlinkElem.getAttribute("bookmarkLevel") || "0");
+      }
     }
   }
   
-  // 解析evaluationTime
-  if (element.hasAttribute("evaluationTime")) {
+  // 解析reportElement属性
+  const reportElem = element.querySelector("reportElement");
+  if (reportElem) {
+    if (reportElem.hasAttribute("uuid")) {
+      result.uuid = reportElem.getAttribute("uuid");
+    }
+  }
+  
+  // 解析外层chart元素属性（兼容evaluationTime在最外层）
+  if (!result.evaluationTime && element.hasAttribute("evaluationTime")) {
     result.evaluationTime = element.getAttribute("evaluationTime");
+  }
+  
+  // 解析数据集
+  parseChartDataset(element, result);
+  
+  // 解析Plot
+  parseChartPlot(element, result);
+}
+
+// 解析图表数据集
+function parseChartDataset(element: Element, result: any): void {
+  const chartType = result.chartType || 'bar';
+  
+  // 饼图数据集
+  const pieDataset = element.querySelector("pieDataset");
+  if (pieDataset) {
+    parseDatasetAttributes(pieDataset, result);
+    
+    const keyExpr = pieDataset.querySelector("keyExpression");
+    if (keyExpr) {
+      result.keyExpression = keyExpr.textContent?.trim() || '';
+    }
+    const valueExpr = pieDataset.querySelector("valueExpression");
+    if (valueExpr) {
+      result.valueExpression = valueExpr.textContent?.trim() || '';
+    }
+    return;
+  }
+  
+  // 分类数据集
+  const categoryDataset = element.querySelector("categoryDataset");
+  if (categoryDataset) {
+    parseDatasetAttributes(categoryDataset, result);
+    
+    const categorySeries = categoryDataset.querySelector("categorySeries");
+    if (categorySeries) {
+      const seriesExpr = categorySeries.querySelector("seriesExpression");
+      if (seriesExpr) {
+        result.seriesExpression = seriesExpr.textContent?.trim() || '';
+      }
+      const categoryExpr = categorySeries.querySelector("categoryExpression");
+      if (categoryExpr) {
+        result.categoryExpression = categoryExpr.textContent?.trim() || '';
+      }
+      const valueExpr = categorySeries.querySelector("valueExpression");
+      if (valueExpr) {
+        result.valueExpression = valueExpr.textContent?.trim() || '';
+      }
+    }
+    return;
+  }
+  
+  // XY数据集
+  const xyDataset = element.querySelector("xyDataset");
+  if (xyDataset) {
+    parseDatasetAttributes(xyDataset, result);
+    
+    const xySeries = xyDataset.querySelector("xySeries");
+    if (xySeries) {
+      const seriesExpr = xySeries.querySelector("seriesExpression");
+      if (seriesExpr) {
+        result.seriesExpression = seriesExpr.textContent?.trim() || '';
+      }
+      const xValueExpr = xySeries.querySelector("xValueExpression");
+      if (xValueExpr) {
+        result.xValueExpression = xValueExpr.textContent?.trim() || '';
+      }
+      const yValueExpr = xySeries.querySelector("yValueExpression");
+      if (yValueExpr) {
+        result.yValueExpression = yValueExpr.textContent?.trim() || '';
+      }
+    }
+    return;
+  }
+  
+  // HighLow数据集
+  const highLowDataset = element.querySelector("highLowDataset");
+  if (highLowDataset) {
+    parseDatasetAttributes(highLowDataset, result);
+    
+    const highLowSeries = highLowDataset.querySelector("highLowSeries");
+    if (highLowSeries) {
+      const seriesExpr = highLowSeries.querySelector("seriesExpression");
+      if (seriesExpr) {
+        result.seriesExpression = seriesExpr.textContent?.trim() || '';
+      }
+      const xValueExpr = highLowSeries.querySelector("xValueExpression");
+      if (xValueExpr) {
+        result.xValueExpression = xValueExpr.textContent?.trim() || '';
+      }
+      const yValueExpr = highLowSeries.querySelector("yValueExpression");
+      if (yValueExpr) {
+        result.yValueExpression = yValueExpr.textContent?.trim() || '';
+      }
+    }
+    return;
+  }
+}
+
+// 解析数据集公共属性
+function parseDatasetAttributes(datasetElem: Element, result: any): void {
+  const dataset = datasetElem.querySelector("dataset");
+  if (dataset) {
+    if (dataset.hasAttribute("incrementType")) {
+      result.incrementType = dataset.getAttribute("incrementType");
+    }
+    if (dataset.hasAttribute("incrementGroup")) {
+      result.incrementGroup = dataset.getAttribute("incrementGroup");
+    }
+    
+    const datasetRun = dataset.querySelector("datasetRun");
+    if (datasetRun) {
+      if (datasetRun.hasAttribute("subDataset")) {
+        result.subDataset = datasetRun.getAttribute("subDataset");
+      }
+      const dsExpr = datasetRun.querySelector("dataSourceExpression");
+      if (dsExpr) {
+        result.dataSourceExpression = dsExpr.textContent?.trim() || '';
+      }
+    }
+  }
+}
+
+// 解析图表Plot
+function parseChartPlot(element: Element, result: any): void {
+  const plotTags = [
+    'piePlot', 'pie3DPlot', 'barPlot', 'bar3DPlot', 'linePlot', 'areaPlot',
+    'scatterPlot', 'bubblePlot', 'highLowPlot', 'meterPlot', 'thermometerPlot'
+  ];
+  
+  for (const tag of plotTags) {
+    const plotElem = element.querySelector(tag);
+    if (plotElem) {
+      // 饼图属性
+      if (plotElem.hasAttribute("isCircular")) {
+        result.isCircular = plotElem.getAttribute("isCircular") === "true";
+      }
+      
+      // 折线图属性
+      if (plotElem.hasAttribute("isShowShapes")) {
+        result.isShowShapes = plotElem.getAttribute("isShowShapes") === "true";
+      }
+      
+      // itemLabel
+      const itemLabel = plotElem.querySelector("itemLabel");
+      if (itemLabel) {
+        if (itemLabel.hasAttribute("color")) {
+          result.itemLabelColor = itemLabel.getAttribute("color");
+        }
+        if (itemLabel.hasAttribute("backgroundColor")) {
+          result.itemLabelBackgroundColor = itemLabel.getAttribute("backgroundColor");
+        }
+      }
+      
+      // 轴标签
+      const categoryAxisLabel = plotElem.querySelector("categoryAxisLabelExpression");
+      if (categoryAxisLabel) {
+        result.categoryAxisLabelExpression = categoryAxisLabel.textContent?.trim() || '';
+      }
+      
+      const valueAxisLabel = plotElem.querySelector("valueAxisLabelExpression");
+      if (valueAxisLabel) {
+        result.valueAxisLabelExpression = valueAxisLabel.textContent?.trim() || '';
+      }
+      
+      break;
+    }
   }
 }
 

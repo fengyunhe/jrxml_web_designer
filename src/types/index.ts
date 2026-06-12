@@ -501,24 +501,78 @@ export interface ListElement extends DesignElementBase {
   listContents?: {
     elements: DesignElement[];
     height?: number;
+    width?: number;
   };
+  // 数据集运行配置
+  subDataset?: string;
+  dataSourceExpression?: string;
+  connectionExpression?: string;
+  // 列表设置
+  printOrder?: "Vertical" | "Horizontal";
+  ignoreWidth?: boolean;
+  // 条件显示
   printWhenExpression?: string;
+  // 求值设置
   evaluationTime?: "Now" | "Report" | "Page" | "Column" | "Group" | "Band" | "Auto";
   evaluationGroup?: string;
+  // 分页设置
   splitType?: "Stretch" | "Prevent" | "Immediate";
+  isIgnorePagination?: boolean;
 }
 
 // 图表元素接口
 export interface ChartElement extends DesignElementBase {
   type: "chart";
   chartType: "pie" | "pie3D" | "bar" | "bar3D" | "xyBar" | "stackedBar" | "stackedBar3D" | "line" | "xyLine" | "area" | "xyArea" | "scatter" | "bubble" | "timeSeries" | "highLow" | "candlestick" | "meter" | "thermometer" | "multiAxis" | "stackedArea" | "gantt" | "spider";
+  // 图表标题
   title?: string;
   titleExpression?: string;
   subtitleExpression?: string;
   legendExpression?: string;
+  // 图表设置
+  isShowLegend?: boolean;
+  isShowTitle?: boolean;
+  isShowSubtitle?: boolean;
+  renderType?: "svg" | "draw" | "image";
+  customizerClass?: string;
+  // 超链接
+  hyperlinkTooltipExpression?: string;
+  hyperlinkTarget?: "Self" | "Blank" | "Top" | "Parent";
+  hyperlinkType?: "None" | "Reference" | "LocalAnchor" | "LocalPage" | "RemoteAnchor" | "RemotePage" | "Tooltip";
+  hyperlinkExpression?: string;
+  bookmarkLevel?: number;
+  // 评估设置
   evaluationTime?: "Now" | "Report" | "Page" | "Column" | "Group" | "Band" | "Auto" | "Master";
   evaluationGroup?: string;
   printWhenExpression?: string;
+  // 数据集
+  subDataset?: string;
+  dataSourceExpression?: string;
+  incrementType?: "None" | "Group" | "Page" | "Column" | "Report";
+  incrementGroup?: string;
+  // 系列表达式（分类图表：bar, line, area, stackedBar 等）
+  seriesExpression?: string;
+  categoryExpression?: string;
+  valueExpression?: string;
+  // 饼图表达式
+  keyExpression?: string;
+  // XY 图表表达式（scatter, bubble, xyLine, xyArea, timeSeries 等）
+  xValueExpression?: string;
+  yValueExpression?: string;
+  // 绘图设置
+  isCircular?: boolean;
+  isShowShapes?: boolean;
+  itemLabelColor?: string;
+  itemLabelBackgroundColor?: string;
+  categoryAxisLabelExpression?: string;
+  valueAxisLabelExpression?: string;
+  // 仪表盘/温度计特有
+  dataExpression?: string;
+  shape?: "chord" | "pie" | "circle" | "fan" | "dash" | "bullet";
+  lowExpression?: string;
+  mediumExpression?: string;
+  highExpression?: string;
+  units?: string;
 }
 
 // 条码元素接口
