@@ -76,15 +76,15 @@
         <div class="help-items">
           <div class="help-item" @click="insertExpression('$V{REPORT_COUNT}')">
             <span class="expression-text">$V{REPORT_COUNT}</span>
-            <span class="expression-desc">记录总数</span>
+            <span class="expression-desc">数据源记录总数</span>
           </div>
           <div class="help-item" @click="insertExpression('$V{PAGE_NUMBER}')">
             <span class="expression-text">$V{PAGE_NUMBER}</span>
-            <span class="expression-desc">当前页码</span>
+            <span class="expression-desc">当前页码（末尾时=总页数）</span>
           </div>
           <div class="help-item" @click="insertExpression('$V{PAGE_COUNT}')">
             <span class="expression-text">$V{PAGE_COUNT}</span>
-            <span class="expression-desc">总页数</span>
+            <span class="expression-desc">当前页处理的记录数</span>
           </div>
           <div class="help-item" @click="insertExpression('$V{COLUMN_NUMBER}')">
             <span class="expression-text">$V{COLUMN_NUMBER}</span>
@@ -92,7 +92,7 @@
           </div>
           <div class="help-item" @click="insertExpression('$V{COLUMN_COUNT}')">
             <span class="expression-text">$V{COLUMN_COUNT}</span>
-            <span class="expression-desc">当前列记录数</span>
+            <span class="expression-desc">当前列处理的记录数</span>
           </div>
           <div class="help-item" @click="insertExpression('$V{MASTER_CURRENT_PAGE}')">
             <span class="expression-text">$V{MASTER_CURRENT_PAGE}</span>
@@ -290,13 +290,13 @@ const allSuggestions = computed<SuggestionItem[]>(() => {
 
   // Built-in variables (from JRVariable.java)
   const builtInVars = [
-    { value: 'REPORT_COUNT', description: '数据源中读取的总记录数' },
-    { value: 'PAGE_COUNT', description: '生成当前页面时处理的记录数' },
-    { value: 'COLUMN_COUNT', description: '生成当前列时处理的记录数' },
-    { value: 'PAGE_NUMBER', description: '当前页码' },
+    { value: 'REPORT_COUNT', description: '数据源记录总数' },
+    { value: 'PAGE_COUNT', description: '当前页处理的记录数' },
+    { value: 'COLUMN_COUNT', description: '当前列处理的记录数' },
+    { value: 'PAGE_NUMBER', description: '当前页码（报表末尾时=总页数）' },
     { value: 'COLUMN_NUMBER', description: '当前列号' },
-    { value: 'MASTER_CURRENT_PAGE', description: '主报表的当前页码' },
-    { value: 'MASTER_TOTAL_PAGES', description: '主报表的总页数' },
+    { value: 'MASTER_CURRENT_PAGE', description: '主报表当前页码（需Master评估时间）' },
+    { value: 'MASTER_TOTAL_PAGES', description: '主报表总页数（需Master评估时间）' },
     { value: 'CURRENT_ROW_COUNT', description: '当前行号' },
     { value: 'GROUP_COUNT', description: '组计数变量（自动生成）' },
   ];
