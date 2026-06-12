@@ -549,6 +549,7 @@ export interface CrosstabElement extends DesignElementBase {
   crosstabHeight?: number;
   printWhenExpression?: string;
   whenNoDataType?: "AllSectionsNoDetail" | "AllSectionsWithDetail" | "NoDataCell" | "Blank";
+  evaluationTime?: "Now" | "Report" | "Page" | "Column" | "Group" | "Band" | "Auto" | "Master";
 }
 
 // 图标标签元素接口

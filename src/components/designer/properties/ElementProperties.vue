@@ -1653,6 +1653,445 @@
                         </template>
                     </template>
                 </n-tab-pane>
+
+                <!-- 子报表属性标签页 -->
+                <n-tab-pane
+                    v-if="currentElement && currentElement.type === 'subreport'"
+                    name="subreport"
+                    :tab="'子报表属性'"
+                >
+                    <div class="form-group">
+                        <label>子报表表达式</label>
+                        <ExpressionEditor
+                            :model-value="currentElement.subreportExpression || ''"
+                            @update:model-value="currentElement.subreportExpression = $event"
+                            :report-fields="reportFields"
+                            :report-parameters="reportParameters"
+                            :report-variables="reportVariables"
+                            placeholder="例如: $P{SUBREPORT_DIR} + 'subreport.jasper'"
+                        />
+                    </div>
+                    <div class="form-group">
+                        <label>连接表达式</label>
+                        <ExpressionEditor
+                            :model-value="currentElement.connectionExpression || ''"
+                            @update:model-value="currentElement.connectionExpression = $event"
+                            :report-fields="reportFields"
+                            :report-parameters="reportParameters"
+                            :report-variables="reportVariables"
+                            placeholder="例如: $P{REPORT_CONNECTION}"
+                        />
+                    </div>
+                    <div class="form-group">
+                        <label>数据源表达式</label>
+                        <ExpressionEditor
+                            :model-value="currentElement.dataSourceExpression || ''"
+                            @update:model-value="currentElement.dataSourceExpression = $event"
+                            :report-fields="reportFields"
+                            :report-parameters="reportParameters"
+                            :report-variables="reportVariables"
+                            placeholder="例如: $P{REPORT_DATA_SOURCE}"
+                        />
+                    </div>
+                    <div class="form-group">
+                        <label>参数映射表达式</label>
+                        <ExpressionEditor
+                            :model-value="currentElement.parametersMapExpression || ''"
+                            @update:model-value="currentElement.parametersMapExpression = $event"
+                            :report-fields="reportFields"
+                            :report-parameters="reportParameters"
+                            :report-variables="reportVariables"
+                            placeholder="例如: $P{REPORT_PARAMETERS_MAP}"
+                        />
+                    </div>
+                    <div class="form-group">
+                        <label>求值时间</label>
+                        <select v-model="currentElement.evaluationTime">
+                            <option value="Now">Now - 立即求值</option>
+                            <option value="Report">Report - 报表结束时</option>
+                            <option value="Page">Page - 页面结束时</option>
+                            <option value="Column">Column - 列结束时</option>
+                            <option value="Group">Group - 组结束时</option>
+                            <option value="Band">Band - 区域结束时</option>
+                            <option value="Auto">Auto - 引擎决定</option>
+                            <option value="Master">Master - 主报表结束时</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <SwitchControl
+                            :model-value="currentElement.isUsingCache || false"
+                            @update:model-value="currentElement.isUsingCache = $event"
+                            label="使用缓存"
+                        />
+                    </div>
+                    <div class="form-group">
+                        <SwitchControl
+                            :model-value="currentElement.isIgnorePagination || false"
+                            @update:model-value="currentElement.isIgnorePagination = $event"
+                            label="忽略分页"
+                        />
+                    </div>
+                </n-tab-pane>
+
+                <!-- 图表属性标签页 -->
+                <n-tab-pane
+                    v-if="currentElement && currentElement.type === 'chart'"
+                    name="chart"
+                    :tab="'图表属性'"
+                >
+                    <div class="form-group">
+                        <label>图表类型</label>
+                        <select v-model="currentElement.chartType">
+                            <option value="pie">饼图</option>
+                            <option value="pie3D">3D饼图</option>
+                            <option value="bar">柱状图</option>
+                            <option value="bar3D">3D柱状图</option>
+                            <option value="line">折线图</option>
+                            <option value="area">面积图</option>
+                            <option value="scatter">散点图</option>
+                            <option value="bubble">气泡图</option>
+                            <option value="timeSeries">时间序列</option>
+                            <option value="highLow">高低图</option>
+                            <option value="candlestick">K线图</option>
+                            <option value="meter">仪表盘</option>
+                            <option value="thermometer">温度计</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>标题</label>
+                        <input v-model="currentElement.title" type="text" />
+                    </div>
+                    <div class="form-group">
+                        <label>标题表达式</label>
+                        <ExpressionEditor
+                            :model-value="currentElement.titleExpression || ''"
+                            @update:model-value="currentElement.titleExpression = $event"
+                            :report-fields="reportFields"
+                            :report-parameters="reportParameters"
+                            :report-variables="reportVariables"
+                        />
+                    </div>
+                    <div class="form-group">
+                        <label>副标题表达式</label>
+                        <ExpressionEditor
+                            :model-value="currentElement.subtitleExpression || ''"
+                            @update:model-value="currentElement.subtitleExpression = $event"
+                            :report-fields="reportFields"
+                            :report-parameters="reportParameters"
+                            :report-variables="reportVariables"
+                        />
+                    </div>
+                    <div class="form-group">
+                        <label>图例表达式</label>
+                        <ExpressionEditor
+                            :model-value="currentElement.legendExpression || ''"
+                            @update:model-value="currentElement.legendExpression = $event"
+                            :report-fields="reportFields"
+                            :report-parameters="reportParameters"
+                            :report-variables="reportVariables"
+                        />
+                    </div>
+                </n-tab-pane>
+
+                <!-- 条码属性标签页 -->
+                <n-tab-pane
+                    v-if="currentElement && currentElement.type === 'barcode'"
+                    name="barcode"
+                    :tab="'条码属性'"
+                >
+                    <div class="form-group">
+                        <label>条码类型</label>
+                        <select v-model="currentElement.barcodeType">
+                            <option value="Code128">Code128</option>
+                            <option value="Code39">Code39</option>
+                            <option value="EAN13">EAN13</option>
+                            <option value="EAN8">EAN8</option>
+                            <option value="UPCA">UPC-A</option>
+                            <option value="UPCE">UPC-E</option>
+                            <option value="QRCode">QR Code</option>
+                            <option value="DataMatrix">Data Matrix</option>
+                            <option value="Interleaved2Of5">Interleaved 2 of 5</option>
+                            <option value="Codabar">Codabar</option>
+                            <option value="EAN128">EAN128</option>
+                            <option value="PDF417">PDF417</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>条码表达式</label>
+                        <ExpressionEditor
+                            :model-value="currentElement.codeExpression || ''"
+                            @update:model-value="currentElement.codeExpression = $event"
+                            :report-fields="reportFields"
+                            :report-parameters="reportParameters"
+                            :report-variables="reportVariables"
+                            placeholder='例如: "1234567890"'
+                        />
+                    </div>
+                </n-tab-pane>
+
+                <!-- 地图属性标签页 -->
+                <n-tab-pane
+                    v-if="currentElement && currentElement.type === 'map'"
+                    name="map"
+                    :tab="'地图属性'"
+                >
+                    <div class="form-group">
+                        <label>地图类型</label>
+                        <select v-model="currentElement.mapType">
+                            <option value="html">HTML</option>
+                            <option value="image">图片</option>
+                            <option value="pdf">PDF</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>纬度表达式</label>
+                        <ExpressionEditor
+                            :model-value="currentElement.latExpression || ''"
+                            @update:model-value="currentElement.latExpression = $event"
+                            :report-fields="reportFields"
+                            :report-parameters="reportParameters"
+                            :report-variables="reportVariables"
+                        />
+                    </div>
+                    <div class="form-group">
+                        <label>经度表达式</label>
+                        <ExpressionEditor
+                            :model-value="currentElement.lngExpression || ''"
+                            @update:model-value="currentElement.lngExpression = $event"
+                            :report-fields="reportFields"
+                            :report-parameters="reportParameters"
+                            :report-variables="reportVariables"
+                        />
+                    </div>
+                    <div class="form-group">
+                        <label>缩放级别表达式</label>
+                        <ExpressionEditor
+                            :model-value="currentElement.zoomExpression || ''"
+                            @update:model-value="currentElement.zoomExpression = $event"
+                            :report-fields="reportFields"
+                            :report-parameters="reportParameters"
+                            :report-variables="reportVariables"
+                        />
+                    </div>
+                    <div class="form-group">
+                        <label>语言表达式</label>
+                        <ExpressionEditor
+                            :model-value="currentElement.languageExpression || ''"
+                            @update:model-value="currentElement.languageExpression = $event"
+                            :report-fields="reportFields"
+                            :report-parameters="reportParameters"
+                            :report-variables="reportVariables"
+                        />
+                    </div>
+                </n-tab-pane>
+
+                <!-- 交叉表属性标签页 -->
+                <n-tab-pane
+                    v-if="currentElement && currentElement.type === 'crosstab'"
+                    name="crosstab"
+                    :tab="'交叉表属性'"
+                >
+                    <div class="form-group">
+                        <label>交叉表宽度</label>
+                        <input
+                            v-model.number="currentElement.crosstabWidth"
+                            type="number"
+                            min="0"
+                            placeholder="像素"
+                        />
+                    </div>
+                    <div class="form-group">
+                        <label>交叉表高度</label>
+                        <input
+                            v-model.number="currentElement.crosstabHeight"
+                            type="number"
+                            min="0"
+                            placeholder="像素"
+                        />
+                    </div>
+                    <div class="form-group">
+                        <label>无数据时显示</label>
+                        <select v-model="currentElement.whenNoDataType">
+                            <option value="AllSectionsNoDetail">所有区域无详情</option>
+                            <option value="AllSectionsWithDetail">所有区域包含详情</option>
+                            <option value="NoDataCell">无数据单元格</option>
+                            <option value="Blank">空白</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>求值时间</label>
+                        <select v-model="currentElement.evaluationTime">
+                            <option value="Now">Now - 立即求值</option>
+                            <option value="Report">Report - 报表结束时</option>
+                            <option value="Page">Page - 页面结束时</option>
+                            <option value="Column">Column - 列结束时</option>
+                            <option value="Group">Group - 组结束时</option>
+                            <option value="Band">Band - 区域结束时</option>
+                            <option value="Auto">Auto - 引擎决定</option>
+                            <option value="Master">Master - 主报表结束时</option>
+                        </select>
+                    </div>
+                </n-tab-pane>
+
+                <!-- 图标标签属性标签页 -->
+                <n-tab-pane
+                    v-if="currentElement && currentElement.type === 'iconLabel'"
+                    name="iconLabel"
+                    :tab="'图标标签属性'"
+                >
+                    <div class="form-group">
+                        <label>图标</label>
+                        <input
+                            v-model="currentElement.icon"
+                            type="text"
+                            placeholder="输入图标名称或 emoji，例如: 📊、📊"
+                        />
+                    </div>
+                    <div class="form-group">
+                        <label>静态标签</label>
+                        <input
+                            v-model="currentElement.label"
+                            type="text"
+                            placeholder="输入固定标签文本"
+                        />
+                    </div>
+                    <div class="form-group">
+                        <label>标签表达式</label>
+                        <ExpressionEditor
+                            :model-value="currentElement.labelExpression || ''"
+                            @update:model-value="currentElement.labelExpression = $event"
+                            :report-fields="reportFields"
+                            :report-parameters="reportParameters"
+                            :report-variables="reportVariables"
+                        />
+                    </div>
+                    <div class="form-group">
+                        <label>求值时间</label>
+                        <select v-model="currentElement.evaluationTime">
+                            <option value="Now">Now - 立即求值</option>
+                            <option value="Report">Report - 报表结束时</option>
+                            <option value="Page">Page - 页面结束时</option>
+                            <option value="Column">Column - 列结束时</option>
+                            <option value="Group">Group - 组结束时</option>
+                            <option value="Band">Band - 区域结束时</option>
+                            <option value="Auto">Auto - 引擎决定</option>
+                            <option value="Master">Master - 主报表结束时</option>
+                        </select>
+                    </div>
+                </n-tab-pane>
+
+                <!-- 通用元素属性标签页 -->
+                <n-tab-pane
+                    v-if="currentElement && currentElement.type === 'genericElement'"
+                    name="genericElement"
+                    :tab="'通用元素属性'"
+                >
+                    <div class="form-group">
+                        <label>命名空间</label>
+                        <input v-model="currentElement.namespace" type="text" placeholder="例如: http://example.com/namespace" />
+                    </div>
+                    <div class="form-group">
+                        <label>求值时间</label>
+                        <select v-model="currentElement.evaluationTime">
+                            <option value="Now">Now - 立即求值</option>
+                            <option value="Report">Report - 报表结束时</option>
+                            <option value="Page">Page - 页面结束时</option>
+                            <option value="Column">Column - 列结束时</option>
+                            <option value="Group">Group - 组结束时</option>
+                            <option value="Band">Band - 区域结束时</option>
+                            <option value="Auto">Auto - 引擎决定</option>
+                            <option value="Master">Master - 主报表结束时</option>
+                        </select>
+                    </div>
+                </n-tab-pane>
+
+                <!-- 排序属性标签页 -->
+                <n-tab-pane
+                    v-if="currentElement && currentElement.type === 'sort'"
+                    name="sort"
+                    :tab="'排序属性'"
+                >
+                    <div class="form-group">
+                        <label>排序字段</label>
+                        <div v-if="currentElement.sortFields && currentElement.sortFields.length > 0">
+                            <div v-for="(field, index) in currentElement.sortFields" :key="index" class="sort-field-item">
+                                <input v-model="field.name" type="text" placeholder="字段名" class="sort-field-name" />
+                                <select v-model="field.order" class="sort-field-order">
+                                    <option value="Ascending">升序</option>
+                                    <option value="Descending">降序</option>
+                                </select>
+                                <button @click="removeSortField(index)" class="sort-field-remove">删除</button>
+                            </div>
+                        </div>
+                        <button @click="addSortField" class="add-sort-field">添加排序字段</button>
+                    </div>
+                    <div class="form-group">
+                        <label>求值时间</label>
+                        <select v-model="currentElement.evaluationTime">
+                            <option value="Now">Now - 立即求值</option>
+                            <option value="Report">Report - 报表结束时</option>
+                            <option value="Page">Page - 页面结束时</option>
+                            <option value="Column">Column - 列结束时</option>
+                            <option value="Group">Group - 组结束时</option>
+                            <option value="Band">Band - 区域结束时</option>
+                            <option value="Auto">Auto - 引擎决定</option>
+                            <option value="Master">Master - 主报表结束时</option>
+                        </select>
+                    </div>
+                </n-tab-pane>
+
+                <!-- 列表属性标签页 -->
+                <n-tab-pane
+                    v-if="currentElement && currentElement.type === 'list'"
+                    name="list"
+                    :tab="'列表属性'"
+                >
+                    <div class="form-group">
+                        <label>列表内容高度</label>
+                        <input
+                            v-model.number="listContentsHeight"
+                            type="number"
+                            min="0"
+                            placeholder="像素"
+                            @change="updateListContentsHeight"
+                        />
+                    </div>
+                    <div class="form-group">
+                        <label>分页类型</label>
+                        <select v-model="currentElement.splitType">
+                            <option value="Stretch">Stretch - 拉伸</option>
+                            <option value="Prevent">Prevent - 防止分割</option>
+                            <option value="Immediate">Immediate - 立即分割</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>求值时间</label>
+                        <select v-model="currentElement.evaluationTime">
+                            <option value="Now">Now - 立即求值</option>
+                            <option value="Report">Report - 报表结束时</option>
+                            <option value="Page">Page - 页面结束时</option>
+                            <option value="Column">Column - 列结束时</option>
+                            <option value="Group">Group - 组结束时</option>
+                            <option value="Band">Band - 区域结束时</option>
+                            <option value="Auto">Auto - 引擎决定</option>
+                        </select>
+                    </div>
+                    <div
+                        class="form-group"
+                        v-if="currentElement.evaluationTime === 'Group'"
+                    >
+                        <label>求值组</label>
+                        <ExpressionEditor
+                            :model-value="currentElement.evaluationGroup || ''"
+                            @update:model-value="currentElement.evaluationGroup = $event"
+                            :report-fields="reportFields"
+                            :report-parameters="reportParameters"
+                            :report-variables="reportVariables"
+                            placeholder="输入组名称"
+                        />
+                    </div>
+                </n-tab-pane>
+
             </n-tabs>
 
             <div class="element-actions">
@@ -4108,6 +4547,52 @@ function updateTableStyles() {
             updateCellStyle(group);
         }
     }
+}
+
+// 排序字段管理
+function addSortField() {
+    if (!currentElement.value || currentElement.value.type !== "sort") return;
+    if (!currentElement.value.sortFields) {
+        currentElement.value.sortFields = [];
+    }
+    currentElement.value.sortFields.push({
+        name: "",
+        order: "Ascending",
+    });
+    emit("update-jrxml");
+}
+
+function removeSortField(index: number) {
+    if (!currentElement.value || currentElement.value.type !== "sort") return;
+    if (!currentElement.value.sortFields) return;
+    currentElement.value.sortFields.splice(index, 1);
+    emit("update-jrxml");
+}
+
+// 列表内容高度
+const listContentsHeight = ref(0);
+
+// 同步列表内容高度到currentElement
+watch(
+    () => currentElement.value,
+    (el) => {
+        if (el && el.type === "list" && el.listContents) {
+            listContentsHeight.value = el.listContents.height || 0;
+        }
+    },
+    { immediate: true },
+);
+
+function updateListContentsHeight() {
+    if (!currentElement.value || currentElement.value.type !== "list") return;
+    if (!currentElement.value.listContents) {
+        currentElement.value.listContents = {
+            elements: [],
+            height: 0,
+        };
+    }
+    currentElement.value.listContents.height = listContentsHeight.value;
+    emit("update-jrxml");
 }
 </script>
 
