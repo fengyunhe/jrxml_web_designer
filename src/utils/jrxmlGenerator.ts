@@ -2585,25 +2585,26 @@ function generateTableXML(element: any): string {
   let xml = `    <componentElement>
       <reportElement${generateReportElementAttrs(element)}`;
   xml += `${generateReportElementChildren(element)}`;
-  xml += "/>\n";
 
   // 添加表格样式属性
+  let tableStyleProps = '';
   if (element.styles) {
     if (element.styles.tableHeader) {
-      xml += `        <property name="com.jaspersoft.studio.table.style.table_header" value="${element.styles.tableHeader}"/>
-`;
+      tableStyleProps += `\n        <property name="com.jaspersoft.studio.table.style.table_header" value="${element.styles.tableHeader}"/>`;
     }
     if (element.styles.columnHeader) {
-      xml += `        <property name="com.jaspersoft.studio.table.style.column_header" value="${element.styles.columnHeader}"/>
-`;
+      tableStyleProps += `\n        <property name="com.jaspersoft.studio.table.style.column_header" value="${element.styles.columnHeader}"/>`;
     }
     if (element.styles.detail) {
-      xml += `        <property name="com.jaspersoft.studio.table.style.detail" value="${element.styles.detail}"/>
-`;
+      tableStyleProps += `\n        <property name="com.jaspersoft.studio.table.style.detail" value="${element.styles.detail}"/>`;
     }
   }
 
-  xml += "</reportElement>\n";
+  if (tableStyleProps) {
+    xml += ">" + tableStyleProps + "\n      </reportElement>\n";
+  } else {
+    xml += "/>\n";
+  }
 
   // 添加表格属性 - 只包含XSD允许的属性
   let tableAttrs = "";
