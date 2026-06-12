@@ -526,6 +526,8 @@ function generateElementXML(element: any): string {
       return generateListXML(element);
     case "chart":
       return generateChartXML(element);
+    case "barcode":
+      return generateBarcodeXML(element);
     default:
       return "";
   }
@@ -1693,6 +1695,33 @@ function generateChartXML(element: any): string {
   }
 
   xml += `    </${chartTag}>`;
+  return xml;
+}
+
+// 生成条码XML
+function generateBarcodeXML(element: any): string {
+  const barcodeType = element.barcodeType || 'Code128';
+  // Barcode4j elements are wrapped in componentElement
+  let xml = `    <componentElement>`;
+  xml += `\n      <reportElement x="${toInt(element.x)}" y="${toInt(element.y)}" width="${toInt(element.width)}" height="${toInt(element.height)}"`;
+  if (element.uuid) {
+    xml += ` uuid="${element.uuid}"`;
+  }
+  if (element.printWhenExpression) {
+    xml += `>`;
+    xml += `\n        <printWhenExpression><![CDATA[${element.printWhenExpression}]]></printWhenExpression>`;
+    xml += `\n      </reportElement>`;
+  } else {
+    xml += `/>`;
+  }
+
+  // Barcode4j uses the components namespace
+  xml += `\n      <c:${barcodeType} xmlns:c="http://jasperreports.sourceforge.net/jasperreports/components">`;
+  if (element.codeExpression) {
+    xml += `\n        <c:codeExpression><![CDATA[${element.codeExpression}]]></c:codeExpression>`;
+  }
+  xml += `\n      </c:${barcodeType}>`;
+  xml += `\n    </componentElement>`;
   return xml;
 }
 

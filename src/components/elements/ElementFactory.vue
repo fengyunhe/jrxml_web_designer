@@ -22,6 +22,7 @@ import TableElement from './TableElement.vue';
 import SubreportElement from './SubreportElement.vue';
 import ListElement from './ListElement.vue';
 import ChartElement from './ChartElement.vue';
+import BarcodeElement from './BarcodeElement.vue';
 import type { 
   DesignElement,
   SelectedElementInfo,
@@ -41,7 +42,8 @@ const componentCache: Record<string, any> = {
   table: TableElement,
   subreport: SubreportElement,
   list: ListElement,
-  chart: ChartElement
+  chart: ChartElement,
+  barcode: BarcodeElement
 };
 
 // 预加载组件

@@ -11,7 +11,8 @@ export type ElementType =
   | "table"
   | "subreport"
   | "list"
-  | "chart";
+  | "chart"
+  | "barcode";
 
 // 列分组接口
 export interface ColumnGroup {
@@ -515,6 +516,15 @@ export interface ChartElement extends DesignElementBase {
   printWhenExpression?: string;
 }
 
+// 条码元素接口
+export interface BarcodeElement extends DesignElementBase {
+  type: "barcode";
+  barcodeType: "Code128" | "Code39" | "EAN13" | "EAN8" | "UPCA" | "UPCE" | "QRCode" | "DataMatrix" | "Interleaved2Of5" | "Codabar" | "EAN128" | "PDF417" | "POSTNET" | "RoyalMailCustomer" | "USPSIntelligentMail";
+  codeExpression?: string;
+  printWhenExpression?: string;
+  evaluationTime?: "Now" | "Report" | "Page" | "Column" | "Group" | "Band" | "Auto";
+}
+
 // 设计元素联合类型
 export type DesignElement =
   | StaticTextElement
@@ -528,7 +538,8 @@ export type DesignElement =
   | TableElement
   | SubreportElement
   | ListElement
-  | ChartElement;
+  | ChartElement
+  | BarcodeElement;
 
 // 报表区域接口
 export interface Band {

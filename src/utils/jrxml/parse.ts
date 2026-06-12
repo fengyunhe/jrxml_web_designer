@@ -693,10 +693,39 @@ function parseComponentElement(componentElem: Element): any {
     }
   }
 
-  if (!tableElem) return null;
+  if (tableElem) {
+    // 解析表格
+    return parseTableElement(tableElem, reportElement);
+  }
 
-  // 解析表格
-  return parseTableElement(tableElem, reportElement);
+  // 查找barcode4j元素 - 支持带命名空间和不带命名空间
+  const barcodeTypes = ['Code128', 'Code39', 'EAN13', 'EAN8', 'UPCA', 'UPCE', 'QRCode', 'DataMatrix', 'Interleaved2Of5', 'Codabar', 'EAN128', 'PDF417', 'POSTNET', 'RoyalMailCustomer', 'USPSIntelligentMail'];
+  
+  for (const child of Array.from(componentElem.children)) {
+    const childLocalName = child.localName || child.tagName;
+    // 检查是否是barcode4j元素（带或不带命名空间前缀）
+    for (const barcodeType of barcodeTypes) {
+      if (childLocalName === barcodeType || child.tagName === `c:${barcodeType}`) {
+        // 解析barcode元素
+        const codeExprElem = child.querySelector("codeExpression");
+        const codeExpression = codeExprElem ? codeExprElem.textContent?.trim() || '' : '';
+        
+        return {
+          type: 'barcode',
+          uuid: reportElement.getAttribute("uuid") || crypto.randomUUID(),
+          x: parseInt(reportElement.getAttribute("x") || "0"),
+          y: parseInt(reportElement.getAttribute("y") || "0"),
+          width: parseInt(reportElement.getAttribute("width") || "100"),
+          height: parseInt(reportElement.getAttribute("height") || "30"),
+          barcodeType: barcodeType,
+          codeExpression: codeExpression,
+          printWhenExpression: ''
+        };
+      }
+    }
+  }
+
+  return null;
 }
 
 // 解析表格单元格内容

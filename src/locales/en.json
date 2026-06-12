@@ -137,7 +137,8 @@
     "table": "Table",
     "subreport": "Subreport",
     "list": "List",
-    "chart": "Chart"
+    "chart": "Chart",
+    "barcode": "Barcode"
   },
   "properties": {
     "title": "Properties",

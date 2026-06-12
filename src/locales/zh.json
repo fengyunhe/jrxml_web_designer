@@ -137,7 +137,8 @@
     "table": "表格",
     "subreport": "子报表",
     "list": "列表",
-    "chart": "图表"
+    "chart": "图表",
+    "barcode": "条码"
   },
   "properties": {
     "title": "属性设置",

@@ -400,6 +400,25 @@ export class ElementRegistry {
         printWhenExpression: ''
       }
     });
+
+    // 条码元素
+    this.registerElement({
+      type: 'barcode',
+      name: 'elementNames.barcode',
+      icon: '▌▐',
+      category: 'shape',
+      defaultProps: {
+        type: 'barcode',
+        x: 0,
+        y: 0,
+        width: 150,
+        height: 60,
+        barcodeType: 'Code128',
+        codeExpression: '"1234567890"',
+        evaluationTime: 'Now',
+        printWhenExpression: ''
+      }
+    });
   }
 
   // 注册元素
