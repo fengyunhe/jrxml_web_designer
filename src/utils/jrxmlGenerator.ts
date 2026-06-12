@@ -30,7 +30,7 @@ function generateReportElementAttrs(element: any): string {
   return attrs;
 }
 
-// 生成reportElement子元素（printWhenExpression, styleExpression）
+// 生成reportElement子元素（printWhenExpression, styleExpression, property, propertyExpression）
 function generateReportElementChildren(element: any): string {
   let xml = '';
   if (element.printWhenExpression) {
@@ -38,6 +38,22 @@ function generateReportElementChildren(element: any): string {
   }
   if (element.styleExpression) {
     xml += `\n        <styleExpression><![CDATA[${element.styleExpression}]]></styleExpression>`;
+  }
+  // 生成property元素
+  if (element.properties && element.properties.length > 0) {
+    element.properties.forEach((prop: any) => {
+      if (prop.name) {
+        xml += `\n        <property name="${prop.name}" value="${prop.value || ''}"/>`;
+      }
+    });
+  }
+  // 生成propertyExpression元素
+  if (element.propertyExpressions && element.propertyExpressions.length > 0) {
+    element.propertyExpressions.forEach((prop: any) => {
+      if (prop.name) {
+        xml += `\n        <propertyExpression name="${prop.name}"><![CDATA[${prop.valueExpression || ''}]]></propertyExpression>`;
+      }
+    });
   }
   return xml;
 }

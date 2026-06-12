@@ -264,7 +264,7 @@ export interface ReportProperties {
 
 // 设计元素基础接口
 export interface DesignElementBase {
-  uuid?: string; // 符合XSD要求的唯一标识符
+  uuid?: string;
   type: ElementType;
   x: number;
   y: number;
@@ -297,6 +297,9 @@ export interface DesignElementBase {
   isRemoveLineWhenBlank?: boolean;
   printWhenExpression?: string;
   styleExpression?: string;
+  // 自定义属性
+  properties?: Array<{ name: string; value: string }>;
+  propertyExpressions?: Array<{ name: string; valueExpression: string }>;
 }
 
 // 静态文本元素接口

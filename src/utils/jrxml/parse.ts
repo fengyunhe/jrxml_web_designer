@@ -1476,6 +1476,38 @@ function parseElement(element: Element, type: string): any {
     (result as any).styleExpression = styleExprElem.textContent?.trim() || '';
   }
 
+  // 解析property元素
+  const propertyElems = reportElement.querySelectorAll("property");
+  if (propertyElems.length > 0) {
+    const properties: Array<{ name: string; value: string }> = [];
+    propertyElems.forEach(prop => {
+      const name = prop.getAttribute("name");
+      const value = prop.getAttribute("value");
+      if (name) {
+        properties.push({ name, value: value || '' });
+      }
+    });
+    if (properties.length > 0) {
+      (result as any).properties = properties;
+    }
+  }
+
+  // 解析propertyExpression元素
+  const propExprElems = reportElement.querySelectorAll("propertyExpression");
+  if (propExprElems.length > 0) {
+    const propertyExpressions: Array<{ name: string; valueExpression: string }> = [];
+    propExprElems.forEach(prop => {
+      const name = prop.getAttribute("name");
+      const valueExpression = prop.textContent?.trim() || '';
+      if (name) {
+        propertyExpressions.push({ name, valueExpression });
+      }
+    });
+    if (propertyExpressions.length > 0) {
+      (result as any).propertyExpressions = propertyExpressions;
+    }
+  }
+
   switch (type) {
     case "staticText":
       parseStaticTextElement(element, result);

@@ -531,6 +531,41 @@
                             placeholder="例如: $V{rowNumber} % 2 == 0 ? &quot;evenRow&quot; : &quot;&quot;"
                         />
                     </div>
+
+                    <!-- 自定义属性 -->
+                    <div class="form-group">
+                        <label>自定义属性</label>
+                        <div v-if="currentElement.properties && currentElement.properties.length > 0" style="margin-bottom: 8px;">
+                            <div v-for="(prop, index) in currentElement.properties" :key="index" style="display: flex; gap: 4px; margin-bottom: 4px;">
+                                <input v-model="prop.name" type="text" placeholder="属性名" style="flex: 1;" />
+                                <input v-model="prop.value" type="text" placeholder="属性值" style="flex: 1;" />
+                                <button @click="currentElement.properties.splice(index, 1)" type="button" class="prop-btn-danger" style="padding: 2px 6px;">×</button>
+                            </div>
+                        </div>
+                        <button @click="addProperty" type="button" class="prop-btn-primary" style="font-size: 12px;">+ 添加属性</button>
+                    </div>
+
+                    <!-- 自定义属性表达式 -->
+                    <div class="form-group">
+                        <label>自定义属性表达式</label>
+                        <div v-if="currentElement.propertyExpressions && currentElement.propertyExpressions.length > 0" style="margin-bottom: 8px;">
+                            <div v-for="(prop, index) in currentElement.propertyExpressions" :key="index" style="margin-bottom: 4px;">
+                                <div style="display: flex; gap: 4px; margin-bottom: 2px;">
+                                    <input v-model="prop.name" type="text" placeholder="属性名" style="flex: 1;" />
+                                    <button @click="currentElement.propertyExpressions.splice(index, 1)" type="button" class="prop-btn-danger" style="padding: 2px 6px;">×</button>
+                                </div>
+                                <ExpressionEditor
+                                    :model-value="prop.valueExpression || ''"
+                                    @update:model-value="prop.valueExpression = $event"
+                                    :report-fields="reportFields"
+                                    :report-parameters="reportParameters"
+                                    :report-variables="reportVariables"
+                                    placeholder="属性值表达式"
+                                />
+                            </div>
+                        </div>
+                        <button @click="addPropertyExpression" type="button" class="prop-btn-primary" style="font-size: 12px;">+ 添加属性表达式</button>
+                    </div>
                 </n-tab-pane>
 
                 <!-- 表格属性标签页 -->
@@ -5193,6 +5228,24 @@ function updateListContentsWidth() {
         };
     }
     currentElement.value.listContents.width = listContentsWidth.value;
+    emit("update-jrxml");
+}
+
+function addProperty() {
+    if (!currentElement.value) return;
+    if (!currentElement.value.properties) {
+        (currentElement.value as any).properties = [];
+    }
+    (currentElement.value as any).properties.push({ name: '', value: '' });
+    emit("update-jrxml");
+}
+
+function addPropertyExpression() {
+    if (!currentElement.value) return;
+    if (!currentElement.value.propertyExpressions) {
+        (currentElement.value as any).propertyExpressions = [];
+    }
+    (currentElement.value as any).propertyExpressions.push({ name: '', valueExpression: '' });
     emit("update-jrxml");
 }
 </script>
