@@ -1382,68 +1382,9 @@ function generateEllipseXML(element: any): string {
 
 // 生成容器XML
 function generateFrameXML(element: any): string {
-  let xml =
-    '    <frame>\n      <reportElement x="' +
-    toInt(element.x) +
-    '" y="' +
-    toInt(element.y) +
-    '" width="' +
-    toInt(element.width) +
-    '" height="' +
-    toInt(element.height) +
-    '"';
-
-  if (element.uuid) {
-    xml += ` uuid="${element.uuid}"`;
-  }
-
-  if (element.forecolor) {
-    xml += ` forecolor="${element.forecolor}"`;
-  }
-
-  if (element.backcolor) {
-    xml += ` backcolor="${element.backcolor}"`;
-  }
-
-  // 使用元素设置的模式，不再自动覆盖
-  if (element.mode) {
-    xml += ` mode="${element.mode}"`;
-  }
-
-  // 新增：条件打印表达式
-  if (element.printWhenExpression) {
-    xml += ` printWhenExpression="${element.printWhenExpression}"`;
-  }
-  if (element.style) {
-    xml += ` style="${element.style}"`;
-  }
-
-  // 新增：忽略分页
-  if (element.isIgnorePagination !== undefined && element.isIgnorePagination) {
-    xml += ` isIgnorePagination="true"`;
-  }
-
-  // 新增：分裂类型
-  if (element.splitType) {
-    xml += ` splitType="${element.splitType}"`;
-  }
-
-  // 新增：是否移除空白行
-  if (
-    element.isRemoveLineWhenBlank !== undefined &&
-    element.isRemoveLineWhenBlank
-  ) {
-    xml += ` isRemoveLineWhenBlank="true"`;
-  }
-
-  // 新增：是否打印重复值
-  if (
-    element.isPrintRepeatedValues !== undefined &&
-    !element.isPrintRepeatedValues
-  ) {
-    xml += ` isPrintRepeatedValues="false"`;
-  }
-
+  let xml = `    <frame>`;
+  xml += `\n      <reportElement${generateReportElementAttrs(element)}`;
+  xml += `${generateReportElementChildren(element)}`;
   xml += "/>\n";
 
   // 生成layout属性
@@ -1461,7 +1402,7 @@ function generateFrameXML(element: any): string {
     });
   }
 
-  xml += "    </frame>\n";
+  xml += `    </frame>\n`;
   return xml;
 }
 
@@ -1470,29 +1411,10 @@ function generateBreakXML(element: any): string {
   // 默认为Page类型
   const type = element.breakType || "Page";
   let xml = `    <break type="${type}">`;
-
-  xml += `\n      <reportElement x="${toInt(element.x)}" y="${toInt(element.y)}" width="${toInt(element.width)}" height="${toInt(element.height)}"`;
-
-  // 是否重置页码
-  if (element.isResetPageNumber !== undefined && element.isResetPageNumber) {
-    xml += ` isResetPageNumber="true"`;
-  }
-
-  // 是否重置页溢出
-  if (
-    element.isResetPageOverflow !== undefined &&
-    element.isResetPageOverflow
-  ) {
-    xml += ` isResetPageOverflow="true"`;
-  }
-
-  if (element.uuid) {
-    xml += ` uuid="${element.uuid}"`;
-  }
-
-  xml += `/>
-    </break>
-`;
+  xml += `\n      <reportElement${generateReportElementAttrs(element)}`;
+  xml += `${generateReportElementChildren(element)}`;
+  xml += "/>\n";
+  xml += "    </break>\n";
   return xml;
 }
 
@@ -1627,11 +1549,9 @@ function generateChartXML(element: any): string {
   xml += `>\n`;
 
   // reportElement
-  xml += `        <reportElement x="${toInt(element.x)}" y="${toInt(element.y)}" width="${toInt(element.width)}" height="${toInt(element.height)}"`;
-  if (element.uuid) {
-    xml += ` uuid="${element.uuid}"`;
-  }
-  xml += `/>\n`;
+  xml += `        <reportElement${generateReportElementAttrs(element)}`;
+  xml += `${generateReportElementChildren(element)}`;
+  xml += "/>\n";
 
   // chartTitle
   if (element.isShowTitle !== false && (element.titleExpression || element.title)) {
@@ -1854,20 +1774,12 @@ function generateBarcodeXML(element: any): string {
   const barcodeType = element.barcodeType || 'Code128';
   // Barcode4j elements are wrapped in componentElement
   let xml = `    <componentElement>`;
-  xml += `\n      <reportElement x="${toInt(element.x)}" y="${toInt(element.y)}" width="${toInt(element.width)}" height="${toInt(element.height)}"`;
-  if (element.uuid) {
-    xml += ` uuid="${element.uuid}"`;
-  }
-  if (element.printWhenExpression) {
-    xml += `>`;
-    xml += `\n        <printWhenExpression><![CDATA[${element.printWhenExpression}]]></printWhenExpression>`;
-    xml += `\n      </reportElement>`;
-  } else {
-    xml += `/>`;
-  }
+  xml += `\n      <reportElement${generateReportElementAttrs(element)}`;
+  xml += `${generateReportElementChildren(element)}`;
+  xml += "/>\n";
 
   // Barcode4j uses the components namespace
-  xml += `\n      <c:${barcodeType} xmlns:c="http://jasperreports.sourceforge.net/jasperreports/components">`;
+  xml += `      <c:${barcodeType} xmlns:c="http://jasperreports.sourceforge.net/jasperreports/components">`;
   if (element.codeExpression) {
     xml += `\n        <c:codeExpression><![CDATA[${element.codeExpression}]]></c:codeExpression>`;
   }
@@ -1880,20 +1792,12 @@ function generateBarcodeXML(element: any): string {
 function generateMapXML(element: any): string {
   // Map is a componentElement type that uses the map namespace
   let xml = `    <componentElement>`;
-  xml += `\n      <reportElement x="${toInt(element.x)}" y="${toInt(element.y)}" width="${toInt(element.width)}" height="${toInt(element.height)}"`;
-  if (element.uuid) {
-    xml += ` uuid="${element.uuid}"`;
-  }
-  if (element.printWhenExpression) {
-    xml += `>`;
-    xml += `\n        <printWhenExpression><![CDATA[${element.printWhenExpression}]]></printWhenExpression>`;
-    xml += `\n      </reportElement>`;
-  } else {
-    xml += `/>`;
-  }
+  xml += `\n      <reportElement${generateReportElementAttrs(element)}`;
+  xml += `${generateReportElementChildren(element)}`;
+  xml += "/>\n";
 
   // Map uses the map namespace
-  xml += `\n      <m:map xmlns:m="http://jasperreports.sourceforge.net/jasperreports/components/map">`;
+  xml += `      <m:map xmlns:m="http://jasperreports.sourceforge.net/jasperreports/components/map">`;
   if (element.latExpression) {
     xml += `\n        <m:latExpression><![CDATA[${element.latExpression}]]></m:latExpression>`;
   }
@@ -1942,26 +1846,22 @@ function generateCrosstabXML(element: any): string {
 function generateIconLabelXML(element: any): string {
   // IconLabel is a componentElement type
   let xml = `    <componentElement>`;
-  xml += `\n      <reportElement x="${toInt(element.x)}" y="${toInt(element.y)}" width="${toInt(element.width)}" height="${toInt(element.height)}"`;
-  if (element.uuid) {
-    xml += ` uuid="${element.uuid}"`;
-  }
-  if (element.printWhenExpression) {
-    xml += `>`;
-    xml += `\n        <printWhenExpression><![CDATA[${element.printWhenExpression}]]></printWhenExpression>`;
-    xml += `\n      </reportElement>`;
-  } else {
-    xml += `/>`;
-  }
+  xml += `\n      <reportElement${generateReportElementAttrs(element)}`;
+  xml += `${generateReportElementChildren(element)}`;
+  xml += "/>\n";
 
-  // IconLabel uses the components namespace
-  xml += `\n      <c:iconLabel xmlns:c="http://jasperreports.sourceforge.net/jasperreports/components">`;
-  if (element.labelExpression) {
-    xml += `\n        <c:labelExpression><![CDATA[${element.labelExpression}]]></c:labelExpression>`;
-  } else if (element.label) {
-    xml += `\n        <c:labelExpression><![CDATA["${element.label}"]]></c:labelExpression>`;
+  // IconLabel component
+  xml += `      <ic:iconLabel xmlns:ic="http://jasperreports.sourceforge.net/jasperreports/components/iconlabel">`;
+  if (element.icon) {
+    xml += `\n        <ic:icon><![CDATA[${element.icon}]]></ic:icon>`;
   }
-  xml += `\n      </c:iconLabel>`;
+  if (element.label) {
+    xml += `\n        <ic:label><![CDATA[${element.label}]]></ic:label>`;
+  }
+  if (element.labelExpression) {
+    xml += `\n        <ic:labelExpression><![CDATA[${element.labelExpression}]]></ic:labelExpression>`;
+  }
+  xml += `\n      </ic:iconLabel>`;
   xml += `\n    </componentElement>`;
   return xml;
 }
@@ -1985,20 +1885,12 @@ function generateGenericElementXML(element: any): string {
 function generateSortXML(element: any): string {
   // Sort is a componentElement type
   let xml = `    <componentElement>`;
-  xml += `\n      <reportElement x="${toInt(element.x)}" y="${toInt(element.y)}" width="${toInt(element.width)}" height="${toInt(element.height)}"`;
-  if (element.uuid) {
-    xml += ` uuid="${element.uuid}"`;
-  }
-  if (element.printWhenExpression) {
-    xml += `>`;
-    xml += `\n        <printWhenExpression><![CDATA[${element.printWhenExpression}]]></printWhenExpression>`;
-    xml += `\n      </reportElement>`;
-  } else {
-    xml += `/>`;
-  }
+  xml += `\n      <reportElement${generateReportElementAttrs(element)}`;
+  xml += `${generateReportElementChildren(element)}`;
+  xml += "/>\n";
 
   // Sort uses the components namespace
-  xml += `\n      <c:sort xmlns:c="http://jasperreports.sourceforge.net/jasperreports/components">`;
+  xml += `      <c:sort xmlns:c="http://jasperreports.sourceforge.net/jasperreports/components">`;
   if (element.sortFields && element.sortFields.length > 0) {
     element.sortFields.forEach((field: any) => {
       const order = field.order || 'Ascending';
@@ -2688,27 +2580,9 @@ function generateTableXML(element: any): string {
   preprocessTableElements(element);
 
   let xml = `    <componentElement>
-      <reportElement x="${toInt(element.x)}" y="${toInt(element.y)}" width="${toInt(element.width)}" height="${toInt(element.height)}"`;
-
-  if (element.uuid) {
-    xml += ` uuid="${element.uuid}"`;
-  }
-
-  if (element.forecolor) {
-    xml += ` forecolor="${element.forecolor}"`;
-  }
-
-  if (element.backcolor) {
-    xml += ` backcolor="${element.backcolor}"`;
-  }
-
-  // 使用元素设置的模式，不再自动覆盖
-  if (element.mode) {
-    xml += ` mode="${element.mode}"`;
-  }
-
-  xml += `>
-`;
+      <reportElement${generateReportElementAttrs(element)}`;
+  xml += `${generateReportElementChildren(element)}`;
+  xml += "/>\n";
 
   // 添加表格样式属性
   if (element.styles) {
