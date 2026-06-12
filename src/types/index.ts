@@ -270,11 +270,11 @@ export interface DesignElementBase {
   y: number;
   width: number;
   height: number;
-  forecolor?: string; // 添加forecolor属性
-  forecolorMode?: "Opaque" | "Transparent"; // 添加forecolorMode属性
+  forecolor?: string;
+  forecolorMode?: "Opaque" | "Transparent";
   backcolor?: string;
   mode?: "Opaque" | "Transparent";
-  fill?: "Solid" | "None"; // 添加fill属性
+  fill?: "Solid" | "None";
   border?: string;
   box?: Box;
   fontFamily?: string;
@@ -284,11 +284,19 @@ export interface DesignElementBase {
   isUnderline?: boolean;
   textAlignment?: "Left" | "Center" | "Right" | "Justified";
   verticalAlignment?: "Top" | "Middle" | "Bottom";
-  markup?: string; // 添加markup属性
-  textAdjust?: string; // 添加textAdjust属性
-  isStyledText?: boolean; // 添加过时的isStyledText属性以保持兼容性
-  isStretchWithOverflow?: boolean; // 添加过时的isStretchWithOverflow属性以保持兼容性
-  style?: string; // 样式引用名称
+  markup?: string;
+  textAdjust?: string;
+  isStyledText?: boolean;
+  isStretchWithOverflow?: boolean;
+  style?: string;
+  // reportElement 通用属性
+  key?: string;
+  positionType?: "Float" | "FixRelativeToTop" | "FixRelativeToBottom";
+  stretchType?: "NoStretch" | "ElementGroupBottom" | "ElementGroupHeight" | "ContainerBottom" | "ContainerHeight";
+  isPrintRepeatedValues?: boolean;
+  isRemoveLineWhenBlank?: boolean;
+  printWhenExpression?: string;
+  styleExpression?: string;
 }
 
 // 静态文本元素接口

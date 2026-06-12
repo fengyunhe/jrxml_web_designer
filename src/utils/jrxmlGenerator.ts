@@ -14,6 +14,34 @@ function toInt(value: any): number {
   return parseInt(value as string) || 0;
 }
 
+// 生成reportElement通用属性
+function generateReportElementAttrs(element: any): string {
+  let attrs = ` x="${toInt(element.x)}" y="${toInt(element.y)}" width="${toInt(element.width)}" height="${toInt(element.height)}"`;
+  if (element.uuid) attrs += ` uuid="${element.uuid}"`;
+  if (element.key) attrs += ` key="${element.key}"`;
+  if (element.style) attrs += ` style="${element.style}"`;
+  if (element.mode) attrs += ` mode="${element.mode}"`;
+  if (element.positionType && element.positionType !== 'FixRelativeToTop') attrs += ` positionType="${element.positionType}"`;
+  if (element.stretchType && element.stretchType !== 'NoStretch') attrs += ` stretchType="${element.stretchType}"`;
+  if (element.isPrintRepeatedValues === false) attrs += ` isPrintRepeatedValues="false"`;
+  if (element.isRemoveLineWhenBlank) attrs += ` isRemoveLineWhenBlank="true"`;
+  if (element.forecolor) attrs += ` forecolor="${element.forecolor}"`;
+  if (element.backcolor) attrs += ` backcolor="${element.backcolor}"`;
+  return attrs;
+}
+
+// 生成reportElement子元素（printWhenExpression, styleExpression）
+function generateReportElementChildren(element: any): string {
+  let xml = '';
+  if (element.printWhenExpression) {
+    xml += `\n        <printWhenExpression><![CDATA[${element.printWhenExpression}]]></printWhenExpression>`;
+  }
+  if (element.styleExpression) {
+    xml += `\n        <styleExpression><![CDATA[${element.styleExpression}]]></styleExpression>`;
+  }
+  return xml;
+}
+
 // 生成JRXML内容
 export function generateJRXMLContent(
   properties: ReportProperties,
@@ -836,37 +864,8 @@ function getDefaultBandHeight(bandType: string): number {
 // 生成静态文本XML
 function generateStaticTextXML(element: any): string {
   let xml = `    <staticText`;
-
-  // staticText不支持rotation和pattern属性（这些是textField专有属性）
-
-  xml += `>\n      <reportElement x="${toInt(element.x)}" y="${toInt(element.y)}" width="${toInt(element.width)}" height="${toInt(element.height)}"`;
-
-  if (element.uuid) {
-    xml += ` uuid="${element.uuid}"`;
-  }
-
-  if (element.forecolor) {
-    xml += ` forecolor="${element.forecolor}"`;
-  }
-
-  if (element.backcolor) {
-    xml += ` backcolor="${element.backcolor}"`;
-  }
-
-  // 使用元素设置的模式，不再自动覆盖
-  if (element.mode) {
-    xml += ` mode="${element.mode}"`;
-  }
-
-  if (element.printWhenExpression) {
-    xml += ` printWhenExpression="${element.printWhenExpression}"`;
-  }
-  if (element.style) {
-    xml += ` style="${element.style}"`;
-  }
-
-  // rotation和textAdjust属性不属于reportElement，将在textElement或textField中处理
-
+  xml += `>\n      <reportElement${generateReportElementAttrs(element)}`;
+  xml += `${generateReportElementChildren(element)}`;
   xml += "/>\n";
 
   // 生成layout属性
@@ -1001,41 +1000,8 @@ function generateTextFieldXML(element: any): string {
     xml += ` isIgnorePagination="true"`;
   }
 
-  xml += `>\n      <reportElement x="${toInt(element.x)}" y="${toInt(element.y)}" width="${toInt(element.width)}" height="${toInt(element.height)}"`;
-
-  if (element.uuid) {
-    xml += ` uuid="${element.uuid}"`;
-  }
-
-  if (element.forecolor) {
-    xml += ` forecolor="${element.forecolor}"`;
-  }
-
-  if (element.backcolor) {
-    xml += ` backcolor="${element.backcolor}"`;
-  }
-
-  // 使用元素设置的模式，不再自动覆盖
-  if (element.mode) {
-    xml += ` mode="${element.mode}"`;
-  }
-
-  // 添加reportElement的其他可选属性
-  if (
-    element.positionType &&
-    ["Float", "FixRelativeToTop", "FixRelativeToBottom"].includes(
-      element.positionType,
-    )
-  ) {
-    xml += ` positionType="${element.positionType}"`;
-  }
-
-  if (element.printWhenExpression) {
-    xml += ` printWhenExpression="${element.printWhenExpression}"`;
-  }
-  if (element.style) {
-    xml += ` style="${element.style}"`;
-  }
+  xml += `>\n      <reportElement${generateReportElementAttrs(element)}`;
+  xml += `${generateReportElementChildren(element)}`;
 
   xml += "/>\n";
 
@@ -1234,29 +1200,8 @@ function generateLineXML(element: any): string {
   // 处理过时的direction属性，转换为direction属性
   const direction = element.lineDirection || element.direction || "TopDown"; // XSD中默认是TopDown
   let xml = `    <line direction="${direction}">`;
-  xml += `\n      <reportElement x="${toInt(element.x)}" y="${toInt(element.y)}" width="${toInt(element.width)}" height="${toInt(element.height)}"`;
-
-  if (element.uuid) {
-    xml += ` uuid="${element.uuid}"`;
-  }
-
-  if (element.forecolor) {
-    xml += ` forecolor="${element.forecolor}"`;
-  }
-  if (element.backcolor) {
-    xml += ` backcolor="${element.backcolor}"`;
-  }
-  if (element.mode) {
-    xml += ` mode="${element.mode}"`;
-  }
-
-  if (element.printWhenExpression) {
-    xml += ` printWhenExpression="${element.printWhenExpression}"`;
-  }
-  if (element.style) {
-    xml += ` style="${element.style}"`;
-  }
-
+  xml += `\n      <reportElement${generateReportElementAttrs(element)}`;
+  xml += `${generateReportElementChildren(element)}`;
   xml += "/>\n";
 
   // 生成graphicElement（线条的笔设置）
@@ -1310,50 +1255,8 @@ function generateRectangleXML(element: any): string {
     xml += ` radius="${element.radius}"`;
   }
 
-  xml += `>\n      <reportElement x="${toInt(element.x)}" y="${toInt(element.y)}" width="${toInt(element.width)}" height="${toInt(element.height)}"`;
-
-  if (element.uuid) {
-    xml += ` uuid="${element.uuid}"`;
-  }
-
-  if (element.forecolor) {
-    xml += ` forecolor="${element.forecolor}"`;
-  }
-
-  // 处理backcolor属性
-  if (element.backcolor) {
-    xml += ` backcolor="${element.backcolor}"`;
-  }
-
-  // 使用元素设置的模式，不再自动覆盖
-  if (element.mode) {
-    xml += ` mode="${element.mode}"`;
-  }
-
-  // 新增：是否打印重复值
-  if (
-    element.isPrintRepeatedValues !== undefined &&
-    !element.isPrintRepeatedValues
-  ) {
-    xml += ` isPrintRepeatedValues="false"`;
-  }
-
-  // 新增：是否移除空白行
-  if (
-    element.isRemoveLineWhenBlank !== undefined &&
-    element.isRemoveLineWhenBlank
-  ) {
-    xml += ` isRemoveLineWhenBlank="true"`;
-  }
-
-  // 新增：条件打印表达式
-  if (element.printWhenExpression) {
-    xml += ` printWhenExpression="${element.printWhenExpression}"`;
-  }
-  if (element.style) {
-    xml += ` style="${element.style}"`;
-  }
-
+  xml += `>\n      <reportElement${generateReportElementAttrs(element)}`;
+  xml += `${generateReportElementChildren(element)}`;
   xml += "/>\n";
 
   // 生成graphicElement
@@ -1397,59 +1300,8 @@ function generateRectangleXML(element: any): string {
 
 // 生成椭圆XML
 function generateEllipseXML(element: any): string {
-  let xml =
-    '    <ellipse>\n      <reportElement x="' +
-    toInt(element.x) +
-    '" y="' +
-    toInt(element.y) +
-    '" width="' +
-    toInt(element.width) +
-    '" height="' +
-    toInt(element.height) +
-    '"';
-
-  if (element.uuid) {
-    xml += ` uuid="${element.uuid}"`;
-  }
-
-  if (element.forecolor) {
-    xml += ` forecolor="${element.forecolor}"`;
-  }
-
-  // 处理backcolor属性
-  if (element.backcolor) {
-    xml += ` backcolor="${element.backcolor}"`;
-  }
-
-  // 使用元素设置的模式，不再自动覆盖
-  if (element.mode) {
-    xml += ` mode="${element.mode}"`;
-  }
-
-  // 新增：是否打印重复值
-  if (
-    element.isPrintRepeatedValues !== undefined &&
-    !element.isPrintRepeatedValues
-  ) {
-    xml += ` isPrintRepeatedValues="false"`;
-  }
-
-  // 新增：是否移除空白行
-  if (
-    element.isRemoveLineWhenBlank !== undefined &&
-    element.isRemoveLineWhenBlank
-  ) {
-    xml += ` isRemoveLineWhenBlank="true"`;
-  }
-
-  // 新增：条件打印表达式
-  if (element.printWhenExpression) {
-    xml += ` printWhenExpression="${element.printWhenExpression}"`;
-  }
-  if (element.style) {
-    xml += ` style="${element.style}"`;
-  }
-
+  let xml = `    <ellipse>\n      <reportElement${generateReportElementAttrs(element)}`;
+  xml += `${generateReportElementChildren(element)}`;
   xml += "/>\n";
 
   // 生成graphicElement

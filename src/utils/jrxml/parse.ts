@@ -1459,6 +1459,23 @@ function parseElement(element: Element, type: string): any {
       reportElement.getAttribute("isResetPageOverflow") === "true";
   }
 
+  // 解析新增的通用属性
+  if (reportElement.hasAttribute("key")) {
+    (result as any).key = reportElement.getAttribute("key") || undefined;
+  }
+  if (reportElement.hasAttribute("positionType")) {
+    (result as any).positionType = reportElement.getAttribute("positionType") || undefined;
+  }
+  if (reportElement.hasAttribute("stretchType")) {
+    (result as any).stretchType = reportElement.getAttribute("stretchType") || undefined;
+  }
+
+  // 解析styleExpression
+  const styleExprElem = findChildElement(element, "styleExpression");
+  if (styleExprElem) {
+    (result as any).styleExpression = styleExprElem.textContent?.trim() || '';
+  }
+
   switch (type) {
     case "staticText":
       parseStaticTextElement(element, result);

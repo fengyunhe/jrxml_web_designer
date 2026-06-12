@@ -371,6 +371,49 @@
                     </template>
                 </n-tab-pane>
 
+                <!-- 元素通用设置标签页 -->
+                <n-tab-pane
+                    v-if="currentElement && currentElement.type !== 'sort'"
+                    name="elementSettings"
+                    :tab="'元素设置'"
+                >
+                    <div class="form-group">
+                        <label>元素键（Key）</label>
+                        <input v-model="currentElement.key" type="text" placeholder="用于运行时标识元素" />
+                    </div>
+                    <div class="form-group">
+                        <label>位置类型</label>
+                        <select v-model="currentElement.positionType">
+                            <option value="">默认（FixRelativeToTop）</option>
+                            <option value="FixRelativeToTop">FixRelativeToTop - 固定相对于顶部</option>
+                            <option value="FixRelativeToBottom">FixRelativeToBottom - 固定相对于底部</option>
+                            <option value="Float">Float - 浮动</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>拉伸类型</label>
+                        <select v-model="currentElement.stretchType">
+                            <option value="">默认（NoStretch）</option>
+                            <option value="NoStretch">NoStretch - 不拉伸</option>
+                            <option value="ElementGroupBottom">ElementGroupBottom - 拉伸到组底部</option>
+                            <option value="ElementGroupHeight">ElementGroupHeight - 拉伸到组高度</option>
+                            <option value="ContainerBottom">ContainerBottom - 拉伸到容器底部</option>
+                            <option value="ContainerHeight">ContainerHeight - 拉伸到容器高度</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>条件样式表达式</label>
+                        <ExpressionEditor
+                            :model-value="currentElement.styleExpression || ''"
+                            @update:model-value="currentElement.styleExpression = $event"
+                            :report-fields="reportFields"
+                            :report-parameters="reportParameters"
+                            :report-variables="reportVariables"
+                            placeholder="例如: $V{rowNumber} % 2 == 0 ? &quot;evenRow&quot; : &quot;&quot;"
+                        />
+                    </div>
+                </n-tab-pane>
+
                 <!-- 表格属性标签页 -->
                 <n-tab-pane
                     v-if="currentElement && currentElement.type === 'table'"
