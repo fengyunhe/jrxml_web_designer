@@ -752,6 +752,25 @@ function parseComponentElement(componentElem: Element): any {
     }
   }
 
+  // 查找iconLabel元素
+  for (const child of Array.from(componentElem.children)) {
+    const childLocalName = child.localName || child.tagName;
+    if (childLocalName === 'iconLabel' || child.tagName === 'c:iconLabel') {
+      const labelExprElem = child.querySelector("labelExpression");
+      
+      return {
+        type: 'iconLabel',
+        uuid: reportElement.getAttribute("uuid") || crypto.randomUUID(),
+        x: parseInt(reportElement.getAttribute("x") || "0"),
+        y: parseInt(reportElement.getAttribute("y") || "0"),
+        width: parseInt(reportElement.getAttribute("width") || "100"),
+        height: parseInt(reportElement.getAttribute("height") || "30"),
+        labelExpression: labelExprElem ? labelExprElem.textContent?.trim() || '' : '',
+        printWhenExpression: ''
+      };
+    }
+  }
+
   return null;
 }
 

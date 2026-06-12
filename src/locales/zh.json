@@ -140,7 +140,8 @@
     "chart": "图表",
     "barcode": "条码",
     "map": "地图",
-    "crosstab": "交叉表"
+    "crosstab": "交叉表",
+    "iconLabel": "图标标签"
   },
   "properties": {
     "title": "属性设置",

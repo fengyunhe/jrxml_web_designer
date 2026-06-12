@@ -460,6 +460,26 @@ export class ElementRegistry {
         whenNoDataType: 'AllSectionsNoDetail'
       }
     });
+
+    // 图标标签元素
+    this.registerElement({
+      type: 'iconLabel',
+      name: 'elementNames.iconLabel',
+      icon: '🏷️',
+      category: 'text',
+      defaultProps: {
+        type: 'iconLabel',
+        x: 0,
+        y: 0,
+        width: 100,
+        height: 30,
+        icon: '',
+        label: '',
+        labelExpression: '',
+        evaluationTime: 'Now',
+        printWhenExpression: ''
+      }
+    });
   }
 
   // 注册元素

@@ -14,7 +14,8 @@ export type ElementType =
   | "chart"
   | "barcode"
   | "map"
-  | "crosstab";
+  | "crosstab"
+  | "iconLabel";
 
 // 列分组接口
 export interface ColumnGroup {
@@ -548,6 +549,16 @@ export interface CrosstabElement extends DesignElementBase {
   whenNoDataType?: "AllSectionsNoDetail" | "AllSectionsWithDetail" | "NoDataCell" | "Blank";
 }
 
+// 图标标签元素接口
+export interface IconLabelElement extends DesignElementBase {
+  type: "iconLabel";
+  icon?: string;
+  label?: string;
+  labelExpression?: string;
+  printWhenExpression?: string;
+  evaluationTime?: "Now" | "Report" | "Page" | "Column" | "Group" | "Band" | "Auto";
+}
+
 // 设计元素联合类型
 export type DesignElement =
   | StaticTextElement
@@ -564,7 +575,8 @@ export type DesignElement =
   | ChartElement
   | BarcodeElement
   | MapElement
-  | CrosstabElement;
+  | CrosstabElement
+  | IconLabelElement;
 
 // 报表区域接口
 export interface Band {

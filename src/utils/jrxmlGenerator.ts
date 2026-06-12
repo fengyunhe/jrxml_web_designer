@@ -532,6 +532,8 @@ function generateElementXML(element: any): string {
       return generateMapXML(element);
     case "crosstab":
       return generateCrosstabXML(element);
+    case "iconLabel":
+      return generateIconLabelXML(element);
     default:
       return "";
   }
@@ -1788,6 +1790,34 @@ function generateCrosstabXML(element: any): string {
   }
 
   xml += `\n    </crosstab>`;
+  return xml;
+}
+
+// 生成图标标签XML
+function generateIconLabelXML(element: any): string {
+  // IconLabel is a componentElement type
+  let xml = `    <componentElement>`;
+  xml += `\n      <reportElement x="${toInt(element.x)}" y="${toInt(element.y)}" width="${toInt(element.width)}" height="${toInt(element.height)}"`;
+  if (element.uuid) {
+    xml += ` uuid="${element.uuid}"`;
+  }
+  if (element.printWhenExpression) {
+    xml += `>`;
+    xml += `\n        <printWhenExpression><![CDATA[${element.printWhenExpression}]]></printWhenExpression>`;
+    xml += `\n      </reportElement>`;
+  } else {
+    xml += `/>`;
+  }
+
+  // IconLabel uses the components namespace
+  xml += `\n      <c:iconLabel xmlns:c="http://jasperreports.sourceforge.net/jasperreports/components">`;
+  if (element.labelExpression) {
+    xml += `\n        <c:labelExpression><![CDATA[${element.labelExpression}]]></c:labelExpression>`;
+  } else if (element.label) {
+    xml += `\n        <c:labelExpression><![CDATA["${element.label}"]]></c:labelExpression>`;
+  }
+  xml += `\n      </c:iconLabel>`;
+  xml += `\n    </componentElement>`;
   return xml;
 }
 

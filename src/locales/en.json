@@ -140,7 +140,8 @@
     "chart": "Chart",
     "barcode": "Barcode",
     "map": "Map",
-    "crosstab": "Crosstab"
+    "crosstab": "Crosstab",
+    "iconLabel": "Icon Label"
   },
   "properties": {
     "title": "Properties",
