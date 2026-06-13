@@ -161,9 +161,21 @@ const toggleSearch = () => {
 const performSearch = () => {
   searchResultsCount.value = codeMirrorEditorRef.value?.performSearchWith(searchQuery.value) ?? 0;
   currentSearchResult.value = searchResultsCount.value > 0 ? 1 : 0;
+  // 纯数字且无搜索结果时，当作行号跳转
+  if (searchResultsCount.value === 0 && /^\d+$/.test(searchQuery.value)) {
+    jumpToLine(parseInt(searchQuery.value, 10), 0);
+  }
+  // 保持搜索框焦点，防止编辑器抢焦点
+  nextTick(() => { searchInputRef.value?.focus(); });
 };
 
 const findNext = () => {
+  // 纯数字无结果时，当作行号跳转
+  if (searchResultsCount.value === 0 && /^\d+$/.test(searchQuery.value)) {
+    performSearch();
+    closeSearch();
+    return;
+  }
   codeMirrorEditorRef.value?.findNext();
   if (searchResultsCount.value > 0) {
     currentSearchResult.value = ((currentSearchResult.value) % searchResultsCount.value) + 1;

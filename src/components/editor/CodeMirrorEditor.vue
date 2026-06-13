@@ -306,13 +306,13 @@ const clearSearchHighlights = () => {
 
 const scrollToResult = (index: number) => {
   if (!editorView || index < 0 || index >= searchResults.length) return;
-  
+
   const result = searchResults[index];
   if (result) {
     editorView.dispatch({
       selection: { anchor: result.from, head: result.to }
     });
-    
+
     // 滚动到结果位置
     editorView.dispatch({
       effects: EditorView.scrollIntoView(result.from, {

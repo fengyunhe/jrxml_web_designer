@@ -853,15 +853,15 @@ function getDefaultBandHeight(bandType: string): number {
 // 生成静态文本XML
 function generateStaticTextXML(element: any): string {
   let xml = `<staticText`;
-  xml += `><reportElement${generateReportElementAttrs(element)}`;
+  xml += `><reportElement${generateReportElementAttrs(element)}>`;
   xml += `${generateReportElementChildren(element)}`;
-  xml += "/>";
 
-  // 生成layout属性
+  // layout属性属于reportElement的子元素property
   if (element.layout) {
-    // 写入property标签来保存布局信息
     xml += `<property name="com.jaspersoft.studio.layout" value="com.jaspersoft.studio.editor.layout.${element.layout}"/>`;
   }
+
+  xml += "</reportElement>";
 
   // 生成box元素
   xml += generateBoxXML(element.box, element);
@@ -984,10 +984,10 @@ function generateTextFieldXML(element: any): string {
     xml += ` bookmarkLevel="${element.bookmarkLevel}"`;
   }
 
-  xml += `><reportElement${generateReportElementAttrs(element)}`;
+  xml += `><reportElement${generateReportElementAttrs(element)}>`;
   xml += `${generateReportElementChildren(element)}`;
 
-  xml += "/>";
+  xml += "</reportElement>";
 
   // 生成box元素
   xml += generateBoxXML(element.box, element);
@@ -1164,9 +1164,9 @@ function generateImageXML(element: any): string {
   }
 
   xml += `>
-      <reportElement${generateReportElementAttrs(element)}`;
+      <reportElement${generateReportElementAttrs(element)}>`;
   xml += `${generateReportElementChildren(element)}`;
-  xml += "/>";
+  xml += "</reportElement>";
 
   // 生成box元素
   xml += generateBoxXML(element.box, element);
@@ -1218,9 +1218,9 @@ function generateLineXML(element: any): string {
   // 处理过时的direction属性，转换为direction属性
   const direction = element.lineDirection || element.direction || "TopDown"; // XSD中默认是TopDown
   let xml = `<line direction="${direction}">`;
-  xml += `<reportElement${generateReportElementAttrs(element)}`;
+  xml += `<reportElement${generateReportElementAttrs(element)}>`;
   xml += `${generateReportElementChildren(element)}`;
-  xml += "/>";
+  xml += "</reportElement>";
 
   // 生成graphicElement（线条的笔设置）
   const hasLineWidth = element.lineWidth !== undefined && element.lineWidth > 0;
@@ -1273,9 +1273,9 @@ function generateRectangleXML(element: any): string {
     xml += ` radius="${element.radius}"`;
   }
 
-  xml += `><reportElement${generateReportElementAttrs(element)}`;
+  xml += `><reportElement${generateReportElementAttrs(element)}>`;
   xml += `${generateReportElementChildren(element)}`;
-  xml += "/>";
+  xml += "</reportElement>";
 
   // 生成graphicElement
   let hasGraphicElement = false;
@@ -1318,9 +1318,9 @@ function generateRectangleXML(element: any): string {
 
 // 生成椭圆XML
 function generateEllipseXML(element: any): string {
-  let xml = `<ellipse><reportElement${generateReportElementAttrs(element)}`;
+  let xml = `<ellipse><reportElement${generateReportElementAttrs(element)}>`;
   xml += `${generateReportElementChildren(element)}`;
-  xml += "/>";
+  xml += "</reportElement>";
 
   // 生成graphicElement
   let hasGraphicElement = false;
@@ -1364,14 +1364,15 @@ function generateEllipseXML(element: any): string {
 // 生成容器XML
 function generateFrameXML(element: any): string {
   let xml = `<frame>`;
-  xml += `<reportElement${generateReportElementAttrs(element)}`;
+  xml += `<reportElement${generateReportElementAttrs(element)}>`;
   xml += `${generateReportElementChildren(element)}`;
-  xml += "/>";
 
-  // 生成layout属性
+  // layout属性属于reportElement的子元素property
   if (element.layout) {
     xml += `<property name="com.jaspersoft.studio.layout" value="com.jaspersoft.studio.editor.layout.${element.layout}"/>`;
   }
+
+  xml += "</reportElement>";
 
   // 生成box元素
   xml += generateBoxXML(element.box, element);
@@ -1392,9 +1393,9 @@ function generateBreakXML(element: any): string {
   // 默认为Page类型
   const type = element.breakType || "Page";
   let xml = `<break type="${type}">`;
-  xml += `<reportElement${generateReportElementAttrs(element)}`;
+  xml += `<reportElement${generateReportElementAttrs(element)}>`;
   xml += `${generateReportElementChildren(element)}`;
-  xml += "/>";
+  xml += "</reportElement>";
   xml += "</break>";
   return xml;
 }
@@ -1412,9 +1413,9 @@ function generateSubreportXML(element: any): string {
   }
   
   xml += `>`;
-  xml += `<reportElement${generateReportElementAttrs(element)}`;
+  xml += `<reportElement${generateReportElementAttrs(element)}>`;
   xml += `${generateReportElementChildren(element)}`;
-  xml += "/>";
+  xml += "</reportElement>";
 
   // 生成parametersMapExpression
   if (element.parametersMapExpression) {
@@ -1452,9 +1453,9 @@ function generateListXML(element: any): string {
   }
   
   xml += `>`;
-  xml += `<reportElement${generateReportElementAttrs(element)}`;
+  xml += `<reportElement${generateReportElementAttrs(element)}>`;
   xml += `${generateReportElementChildren(element)}`;
-  xml += "/>";
+  xml += "</reportElement>";
 
   // 生成datasetRun（数据集运行配置）
   if (element.subDataset || element.dataSourceExpression || element.connectionExpression) {
@@ -1530,9 +1531,9 @@ function generateChartXML(element: any): string {
   xml += `>`;
 
   // reportElement
-  xml += `<reportElement${generateReportElementAttrs(element)}`;
+  xml += `<reportElement${generateReportElementAttrs(element)}>`;
   xml += `${generateReportElementChildren(element)}`;
-  xml += "/>";
+  xml += "</reportElement>";
 
   // chartTitle
   if (element.isShowTitle !== false && (element.titleExpression || element.title)) {
@@ -1755,9 +1756,9 @@ function generateBarcodeXML(element: any): string {
   const barcodeType = element.barcodeType || 'Code128';
   // Barcode4j elements are wrapped in componentElement
   let xml = `<componentElement>`;
-  xml += `<reportElement${generateReportElementAttrs(element)}`;
+  xml += `<reportElement${generateReportElementAttrs(element)}>`;
   xml += `${generateReportElementChildren(element)}`;
-  xml += "/>";
+  xml += "</reportElement>";
 
   // Barcode4j uses the components namespace
   xml += `<c:${barcodeType} xmlns:c="http://jasperreports.sourceforge.net/jasperreports/components">`;
@@ -1773,9 +1774,9 @@ function generateBarcodeXML(element: any): string {
 function generateMapXML(element: any): string {
   // Map is a componentElement type that uses the map namespace
   let xml = `<componentElement>`;
-  xml += `<reportElement${generateReportElementAttrs(element)}`;
+  xml += `<reportElement${generateReportElementAttrs(element)}>`;
   xml += `${generateReportElementChildren(element)}`;
-  xml += "/>";
+  xml += "</reportElement>";
 
   // Map uses the map namespace
   xml += `<m:map xmlns:m="http://jasperreports.sourceforge.net/jasperreports/components/map">`;
@@ -1799,9 +1800,9 @@ function generateMapXML(element: any): string {
 // 生成交叉表XML
 function generateCrosstabXML(element: any): string {
   let xml = `<crosstab>`;
-  xml += `<reportElement${generateReportElementAttrs(element)}`;
+  xml += `<reportElement${generateReportElementAttrs(element)}>`;
   xml += `${generateReportElementChildren(element)}`;
-  xml += "/>";
+  xml += "</reportElement>";
 
   // 当无数据时的显示方式
   if (element.whenNoDataType) {
@@ -1819,9 +1820,9 @@ function generateCrosstabXML(element: any): string {
 function generateIconLabelXML(element: any): string {
   // IconLabel is a componentElement type
   let xml = `<componentElement>`;
-  xml += `<reportElement${generateReportElementAttrs(element)}`;
+  xml += `<reportElement${generateReportElementAttrs(element)}>`;
   xml += `${generateReportElementChildren(element)}`;
-  xml += "/>";
+  xml += "</reportElement>";
 
   // IconLabel component
   xml += `<ic:iconLabel xmlns:ic="http://jasperreports.sourceforge.net/jasperreports/components/iconlabel">`;
@@ -1858,9 +1859,9 @@ function generateGenericElementXML(element: any): string {
 function generateSortXML(element: any): string {
   // Sort is a componentElement type
   let xml = `<componentElement>`;
-  xml += `<reportElement${generateReportElementAttrs(element)}`;
+  xml += `<reportElement${generateReportElementAttrs(element)}>`;
   xml += `${generateReportElementChildren(element)}`;
-  xml += "/>";
+  xml += "</reportElement>";
 
   // Sort uses the components namespace
   xml += `<c:sort xmlns:c="http://jasperreports.sourceforge.net/jasperreports/components">`;
