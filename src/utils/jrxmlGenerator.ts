@@ -1196,9 +1196,6 @@ function generateImageXML(element: any): string {
   xml += `${generateReportElementChildren(element)}`;
   xml += "/>\n";
 
-  xml += `/>
-`;
-
   // 生成box元素
   xml += generateBoxXML(element.box, element);
 
