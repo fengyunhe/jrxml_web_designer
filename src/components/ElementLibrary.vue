@@ -317,7 +317,7 @@ const elementFilterText = ref('');
 const expandedCategories = ref<Record<string, boolean>>({ basic: true, composite: true });
 const toggleCategory = (key: string) => { expandedCategories.value[key] = !expandedCategories.value[key]; };
 
-const categoryLabels = computed(() => ({
+const categoryLabels = computed<Record<string, string>>(() => ({
   basic: t('elementLibrary.basicElements'),
   composite: t('elementLibrary.compositeElements')
 }));
