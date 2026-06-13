@@ -7,7 +7,8 @@ import PdfPreviewModal from '../modals/PdfPreviewModal.vue';
 import CodeMirrorEditor from '../editor/CodeMirrorEditor.vue';
 
 import { validateJRXML, autoFixJRXML, type ValidationResult, type ValidationError, type AutoFixResult } from '../../utils/jrxml/xsdValidator';
-import { formatXML } from '../../utils/jrxml/formatXml';
+import { html_beautify } from 'js-beautify';
+
 import type { Band, ReportProperties } from '../../types';
 import {
   UI_CONSTANTS,
@@ -284,7 +285,20 @@ const localSelectedBandTypes = computed({
 
 // 计算属性：本地绑定的jrxmlContent
 const localJrxmlContent = computed({
-  get: () => formatXML(props.jrxmlContent),
+  get: () => {
+    if (!props.jrxmlContent) return props.jrxmlContent;
+    return html_beautify(props.jrxmlContent, {
+      indent_size: 2,
+      wrap_attributes: 'auto',
+      wrap_line_length: 120,
+      content_unformatted: [
+        'text', 'textFieldExpression', 'parameterExpression', 'queryString',
+        'sortField', 'groupExpression', 'reportFont', 'property',
+        'propertyExpression', 'font'
+      ],
+      extra_liners: ['text', 'textFieldExpression', 'parameterExpression', 'queryString']
+    });
+  },
   set: (value) => emit('update:jrxml-content', value)
 });
 
