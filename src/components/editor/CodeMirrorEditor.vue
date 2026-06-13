@@ -11,7 +11,7 @@ import type { Extension } from '@codemirror/state';
 import { EditorView } from '@codemirror/view';
 import { lineNumbers, keymap, highlightActiveLine, highlightActiveLineGutter, gutter } from '@codemirror/view';
 import { xml } from '@codemirror/lang-xml';
-import { syntaxHighlighting, defaultHighlightStyle, foldGutter, indentOnInput } from '@codemirror/language';
+import { foldGutter, indentOnInput } from '@codemirror/language';
 import type { EditorStateConfig } from '@codemirror/state';
 import { defaultKeymap } from '@codemirror/commands';
 import { html_beautify } from 'js-beautify';
@@ -62,7 +62,6 @@ const createEditor = () => {
       foldGutter(),
       highlightActiveLineGutter(),
       highlightActiveLine(),
-      syntaxHighlighting(defaultHighlightStyle),
       xml(),
       keymap.of([
         ...defaultKeymap
@@ -148,7 +147,6 @@ watch(() => props.readOnly, (newValue) => {
         foldGutter(),
         highlightActiveLineGutter(),
         highlightActiveLine(),
-        syntaxHighlighting(defaultHighlightStyle),
         xml(),
         keymap.of([
           ...defaultKeymap,
@@ -456,36 +454,5 @@ defineExpose({
 
 :deep(.cm-cursor) {
   border-left-color: #333;
-}
-
-/* XML语法高亮样式 */
-:deep(.cm-tag) {
-  color: #881280;
-}
-
-:deep(.cm-attribute) {
-  color: #1f7199;
-}
-
-:deep(.cm-string) {
-  color: #881280;
-}
-
-:deep(.cm-comment) {
-  color: #a0a1a7;
-  font-style: italic;
-}
-
-:deep(.cm-namespace) {
-  color: #1f7199;
-}
-
-:deep(.cm-punctuation) {
-  color: #333;
-}
-
-:deep(.cm-xml-error) {
-  color: #f44747;
-  text-decoration: wavy underline;
 }
 </style>

@@ -5,7 +5,7 @@
  * - 每个子元素另起一行，缩进 2 空格
  * - 自闭合标签（无子元素、无文本）保持单行
  * - 叶节点的文本内容（如 CDATA）保持在同一行（如 <text>内容</text>）
- * - 属性 ≤2 个时放同一行；≥3 个时换行对齐（4 空格缩进）
+ * - 属性 ≤5 个时放同一行；>5 个时每个属性换行对齐（2 空格缩进）
  */
 export function formatXML(xml: string): string {
   if (!xml) return xml;
@@ -65,8 +65,8 @@ export function formatXML(xml: string): string {
     if (el.attributes.length <= 5) {
       return ' ' + attrs.join(' ');
     }
-    // 大量属性（如 jasperReport）：每个属性换行，4 空格缩进
-    return '\n' + attrs.map(a => `    ${a}`).join('\n');
+    // 大量属性（如 jasperReport）：每个属性换行，2 空格缩进
+    return '\n' + attrs.map(a => `${INDENT}${a}`).join('\n');
   }
 
   /**
