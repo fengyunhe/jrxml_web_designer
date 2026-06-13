@@ -44,6 +44,8 @@
   },
   "elementLibrary": {
     "title": "元素库",
+    "basicElements": "基本元素",
+    "compositeElements": "复合元素",
     "reportElements": "报表元素",
     "filterElements": "过滤元素...",
     "reportParameters": "报表参数",
@@ -143,7 +145,13 @@
     "crosstab": "交叉表",
     "iconLabel": "图标标签",
     "genericElement": "通用元素",
-    "sort": "排序"
+    "sort": "排序",
+    "pageNumber": "页码",
+    "totalPages": "总页数",
+    "currentDate": "当前日期",
+    "currentTime": "当前时间",
+    "percentage": "百分比",
+    "pageXofY": "第X页/共Y页"
   },
   "properties": {
     "title": "属性设置",

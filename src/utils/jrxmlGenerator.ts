@@ -2554,7 +2554,7 @@ function generateTableXML(element: any): string {
   preprocessTableElements(element);
 
   let xml = `<componentElement>
-      <reportElement${generateReportElementAttrs(element)}`;
+      <reportElement${generateReportElementAttrs(element)}>`;
   xml += `${generateReportElementChildren(element)}`;
 
   // 添加表格样式属性
@@ -2571,11 +2571,8 @@ function generateTableXML(element: any): string {
     }
   }
 
-  if (tableStyleProps) {
-    xml += ">" + tableStyleProps + "</reportElement>";
-  } else {
-    xml += "/>";
-  }
+  xml += tableStyleProps;
+  xml += "</reportElement>";
 
   // 添加表格属性 - 只包含XSD允许的属性
   let tableAttrs = "";

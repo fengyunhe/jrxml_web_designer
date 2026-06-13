@@ -44,6 +44,8 @@
   },
   "elementLibrary": {
     "title": "Element Library",
+    "basicElements": "Basic Elements",
+    "compositeElements": "Composite Elements",
     "reportElements": "Report Elements",
     "filterElements": "Filter elements...",
     "reportParameters": "Report Parameters",
@@ -143,7 +145,13 @@
     "crosstab": "Crosstab",
     "iconLabel": "Icon Label",
     "genericElement": "Generic Element",
-    "sort": "Sort"
+    "sort": "Sort",
+    "pageNumber": "Page Number",
+    "totalPages": "Total Pages",
+    "currentDate": "Current Date",
+    "currentTime": "Time",
+    "percentage": "Percentage",
+    "pageXofY": "Page X of Y"
   },
   "properties": {
     "title": "Properties",

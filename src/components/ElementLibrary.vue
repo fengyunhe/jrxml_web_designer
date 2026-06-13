@@ -314,21 +314,20 @@ const emit = defineEmits<Emits>();
 const elementFilterText = ref('');
 
 // 元素分组展开状态
-const expandedCategories = ref<Record<string, boolean>>({ text: true, shape: true, container: true });
+const expandedCategories = ref<Record<string, boolean>>({ basic: true, composite: true });
 const toggleCategory = (key: string) => { expandedCategories.value[key] = !expandedCategories.value[key]; };
 
-const categoryLabels: Record<string, string> = {
-  text: '文本元素',
-  shape: '图形元素',
-  container: '容器元素'
-};
+const categoryLabels = computed(() => ({
+  basic: t('elementLibrary.basicElements'),
+  composite: t('elementLibrary.compositeElements')
+}));
 
 const groupedElements = computed(() => {
   const registry = ElementRegistry.getInstance();
-  const categories: Record<string, any[]> = { text: [], shape: [], container: [] };
+  const categories: Record<string, any[]> = { basic: [], composite: [] };
   for (const element of props.elements) {
     const config = registry.getElementConfig(element.type);
-    const category = config?.category || 'text';
+    const category = config?.category || 'basic';
     if (!categories[category]) categories[category] = [];
     categories[category].push(element);
   }
@@ -607,7 +606,7 @@ function handleConfirmDelete(): void {
 
 .element-list {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
+  grid-template-columns: repeat(3, 1fr);
   gap: 6px;
   /* margin-bottom: 16px; */
 }

@@ -37,7 +37,7 @@ export class ElementRegistry {
       name: 'elementNames.staticText',
       icon: 'T',
       iconSvg: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7V4h16v3M9 20h6M12 4v16"/></svg>',
-      category: 'text',
+      category: 'basic',
       defaultProps: {
         type: 'staticText',
         x: 0,
@@ -64,7 +64,7 @@ export class ElementRegistry {
       name: 'elementNames.textField',
       icon: '{ }',
       iconSvg: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 9l-3 3 3 3M16 9l3 3-3 3M14 4l-4 16"/></svg>',
-      category: 'text',
+      category: 'basic',
       defaultProps: {
         type: 'textField',
         x: 0,
@@ -96,7 +96,7 @@ export class ElementRegistry {
       name: 'elementNames.image',
       icon: '◻',
       iconSvg: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>',
-      category: 'shape',
+      category: 'basic',
       defaultProps: {
         type: 'image',
         x: 0,
@@ -119,7 +119,7 @@ export class ElementRegistry {
       name: 'elementNames.line',
       icon: '─',
       iconSvg: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14"/></svg>',
-      category: 'shape',
+      category: 'basic',
       defaultProps: {
         type: 'line',
         x: 0,
@@ -139,7 +139,7 @@ export class ElementRegistry {
       name: 'elementNames.rectangle',
       icon: '▭',
       iconSvg: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="1"/></svg>',
-      category: 'shape',
+      category: 'basic',
       defaultProps: {
         type: 'rectangle',
         x: 0,
@@ -159,7 +159,7 @@ export class ElementRegistry {
       name: 'elementNames.ellipse',
       icon: '◯',
       iconSvg: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><ellipse cx="12" cy="12" rx="10" ry="8"/></svg>',
-      category: 'shape',
+      category: 'basic',
       defaultProps: {
         type: 'ellipse',
         x: 0,
@@ -179,7 +179,7 @@ export class ElementRegistry {
       name: 'elementNames.break',
       icon: '⤓',
       iconSvg: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12l7 7 7-7"/></svg>',
-      category: 'container',
+      category: 'basic',
       defaultProps: {
         type: 'break',
         x: 0,
@@ -197,7 +197,7 @@ export class ElementRegistry {
       name: 'elementNames.frame',
       icon: '☐',
       iconSvg: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" stroke-dasharray="4 2"/></svg>',
-      category: 'container',
+      category: 'basic',
       defaultProps: {
         type: 'frame',
         x: 0,
@@ -223,7 +223,7 @@ export class ElementRegistry {
       name: 'elementNames.table',
       icon: '⊞',
       iconSvg: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M3 15h18M9 3v18M15 3v18"/></svg>',
-      category: 'container',
+      category: 'basic',
       defaultProps: {
         type: 'table',
         x: 0,
@@ -349,7 +349,7 @@ export class ElementRegistry {
       name: 'elementNames.subreport',
       icon: '⊡',
       iconSvg: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="20" rx="2"/><rect x="6" y="6" width="12" height="12" rx="1"/></svg>',
-      category: 'container',
+      category: 'basic',
       defaultProps: {
         type: 'subreport',
         x: 0,
@@ -373,7 +373,7 @@ export class ElementRegistry {
       name: 'elementNames.list',
       icon: '☰',
       iconSvg: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg>',
-      category: 'container',
+      category: 'basic',
       defaultProps: {
         type: 'list',
         x: 0,
@@ -403,7 +403,7 @@ export class ElementRegistry {
       name: 'elementNames.chart',
       icon: '▊',
       iconSvg: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 20V10M12 20V4M6 20v-6"/></svg>',
-      category: 'shape',
+      category: 'basic',
       defaultProps: {
         type: 'chart',
         x: 0,
@@ -426,7 +426,7 @@ export class ElementRegistry {
       name: 'elementNames.barcode',
       icon: '▐',
       iconSvg: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2v20M10 2v20M14 2v20M18 2v20M22 2v20"/></svg>',
-      category: 'shape',
+      category: 'basic',
       defaultProps: {
         type: 'barcode',
         x: 0,
@@ -446,7 +446,7 @@ export class ElementRegistry {
       name: 'elementNames.map',
       icon: '📍',
       iconSvg: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>',
-      category: 'container',
+      category: 'basic',
       defaultProps: {
         type: 'map',
         x: 0,
@@ -469,7 +469,7 @@ export class ElementRegistry {
       name: 'elementNames.crosstab',
       icon: '⊞',
       iconSvg: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M3 15h18M9 3v18M15 3v18"/><path d="M9 9h6v6H9z" fill="currentColor" opacity="0.2"/></svg>',
-      category: 'container',
+      category: 'basic',
       defaultProps: {
         type: 'crosstab',
         x: 0,
@@ -489,7 +489,7 @@ export class ElementRegistry {
       name: 'elementNames.iconLabel',
       icon: '🏷️',
       iconSvg: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>',
-      category: 'text',
+      category: 'basic',
       defaultProps: {
         type: 'iconLabel',
         x: 0,
@@ -510,7 +510,7 @@ export class ElementRegistry {
       name: 'elementNames.genericElement',
       icon: '❓',
       iconSvg: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>',
-      category: 'container',
+      category: 'basic',
       defaultProps: {
         type: 'genericElement',
         x: 0,
@@ -523,22 +523,100 @@ export class ElementRegistry {
       }
     });
 
-    // 排序元素
+    // Composite Elements
     this.registerElement({
-      type: 'sort',
-      name: 'elementNames.sort',
-      icon: '↕️',
-      iconSvg: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 15l5 5 5-5M7 9l5-5 5 5"/></svg>',
-      category: 'container',
+      type: 'pageNumber',
+      name: 'elementNames.pageNumber',
+      icon: '#',
+      iconSvg: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 12h6M12 9v6"/></svg>',
+      category: 'composite',
       defaultProps: {
-        type: 'sort',
-        x: 0,
-        y: 0,
-        width: 100,
-        height: 30,
-        sortFields: [],
+        type: 'textField',
+        x: 0, y: 0, width: 50, height: 20,
+        expression: '$V{PAGE_NUMBER}',
         evaluationTime: 'Now',
-        printWhenExpression: ''
+        fontFamily: 'SansSerif', fontSize: 12,
+        textAlignment: 'Center', verticalAlignment: 'Middle'
+      }
+    });
+
+    this.registerElement({
+      type: 'totalPages',
+      name: 'elementNames.totalPages',
+      icon: 'Σ',
+      iconSvg: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M7 8l5-3 5 3M7 16l5 3 5-3"/></svg>',
+      category: 'composite',
+      defaultProps: {
+        type: 'textField',
+        x: 0, y: 0, width: 50, height: 20,
+        expression: '$V{PAGE_NUMBER}',
+        evaluationTime: 'Report',
+        fontFamily: 'SansSerif', fontSize: 12,
+        textAlignment: 'Center', verticalAlignment: 'Middle'
+      }
+    });
+
+    this.registerElement({
+      type: 'currentDate',
+      name: 'elementNames.currentDate',
+      icon: '📅',
+      iconSvg: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>',
+      category: 'composite',
+      defaultProps: {
+        type: 'textField',
+        x: 0, y: 0, width: 100, height: 20,
+        expression: 'new java.util.Date()',
+        evaluationTime: 'Now', pattern: 'yyyy-MM-dd',
+        fontFamily: 'SansSerif', fontSize: 12,
+        textAlignment: 'Center', verticalAlignment: 'Middle'
+      }
+    });
+
+    this.registerElement({
+      type: 'currentTime',
+      name: 'elementNames.currentTime',
+      icon: '🕒',
+      iconSvg: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>',
+      category: 'composite',
+      defaultProps: {
+        type: 'textField',
+        x: 0, y: 0, width: 80, height: 20,
+        expression: 'new java.util.Date()',
+        evaluationTime: 'Now', pattern: 'HH:mm:ss',
+        fontFamily: 'SansSerif', fontSize: 12,
+        textAlignment: 'Center', verticalAlignment: 'Middle'
+      }
+    });
+
+    this.registerElement({
+      type: 'percentage',
+      name: 'elementNames.percentage',
+      icon: '%',
+      iconSvg: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="7" cy="7" r="3"/><circle cx="17" cy="17" r="3"/><path d="M20 4L4 20"/></svg>',
+      category: 'composite',
+      defaultProps: {
+        type: 'textField',
+        x: 0, y: 0, width: 60, height: 20,
+        expression: '$V{REPORT_COUNT} / $V{REPORT_TOTAL_COUNT}',
+        evaluationTime: 'Report', pattern: '#,##0.0%',
+        fontFamily: 'SansSerif', fontSize: 12,
+        textAlignment: 'Center', verticalAlignment: 'Middle'
+      }
+    });
+
+    this.registerElement({
+      type: 'pageXofY',
+      name: 'elementNames.pageXofY',
+      icon: '#/#',
+      iconSvg: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M8 12h8"/></svg>',
+      category: 'composite',
+      defaultProps: {
+        type: 'textField',
+        x: 0, y: 0, width: 80, height: 20,
+        expression: '$V{PAGE_NUMBER} + " / " + $V{NUMBER_OF_PAGES}',
+        evaluationTime: 'Now',
+        fontFamily: 'SansSerif', fontSize: 12,
+        textAlignment: 'Center', verticalAlignment: 'Middle'
       }
     });
   }
@@ -580,10 +658,13 @@ export class ElementRegistry {
       throw new Error(`Unknown element type: ${type}`);
     }
 
+    // composite 元素使用 defaultProps 中的实际类型（如 textField）
+    const actualType = config.defaultProps.type || type;
+
     return {
       ...config.defaultProps,
       ...overrides,
-      type
+      type: actualType
     } as DesignElement;
   }
 
