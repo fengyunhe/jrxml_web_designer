@@ -26,6 +26,7 @@
     "@codemirror/lint": "^6.9.3",
     "@codemirror/state": "^6.5.4",
     "@codemirror/view": "^6.39.16",
+    "js-beautify": "^1.15.4",
     "naive-ui": "^2.43.2",
     "uss-xsd-engine": "^0.2.1",
     "vscode-languageserver-types": "^3.17.5",
