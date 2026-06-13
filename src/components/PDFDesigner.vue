@@ -2441,6 +2441,12 @@ const startDragging = (event: MouseEvent, bandIndex: number, elementIndex: numbe
             if ((!isSameBand || !isSameFrame) && targetBand) {
                // Reparenting
 
+               // 提前获取目标Frame引用（splice会导致索引偏移）
+               let targetFrame: FrameElement | null = null;
+               if (targetFrameIndex !== -1) {
+                   targetFrame = targetBand.elements[targetFrameIndex] as FrameElement;
+               }
+
                // Remove from Source
                let element;
                if (draggingInfo.value.parentFrameIndex !== undefined) {
@@ -2454,22 +2460,21 @@ const startDragging = (event: MouseEvent, bandIndex: number, elementIndex: numbe
 
                if (element) {
                  // Add to Target
-                 if (targetFrameIndex !== -1) {
-                     const frame = targetBand.elements[targetFrameIndex] as FrameElement;
-                     if (!frame.elements) frame.elements = [];
+                 if (targetFrame) {
+                     if (!targetFrame.elements) targetFrame.elements = [];
 
                      // Convert to Frame Rel Coords
-                     element.x = Math.round(elementRelTargetBandX - frame.x);
-                     element.y = Math.round(elementRelTargetBandY - frame.y);
+                     element.x = Math.round(elementRelTargetBandX - targetFrame.x);
+                     element.y = Math.round(elementRelTargetBandY - targetFrame.y);
 
                      // Limit
                      element.x = Math.max(0, element.x);
                      element.y = Math.max(0, element.y);
-                     if (element.x + element.width > frame.width) element.x = Math.max(0, frame.width - element.width);
-                     if (element.y + element.height > frame.height) element.y = Math.max(0, frame.height - element.height);
+                     if (element.x + element.width > targetFrame.width) element.x = Math.max(0, targetFrame.width - element.width);
+                     if (element.y + element.height > targetFrame.height) element.y = Math.max(0, targetFrame.height - element.height);
 
-                     frame.elements.push(element);
-                     selectElement(targetBandIndex, frame.elements.length - 1, false, targetFrameIndex);
+                     targetFrame.elements.push(element);
+                     selectElement(targetBandIndex, targetFrame.elements.length - 1, false, targetFrameIndex);
                  } else {
                      // Add to Band
                      element.x = Math.round(elementRelTargetBandX);
