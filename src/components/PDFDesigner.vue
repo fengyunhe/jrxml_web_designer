@@ -807,8 +807,16 @@ function saveCurrentFile() {
   return fileData;
 }
 
+// 未完善元素，仅 localhost 可见
+const INCOMPLETE_ELEMENTS = ['map', 'crosstab', 'iconLabel', 'genericElement', 'list', 'subreport'];
+const isDev = location.hostname === 'localhost';
+
 // 可用元素
-const elements = computed(() => getAllElementConfigs().map(config => ({ type: config.type, name: config.name })));
+const elements = computed(() =>
+  getAllElementConfigs()
+    .filter(config => isDev || !INCOMPLETE_ELEMENTS.includes(config.type))
+    .map(config => ({ type: config.type, name: config.name }))
+);
 
 // 定义元素接口
 // 使用从types/index.ts导入的Pen和Box接口
