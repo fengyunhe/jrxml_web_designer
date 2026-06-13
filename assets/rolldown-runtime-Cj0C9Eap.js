@@ -1,1 +1,0 @@
-var e=Object.defineProperty,t=t=>{let n={};for(var r in t)e(n,r,{get:t[r],enumerable:!0});return n};export{t};
