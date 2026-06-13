@@ -515,6 +515,7 @@ import {useDragFeedback} from '@/composables/useDragFeedback';
 // 确保浏览器环境中DOMParser可用
 // 移除未使用的getDOMParser函数
 import {generateJRXMLContent, parseJRXMLContent} from '../utils/jrxmlGenerator';
+import { formatXML } from '../utils/jrxml/formatXml';
 
 // 导入通知管理器
 import notification from '../utils/notification';
@@ -731,7 +732,7 @@ function loadFile(fileData: DesignerFile | any) {
     }
 
     if (fileContent.jrxmlContent) {
-      jrxmlContent.value = fileContent.jrxmlContent;
+      jrxmlContent.value = formatXML(fileContent.jrxmlContent);
     }
 
     // 更新当前文件信息
@@ -2633,7 +2634,7 @@ const loadFromLocalStorageWrapper = () => {
     reportProperties.value = loadedData.reportData.reportProperties;
     bands.value = loadedData.reportData.bands;
     reportFields.value = loadedData.reportData.reportFields;
-    jrxmlContent.value = loadedData.reportData.jrxmlContent;
+    jrxmlContent.value = formatXML(loadedData.reportData.jrxmlContent);
     // 更新selectedBandTypes以匹配加载的bands
     if (loadedData.reportData.bands && Array.isArray(loadedData.reportData.bands)) {
       selectedBandTypes.value = loadedData.reportData.bands.map((band: Band) => band.type);

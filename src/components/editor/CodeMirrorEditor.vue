@@ -1,53 +1,19 @@
 <template>
   <div class="codemirror-wrapper">
-    <!-- 编辑器工具栏 -->
-    <div class="editor-toolbar">
-      <div class="toolbar-left">
-        <span class="toolbar-info">XML Editor</span>
-      </div>
-      <div class="toolbar-right">
-        <button class="toolbar-btn" @click="toggleSearch" title="搜索 (Ctrl+F)">
-          <span class="search-icon">🔍</span>
-          搜索
-        </button>
-      </div>
-    </div>
-    
-    <!-- 搜索栏 -->
-    <div v-if="showSearch" class="search-bar">
-      <input 
-        ref="searchInput" 
-        v-model="searchQuery" 
-        class="search-input" 
-        placeholder="搜索... (Ctrl+F)"
-        @input="performSearch"
-        @keydown.enter="findNext"
-        @keydown.shift.enter="findPrevious"
-        @keydown.escape="closeSearch"
-      />
-      <div class="search-controls">
-        <button class="search-btn" @click="findPrevious" title="上一个">↑</button>
-        <button class="search-btn" @click="findNext" title="下一个">↓</button>
-        <button class="search-btn" @click="closeSearch" title="关闭">×</button>
-      </div>
-      <div v-if="searchResultsCount > 0" class="search-status">
-        {{ currentSearchResult }} / {{ searchResultsCount }}
-      </div>
-    </div>
     <div ref="editorContainer" class="codemirror-container"></div>
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, onMounted, watch, onBeforeUnmount } from 'vue';
-import { EditorState } from '@codemirror/state';
+import { EditorState, EditorSelection } from '@codemirror/state';
 import type { Extension } from '@codemirror/state';
 import { EditorView } from '@codemirror/view';
 import { lineNumbers, keymap, highlightActiveLine, highlightActiveLineGutter, gutter } from '@codemirror/view';
 import { xml } from '@codemirror/lang-xml';
 import { syntaxHighlighting, defaultHighlightStyle, foldGutter, indentOnInput } from '@codemirror/language';
 import type { EditorStateConfig } from '@codemirror/state';
-import { defaultKeymap } from '@codemirror/commands';
+import { defaultKeymap, indentSelection } from '@codemirror/commands';
 
 // 定义组件属性
 interface Props {
@@ -98,14 +64,7 @@ const createEditor = () => {
       syntaxHighlighting(defaultHighlightStyle),
       xml(),
       keymap.of([
-        ...defaultKeymap,
-        {
-          key: 'Ctrl-F',
-          run: () => {
-            toggleSearch();
-            return true;
-          }
-        }
+        ...defaultKeymap
       ]),
       indentOnInput(),
       EditorState.readOnly.of(props.readOnly),
@@ -390,21 +349,46 @@ const jumpToLine = (line: number, column: number) => {
   }
 };
 
+// 使用指定查询执行搜索（供父组件调用）
+const performSearchWith = (query: string): number => {
+  if (!editorView) return 0;
+  if (!query) {
+    clearSearchHighlights();
+    searchResults = [];
+    currentSearchIndex = 0;
+    return 0;
+  }
+  searchResults = [];
+  const text = editorView.state.doc.toString();
+  let index = 0;
+  while ((index = text.indexOf(query, index)) !== -1) {
+    searchResults.push({ from: index, to: index + query.length });
+    index += query.length;
+  }
+  currentSearchIndex = 0;
+  if (searchResults.length > 0) scrollToResult(0);
+  return searchResults.length;
+};
+
+// 格式化：利用 XML 语言的 indentNodeProp 自动缩进
+const formatDocument = () => {
+  if (!editorView) return;
+  const { state } = editorView;
+  // 全选后调用 indentSelection，由 xml() 的 indentNodeProp 计算每行正确缩进
+  editorView.dispatch({ selection: EditorSelection.range(0, state.doc.length) });
+  indentSelection(editorView);
+};
+
 // 暴露方法给父组件
 defineExpose({
-  // 聚焦编辑器
-  focus: () => {
-    editorView?.focus();
-  },
-  
-  // 获取编辑器实例
+  focus: () => { editorView?.focus(); },
   getEditor: () => editorView,
-  
-  // 打开搜索栏
-  openSearch: toggleSearch,
-  
-  // 跳转到指定行
-  jumpToLine
+  performSearchWith,
+  findNext,
+  findPrevious,
+  closeSearch,
+  jumpToLine,
+  formatDocument
 });
 </script>
 
@@ -417,112 +401,6 @@ defineExpose({
   border-radius: 4px;
   border: 1px solid #ddd;
   overflow: hidden;
-}
-
-/* 编辑器工具栏 */
-.editor-toolbar {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 6px 12px;
-  background-color: #f8f9fa;
-  border-bottom: 1px solid #ddd;
-  font-size: 14px;
-}
-
-.toolbar-left {
-  display: flex;
-  align-items: center;
-}
-
-.toolbar-info {
-  color: #666;
-  font-size: 12px;
-}
-
-.toolbar-right {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.toolbar-btn {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  padding: 4px 8px;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  background-color: #fff;
-  cursor: pointer;
-  font-size: 12px;
-  color: #666;
-  transition: all 0.2s ease;
-}
-
-.toolbar-btn:hover {
-  background-color: #f0f0f0;
-  border-color: #4a90e2;
-  color: #4a90e2;
-}
-
-.search-icon {
-  font-size: 12px;
-}
-
-.search-bar {
-  display: flex;
-  align-items: center;
-  padding: 8px;
-  background-color: #f8f9fa;
-  border-bottom: 1px solid #ddd;
-  gap: 8px;
-}
-
-.search-input {
-  flex: 1;
-  padding: 6px 10px;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  font-size: 14px;
-  font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
-}
-
-.search-input:focus {
-  outline: none;
-  border-color: #4a90e2;
-  box-shadow: 0 0 0 2px rgba(74, 144, 226, 0.2);
-}
-
-.search-controls {
-  display: flex;
-  gap: 4px;
-}
-
-.search-btn {
-  width: 28px;
-  height: 28px;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  background-color: #fff;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 12px;
-  color: #666;
-}
-
-.search-btn:hover {
-  background-color: #f0f0f0;
-  border-color: #4a90e2;
-  color: #4a90e2;
-}
-
-.search-status {
-  font-size: 12px;
-  color: #666;
-  margin-left: 8px;
 }
 
 .codemirror-container {

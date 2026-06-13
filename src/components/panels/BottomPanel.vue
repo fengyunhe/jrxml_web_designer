@@ -5,8 +5,9 @@ import { NButton, NAlert } from 'naive-ui';
 import ResizablePanel from './ResizablePanel.vue';
 import PdfPreviewModal from '../modals/PdfPreviewModal.vue';
 import CodeMirrorEditor from '../editor/CodeMirrorEditor.vue';
-import { renderToHtml, renderToMultiPageHtml } from '../../utils/jrxmlHtmlRenderer';
+
 import { validateJRXML, autoFixJRXML, type ValidationResult, type ValidationError, type AutoFixResult } from '../../utils/jrxml/xsdValidator';
+import { formatXML } from '../../utils/jrxml/formatXml';
 import type { Band, ReportProperties } from '../../types';
 import {
   UI_CONSTANTS,
@@ -61,8 +62,7 @@ const emit = defineEmits<Emits>();
 const activeTab = ref('pageSettings');
 const tabs = ref([
   { id: 'pageSettings', name: t('bottomPanel.jrxmlTabs.pageSettings') },
-  { id: 'jrxml', name: t('bottomPanel.jrxmlContent') },
-  { id: 'htmlPreview', name: 'HTML预览' }
+  { id: 'jrxml', name: t('bottomPanel.jrxmlContent') }
 ]);
 
 // 底部面板高度
@@ -138,6 +138,53 @@ const showPdfPreview = ref(false);
 
 // CodeMirrorEditor组件引用
 const codeMirrorEditorRef = ref<InstanceType<typeof CodeMirrorEditor> | null>(null);
+
+// 搜索相关（聚合到按钮行）
+const searchInputRef = ref<HTMLInputElement | null>(null);
+const showSearch = ref(false);
+const searchQuery = ref('');
+const searchResultsCount = ref(0);
+const currentSearchResult = ref(0);
+
+const toggleSearch = () => {
+  showSearch.value = !showSearch.value;
+  if (showSearch.value) {
+    searchResultsCount.value = codeMirrorEditorRef.value?.performSearchWith(searchQuery.value) ?? 0;
+    currentSearchResult.value = searchResultsCount.value > 0 ? 1 : 0;
+    nextTick(() => { searchInputRef.value?.focus(); });
+  } else {
+    codeMirrorEditorRef.value?.closeSearch();
+  }
+};
+
+const performSearch = () => {
+  searchResultsCount.value = codeMirrorEditorRef.value?.performSearchWith(searchQuery.value) ?? 0;
+  currentSearchResult.value = searchResultsCount.value > 0 ? 1 : 0;
+};
+
+const findNext = () => {
+  codeMirrorEditorRef.value?.findNext();
+  if (searchResultsCount.value > 0) {
+    currentSearchResult.value = ((currentSearchResult.value) % searchResultsCount.value) + 1;
+  }
+};
+
+const findPrevious = () => {
+  codeMirrorEditorRef.value?.findPrevious();
+  if (searchResultsCount.value > 0) {
+    currentSearchResult.value = currentSearchResult.value <= 1
+      ? searchResultsCount.value
+      : currentSearchResult.value - 1;
+  }
+};
+
+const closeSearch = () => {
+  showSearch.value = false;
+  searchQuery.value = '';
+  searchResultsCount.value = 0;
+  currentSearchResult.value = 0;
+  codeMirrorEditorRef.value?.closeSearch();
+};
 
 onMounted(async () => {
   availableFonts.value = await getAvailableFonts();
@@ -237,69 +284,8 @@ const localSelectedBandTypes = computed({
 
 // 计算属性：本地绑定的jrxmlContent
 const localJrxmlContent = computed({
-  get: () => props.jrxmlContent,
+  get: () => formatXML(props.jrxmlContent),
   set: (value) => emit('update:jrxml-content', value)
-});
-
-// HTML预览相关
-const htmlPreviewScale = ref(1);
-const currentPage = ref(0);
-const totalPages = ref(1);
-const htmlPages = ref<string[]>([]);
-
-const htmlPreviewContent = computed(() => {
-  if (htmlPages.value.length > 0) {
-    return htmlPages.value[currentPage.value] || '';
-  }
-  return '';
-});
-
-// 更新多页预览
-const updateMultiPagePreview = () => {
-  const bands = props.bands;
-  const rp = props.reportProperties;
-  if (!bands || !rp) {
-    htmlPages.value = [];
-    totalPages.value = 1;
-    currentPage.value = 0;
-    return;
-  }
-  const result = renderToMultiPageHtml(bands as Band[], rp as unknown as ReportProperties, {
-    scale: htmlPreviewScale.value,
-    showBorders: true,
-    showElementBorders: true,
-    showBandLabels: false,
-  });
-  htmlPages.value = result.pages;
-  totalPages.value = result.totalPages;
-  if (currentPage.value >= result.totalPages) {
-    currentPage.value = Math.max(0, result.totalPages - 1);
-  }
-};
-
-const prevPage = () => {
-  if (currentPage.value > 0) currentPage.value--;
-};
-
-const nextPage = () => {
-  if (currentPage.value < totalPages.value - 1) currentPage.value++;
-};
-
-// Watch for changes that should trigger re-render
-watch(
-  () => [props.bands, props.reportProperties, htmlPreviewScale.value],
-  () => {
-    if (activeTab.value === 'htmlPreview') {
-      updateMultiPagePreview();
-    }
-  },
-  { deep: true }
-);
-
-watch(activeTab, (tab) => {
-  if (tab === 'htmlPreview') {
-    updateMultiPagePreview();
-  }
 });
 
 // 同步滚动
@@ -329,6 +315,10 @@ const copyJRXML = async (): Promise<void> => {
 // 重新生成JRXML内容
 const regenerateJRXML = (): void => {
   emit('regenerate-jrxml');
+};
+
+const formatJRXML = (): void => {
+  codeMirrorEditorRef.value?.formatDocument();
 };
 
 // 下载JRXML文件
@@ -389,7 +379,7 @@ function handleKeyDown(event: KeyboardEvent) {
     
     // 延迟一下，确保DOM已经更新，然后打开搜索栏并聚焦搜索输入框
     setTimeout(() => {
-      codeMirrorEditorRef.value?.openSearch();
+      toggleSearch();
     }, 200);
   }
 }
@@ -634,6 +624,7 @@ onBeforeUnmount(() => {
             <n-button @click="copyJRXML" type="default" size="small">{{ t('bottomPanel.copy') }}</n-button>
             <n-button @click="saveJRXML" type="primary" size="small">{{ t('bottomPanel.apply') }}</n-button>
             <n-button @click="regenerateJRXML" type="default" size="small">{{ t('bottomPanel.regenerate') }}</n-button>
+            <n-button @click="formatJRXML" type="default" size="small">{{ t('bottomPanel.format') }}</n-button>
             <n-button @click="downloadJRXML" type="primary" size="small">{{ t('bottomPanel.downloadJRXML') }}</n-button>
             <n-button @click="openPdfPreview" type="info" size="small">{{ t('bottomPanel.previewPDF') }}</n-button>
             <n-button
@@ -654,6 +645,25 @@ onBeforeUnmount(() => {
             >
               {{ t('bottomPanel.autoFix') }}
             </n-button>
+            <template v-if="showSearch">
+              <div class="action-separator"></div>
+              <input
+                ref="searchInputRef"
+                v-model="searchQuery"
+                class="inline-search-input"
+                placeholder="搜索... (Ctrl+F)"
+                @input="performSearch"
+                @keydown.enter="findNext"
+                @keydown.shift.enter="findPrevious"
+                @keydown.escape="closeSearch"
+              />
+              <n-button @click="findPrevious" type="default" size="small" title="上一个">↑</n-button>
+              <n-button @click="findNext" type="default" size="small" title="下一个">↓</n-button>
+              <n-button @click="closeSearch" type="default" size="small" title="关闭">×</n-button>
+              <span v-if="searchResultsCount > 0" class="search-status">
+                {{ currentSearchResult }} / {{ searchResultsCount }}
+              </span>
+            </template>
           </div>
         </div>
         
@@ -742,31 +752,6 @@ onBeforeUnmount(() => {
       </div>
     </div>
 
-    <!-- HTML预览标签 -->
-    <div class="tab-content html-preview-tab" v-show="activeTab === 'htmlPreview'">
-      <div class="html-preview-toolbar">
-        <div class="preview-zoom-controls">
-          <button @click="htmlPreviewScale = 0.5" :class="{ active: htmlPreviewScale === 0.5 }">50%</button>
-          <button @click="htmlPreviewScale = 0.75" :class="{ active: htmlPreviewScale === 0.75 }">75%</button>
-          <button @click="htmlPreviewScale = 1" :class="{ active: htmlPreviewScale === 1 }">100%</button>
-          <button @click="htmlPreviewScale = 1.25" :class="{ active: htmlPreviewScale === 1.25 }">125%</button>
-          <button @click="htmlPreviewScale = 1.5" :class="{ active: htmlPreviewScale === 1.5 }">150%</button>
-        </div>
-        <div class="preview-page-nav" v-if="totalPages > 1">
-          <button @click="prevPage" :disabled="currentPage === 0">◀</button>
-          <span class="page-info">{{ currentPage + 1 }} / {{ totalPages }}</span>
-          <button @click="nextPage" :disabled="currentPage >= totalPages - 1">▶</button>
-        </div>
-      </div>
-      <div class="html-preview-container">
-        <iframe
-          :srcdoc="htmlPreviewContent"
-          class="html-preview-iframe"
-          sandbox="allow-same-origin"
-          title="HTML Preview"
-        ></iframe>
-      </div>
-    </div>
   </ResizablePanel>
 
   <PdfPreviewModal
@@ -1014,6 +999,40 @@ onBeforeUnmount(() => {
 .jrxml-actions {
   display: flex;
   gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.action-separator {
+  width: 1px;
+  height: 20px;
+  background-color: #ddd;
+  margin: 0 2px;
+  flex-shrink: 0;
+}
+
+.inline-search-input {
+  width: 160px;
+  padding: 3px 8px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 12px;
+  font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+  height: 20px;
+  flex-shrink: 0;
+}
+
+.inline-search-input:focus {
+  outline: none;
+  border-color: #4a90e2;
+  box-shadow: 0 0 0 2px rgba(74, 144, 226, 0.2);
+}
+
+.search-status {
+  font-size: 11px;
+  color: #666;
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .jrxml-actions .fullscreen-active {
@@ -1079,106 +1098,6 @@ onBeforeUnmount(() => {
 .form-group select:focus {
   border-color: #4a90e2;
   outline: none;
-}
-
-/* HTML预览标签样式 */
-.html-preview-tab {
-  background-color: white;
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-  padding: 0;
-}
-
-.html-preview-toolbar {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 6px 12px;
-  background: #f5f5f5;
-  border-bottom: 1px solid #ddd;
-  flex-shrink: 0;
-}
-
-.preview-zoom-controls {
-  display: flex;
-  gap: 2px;
-}
-
-.preview-zoom-controls button {
-  padding: 4px 10px;
-  border: 1px solid #ccc;
-  background: white;
-  cursor: pointer;
-  font-size: 12px;
-  color: #555;
-  transition: all 0.15s;
-}
-
-.preview-zoom-controls button:first-child {
-  border-radius: 4px 0 0 4px;
-}
-
-.preview-zoom-controls button:last-child {
-  border-radius: 0 4px 4px 0;
-}
-
-.preview-zoom-controls button.active {
-  background: #4a90e2;
-  color: white;
-  border-color: #4a90e2;
-}
-
-.preview-zoom-controls button:hover:not(.active) {
-  background: #e8e8e8;
-}
-
-.preview-page-nav {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  margin-left: auto;
-}
-
-.preview-page-nav button {
-  padding: 4px 8px;
-  border: 1px solid #ccc;
-  background: white;
-  cursor: pointer;
-  font-size: 12px;
-  color: #555;
-  border-radius: 3px;
-  transition: all 0.15s;
-}
-
-.preview-page-nav button:hover:not(:disabled) {
-  background: #e8e8e8;
-}
-
-.preview-page-nav button:disabled {
-  opacity: 0.4;
-  cursor: not-allowed;
-}
-
-.page-info {
-  font-size: 12px;
-  color: #666;
-  white-space: nowrap;
-}
-
-.html-preview-container {
-  flex: 1;
-  overflow: auto;
-  background: #e8e8e8;
-  min-height: 0;
-}
-
-.html-preview-iframe {
-  width: 100%;
-  height: 100%;
-  border: none;
-  display: block;
 }
 
 .validation-btn {

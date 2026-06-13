@@ -340,6 +340,7 @@
     "copy": "Copy",
     "apply": "Apply",
     "regenerate": "Regenerate",
+    "format": "Format",
     "previewPDF": "Preview PDF",
     "clickToGenerate": "Click \"Generate JRXML\" to view content",
     "generateJRXML": "Generate JRXML",

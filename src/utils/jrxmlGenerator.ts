@@ -3,6 +3,7 @@ import type { DesignElement, BandType, Band, ReportGroup } from "../types";
 import type { ReportProperties, Field, Parameter } from "./jrxml/types";
 import { buildJasperReportOpenTag } from "./jrxml/xmlBuilder";
 import { generateUUID } from "./jrxml/uuidGenerator";
+import { formatXML } from "./jrxml/formatXml";
 
 export type { ReportProperties, Field, Parameter } from "./jrxml/types";
 
@@ -379,7 +380,7 @@ export function generateJRXMLContent(
   });
 
   jrxml += "</jasperReport>";
-  return jrxml;
+  return formatXML(jrxml);
 }
 
 // 生成默认表格样式XML

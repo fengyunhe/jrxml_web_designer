@@ -340,6 +340,7 @@
     "copy": "复制",
     "apply": "应用",
     "regenerate": "重新生成",
+    "format": "格式化",
     "previewPDF": "预览PDF",
     "clickToGenerate": "点击\"生成JRXML\"按钮查看内容",
     "generateJRXML": "生成JRXML",
