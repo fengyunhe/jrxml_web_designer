@@ -29,7 +29,7 @@
     "js-beautify": "^1.15.4",
     "naive-ui": "^2.43.2",
     "uss-xsd-engine": "^0.2.1",
-    "vscode-languageserver-types": "^3.17.5",
+    "vscode-languageserver-types": "^3.18.0",
     "vue": "^3.5.28",
     "vue-i18n": "^11.2.8",
     "xerces-wasm": "^1.0.0"
