@@ -41,7 +41,7 @@
     "@vitejs/plugin-vue": "^6.0.4",
     "@vitest/coverage-v8": "4.0.6",
     "@vitest/ui": "^4.0.6",
-    "@vue/test-utils": "^2.4.6",
+    "@vue/test-utils": "^2.4.11",
     "@vue/tsconfig": "^0.8.1",
     "jsdom": "^27.4.0",
     "typescript": "~5.9.3",
